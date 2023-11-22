@@ -1,0 +1,31 @@
+# permissions for end users to edit blueprints.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: blueprint-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: k8s-blueprint-operator
+    app.kubernetes.io/part-of: k8s-blueprint-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: blueprint-editor-role
+rules:
+- apiGroups:
+  - k8s.cloudogu.com
+  resources:
+  - blueprints
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - k8s.cloudogu.com
+  resources:
+  - blueprints/status
+  verbs:
+  - get
