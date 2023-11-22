@@ -32,7 +32,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/api/v1"
+	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	//+kubebuilder:scaffold:imports
 )
 
