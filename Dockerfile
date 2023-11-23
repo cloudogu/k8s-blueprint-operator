@@ -13,7 +13,6 @@ RUN go mod download
 
 # Copy the go source
 COPY main.go main.go
-COPY interfaces.go interfaces.go
 COPY pkg/ pkg/
 
 # Copy .git files as the build process builds the current commit id into the binary via ldflags.
