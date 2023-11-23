@@ -32,15 +32,29 @@ spec:
           metadata:
             type: object
           spec:
-            description: BlueprintSpec defines the desired state of Blueprint
+            description: Spec defines the desired state of the Blueprint.
             properties:
-              foo:
-                description: Foo is an example field of Blueprint. Edit blueprint_types.go
-                  to remove/update
+              blueprint:
+                description: Blueprint json with the desired state of the ecosystem.
                 type: string
+              blueprintMask:
+                description: BlueprintMask json can further restrict the desired state
+                  from the blueprint.
+                type: string
+            required:
+            - blueprint
             type: object
           status:
-            description: BlueprintStatus defines the observed state of Blueprint
+            description: Status defines the observed state of the Blueprint.
+            properties:
+              phase:
+                description: Phase represents the processing state of the blueprint
+                type: string
+              requeueTimeNanos:
+                description: RequeueTimeNanos contains the time in nanoseconds to
+                  wait until the next requeue.
+                format: int64
+                type: integer
             type: object
         type: object
     served: true

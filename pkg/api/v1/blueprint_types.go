@@ -18,6 +18,7 @@ package v1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"time"
 )
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
@@ -25,18 +26,36 @@ import (
 
 // BlueprintSpec defines the desired state of Blueprint
 type BlueprintSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Blueprint. Edit blueprint_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Blueprint json with the desired state of the ecosystem.
+	Blueprint string `json:"blueprint"`
+	// BlueprintMask json can further restrict the desired state from the blueprint.
+	BlueprintMask string `json:"blueprintMask,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Phase represents the processing state of the blueprint
+	Phase StatusPhase `json:"phase,omitempty"`
+	// RequeueTimeNanos contains the time in nanoseconds to wait until the next requeue.
+	RequeueTimeNanos time.Duration `json:"requeueTimeNanos,omitempty"`
 }
+
+type StatusPhase string
+
+const (
+	// StatusPhaseNew marks a newly created blueprint-CR.
+	StatusPhaseNew StatusPhase = ""
+	// StatusPhaseCompleted marks the blueprint as successfully applied.
+	StatusPhaseCompleted StatusPhase = "completed"
+	// StatusPhaseInvalid marks the given blueprint or the blueprint mask as not correct.
+	StatusPhaseInvalid StatusPhase = "invalid"
+	// StatusPhaseRetrying marks the blueprint as not applicable for now (e.g. dogu health state) but a retry is queued.
+	StatusPhaseRetrying StatusPhase = "retrying"
+	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
+	StatusPhaseFailed StatusPhase = "failed"
+	// StatusPhaseInProgress marks that the blueprint is currently being processed.
+	StatusPhaseInProgress StatusPhase = "inProgress"
+)
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
@@ -46,7 +65,9 @@ type Blueprint struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   BlueprintSpec   `json:"spec,omitempty"`
+	// Spec defines the desired state of the Blueprint.
+	Spec BlueprintSpec `json:"spec,omitempty"`
+	// Status defines the observed state of the Blueprint.
 	Status BlueprintStatus `json:"status,omitempty"`
 }
 
