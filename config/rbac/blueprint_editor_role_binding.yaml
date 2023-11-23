@@ -3,16 +3,16 @@ kind: RoleBinding
 metadata:
   labels:
     app.kubernetes.io/name: rolebinding
-    app.kubernetes.io/instance: leader-election-rolebinding
-    app.kubernetes.io/component: rbac
+    app.kubernetes.io/instance: blueprint-editor-rolebinding
+    app.kubernetes.io/component: kube-rbac-proxy
     app.kubernetes.io/created-by: k8s-blueprint-operator
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/managed-by: kustomize
-  name: leader-election-rolebinding
+  name: blueprint-editor-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: leader-election-role
+  name: blueprint-editor-role
 subjects:
 - kind: ServiceAccount
   name: controller-manager
