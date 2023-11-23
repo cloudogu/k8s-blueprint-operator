@@ -17,8 +17,11 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
+	"fmt"
 	"os"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -28,18 +31,31 @@ import (
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/cloudogu/k8s-blueprint-operator/internal/controller"
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/controller"
 	//+kubebuilder:scaffold:imports
+)
+
+var (
+	// Version of the application
+	Version = "0.0.0"
 )
 
 var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
+
+	// These variables are here to avoid errors during leader election.
+	leaseDuration = time.Second * 60
+	renewDeadline = time.Second * 40
 )
 
 func init() {
@@ -50,66 +66,122 @@ func init() {
 }
 
 func main() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	err := startOperator(ctx, flag.CommandLine, os.Args)
+	if err != nil {
+		setupLog.Error(err, "unable to start operator")
+		os.Exit(1)
+	}
+}
+
+func startOperator(ctx context.Context, flags *flag.FlagSet, args []string) error {
+	operatorConfig, err := config.NewOperatorConfig(Version)
+	if err != nil {
+		return fmt.Errorf("unable to create operator config: %w", err)
+	}
+
+	options := getK8sManagerOptions(flags, args, operatorConfig)
+	restConfig := ctrl.GetConfigOrDie()
+
+	k8sManager, err := ctrl.NewManager(restConfig, options)
+	if err != nil {
+		return fmt.Errorf("unable to start manager: %w", err)
+	}
+
+	err = configureManager(k8sManager)
+	if err != nil {
+		return fmt.Errorf("unable to configure manager: %w", err)
+	}
+
+	return startK8sManager(ctx, k8sManager)
+}
+
+func configureManager(k8sManager controllerManager) error {
+	err := configureReconcilers(k8sManager)
+	if err != nil {
+		return fmt.Errorf("unable to configure reconciler: %w", err)
+	}
+
+	err = addChecks(k8sManager)
+	if err != nil {
+		return fmt.Errorf("unable to add checks to the manager: %w", err)
+	}
+
+	return nil
+}
+
+func getK8sManagerOptions(flags *flag.FlagSet, args []string, operatorConfig *config.OperatorConfig) ctrl.Options {
+	controllerOpts := ctrl.Options{
+		Scheme: scheme,
+		Cache: cache.Options{DefaultNamespaces: map[string]cache.Config{
+			operatorConfig.Namespace: {},
+		}},
+		WebhookServer:    webhook.NewServer(webhook.Options{Port: 9443}),
+		LeaderElectionID: "ae48821c.cloudogu.com",
+		LeaseDuration:    &leaseDuration,
+		RenewDeadline:    &renewDeadline,
+	}
+	controllerOpts, zapOpts := parseManagerFlags(flags, args, controllerOpts)
+
+	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&zapOpts)))
+
+	return controllerOpts
+}
+
+func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options) (ctrl.Options, zap.Options) {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
-	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
-	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
-	flag.BoolVar(&enableLeaderElection, "leader-elect", false,
+	flags.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
+	flags.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
+	flags.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	opts := zap.Options{
-		Development: true,
+	zapOpts := zap.Options{
+		Development: config.IsStageDevelopment(),
 	}
-	opts.BindFlags(flag.CommandLine)
-	flag.Parse()
+	zapOpts.BindFlags(flags)
+	// Ignore errors; flags is set to exit on errors
+	_ = flags.Parse(args)
 
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+	ctrlOpts.Metrics = metricsserver.Options{BindAddress: metricsAddr}
+	ctrlOpts.HealthProbeBindAddress = probeAddr
+	ctrlOpts.LeaderElection = enableLeaderElection
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		Metrics:                metricsserver.Options{BindAddress: metricsAddr},
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "ae48821c.cloudogu.com",
-		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
-		// when the Manager ends. This requires the binary to immediately end when the
-		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
-		// speeds up voluntary leader transitions as the new leader don't have to wait
-		// LeaseDuration time first.
-		//
-		// In the default scaffold provided, the program ends immediately after
-		// the manager stops, so would be fine to enable this option. However,
-		// if you are doing or is intended to do any operation such as perform cleanups
-		// after the manager stops then its usage might be unsafe.
-		// LeaderElectionReleaseOnCancel: true,
-	})
-	if err != nil {
-		setupLog.Error(err, "unable to start manager")
-		os.Exit(1)
+	return ctrlOpts, zapOpts
+}
+
+func configureReconcilers(k8sManager controllerManager) error {
+	if err := (&controller.BlueprintReconciler{
+		Client: k8sManager.GetClient(),
+		Scheme: k8sManager.GetScheme(),
+	}).SetupWithManager(k8sManager); err != nil {
+		return fmt.Errorf("unable to configure reconciler: %w", err)
 	}
+	// +kubebuilder:scaffold:builder
 
-	if err = (&controller.BlueprintReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Blueprint")
-		os.Exit(1)
-	}
-	//+kubebuilder:scaffold:builder
+	return nil
+}
 
-	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up health check")
-		os.Exit(1)
+func addChecks(k8sManager controllerManager) error {
+	if err := k8sManager.AddHealthzCheck("healthz", healthz.Ping); err != nil {
+		return fmt.Errorf("unable to set up health check: %w", err)
 	}
-	if err := mgr.AddReadyzCheck("readyz", healthz.Ping); err != nil {
-		setupLog.Error(err, "unable to set up ready check")
-		os.Exit(1)
+	if err := k8sManager.AddReadyzCheck("readyz", healthz.Ping); err != nil {
+		return fmt.Errorf("unable to set up ready check: %w", err)
 	}
 
-	setupLog.Info("starting manager")
-	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
-		setupLog.Error(err, "problem running manager")
-		os.Exit(1)
+	return nil
+}
+
+func startK8sManager(ctx context.Context, k8sManager controllerManager) error {
+	logger := log.FromContext(ctx).WithName("k8s-manager-start")
+	logger.Info("starting manager")
+	if err := k8sManager.Start(ctrl.SetupSignalHandler()); err != nil {
+		return fmt.Errorf("problem running manager: %w", err)
 	}
+
+	return nil
 }
