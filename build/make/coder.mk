@@ -28,9 +28,10 @@ CHANGELOG_FILE=${WORKDIR}/CHANGELOG.md
 TEMPLATE_RELEASE_TAR_GZ=${RELEASE_DIR}/${TEMPLATE_NAME}-template.tar.gz
 
 TEST_WORKSPACE_PREFIX?=test-${TEMPLATE_NAME}
-CODER_USER?=$(shell . ${CODER_LIB_PATH} && getCoderUser)
+# only set if coder is installed, so that there is no problem with build and release targets
+CODER_USER?=$(shell if [ -x "$(command -v coder)" ]; then coder users show me -o json | jq -r '.username'; else echo ""; fi )
 
-CONTAINER_BIN?=$(shell . ${CODER_LIB_PATH} && getContainerBin)
+CONTAINER_BIN?=$(shell if [ -x "$(command -v podman)" ]; then echo "podman"; else echo "docker"; fi)
 GOPASS_BIN?=$(shell command -v gopass 2> /dev/null)
 
 EXCLUDED_TEMPLATE_FILES?=rich-parameters.yaml variables.yaml

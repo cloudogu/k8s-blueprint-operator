@@ -4,10 +4,11 @@ VERSION=0.1.0
 ## Image URL to use all building/pushing image targets
 IMAGE_DEV=${K3CES_REGISTRY_URL_PREFIX}/${ARTIFACT_ID}:${VERSION}
 IMAGE=cloudogu/${ARTIFACT_ID}:${VERSION}
-GOTAG?=1.21
+GOTAG=1.21
 MAKEFILES_VERSION=8.8.0
 LINT_VERSION=v1.55.2
 STAGE?=production
+
 
 ADDITIONAL_CLEAN=dist-clean
 
@@ -26,6 +27,9 @@ PRE_COMPILE=generate
 K8S_RESOURCE_TEMP_FOLDER ?= $(TARGET_DIR)
 K8S_PRE_GENERATE_TARGETS=k8s-create-temporary-resource template-dev-only-image-pull-policy
 
+K8S_CRD_COMPONENT_SOURCE=$(WORKDIR)/k8s/helm-crd/templates/k8s.cloudogu.com_blueprints.yaml
+CRD_SRC_GO=$(WORKDIR)/pkg/api/v1/blueprint_types.go
+
 include build/make/k8s-controller.mk
 
 .PHONY: build-boot
@@ -33,33 +37,12 @@ build-boot: image-import k8s-apply kill-operator-pod ## Builds a new version of 
 
 ##@ Controller specific targets
 
-.PHONY: manifests
-manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
-	@echo "Generate manifests..."
-	@$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
-	# TODO
-	#@cp config/crd/bases/k8s.cloudogu.com_backups.yaml pkg/api/v1/
-	#@cp config/crd/bases/k8s.cloudogu.com_restores.yaml pkg/api/v1/
-	#@cp config/crd/bases/k8s.cloudogu.com_backupschedules.yaml pkg/api/v1/
-
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
 	@echo "Auto-generate deepcopy functions..."
 	@$(CONTROLLER_GEN) object:headerFile="hack/boilerplate.go.txt" paths="./..."
 
 ##@ Deployment
-
-.PHONY: install
-install: manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
-	$(KUSTOMIZE) build config/crd | kubectl apply -f -
-
-.PHONY: uninstall
-uninstall: manifests kustomize ## Uninstall CRDs from the K8s cluster specified in ~/.kube/config. Call with ignore-not-found=true to ignore resource not found errors during deletion.
-	@$(KUSTOMIZE) build config/crd | kubectl delete --wait=false --ignore-not-found=true -f -
-	# TODO
-	#@kubectl patch crd/backups.k8s.cloudogu.com -p '{"metadata":{"finalizers":[]}}' --type=merge || true
-	#@kubectl patch crd/restores.k8s.cloudogu.com -p '{"metadata":{"finalizers":[]}}' --type=merge || true
-	#@kubectl patch crd/backupschedules.k8s.cloudogu.com -p '{"metadata":{"finalizers":[]}}' --type=merge || true
 
 .PHONY: template-stage
 template-stage:
