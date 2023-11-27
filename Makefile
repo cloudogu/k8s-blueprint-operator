@@ -29,6 +29,7 @@ K8S_PRE_GENERATE_TARGETS=k8s-create-temporary-resource template-dev-only-image-p
 
 K8S_CRD_COMPONENT_SOURCE=$(WORKDIR)/k8s/helm-crd/templates/k8s.cloudogu.com_blueprints.yaml
 CRD_SRC_GO=$(WORKDIR)/pkg/api/v1/blueprint_types.go
+K8S_COPY_CRD_TARGET_DIR=$(WORKDIR)/pkg/api/v1
 
 include build/make/k8s-controller.mk
 
