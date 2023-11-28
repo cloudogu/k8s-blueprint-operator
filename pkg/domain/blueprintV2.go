@@ -1,6 +1,9 @@
 package domain
 
-import "github.com/pkg/errors"
+import (
+	"fmt"
+	"github.com/pkg/errors"
+)
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
 // instances. When the same Blueprint is applied to two different CES instances it is required to leave two equal
@@ -46,6 +49,11 @@ func (blueprint *BlueprintV2) Validate() error {
 		return err
 	}
 
+	err = blueprint.validateComponentUniqueness()
+	if err != nil {
+		return err
+	}
+
 	err = blueprint.validateRegistryConfig()
 	if err != nil {
 		return err
@@ -62,23 +70,16 @@ func (blueprint *BlueprintV2) validateDogus() error {
 			return err
 		}
 	}
-
 	return nil
 }
 
-// validateDoguUniqueness checks if the same dogu exists in the blueprint with different versions or target states and
-// returns an error if it's so.
+// validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *BlueprintV2) validateDoguUniqueness() error {
-	seenDogu := make(map[string]bool)
-
-	for _, dogu := range blueprint.Dogus {
-		_, seen := seenDogu[dogu.Name]
-		if seen {
-			return errors.Errorf("could not validate blueprint, there is at least one duplicate for this dogu: %s", dogu.Name)
-		}
-		seenDogu[dogu.Name] = true
+	doguNames := Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
+	duplicates := getDuplicates(doguNames)
+	if len(duplicates) != 0 {
+		return errors.Errorf("could not validate blueprint, there are duplicate dogus: %v", duplicates)
 	}
-
 	return nil
 }
 
@@ -91,6 +92,16 @@ func (blueprint *BlueprintV2) validateComponents() error {
 		}
 	}
 
+	return nil
+}
+
+// validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
+func (blueprint *BlueprintV2) validateComponentUniqueness() error {
+	componentNames := Map(blueprint.Components, func(component Component) string { return component.Name })
+	duplicates := getDuplicates(componentNames)
+	if len(duplicates) != 0 {
+		return errors.Errorf("could not validate blueprint, there are duplicate components: %v", duplicates)
+	}
 	return nil
 }
 
@@ -125,4 +136,32 @@ func validateKeysNotEmpty(config map[string]interface{}) error {
 	}
 
 	return nil
+}
+
+func getDuplicates(list []string) []string {
+	elementCount := make(map[string]int)
+
+	// countByName
+	for _, name := range list {
+		elementCount[name] += 1
+	}
+
+	// get list of names with count != 1
+	var duplicates []string
+	fmt.Printf("elementCount: %v\n", elementCount)
+	for name, count := range elementCount {
+		if count != 1 {
+			duplicates = append(duplicates, name)
+		}
+	}
+	fmt.Printf("duplicates: %v\n", duplicates)
+	return duplicates
+}
+
+func Map[T, V any](ts []T, fn func(T) V) []V {
+	result := make([]V, len(ts))
+	for i, t := range ts {
+		result[i] = fn(t)
+	}
+	return result
 }

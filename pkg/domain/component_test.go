@@ -12,7 +12,7 @@ func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
 	err := component.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component Version must not be empty")
+	assert.Contains(t, err.Error(), "could not validate blueprint, component version must not be empty")
 }
 
 func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
@@ -21,7 +21,7 @@ func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
 	err := component.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component Version must not be empty")
+	assert.Contains(t, err.Error(), "could not validate blueprint, component version must not be empty")
 }
 
 func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
@@ -30,7 +30,7 @@ func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
 	err := component.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component Name must not be empty")
+	assert.Contains(t, err.Error(), "could not validate blueprint, component name must not be empty")
 }
 
 func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
@@ -39,7 +39,7 @@ func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
 	err := component.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component Name must not be empty")
+	assert.Contains(t, err.Error(), "could not validate blueprint, component name must not be empty")
 }
 
 func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) {
