@@ -4,6 +4,7 @@ type BlueprintApi string
 
 const (
 	V1        BlueprintApi = "v1"
+	V2        BlueprintApi = "v2"
 	TestEmpty BlueprintApi = "test/empty"
 )
 
