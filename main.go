@@ -50,8 +50,7 @@ func init() {
 }
 
 func main() {
-	ctx, cancel := NoInheritCancel(nil)
-	defer cancel()
+	ctx := ctrl.SetupSignalHandler()
 
 	err := startOperator(ctx, flag.CommandLine, os.Args)
 	if err != nil {
@@ -163,13 +162,9 @@ func addChecks(k8sManager controllerManager) error {
 func startK8sManager(ctx context.Context, k8sManager controllerManager) error {
 	logger := log.FromContext(ctx).WithName("k8s-manager-start")
 	logger.Info("starting manager")
-	if err := k8sManager.Start(ctrl.SetupSignalHandler()); err != nil {
+	if err := k8sManager.Start(ctx); err != nil {
 		return fmt.Errorf("problem running manager: %w", err)
 	}
 
 	return nil
-}
-
-func NoInheritCancel(_ context.Context) (context.Context, context.CancelFunc) {
-	return context.WithCancel(context.Background())
 }
