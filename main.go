@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/api/ecosystem"
+	"k8s.io/client-go/kubernetes"
 	"os"
 	"time"
 
@@ -137,10 +139,19 @@ func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options
 }
 
 func configureReconcilers(k8sManager controllerManager) error {
-	if err := (&controller.BlueprintReconciler{
-		Client: k8sManager.GetClient(),
-		Scheme: k8sManager.GetScheme(),
-	}).SetupWithManager(k8sManager); err != nil {
+	var recorder eventRecorder = k8sManager.GetEventRecorderFor("k8s-backup-operator")
+
+	k8sClientSet, err := kubernetes.NewForConfig(k8sManager.GetConfig())
+	if err != nil {
+		return fmt.Errorf("unable to create k8s clientset: %w", err)
+	}
+
+	ecosystemClientSet, err := ecosystem.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
+	if err != nil {
+		return fmt.Errorf("unable to create ecosystem clientset: %w", err)
+	}
+
+	if err := controller.NewBlueprintReconciler(ecosystemClientSet, recorder).SetupWithManager(k8sManager); err != nil {
 		return fmt.Errorf("unable to configure reconciler: %w", err)
 	}
 	// +kubebuilder:scaffold:builder

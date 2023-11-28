@@ -3,9 +3,7 @@ package controller
 import (
 	"context"
 
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
@@ -13,8 +11,12 @@ import (
 
 // BlueprintReconciler reconciles a Blueprint object
 type BlueprintReconciler struct {
-	client.Client
-	Scheme *runtime.Scheme
+	clientSet ecosystemClientSet
+	recorder  eventRecorder
+}
+
+func NewBlueprintReconciler(clientSet ecosystemClientSet, recorder eventRecorder) *BlueprintReconciler {
+	return &BlueprintReconciler{clientSet: clientSet, recorder: recorder}
 }
 
 //+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
