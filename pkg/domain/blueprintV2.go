@@ -1,8 +1,8 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
@@ -34,43 +34,24 @@ type RegistryConfig map[string]map[string]interface{}
 
 // Validate checks the structure and data of the blueprint and returns an error if there are any problems
 func (blueprint *BlueprintV2) Validate() error {
-	err := blueprint.validateDogus()
-	if err != nil {
-		return errors.Wrap(err, "could not Validate blueprint")
+	errorList := []error{
+		blueprint.validateDogus(),
+		blueprint.validateDoguUniqueness(),
+		blueprint.validateComponents(),
+		blueprint.validateComponentUniqueness(),
+		blueprint.validateRegistryConfig(),
 	}
 
-	err = blueprint.validateDoguUniqueness()
+	err := errors.Join(errorList...)
 	if err != nil {
-		return errors.Wrap(err, "could not Validate blueprint")
+		err = fmt.Errorf("could not Validate blueprint: %w", err)
 	}
-
-	err = blueprint.validateComponents()
-	if err != nil {
-		return errors.Wrap(err, "could not Validate blueprint")
-	}
-
-	err = blueprint.validateComponentUniqueness()
-	if err != nil {
-		return errors.Wrap(err, "could not Validate blueprint")
-	}
-
-	err = blueprint.validateRegistryConfig()
-	if err != nil {
-		return errors.Wrap(err, "could not Validate blueprint")
-	}
-
-	return nil
+	return err
 }
 
 func (blueprint *BlueprintV2) validateDogus() error {
-	for _, dogu := range blueprint.Dogus {
-
-		err := dogu.Validate()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	errorList := Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.Validate() })
+	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
@@ -78,21 +59,14 @@ func (blueprint *BlueprintV2) validateDoguUniqueness() error {
 	doguNames := Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
 	duplicates := getDuplicates(doguNames)
 	if len(duplicates) != 0 {
-		return errors.Errorf("could not Validate blueprint, there are duplicate dogus: %v", duplicates)
+		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
 	}
 	return nil
 }
 
 func (blueprint *BlueprintV2) validateComponents() error {
-	for _, component := range blueprint.Components {
-
-		err := component.Validate()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	errorList := Map(blueprint.Components, func(component Component) error { return component.Validate() })
+	return errors.Join(errorList...)
 }
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
@@ -100,7 +74,7 @@ func (blueprint *BlueprintV2) validateComponentUniqueness() error {
 	componentNames := Map(blueprint.Components, func(component Component) string { return component.Name })
 	duplicates := getDuplicates(componentNames)
 	if len(duplicates) != 0 {
-		return errors.Errorf("could not Validate blueprint, there are duplicate components: %v", duplicates)
+		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
 	return nil
 }
@@ -108,7 +82,7 @@ func (blueprint *BlueprintV2) validateComponentUniqueness() error {
 func (blueprint *BlueprintV2) validateRegistryConfig() error {
 	for key, value := range blueprint.RegistryConfig {
 		if len(key) == 0 {
-			return errors.Errorf("could not Validate blueprint, a config key is empty")
+			return fmt.Errorf("a config key is empty")
 		}
 
 		err := validateKeysNotEmpty(value)
@@ -123,7 +97,7 @@ func (blueprint *BlueprintV2) validateRegistryConfig() error {
 func validateKeysNotEmpty(config map[string]interface{}) error {
 	for key, value := range config {
 		if len(key) == 0 {
-			return errors.Errorf("could not Validate blueprint, a config key is empty")
+			return fmt.Errorf("a config key is empty")
 		}
 
 		switch vTyped := value.(type) {
@@ -148,13 +122,11 @@ func getDuplicates(list []string) []string {
 
 	// get list of names with count != 1
 	var duplicates []string
-	fmt.Printf("elementCount: %v\n", elementCount)
 	for name, count := range elementCount {
 		if count != 1 {
 			duplicates = append(duplicates, name)
 		}
 	}
-	fmt.Printf("duplicates: %v\n", duplicates)
 	return duplicates
 }
 

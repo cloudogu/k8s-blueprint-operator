@@ -27,18 +27,21 @@ func Test_validate_ok(t *testing.T) {
 
 	require.Nil(t, err)
 }
-func Test_validate_errorOnDoguProblem(t *testing.T) {
+func Test_validate_multipleErrors(t *testing.T) {
 	dogus := []TargetDogu{
-		{Name: "absent/dogu", TargetState: TargetStateAbsent},
-		{Name: "present/dogu", Version: "3.2.1-2", TargetState: TargetStatePresent},
 		{Version: "3.2.1-2"},
 	}
-	blueprint := BlueprintV2{Dogus: dogus}
+	components := []Component{
+		{Version: "3.2.1-2"},
+	}
+	blueprint := BlueprintV2{Dogus: dogus, Components: components}
 
 	err := blueprint.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not Validate blueprint: dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "could not Validate blueprint")
+	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
 func Test_validateDogus_ok(t *testing.T) {
@@ -55,10 +58,9 @@ func Test_validateDogus_ok(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func Test_validateDogus_errorOnMissingDoguName(t *testing.T) {
+func Test_validateDogus_multipleErrors(t *testing.T) {
 	dogus := []TargetDogu{
-		{Name: "absent/dogu", TargetState: TargetStateAbsent},
-		{Name: "present/dogu", Version: "3.2.1-2", TargetState: TargetStatePresent},
+		{Name: "test"},
 		{Version: "3.2.1-2"},
 	}
 	blueprint := BlueprintV2{Dogus: dogus}
@@ -66,6 +68,8 @@ func Test_validateDogus_errorOnMissingDoguName(t *testing.T) {
 	err := blueprint.validateDogus()
 
 	require.NotNil(t, err)
+	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "dogu field Version must not be empty")
 }
 
 func Test_validateComponents_ok(t *testing.T) {
@@ -80,21 +84,25 @@ func Test_validateComponents_ok(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func Test_validateComponents_errorOnMissingName(t *testing.T) {
+func Test_validateComponents_multipleErrors(t *testing.T) {
 	components := []Component{
-		{Name: "absent-component", TargetState: TargetStateAbsent},
-		{Name: "present-component", Version: "3.2.1-2", TargetState: TargetStatePresent},
+		{Name: "test"},
+		{Version: "3.2.1-2"},
 	}
 	blueprint := BlueprintV2{Components: components}
 	err := blueprint.validateComponents()
 
-	require.Nil(t, err)
+	require.NotNil(t, err)
+	assert.Contains(t, err.Error(), "component name must not be empty")
+	assert.Contains(t, err.Error(), "component version must not be empty")
 }
 
 func Test_validateDoguUniqueness(t *testing.T) {
 	dogus := []TargetDogu{
 		{Name: "present/dogu1", Version: "3.2.1-0", TargetState: TargetStatePresent},
 		{Name: "present/dogu1", Version: "1.2.3-4"},
+		{Name: "present/dogu2", Version: "1.2.3-4"},
+		{Name: "present/dogu2", Version: "1.2.3-4"},
 	}
 
 	blueprint := BlueprintV2{Dogus: dogus}
@@ -102,13 +110,17 @@ func Test_validateDoguUniqueness(t *testing.T) {
 	err := blueprint.validateDoguUniqueness()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not Validate blueprint, there are duplicate dogus: [present/dogu1]")
+	assert.Contains(t, err.Error(), "there are duplicate dogus")
+	assert.Contains(t, err.Error(), "present/dogu1")
+	assert.Contains(t, err.Error(), "present/dogu2")
 }
 
 func Test_validateComponentUniqueness(t *testing.T) {
 	components := []Component{
 		{Name: "present/component1", Version: "3.2.1-0", TargetState: TargetStatePresent},
 		{Name: "present/component1", Version: "1.2.3-4"},
+		{Name: "present/component2", Version: "1.2.3-4"},
+		{Name: "present/component2", Version: "1.2.3-4"},
 	}
 
 	blueprint := BlueprintV2{Components: components}
@@ -116,7 +128,9 @@ func Test_validateComponentUniqueness(t *testing.T) {
 	err := blueprint.validateComponentUniqueness()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not Validate blueprint, there are duplicate components: [present/component1]")
+	assert.Contains(t, err.Error(), "there are duplicate components")
+	assert.Contains(t, err.Error(), "present/component1")
+	assert.Contains(t, err.Error(), "present/component2")
 }
 
 func TestValidationGlobalValid(t *testing.T) {
@@ -146,7 +160,7 @@ func TestValidationGlobalEmptyKeyError(t *testing.T) {
 	err := blueprint.Validate()
 	assert.NotNil(t, err)
 
-	assert.Contains(t, err.Error(), "could not Validate blueprint, a config key is empty")
+	assert.Contains(t, err.Error(), "could not Validate blueprint: a config key is empty")
 }
 
 func TestSetDoguRegistryKeysSuccessful(t *testing.T) {
