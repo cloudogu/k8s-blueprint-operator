@@ -50,7 +50,7 @@ func init() {
 }
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := NoInheritCancel(nil)
 	defer cancel()
 
 	err := startOperator(ctx, flag.CommandLine, os.Args)
@@ -168,4 +168,8 @@ func startK8sManager(ctx context.Context, k8sManager controllerManager) error {
 	}
 
 	return nil
+}
+
+func NoInheritCancel(_ context.Context) (context.Context, context.CancelFunc) {
+	return context.WithCancel(context.Background())
 }
