@@ -8,6 +8,4 @@
 !pkg/**/*
 !build/**/*
 !hack/**/*.go
-!vendor/**/*
 !Makefile
-!.git/**/*
