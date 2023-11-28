@@ -14,11 +14,6 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-const (
-	appLabelKey      = "app"
-	appLabelValueCes = "ces"
-)
-
 type BlueprintInterface interface {
 	// Create takes the representation of a blueprint and creates it.  Returns the server's representation of the blueprint, and an error, if there is any.
 	Create(ctx context.Context, blueprint *v1.Blueprint, opts metav1.CreateOptions) (*v1.Blueprint, error)
