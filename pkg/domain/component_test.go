@@ -9,43 +9,43 @@ import (
 func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
 	component := Component{Name: "present-component", TargetState: TargetStatePresent}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component version must not be empty")
+	assert.Contains(t, err.Error(), "component version must not be empty")
 }
 
 func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
 	component := Component{Name: "present/component", Version: "", TargetState: TargetStatePresent}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component version must not be empty")
+	assert.Contains(t, err.Error(), "component version must not be empty")
 }
 
 func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
 	component := Component{Version: "1.2.3", TargetState: TargetStatePresent}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component name must not be empty")
+	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
 func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
 	component := Component{Name: "", Version: "1.2.3", TargetState: TargetStatePresent}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not validate blueprint, component name must not be empty")
+	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
 func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) {
 	component := Component{Name: "present-component", Version: "1.2.3"}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.Nil(t, err)
 }
@@ -53,7 +53,7 @@ func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) 
 func Test_validateComponents_missingComponentVersionOkayForAbsent(t *testing.T) {
 	component := Component{Name: "present-component", TargetState: TargetStateAbsent}
 
-	err := component.validate()
+	err := component.Validate()
 
 	require.Nil(t, err)
 }

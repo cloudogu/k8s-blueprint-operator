@@ -36,27 +36,27 @@ type RegistryConfig map[string]map[string]interface{}
 func (blueprint *BlueprintV2) Validate() error {
 	err := blueprint.validateDogus()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not Validate blueprint")
 	}
 
 	err = blueprint.validateDoguUniqueness()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not Validate blueprint")
 	}
 
 	err = blueprint.validateComponents()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not Validate blueprint")
 	}
 
 	err = blueprint.validateComponentUniqueness()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not Validate blueprint")
 	}
 
 	err = blueprint.validateRegistryConfig()
 	if err != nil {
-		return err
+		return errors.Wrap(err, "could not Validate blueprint")
 	}
 
 	return nil
@@ -65,7 +65,7 @@ func (blueprint *BlueprintV2) Validate() error {
 func (blueprint *BlueprintV2) validateDogus() error {
 	for _, dogu := range blueprint.Dogus {
 
-		err := dogu.validate()
+		err := dogu.Validate()
 		if err != nil {
 			return err
 		}
@@ -78,7 +78,7 @@ func (blueprint *BlueprintV2) validateDoguUniqueness() error {
 	doguNames := Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
 	duplicates := getDuplicates(doguNames)
 	if len(duplicates) != 0 {
-		return errors.Errorf("could not validate blueprint, there are duplicate dogus: %v", duplicates)
+		return errors.Errorf("could not Validate blueprint, there are duplicate dogus: %v", duplicates)
 	}
 	return nil
 }
@@ -86,7 +86,7 @@ func (blueprint *BlueprintV2) validateDoguUniqueness() error {
 func (blueprint *BlueprintV2) validateComponents() error {
 	for _, component := range blueprint.Components {
 
-		err := component.validate()
+		err := component.Validate()
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (blueprint *BlueprintV2) validateComponentUniqueness() error {
 	componentNames := Map(blueprint.Components, func(component Component) string { return component.Name })
 	duplicates := getDuplicates(componentNames)
 	if len(duplicates) != 0 {
-		return errors.Errorf("could not validate blueprint, there are duplicate components: %v", duplicates)
+		return errors.Errorf("could not Validate blueprint, there are duplicate components: %v", duplicates)
 	}
 	return nil
 }
@@ -108,7 +108,7 @@ func (blueprint *BlueprintV2) validateComponentUniqueness() error {
 func (blueprint *BlueprintV2) validateRegistryConfig() error {
 	for key, value := range blueprint.RegistryConfig {
 		if len(key) == 0 {
-			return errors.Errorf("could not validate blueprint, a config key is empty")
+			return errors.Errorf("could not Validate blueprint, a config key is empty")
 		}
 
 		err := validateKeysNotEmpty(value)
@@ -123,7 +123,7 @@ func (blueprint *BlueprintV2) validateRegistryConfig() error {
 func validateKeysNotEmpty(config map[string]interface{}) error {
 	for key, value := range config {
 		if len(key) == 0 {
-			return errors.Errorf("could not validate blueprint, a config key is empty")
+			return errors.Errorf("could not Validate blueprint, a config key is empty")
 		}
 
 		switch vTyped := value.(type) {

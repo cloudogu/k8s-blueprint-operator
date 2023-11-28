@@ -16,10 +16,10 @@ type MaskTargetDogu struct {
 
 func (dogu MaskTargetDogu) validate() error {
 	if dogu.Name == "" {
-		return errors.Errorf("could not validate blueprint mask, dogu field Name must not be empty: %s", dogu)
+		return errors.Errorf("could not Validate blueprint mask, dogu field Name must not be empty: %s", dogu)
 	}
 	if dogu.TargetState.String() == "" {
-		return errors.Errorf("could not validate dogu, dogu target state must not be empty: %s", dogu)
+		return errors.Errorf("could not Validate dogu, dogu target state must not be empty: %s", dogu)
 	}
 
 	return nil

@@ -21,10 +21,10 @@ type BlueprintMaskV1 struct {
 // Validate checks the structure and data of a blueprint mask and returns an error if there are any problems
 func (blueprintMask *BlueprintMaskV1) Validate() error {
 	if blueprintMask.API == "" {
-		return errors.Errorf("could not validate mask API, mask API must not be empty")
+		return errors.Errorf("could not Validate mask API, mask API must not be empty")
 	}
 	if blueprintMask.ID == "" {
-		return errors.Errorf("could not validate mask ID, mask ID must not be empty")
+		return errors.Errorf("could not Validate mask ID, mask ID must not be empty")
 	}
 
 	err := blueprintMask.validateDogus()
@@ -60,7 +60,7 @@ func (blueprintMask *BlueprintMaskV1) validateDoguUniqueness() error {
 	for _, dogu := range blueprintMask.Dogus {
 		_, seen := seenDogu[dogu.Name]
 		if seen {
-			return errors.Errorf("could not validate blueprint mask, there is at least one duplicate for this dogu: %s", dogu.Name)
+			return errors.Errorf("could not Validate blueprint mask, there is at least one duplicate for this dogu: %s", dogu.Name)
 		}
 		seenDogu[dogu.Name] = true
 	}

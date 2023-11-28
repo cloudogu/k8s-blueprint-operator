@@ -35,5 +35,5 @@ func Test_validateMaskTargetDogu_errorOnMissingNameForDogu(t *testing.T) {
 	err := dogu.validate()
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, "could not validate blueprint mask, dogu field Name must not be empty")
+	require.ErrorContains(t, err, "could not Validate blueprint mask, dogu field Name must not be empty")
 }

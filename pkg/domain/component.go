@@ -14,12 +14,13 @@ type Component struct {
 	TargetState TargetState `json:"targetState"`
 }
 
-func (component *Component) validate() error {
+// Validate checks if the component is semantically correct.
+func (component *Component) Validate() error {
 	if component.Name == "" {
-		return errors.Errorf("could not validate blueprint, component name must not be empty: %s", component)
+		return errors.Errorf("component name must not be empty: %s", component)
 	}
 	if component.TargetState != TargetStateAbsent && component.Version == "" {
-		return errors.Errorf("could not validate blueprint, component version must not be empty: %s", component)
+		return errors.Errorf("component version must not be empty: %s", component)
 	}
 
 	return nil

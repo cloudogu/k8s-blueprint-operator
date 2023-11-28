@@ -14,12 +14,13 @@ type TargetDogu struct {
 	TargetState TargetState `json:"targetState"`
 }
 
-func (dogu TargetDogu) validate() error {
+// Validate checks if the TargetDogu is semantically correct.
+func (dogu TargetDogu) Validate() error {
 	if dogu.Name == "" {
-		return errors.Errorf("could not validate blueprint, dogu field Name must not be empty: %s", dogu)
+		return errors.Errorf("dogu field Name must not be empty: %s", dogu)
 	}
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == "" {
-		return errors.Errorf("could not validate blueprint, dogu field Version must not be empty: %s", dogu)
+		return errors.Errorf("dogu field Version must not be empty: %s", dogu)
 	}
 
 	return nil
