@@ -44,7 +44,7 @@ func (blueprint *BlueprintV2) Validate() error {
 
 	err := errors.Join(errorList...)
 	if err != nil {
-		err = fmt.Errorf("could not Validate blueprint: %w", err)
+		err = fmt.Errorf("blueprint is invalid: %w", err)
 	}
 	return err
 }

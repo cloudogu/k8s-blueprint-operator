@@ -39,7 +39,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 	err := blueprint.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "could not Validate blueprint")
+	assert.Contains(t, err.Error(), "blueprint is invalid")
 	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
 	assert.Contains(t, err.Error(), "component name must not be empty")
 }
@@ -160,7 +160,7 @@ func TestValidationGlobalEmptyKeyError(t *testing.T) {
 	err := blueprint.Validate()
 	assert.NotNil(t, err)
 
-	assert.Contains(t, err.Error(), "could not Validate blueprint: a config key is empty")
+	assert.Contains(t, err.Error(), "blueprint is invalid: a config key is empty")
 }
 
 func TestSetDoguRegistryKeysSuccessful(t *testing.T) {
