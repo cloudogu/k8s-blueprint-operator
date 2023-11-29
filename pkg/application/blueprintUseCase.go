@@ -11,7 +11,7 @@ type BlueprintUseCase struct {
 	doguUseCase DoguInstallationUseCase
 }
 
-func (useCase BlueprintUseCase) validateBlueprintStatically(blueprintId string) error {
+func (useCase BlueprintUseCase) ValidateBlueprintStatically(blueprintId string) error {
 	blueprint, err := useCase.repo.getById(blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot validate blueprint: %w", err)
