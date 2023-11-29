@@ -9,7 +9,7 @@ type BlueprintSpecUseCase struct {
 	doguUseCase DoguInstallationUseCase
 }
 
-func (useCase BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId string) error {
+func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId string) error {
 	blueprintSpec, err := useCase.repo.getById(blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
@@ -24,10 +24,10 @@ func (useCase BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId 
 	return validationError
 }
 
-func (useCase BlueprintSpecUseCase) calculateEffectiveBlueprint(blueprintId string) error {
+func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(blueprintId string) error {
 	blueprintSpec, err := useCase.repo.getById(blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec to calculate effective blueprint it: %w", err)
+		return fmt.Errorf("cannot load blueprint spec to calculate effective blueprint: %w", err)
 	}
 
 	calcError := blueprintSpec.CalculateEffectiveBlueprint()
