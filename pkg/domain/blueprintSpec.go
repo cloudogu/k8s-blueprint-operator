@@ -6,15 +6,15 @@ import (
 )
 
 type BlueprintSpec struct {
-	Id                     string
-	Blueprint              Blueprint
-	BlueprintMask          BlueprintMask
-	EffectiveBlueprint     EffectiveBlueprint
-	StateDiff              StateDiff
-	BlueprintUpgradePlan   BlueprintUpgradePlan
-	BlueprintConfiguration BlueprintConfiguration
-	Status                 StatusPhase
-	Events                 []interface{}
+	Id                   string
+	Blueprint            Blueprint
+	BlueprintMask        BlueprintMask
+	EffectiveBlueprint   EffectiveBlueprint
+	StateDiff            StateDiff
+	BlueprintUpgradePlan BlueprintUpgradePlan
+	config               BlueprintConfiguration
+	Status               StatusPhase
+	Events               []interface{}
 }
 
 type StatusPhase string
@@ -83,8 +83,13 @@ type EffectiveBlueprintCalculatedEvent struct {
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	//TODO: do deep copy
+	effectiveDogus, err := spec.calculateEffectiveDogus()
+	if err != nil {
+		return err
+	}
+
 	spec.EffectiveBlueprint = EffectiveBlueprint{
-		Dogus:                   spec.calculateEffectiveDogus(),
+		Dogus:                   effectiveDogus,
 		Components:              spec.Blueprint.Components,
 		RegistryConfig:          spec.Blueprint.RegistryConfig,
 		RegistryConfigAbsent:    spec.Blueprint.RegistryConfigAbsent,
@@ -95,15 +100,19 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	return nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogus() []TargetDogu {
+func (spec *BlueprintSpec) calculateEffectiveDogus() ([]TargetDogu, error) {
 	var effectiveDogus []TargetDogu
 	for _, dogu := range spec.Blueprint.Dogus {
-		effectiveDogus = append(effectiveDogus, spec.calculateEffectiveDogu(dogu))
+		effectiveDogu, err := spec.calculateEffectiveDogu(dogu)
+		if err != nil {
+			return nil, err
+		}
+		effectiveDogus = append(effectiveDogus, effectiveDogu)
 	}
-	return effectiveDogus
+	return effectiveDogus, nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) TargetDogu {
+func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) (TargetDogu, error) {
 	effectiveDogu := TargetDogu{
 		Namespace:   dogu.Namespace,
 		Name:        dogu.Name,
@@ -115,8 +124,15 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) TargetDogu {
 		if maskDogu.Version != "" {
 			effectiveDogu.Version = maskDogu.Version
 		}
-		effectiveDogu.Namespace = maskDogu.Namespace
+		if maskDogu.Namespace != dogu.Namespace {
+			if spec.config.allowDoguNamespaceSwitch {
+				effectiveDogu.Namespace = maskDogu.Namespace
+			} else {
+				return TargetDogu{}, errors.New("changing the dogu namespace is only allowed with the changeDoguNamespace flag")
+			}
+		}
 		effectiveDogu.TargetState = maskDogu.TargetState
 	}
-	return effectiveDogu
+
+	return effectiveDogu, nil
 }

@@ -119,3 +119,44 @@ func Test_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
 	//TODO: Is that the correct behavior? (absent dogus can be made present?)
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
+
+func Test_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
+	dogus := []TargetDogu{
+		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+	}
+
+	maskedDogus := []MaskTargetDogu{
+		{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+	}
+
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: dogus},
+		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: false},
+	}
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.NotNil(t, err, "without the feature flag, namespace changes are not allowed")
+	require.ErrorContains(t, err, "changing the dogu namespace is only allowed with the changeDoguNamespace flag")
+}
+
+func Test_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
+	dogus := []TargetDogu{
+		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+	}
+
+	maskedDogus := []MaskTargetDogu{
+		{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+	}
+
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: dogus},
+		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: true},
+	}
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.Nil(t, err, "with the feature flag namespace changes should be allowed")
+	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
+	assert.Equal(t, TargetDogu{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+}
