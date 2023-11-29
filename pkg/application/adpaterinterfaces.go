@@ -13,7 +13,7 @@ type DoguInstallationRepository interface {
 }
 
 type BlueprintRepository interface {
-	getByName(doguName string) (domain.BlueprintV2, error)
+	getById(doguName string) (domain.BlueprintV2, error)
 	getAll() ([]domain.BlueprintV2, error)
 	save(domain.BlueprintV2) error
 	delete(domain.BlueprintV2) error
