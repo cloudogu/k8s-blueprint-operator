@@ -1,8 +1,9 @@
 package ecosystem
 
 type DoguInstallation struct {
-	Name   string
-	Health DoguHealth
+	Name    string
+	Version string
+	Health  DoguHealth
 }
 
 type DoguHealth = string
