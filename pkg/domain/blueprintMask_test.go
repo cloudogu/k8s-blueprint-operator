@@ -7,9 +7,9 @@ import (
 
 func Test_blueprintMaskV1Validator_Validate(t *testing.T) {
 	dogus := []MaskTargetDogu{
-		{Name: "absent/dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
-		{Name: "absent/dogu2", TargetState: TargetStateAbsent},
-		{Name: "present/dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
+		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu2", TargetState: TargetStateAbsent},
+		{Namespace: "present", Name: "dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
 	}
 	blueprintMask := BlueprintMask{
 		Dogus: dogus,

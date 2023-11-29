@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 )
 
 type BlueprintSpec struct {
@@ -60,13 +61,16 @@ type InvalidBlueprintEvent struct {
 }
 
 func (spec *BlueprintSpec) Validate() error {
-	if len(spec.Id) == 0 {
-		return errors.New("BlueprintSpec don't have an ID")
+	var errorList []error
+
+	if spec.Id == "" {
+		errorList = append(errorList, errors.New("blueprint spec don't have an ID"))
 	}
-	blueprintErr := spec.Blueprint.Validate()
-	maskErr := spec.BlueprintMask.Validate()
-	err := errors.Join(blueprintErr, maskErr)
+	errorList = append(errorList, spec.Blueprint.Validate())
+	errorList = append(errorList, spec.BlueprintMask.Validate())
+	err := errors.Join(errorList...)
 	if err != nil {
+		err = fmt.Errorf("blueprint spec is invalid: %w", err)
 		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, InvalidBlueprintEvent{ValidationError: err})
 	}

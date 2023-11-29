@@ -1,6 +1,9 @@
 package domain
 
-import "github.com/pkg/errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // MaskTargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
 // was applied for a blueprintMask.
@@ -17,12 +20,22 @@ type MaskTargetDogu struct {
 }
 
 func (dogu MaskTargetDogu) validate() error {
+	var errorList []error
+	if dogu.Namespace == "" {
+		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu))
+	}
+	if dogu.Namespace == "" {
+		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu))
+	}
 	if dogu.Name == "" {
-		return errors.Errorf("could not Validate blueprint mask, dogu field Name must not be empty: %s", dogu)
+		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu))
 	}
 	if dogu.TargetState.String() == "" {
-		return errors.Errorf("could not Validate dogu, dogu target state must not be empty: %s", dogu)
+		errorList = append(errorList, fmt.Errorf("dogu target state must not be empty: %s", dogu))
 	}
-
-	return nil
+	err := errors.Join(errorList...)
+	if err != nil {
+		err = fmt.Errorf("dogu is invalid: %w", err)
+	}
+	return err
 }

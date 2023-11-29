@@ -1,8 +1,8 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
-	"github.com/pkg/errors"
 )
 
 // BlueprintMask describes an abstraction of CES components that should alter a blueprint definition before
@@ -19,17 +19,15 @@ type BlueprintMask struct {
 
 // Validate checks the structure and data of a blueprint mask and returns an error if there are any problems
 func (blueprintMask *BlueprintMask) Validate() error {
-	err := blueprintMask.validateDogus()
-	if err != nil {
-		return err
+	errorList := []error{
+		blueprintMask.validateDogus(),
+		blueprintMask.validateDoguUniqueness(),
 	}
-
-	err = blueprintMask.validateDoguUniqueness()
+	err := errors.Join(errorList...)
 	if err != nil {
-		return err
+		err = fmt.Errorf("blueprint mask is invalid: %w", err)
 	}
-
-	return nil
+	return err
 }
 
 func (blueprintMask *BlueprintMask) validateDogus() error {
@@ -52,7 +50,7 @@ func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
 	for _, dogu := range blueprintMask.Dogus {
 		_, seen := seenDogu[dogu.Name]
 		if seen {
-			return errors.Errorf("could not Validate blueprint mask, there is at least one duplicate for this dogu: %s", dogu.Name)
+			return fmt.Errorf("could not Validate blueprint mask, there is at least one duplicate for this dogu: %s", dogu.Name)
 		}
 		seenDogu[dogu.Name] = true
 	}

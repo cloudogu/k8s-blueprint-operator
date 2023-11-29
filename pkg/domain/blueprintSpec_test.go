@@ -6,12 +6,33 @@ import (
 	"testing"
 )
 
-func Test__ValidateWithEmptyID(t *testing.T) {
+func Test_Validate_allOk(t *testing.T) {
+	spec := BlueprintSpec{Id: "29.11.2023"}
+
+	err := spec.Validate()
+
+	require.Nil(t, err)
+}
+
+func Test_Validate_emptyID(t *testing.T) {
 	spec := BlueprintSpec{}
 
 	err := spec.Validate()
 
 	require.NotNil(t, err, "No ID definition should lead to an error")
+}
+
+func Test_Validate_combineErrors(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{{Name: "no namespace"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Name: "no namespace"}}},
+	}
+
+	err := spec.Validate()
+
+	assert.ErrorContains(t, err, "blueprint spec don't have an ID")
+	assert.ErrorContains(t, err, "blueprint is invalid")
+	assert.ErrorContains(t, err, "blueprint mask is invalid")
 }
 
 func Test_CalculateEffectiveBlueprint_noMask(t *testing.T) {
