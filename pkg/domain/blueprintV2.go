@@ -32,7 +32,7 @@ type BlueprintV2 struct {
 
 type RegistryConfig map[string]map[string]interface{}
 
-// Validate checks the structure and data of the blueprint and returns an error if there are any problems
+// Validate checks the structure and data of the blueprint statically and returns an error if there are any problems
 func (blueprint *BlueprintV2) Validate() error {
 	errorList := []error{
 		blueprint.validateDogus(),
