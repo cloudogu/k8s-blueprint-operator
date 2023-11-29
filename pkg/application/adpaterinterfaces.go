@@ -14,9 +14,9 @@ type DoguInstallationRepository interface {
 }
 
 type BlueprintRepository interface {
-	getById(doguName string) (domain.BlueprintV2, error)
-	getAll() ([]domain.BlueprintV2, error)
-	create(domain.BlueprintV2) error
-	update(domain.BlueprintV2) error
-	delete(domain.BlueprintV2) error
+	getById(doguName string) (domain.Blueprint, error)
+	getAll() ([]domain.Blueprint, error)
+	create(domain.Blueprint) error
+	update(domain.Blueprint) error
+	delete(domain.Blueprint) error
 }

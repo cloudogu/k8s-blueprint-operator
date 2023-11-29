@@ -10,7 +10,7 @@ func Test_validateDogu_errorOnMissingDoguName(t *testing.T) {
 	dogus := []TargetDogu{
 		{Version: "3.2.1-2", TargetState: TargetStatePresent},
 	}
-	blueprint := BlueprintV2{Dogus: dogus}
+	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.Validate()
 
@@ -37,7 +37,7 @@ func Test_validateDogu_errorOnMissingVersionForPresentDogu(t *testing.T) {
 }
 
 func Test_validateDogu_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := TargetDogu{Name: "present/dogu", TargetState: TargetStateAbsent}
+	dogu := TargetDogu{Namespace: "present", Name: "dogu", TargetState: TargetStateAbsent}
 
 	err := dogu.Validate()
 
@@ -45,7 +45,7 @@ func Test_validateDogu_missingVersionOkayForAbsentDogu(t *testing.T) {
 }
 
 func Test_validateDogu_missingStateOkayForPresentDogu(t *testing.T) {
-	dogu := TargetDogu{Name: "present/dogu", Version: "2018-1"}
+	dogu := TargetDogu{Namespace: "present", Name: "dogu", Version: "2018-1"}
 
 	err := dogu.Validate()
 

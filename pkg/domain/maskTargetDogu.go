@@ -5,6 +5,8 @@ import "github.com/pkg/errors"
 // MaskTargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
 // was applied for a blueprintMask.
 type MaskTargetDogu struct {
+	// Namespace defines the namespace of the dogu, e.g. "official". Must not be empty.
+	Namespace string
 	// Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty. If you set another namespace than in the normal blueprint, a
 	Name string `json:"name"`
 	// Version defines the version of the dogu that is to be installed. This version is optional and overrides

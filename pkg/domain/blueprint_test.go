@@ -9,10 +9,10 @@ import (
 
 func Test_validate_ok(t *testing.T) {
 	dogus := []TargetDogu{
-		{Name: "absent/dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
-		{Name: "absent/dogu2", TargetState: TargetStateAbsent},
-		{Name: "present/dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
-		{Name: "present/dogu4", Version: "1.2.3-4"},
+		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu2", TargetState: TargetStateAbsent},
+		{Namespace: "present", Name: "dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "dogu4", Version: "1.2.3-4"},
 	}
 
 	components := []Component{
@@ -21,7 +21,7 @@ func Test_validate_ok(t *testing.T) {
 		{Name: "present-component3", Version: "3.2.1-2", TargetState: TargetStatePresent},
 		{Name: "present/component4", Version: "1.2.3-4"},
 	}
-	blueprint := BlueprintV2{Dogus: dogus, Components: components}
+	blueprint := Blueprint{Dogus: dogus, Components: components}
 
 	err := blueprint.Validate()
 
@@ -34,7 +34,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 	components := []Component{
 		{Version: "3.2.1-2"},
 	}
-	blueprint := BlueprintV2{Dogus: dogus, Components: components}
+	blueprint := Blueprint{Dogus: dogus, Components: components}
 
 	err := blueprint.Validate()
 
@@ -46,12 +46,12 @@ func Test_validate_multipleErrors(t *testing.T) {
 
 func Test_validateDogus_ok(t *testing.T) {
 	dogus := []TargetDogu{
-		{Name: "absent/dogu", Version: "1.2.3-9", TargetState: TargetStateAbsent},
-		{Name: "absent/versionIsOptionalForStateAbsent", TargetState: TargetStateAbsent},
-		{Name: "present/dogu", Version: "3.2.1-2", TargetState: TargetStatePresent},
-		{Name: "present/StateDefaultsToPresent", Version: "3.2.1-2"},
+		{Namespace: "absent", Name: "dogu", Version: "1.2.3-9", TargetState: TargetStateAbsent},
+		{Namespace: "absent", Name: "versionIsOptionalForStateAbsent", TargetState: TargetStateAbsent},
+		{Namespace: "present", Name: "dogu", Version: "3.2.1-2", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "StateDefaultsToPresent", Version: "3.2.1-2"},
 	}
-	blueprint := BlueprintV2{Dogus: dogus}
+	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.validateDogus()
 
@@ -63,7 +63,7 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 		{Name: "test"},
 		{Version: "3.2.1-2"},
 	}
-	blueprint := BlueprintV2{Dogus: dogus}
+	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.validateDogus()
 
@@ -77,7 +77,7 @@ func Test_validateComponents_ok(t *testing.T) {
 		{Name: "absent-component", TargetState: TargetStateAbsent},
 		{Name: "present-component", Version: "3.2.1-2", TargetState: TargetStatePresent},
 	}
-	blueprint := BlueprintV2{Components: components}
+	blueprint := Blueprint{Components: components}
 
 	err := blueprint.validateComponents()
 
@@ -89,7 +89,7 @@ func Test_validateComponents_multipleErrors(t *testing.T) {
 		{Name: "test"},
 		{Version: "3.2.1-2"},
 	}
-	blueprint := BlueprintV2{Components: components}
+	blueprint := Blueprint{Components: components}
 	err := blueprint.validateComponents()
 
 	require.NotNil(t, err)
@@ -105,7 +105,7 @@ func Test_validateDoguUniqueness(t *testing.T) {
 		{Name: "present/dogu2", Version: "1.2.3-4"},
 	}
 
-	blueprint := BlueprintV2{Dogus: dogus}
+	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.validateDoguUniqueness()
 
@@ -123,7 +123,7 @@ func Test_validateComponentUniqueness(t *testing.T) {
 		{Name: "present/component2", Version: "1.2.3-4"},
 	}
 
-	blueprint := BlueprintV2{Components: components}
+	blueprint := Blueprint{Components: components}
 
 	err := blueprint.validateComponentUniqueness()
 
@@ -139,7 +139,7 @@ func TestValidationGlobalValid(t *testing.T) {
 			"key1": "value1",
 		},
 	}
-	blueprint := BlueprintV2{
+	blueprint := Blueprint{
 		RegistryConfig: registryConfig,
 	}
 
@@ -153,7 +153,7 @@ func TestValidationGlobalEmptyKeyError(t *testing.T) {
 			"": "myVal2",
 		},
 	}
-	blueprint := BlueprintV2{
+	blueprint := Blueprint{
 		RegistryConfig: globalRegistryKeys,
 	}
 
@@ -168,12 +168,12 @@ func TestSetDoguRegistryKeysSuccessful(t *testing.T) {
 	dogu2 := map[string]interface{}{"keyDogu2": "valDogu2"}
 	dogu3 := map[string]interface{}{"keyDogu3": "valDogu3"}
 	dogus := []TargetDogu{
-		{Name: "present/dogu1", Version: "3.2.1-0", TargetState: TargetStatePresent},
-		{Name: "present/dogu2", Version: "1.2.3-4", TargetState: TargetStatePresent},
-		{Name: "present/dogu3", Version: "1.2.3-4", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "dogu2", Version: "1.2.3-4", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: "1.2.3-4", TargetState: TargetStatePresent},
 	}
 
-	blueprint := BlueprintV2{
+	blueprint := Blueprint{
 		Dogus: dogus,
 		RegistryConfig: map[string]map[string]interface{}{
 			"dogu1":         dogu1,

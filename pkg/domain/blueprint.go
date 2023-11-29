@@ -5,17 +5,13 @@ import (
 	"fmt"
 )
 
-// BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
+// Blueprint describes an abstraction of CES components that should be absent or present within one or more CES
 // instances. When the same Blueprint is applied to two different CES instances it is required to leave two equal
 // instances in terms of the components.
 //
 // In general additions without changing the version are fine, as long as they don't change semantics. Removal or
 // renaming are breaking changes and require a new blueprint API version.
-type BlueprintV2 struct {
-	GeneralBlueprint
-	// ID is the unique name of the set over all components. This blueprint ID should be used to distinguish from similar
-	// blueprints between humans in an easy way. Must not be empty.
-	ID string `json:"blueprintId"`
+type Blueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []TargetDogu `json:"dogus,omitempty"`
@@ -33,7 +29,7 @@ type BlueprintV2 struct {
 type RegistryConfig map[string]map[string]interface{}
 
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems
-func (blueprint *BlueprintV2) Validate() error {
+func (blueprint *Blueprint) Validate() error {
 	errorList := []error{
 		blueprint.validateDogus(),
 		blueprint.validateDoguUniqueness(),
@@ -49,13 +45,13 @@ func (blueprint *BlueprintV2) Validate() error {
 	return err
 }
 
-func (blueprint *BlueprintV2) validateDogus() error {
+func (blueprint *Blueprint) validateDogus() error {
 	errorList := Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.Validate() })
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
-func (blueprint *BlueprintV2) validateDoguUniqueness() error {
+func (blueprint *Blueprint) validateDoguUniqueness() error {
 	doguNames := Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
 	duplicates := getDuplicates(doguNames)
 	if len(duplicates) != 0 {
@@ -64,13 +60,13 @@ func (blueprint *BlueprintV2) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprint *BlueprintV2) validateComponents() error {
+func (blueprint *Blueprint) validateComponents() error {
 	errorList := Map(blueprint.Components, func(component Component) error { return component.Validate() })
 	return errors.Join(errorList...)
 }
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
-func (blueprint *BlueprintV2) validateComponentUniqueness() error {
+func (blueprint *Blueprint) validateComponentUniqueness() error {
 	componentNames := Map(blueprint.Components, func(component Component) string { return component.Name })
 	duplicates := getDuplicates(componentNames)
 	if len(duplicates) != 0 {
@@ -79,7 +75,7 @@ func (blueprint *BlueprintV2) validateComponentUniqueness() error {
 	return nil
 }
 
-func (blueprint *BlueprintV2) validateRegistryConfig() error {
+func (blueprint *Blueprint) validateRegistryConfig() error {
 	for key, value := range blueprint.RegistryConfig {
 		if len(key) == 0 {
 			return fmt.Errorf("a config key is empty")

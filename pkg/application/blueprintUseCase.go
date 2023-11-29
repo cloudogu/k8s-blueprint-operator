@@ -19,7 +19,7 @@ func (useCase BlueprintUseCase) ValidateBlueprintStatically(blueprintId string) 
 	return blueprint.Validate()
 }
 
-func (useCase BlueprintUseCase) MakeBlueprintUpgrade(blueprint domain.BlueprintV2, mask domain.BlueprintMaskV1) {
+func (useCase BlueprintUseCase) MakeBlueprintUpgrade(blueprint domain.Blueprint, mask domain.BlueprintMask) {
 	//TODO
 	_, _ = domainservice.CalculateEffectiveBlueprint(blueprint, mask)
 }
