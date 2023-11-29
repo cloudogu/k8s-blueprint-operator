@@ -30,6 +30,7 @@ func Test_Validate_combineErrors(t *testing.T) {
 
 	err := spec.Validate()
 
+	assert.ErrorContains(t, err, "blueprint spec is invalid")
 	assert.ErrorContains(t, err, "blueprint spec don't have an ID")
 	assert.ErrorContains(t, err, "blueprint is invalid")
 	assert.ErrorContains(t, err, "blueprint mask is invalid")
