@@ -13,10 +13,10 @@ type DoguInstallationRepository interface {
 	delete(ecosystem.DoguInstallation) error
 }
 
-type BlueprintRepository interface {
-	getById(doguName string) (domain.Blueprint, error)
-	getAll() ([]domain.Blueprint, error)
-	create(domain.Blueprint) error
-	update(domain.Blueprint) error
-	delete(domain.Blueprint) error
+type BlueprintSpecRepository interface {
+	getById(doguName string) (domain.BlueprintSpec, error)
+	getAll() ([]domain.BlueprintSpec, error)
+	create(domain.BlueprintSpec) error
+	update(domain.BlueprintSpec) error
+	delete(domain.BlueprintSpec) error
 }
