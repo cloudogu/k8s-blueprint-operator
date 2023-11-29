@@ -75,3 +75,47 @@ func Test_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-2", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
 }
+
+func Test_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
+	dogus := []TargetDogu{
+		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
+	}
+
+	maskedDogus := []MaskTargetDogu{
+		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStateAbsent},
+		{Namespace: "official", Name: "dogu2", TargetState: TargetStateAbsent},
+	}
+
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: dogus},
+		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+	}
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.Nil(t, err)
+	require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
+	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+}
+
+func Test_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
+	dogus := []TargetDogu{
+		{Namespace: "official", Name: "dogu1", TargetState: TargetStateAbsent},
+	}
+
+	maskedDogus := []MaskTargetDogu{
+		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
+	}
+
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: dogus},
+		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+	}
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.Nil(t, err)
+	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
+	//TODO: Is that the correct behavior? (absent dogus can be made present?)
+	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+}
