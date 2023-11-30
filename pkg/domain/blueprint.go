@@ -15,16 +15,16 @@ import (
 type Blueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []TargetDogu `json:"dogus,omitempty"`
+	Dogus []TargetDogu
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
-	Components []Component `json:"components,omitempty"`
+	Components []Component
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
-	RegistryConfig RegistryConfig `json:"registryConfig,omitempty"`
+	RegistryConfig RegistryConfig
 	// Used to remove registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigAbsent []string `json:"registryConfigAbsent,omitempty"`
+	RegistryConfigAbsent []string
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigEncrypted RegistryConfig `json:"registryConfigEncrypted,omitempty"`
+	RegistryConfigEncrypted RegistryConfig
 }
 
 type RegistryConfig map[string]map[string]interface{}
