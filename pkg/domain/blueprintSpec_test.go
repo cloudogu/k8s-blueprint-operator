@@ -53,6 +53,31 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlue
 	assert.ErrorContains(t, err, "dogu nexus is missing in the blueprint")
 }
 
+func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchAllowed(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
+		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: true},
+	}
+
+	err := spec.validateMaskAgainstBlueprint()
+
+	require.Nil(t, err)
+}
+
+func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
+		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: false},
+	}
+
+	err := spec.validateMaskAgainstBlueprint()
+
+	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
+	assert.ErrorContains(t, err, "namespace switch is not allowed by default for dogu nexus. Activate feature flag for that")
+}
+
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},

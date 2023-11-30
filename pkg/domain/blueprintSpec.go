@@ -91,11 +91,15 @@ type EffectiveBlueprintCalculatedEvent struct {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		_, noDoguFoundError := spec.Blueprint.FindDoguByName(doguMask.Name)
+		dogu, noDoguFoundError := spec.Blueprint.FindDoguByName(doguMask.Name)
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %s is missing in the blueprint", doguMask.Name))
 		}
-		//TODO: check for namespace switch
+		if !spec.config.allowDoguNamespaceSwitch && dogu.Namespace != doguMask.Namespace {
+			errorList = append(errorList, fmt.Errorf(
+				"namespace switch is not allowed by default for dogu %s. Activate feature flag for that", doguMask.Name),
+			)
+		}
 	}
 
 	err := errors.Join(errorList...)
