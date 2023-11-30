@@ -1,4 +1,4 @@
-package domain
+package serializer
 
 import (
 	"bytes"
@@ -21,10 +21,6 @@ const (
 	TargetStateIgnore
 )
 
-var PossbileTargetStates = []TargetState{
-	TargetStatePresent, TargetStateAbsent, TargetStateIgnore,
-}
-
 // String returns a string representation of the given TargetState enum value.
 func (state TargetState) String() string {
 	return toString[state]
@@ -39,8 +35,6 @@ var toID = map[string]TargetState{
 	"present": TargetStatePresent,
 	"absent":  TargetStateAbsent,
 }
-
-//TODO: Move serialization code to serializer adapter
 
 // MarshalJSON marshals the enum as a quoted json string
 func (state TargetState) MarshalJSON() ([]byte, error) {
