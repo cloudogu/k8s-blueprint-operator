@@ -7,15 +7,12 @@ import (
 )
 
 // BlueprintMask describes an abstraction of CES components that should alter a blueprint definition before
-// applying it to a CES system via a blueprint upgrade. The blueprint mask should not change the blueprint JSON file
+// applying it to a CES system via a blueprint upgrade. The blueprint mask does not change the blueprint
 // itself, but is applied to the information in it to generate a new, effective blueprint.
-//
-// In general additions without changing the version are fine, as long as they don't change semantics. Removal or
-// renaming are breaking changes and require a new blueprint mask API version.
 type BlueprintMask struct {
 	// Dogus contains a set of dogus which alters the states of the dogus in the blueprint this mask is applied on.
 	// The names and target states of all dogus must not be empty.
-	Dogus []MaskTargetDogu `json:"dogus"`
+	Dogus []MaskTargetDogu
 }
 
 // Validate checks the structure and data of a blueprint mask and returns an error if there are any problems
