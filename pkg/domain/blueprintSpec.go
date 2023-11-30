@@ -117,10 +117,12 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 }
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
-
-	if spec.Status != StatusPhaseNew && spec.Status != StatusPhaseValidated {
-		//TODO: test this
-		return fmt.Errorf("blueprint spec is in an advanced status %s", spec.Status)
+	switch spec.Status {
+	case StatusPhaseNew: // stop
+		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
+	case StatusPhaseInvalid: // stop
+		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
+	default: //continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
 	}
 	//TODO: do deep copy
 	effectiveDogus, err := spec.calculateEffectiveDogus()

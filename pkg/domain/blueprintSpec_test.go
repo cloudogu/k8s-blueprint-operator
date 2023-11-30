@@ -118,13 +118,40 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		Status:        StatusPhaseValidated,
 	}
 
 	err := spec.CalculateEffectiveBlueprint()
 
 	require.Nil(t, err)
-
 }
+
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		Status:        StatusPhaseNew,
+	}
+
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.NotNil(t, err)
+	require.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
+}
+
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		Status:        StatusPhaseInvalid,
+	}
+
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.NotNil(t, err)
+	require.ErrorContains(t, err, "cannot calculate effective blueprint on invalid blueprint spec")
+}
+
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
@@ -139,6 +166,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) 
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
@@ -162,6 +190,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T)
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
@@ -183,6 +212,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *tes
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
+		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
@@ -205,6 +235,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: false},
+		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
@@ -225,6 +256,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: true},
+		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
