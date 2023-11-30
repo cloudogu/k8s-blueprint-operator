@@ -6,23 +6,28 @@ import (
 	"testing"
 )
 
-func Test_Validate_allOk(t *testing.T) {
+func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
 
 	err := spec.Validate()
 
 	require.Nil(t, err)
+	assert.Equal(t, StatusPhaseValidated, spec.Status)
+	require.Equal(t, 1, len(spec.Events))
+	assert.Equal(t, BlueprintSpecValidatedEvent{}, spec.Events[0])
 }
 
-func Test_Validate_emptyID(t *testing.T) {
+func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 	spec := BlueprintSpec{}
 
 	err := spec.Validate()
 
 	require.NotNil(t, err, "No ID definition should lead to an error")
+	require.Equal(t, 1, len(spec.Events))
+	assert.Equal(t, BlueprintSpecInvalidEvent{err}, spec.Events[0])
 }
 
-func Test_Validate_combineErrors(t *testing.T) {
+func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: []TargetDogu{{Name: "no namespace"}}},
 		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Name: "no namespace"}}},
@@ -36,7 +41,7 @@ func Test_Validate_combineErrors(t *testing.T) {
 	assert.ErrorContains(t, err, "blueprint mask is invalid")
 }
 
-func Test_CalculateEffectiveBlueprint_noMask(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
@@ -53,7 +58,7 @@ func Test_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	require.Nil(t, err)
 
 }
-func Test_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
@@ -76,7 +81,7 @@ func Test_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
-func Test_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
@@ -99,7 +104,7 @@ func Test_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
-func Test_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", TargetState: TargetStateAbsent},
 	}
@@ -120,7 +125,7 @@ func Test_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
 	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
 
-func Test_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
@@ -140,7 +145,7 @@ func Test_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
 	require.ErrorContains(t, err, "changing the dogu namespace is only allowed with the changeDoguNamespace flag")
 }
 
-func Test_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}

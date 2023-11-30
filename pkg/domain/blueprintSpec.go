@@ -22,8 +22,9 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-
-	// StatusPhaseInvalid marks the given blueprint or the blueprint mask as not correct.
+	// StatusPhaseValidated marks the given blueprint spec as validated.
+	StatusPhaseValidated StatusPhase = "validated"
+	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
@@ -56,9 +57,11 @@ type BlueprintUpgradePlan struct {
 	RegistryConfigToRemove []string
 }
 
-type InvalidBlueprintEvent struct {
+type BlueprintSpecInvalidEvent struct {
 	ValidationError error
 }
+
+type BlueprintSpecValidatedEvent struct{}
 
 func (spec *BlueprintSpec) Validate() error {
 	var errorList []error
@@ -68,11 +71,15 @@ func (spec *BlueprintSpec) Validate() error {
 	}
 	errorList = append(errorList, spec.Blueprint.Validate())
 	errorList = append(errorList, spec.BlueprintMask.Validate())
+	errorList = append(errorList, spec.validateMaskAgainstBlueprint())
 	err := errors.Join(errorList...)
 	if err != nil {
 		err = fmt.Errorf("blueprint spec is invalid: %w", err)
 		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, InvalidBlueprintEvent{ValidationError: err})
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+	} else {
+		spec.Status = StatusPhaseValidated
+		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
 	}
 	return err
 }
