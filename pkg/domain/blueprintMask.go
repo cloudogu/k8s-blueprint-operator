@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 // BlueprintMask describes an abstraction of CES components that should alter a blueprint definition before
@@ -42,19 +43,13 @@ func (blueprintMask *BlueprintMask) validateDogus() error {
 	return nil
 }
 
-// validateDoguUniqueness checks if the same dogu exists in the blueprint mask with different versions or
-// target states and returns an error if it's so.
+// validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	seenDogu := make(map[string]bool)
-
-	for _, dogu := range blueprintMask.Dogus {
-		_, seen := seenDogu[dogu.Name]
-		if seen {
-			return fmt.Errorf("could not Validate blueprint mask, there is at least one duplicate for this dogu: %s", dogu.Name)
-		}
-		seenDogu[dogu.Name] = true
+	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskTargetDogu) string { return dogu.Name })
+	duplicates := util.GetDuplicates(doguNames)
+	if len(duplicates) != 0 {
+		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
 	}
-
 	return nil
 }
 

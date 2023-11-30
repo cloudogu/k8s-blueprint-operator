@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 // Blueprint describes an abstraction of CES components that should be absent or present within one or more CES
@@ -46,14 +47,14 @@ func (blueprint *Blueprint) Validate() error {
 }
 
 func (blueprint *Blueprint) validateDogus() error {
-	errorList := Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.Validate() })
+	errorList := util.Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.Validate() })
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
-	duplicates := getDuplicates(doguNames)
+	doguNames := util.Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
+	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
 	}
@@ -61,14 +62,14 @@ func (blueprint *Blueprint) validateDoguUniqueness() error {
 }
 
 func (blueprint *Blueprint) validateComponents() error {
-	errorList := Map(blueprint.Components, func(component Component) error { return component.Validate() })
+	errorList := util.Map(blueprint.Components, func(component Component) error { return component.Validate() })
 	return errors.Join(errorList...)
 }
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := Map(blueprint.Components, func(component Component) string { return component.Name })
-	duplicates := getDuplicates(componentNames)
+	componentNames := util.Map(blueprint.Components, func(component Component) string { return component.Name })
+	duplicates := util.GetDuplicates(componentNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
@@ -106,30 +107,4 @@ func validateKeysNotEmpty(config map[string]interface{}) error {
 	}
 
 	return nil
-}
-
-func getDuplicates(list []string) []string {
-	elementCount := make(map[string]int)
-
-	// countByName
-	for _, name := range list {
-		elementCount[name] += 1
-	}
-
-	// get list of names with count != 1
-	var duplicates []string
-	for name, count := range elementCount {
-		if count != 1 {
-			duplicates = append(duplicates, name)
-		}
-	}
-	return duplicates
-}
-
-func Map[T, V any](ts []T, fn func(T) V) []V {
-	result := make([]V, len(ts))
-	for i, t := range ts {
-		result[i] = fn(t)
-	}
-	return result
 }
