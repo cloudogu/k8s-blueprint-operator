@@ -50,7 +50,7 @@ func Test_TargetDogu_validate_defaultToPresentState(t *testing.T) {
 	err := dogu.validate()
 
 	require.Nil(t, err)
-	assert.Equal(t, TargetStatePresent, dogu.TargetState)
+	assert.Equal(t, TargetState(TargetStatePresent), dogu.TargetState)
 }
 
 func Test_TargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
