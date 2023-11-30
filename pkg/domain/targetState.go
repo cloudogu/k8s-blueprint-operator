@@ -21,6 +21,10 @@ const (
 	TargetStateIgnore
 )
 
+var PossbileTargetStates = []TargetState{
+	TargetStatePresent, TargetStateAbsent, TargetStateIgnore,
+}
+
 // String returns a string representation of the given TargetState enum value.
 func (state TargetState) String() string {
 	return toString[state]

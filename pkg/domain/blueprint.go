@@ -47,7 +47,7 @@ func (blueprint *Blueprint) Validate() error {
 }
 
 func (blueprint *Blueprint) validateDogus() error {
-	errorList := util.Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.Validate() })
+	errorList := util.Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.validate() })
 	return errors.Join(errorList...)
 }
 

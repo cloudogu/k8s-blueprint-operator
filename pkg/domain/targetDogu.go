@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -19,17 +20,24 @@ type TargetDogu struct {
 	TargetState TargetState `json:"targetState"`
 }
 
-// Validate checks if the TargetDogu is semantically correct.
-func (dogu TargetDogu) Validate() error {
+func (dogu TargetDogu) GetQualifiedName() string {
+	return fmt.Sprintf("%s/%s", dogu.Namespace, dogu.Name)
+}
+
+// validate checks if the TargetDogu is semantically correct.
+func (dogu TargetDogu) validate() error {
 	var errorList []error
 	if dogu.Namespace == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu))
+		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	if dogu.Name == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu))
+		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu.GetQualifiedName()))
+	}
+	if !slices.Contains(PossbileTargetStates, dogu.TargetState) {
+		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Version must not be empty: %s", dogu))
+		errorList = append(errorList, fmt.Errorf("dogu field Version must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	err := errors.Join(errorList...)
 	if err != nil {

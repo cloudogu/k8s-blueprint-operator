@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"slices"
 )
 
 // MaskTargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -19,23 +20,24 @@ type MaskTargetDogu struct {
 	TargetState TargetState `json:"targetState"`
 }
 
+func (dogu MaskTargetDogu) GetQualifiedName() string {
+	return fmt.Sprintf("%s/%s", dogu.Namespace, dogu.Name)
+}
+
 func (dogu MaskTargetDogu) validate() error {
 	var errorList []error
 	if dogu.Namespace == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu))
-	}
-	if dogu.Namespace == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu))
+		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	if dogu.Name == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu))
+		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu.GetQualifiedName()))
 	}
-	if dogu.TargetState.String() == "" {
-		errorList = append(errorList, fmt.Errorf("dogu target state must not be empty: %s", dogu))
+	if !slices.Contains(PossbileTargetStates, dogu.TargetState) {
+		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
 	err := errors.Join(errorList...)
 	if err != nil {
-		err = fmt.Errorf("dogu is invalid: %w", err)
+		err = fmt.Errorf("dogu mask is invalid: %w", err)
 	}
 	return err
 }
