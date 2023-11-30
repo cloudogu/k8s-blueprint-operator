@@ -108,3 +108,12 @@ func validateKeysNotEmpty(config map[string]interface{}) error {
 
 	return nil
 }
+
+func (blueprint *Blueprint) FindDoguByName(name string) (TargetDogu, error) {
+	for doguIndex, dogu := range blueprint.Dogus {
+		if dogu.Name == name {
+			return blueprint.Dogus[doguIndex], nil
+		}
+	}
+	return TargetDogu{}, fmt.Errorf("could not find dogu name %s in blueprint", name)
+}

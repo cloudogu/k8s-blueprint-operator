@@ -41,6 +41,18 @@ func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 	assert.ErrorContains(t, err, "blueprint mask is invalid")
 }
 
+func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlueprint(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "official", Name: "nexus"}}},
+	}
+
+	err := spec.validateMaskAgainstBlueprint()
+
+	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
+	assert.ErrorContains(t, err, "dogu nexus is missing in the blueprint")
+}
+
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	dogus := []TargetDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},

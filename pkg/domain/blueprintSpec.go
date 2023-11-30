@@ -88,7 +88,29 @@ type EffectiveBlueprintCalculatedEvent struct {
 	effectiveBlueprint EffectiveBlueprint
 }
 
+func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
+	var errorList []error
+	for _, doguMask := range spec.BlueprintMask.Dogus {
+		_, noDoguFoundError := spec.Blueprint.FindDoguByName(doguMask.Name)
+		if noDoguFoundError != nil {
+			errorList = append(errorList, fmt.Errorf("dogu %s is missing in the blueprint", doguMask.Name))
+		}
+		//TODO: check for namespace switch
+	}
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		err = fmt.Errorf("blueprint mask does not match the blueprint: %w", err)
+	}
+	return err
+}
+
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
+
+	if spec.Status != StatusPhaseNew && spec.Status != StatusPhaseValidated {
+		//TODO: test this
+		return fmt.Errorf("blueprint spec is in an advanced status %s", spec.Status)
+	}
 	//TODO: do deep copy
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
