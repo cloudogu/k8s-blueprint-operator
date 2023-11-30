@@ -8,6 +8,7 @@ import (
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
+	require.Equal(t, StatusPhaseNew, spec.Status, "Status new should be the default")
 
 	err := spec.Validate()
 
@@ -15,6 +16,35 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	assert.Equal(t, StatusPhaseValidated, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, BlueprintSpecValidatedEvent{}, spec.Events[0])
+}
+
+func Test_BlueprintSpec_Validate_inStatusValidated(t *testing.T) {
+	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseValidated}
+
+	err := spec.Validate()
+
+	require.Nil(t, err)
+	assert.Equal(t, StatusPhaseValidated, spec.Status)
+	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
+}
+
+func Test_BlueprintSpec_Validate_inStatusInProgress(t *testing.T) {
+	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInProgress}
+
+	err := spec.Validate()
+
+	require.Nil(t, err)
+	assert.Equal(t, StatusPhaseInProgress, spec.Status, "should stay in the old status")
+	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
+}
+
+func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
+	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInvalid}
+
+	err := spec.Validate()
+
+	require.NotNil(t, err, "should not evaluate again and should stop with an error")
+	assert.ErrorContains(t, err, "blueprint spec was marked invalid before. Do not revalidate")
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
