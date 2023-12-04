@@ -110,6 +110,14 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 }
 
 func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
+	switch blueprint.API {
+	case V1:
+		return domain.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
+			"packages and cesapp version got removed in favour of components")
+	case V2:
+	default:
+		return domain.Blueprint{}, fmt.Errorf("unsupported Blueprint API Version: %s", blueprint.API)
+	}
 	convertedDogus, doguErr := convertDogus(blueprint.Dogus)
 	convertedComponents, compErr := convertComponents(blueprint.Components)
 	err := errors.Join(doguErr, compErr)
