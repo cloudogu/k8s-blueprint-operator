@@ -76,8 +76,13 @@ func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error
 	}, nil
 }
 
-func convertToBlueprintMask(blueprint BlueprintMaskV1) (domain.BlueprintMask, error) {
-	convertedDogus, err := convertMaskDogus(blueprint.Dogus)
+func convertToBlueprintMask(blueprintMask BlueprintMaskV1) (domain.BlueprintMask, error) {
+	switch blueprintMask.API {
+	case BlueprintMaskAPIV1:
+	default:
+		return domain.BlueprintMask{}, fmt.Errorf("unsupported Blueprint Mask API Version: %s", blueprintMask.API)
+	}
+	convertedDogus, err := convertMaskDogus(blueprintMask.Dogus)
 	if err != nil {
 		return domain.BlueprintMask{}, fmt.Errorf("syntax of blueprintMaskV1 is not correct: %w", err)
 	}
