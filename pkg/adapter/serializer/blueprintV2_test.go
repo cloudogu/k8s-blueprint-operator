@@ -37,7 +37,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		},
 	}
 
-	blueprintV2 := ConvertToBlueprintV2(blueprint)
+	blueprintV2, err := ConvertToBlueprintV2(blueprint)
 
 	convertedDogus := []TargetDogu{
 		{Name: "absent/dogu1", Version: "3.2.1-1", TargetState: "absent"},
@@ -53,6 +53,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		{Name: "present/component4", Version: "1.2.3-3", TargetState: "present"},
 	}
 
+	require.Nil(t, err)
 	assert.Equal(t, BlueprintV2{
 		GeneralBlueprint: GeneralBlueprint{V2},
 		Dogus:            convertedDogus,

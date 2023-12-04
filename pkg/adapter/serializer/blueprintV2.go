@@ -73,27 +73,40 @@ type TargetComponent struct {
 	TargetState string `json:"targetState"`
 }
 
-func ConvertToBlueprintV2(spec domain.Blueprint) BlueprintV2 {
-	return BlueprintV2{
-		GeneralBlueprint: GeneralBlueprint{V2},
-		Dogus: util.Map(spec.Dogus, func(dogu domain.TargetDogu) TargetDogu {
-			return TargetDogu{
-				Name:        dogu.GetQualifiedName(),
-				Version:     dogu.Version,
-				TargetState: dogu.TargetState.String(),
-			}
-		}),
-		Components: util.Map(spec.Components, func(component domain.Component) TargetComponent {
-			return TargetComponent{
-				Name:        component.Name,
-				Version:     component.Version,
-				TargetState: component.TargetState.String(),
-			}
-		}),
-		RegistryConfig:          RegistryConfig(spec.RegistryConfig),
-		RegistryConfigAbsent:    spec.RegistryConfigAbsent,
-		RegistryConfigEncrypted: RegistryConfig(spec.RegistryConfigEncrypted),
+func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
+	var errorList []error
+	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.TargetDogu) TargetDogu {
+		newState, err := toSerializerTargetState(dogu.TargetState)
+		errorList = append(errorList, err)
+		return TargetDogu{
+			Name:        dogu.GetQualifiedName(),
+			Version:     dogu.Version,
+			TargetState: newState,
+		}
+	})
+	convertedComponents := util.Map(blueprint.Components, func(component domain.Component) TargetComponent {
+		newState, err := toSerializerTargetState(component.TargetState)
+		errorList = append(errorList, err)
+		return TargetComponent{
+			Name:        component.Name,
+			Version:     component.Version,
+			TargetState: newState,
+		}
+	})
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		return BlueprintV2{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
 	}
+
+	return BlueprintV2{
+		GeneralBlueprint:        GeneralBlueprint{V2},
+		Dogus:                   convertedDogus,
+		Components:              convertedComponents,
+		RegistryConfig:          RegistryConfig(blueprint.RegistryConfig),
+		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
+		RegistryConfigEncrypted: RegistryConfig(blueprint.RegistryConfigEncrypted),
+	}, nil
 }
 
 func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
