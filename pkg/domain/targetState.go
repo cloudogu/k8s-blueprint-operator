@@ -12,7 +12,7 @@ const (
 	TargetStateAbsent
 )
 
-var PossbileTargetStates = []TargetState{
+var PossibleTargetStates = []TargetState{
 	TargetStatePresent, TargetStateAbsent,
 }
 

@@ -32,7 +32,7 @@ func (dogu MaskTargetDogu) validate() error {
 	if dogu.Name == "" {
 		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu.GetQualifiedName()))
 	}
-	if !slices.Contains(PossbileTargetStates, dogu.TargetState) {
+	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
 		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
 	err := errors.Join(errorList...)
