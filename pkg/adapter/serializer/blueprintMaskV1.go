@@ -50,20 +50,30 @@ type MaskTargetDogu struct {
 	// the version of the dogu from the blueprint.
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState string `json:"targetState"`
 }
 
-func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) BlueprintMaskV1 {
+func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error) {
+	var errorList []error
+	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskTargetDogu) MaskTargetDogu {
+		newState, err := toSerializerTargetState(dogu.TargetState)
+		errorList = append(errorList, err)
+		return MaskTargetDogu{
+			Name:        dogu.GetQualifiedName(),
+			Version:     dogu.Version,
+			TargetState: newState,
+		}
+	})
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		return BlueprintMaskV1{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
+	}
+
 	return BlueprintMaskV1{
 		GeneralBlueprintMask: GeneralBlueprintMask{API: BlueprintMaskAPIV1},
-		Dogus: util.Map(spec.Dogus, func(dogu domain.MaskTargetDogu) MaskTargetDogu {
-			return MaskTargetDogu{
-				Name:        dogu.GetQualifiedName(),
-				Version:     dogu.Version,
-				TargetState: TargetState(dogu.TargetState),
-			}
-		}),
-	}
+		Dogus:                convertedDogus,
+	}, nil
 }
 
 func convertToBlueprintMask(blueprint BlueprintMaskV1) (domain.BlueprintMask, error) {
@@ -84,11 +94,16 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskTargetDogu, error) {
 			errorList = append(errorList, err)
 			continue
 		}
+		state, err := toDomainTargetState(dogu.TargetState)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
 		convertedDogus = append(convertedDogus, domain.MaskTargetDogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
 			Version:     dogu.Version,
-			TargetState: domain.TargetState(dogu.TargetState),
+			TargetState: state,
 		})
 	}
 

@@ -11,9 +11,8 @@ import (
 type BlueprintApi string
 
 const (
-	V1        BlueprintApi = "v1"
-	V2        BlueprintApi = "v2"
-	TestEmpty BlueprintApi = "test/empty"
+	V1 BlueprintApi = "v1"
+	V2 BlueprintApi = "v2"
 )
 
 // GeneralBlueprint defines the minimum set to parse the blueprint API version string in order to select the right
@@ -61,7 +60,7 @@ type TargetDogu struct {
 	// otherwise it is optional and is not going to be interpreted.
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState string `json:"targetState"`
 }
 
 type TargetComponent struct {
@@ -71,7 +70,7 @@ type TargetComponent struct {
 	// otherwise it is optional and is not going to be interpreted.
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState string `json:"targetState"`
 }
 
 func ConvertToBlueprintV2(spec domain.Blueprint) BlueprintV2 {
@@ -81,14 +80,14 @@ func ConvertToBlueprintV2(spec domain.Blueprint) BlueprintV2 {
 			return TargetDogu{
 				Name:        dogu.GetQualifiedName(),
 				Version:     dogu.Version,
-				TargetState: TargetState(dogu.TargetState),
+				TargetState: dogu.TargetState.String(),
 			}
 		}),
 		Components: util.Map(spec.Components, func(component domain.Component) TargetComponent {
 			return TargetComponent{
 				Name:        component.Name,
 				Version:     component.Version,
-				TargetState: TargetState(component.TargetState),
+				TargetState: component.TargetState.String(),
 			}
 		}),
 		RegistryConfig:          RegistryConfig(spec.RegistryConfig),
@@ -98,19 +97,15 @@ func ConvertToBlueprintV2(spec domain.Blueprint) BlueprintV2 {
 }
 
 func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
-	convertedDogus, err := convertDogus(blueprint.Dogus)
+	convertedDogus, doguErr := convertDogus(blueprint.Dogus)
+	convertedComponents, compErr := convertComponents(blueprint.Components)
+	err := errors.Join(doguErr, compErr)
 	if err != nil {
 		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
 	return domain.Blueprint{
-		Dogus: convertedDogus,
-		Components: util.Map(blueprint.Components, func(component TargetComponent) domain.Component {
-			return domain.Component{
-				Name:        component.Name,
-				Version:     component.Version,
-				TargetState: domain.TargetState(component.TargetState),
-			}
-		}),
+		Dogus:                   convertedDogus,
+		Components:              convertedComponents,
 		RegistryConfig:          domain.RegistryConfig(blueprint.RegistryConfig),
 		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
 		RegistryConfigEncrypted: domain.RegistryConfig(blueprint.RegistryConfigEncrypted),
@@ -127,14 +122,51 @@ func convertDogus(dogus []TargetDogu) ([]domain.TargetDogu, error) {
 			errorList = append(errorList, err)
 			continue
 		}
+		newState, err := toDomainTargetState(dogu.TargetState)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
+
 		convertedDogus = append(convertedDogus, domain.TargetDogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
 			Version:     dogu.Version,
-			TargetState: domain.TargetState(dogu.TargetState),
+			TargetState: newState,
 		})
 	}
+
 	err := errors.Join(errorList...)
+	if err != nil {
+		return convertedDogus, fmt.Errorf("cannot convert blueprint dogus: %w", err)
+	}
+
+	return convertedDogus, err
+}
+
+func convertComponents(components []TargetComponent) ([]domain.Component, error) {
+	var convertedDogus []domain.Component
+	var errorList []error
+
+	for _, component := range components {
+		newState, err := toDomainTargetState(component.TargetState)
+		errorList = append(errorList, err)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
+
+		convertedDogus = append(convertedDogus, domain.Component{
+			Name:        component.Name,
+			Version:     component.Version,
+			TargetState: newState,
+		})
+	}
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		return convertedDogus, fmt.Errorf("cannot convert blueprint components: %w", err)
+	}
 
 	return convertedDogus, err
 }
