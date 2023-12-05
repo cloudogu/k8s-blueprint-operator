@@ -6,12 +6,12 @@ import (
 )
 
 type DoguInstallationUseCase struct {
-	doguRepo          DoguInstallationRepository
+	doguRepo          domainservice.DoguInstallationRepository
 	doguDomainUseCase domainservice.DoguInstallationDomainUseCase
 }
 
 func (useCase *DoguInstallationUseCase) validateDoguHealth() error {
-	installedDogus, err := useCase.doguRepo.getAll()
+	installedDogus, err := useCase.doguRepo.GetAll()
 	if err != nil {
 		return fmt.Errorf("cannot evaluate dogu health states: %w", err)
 	}

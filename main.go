@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/api/ecosystem"
 	"k8s.io/client-go/kubernetes"
 	"os"
@@ -53,7 +54,7 @@ func init() {
 
 func main() {
 	ctx := ctrl.SetupSignalHandler()
-
+	pkg.Bootstrap()
 	err := startOperator(ctx, flag.CommandLine, os.Args)
 	if err != nil {
 		setupLog.Error(err, "unable to start operator")

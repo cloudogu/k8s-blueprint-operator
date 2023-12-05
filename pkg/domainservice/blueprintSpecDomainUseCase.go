@@ -10,6 +10,12 @@ type BlueprintSpecDomainUseCase struct {
 	remoteDoguRegistry RemoteDoguRegistry
 }
 
+func NewBlueprintSpecDomainUseCase(remoteDoguRegistry RemoteDoguRegistry) *BlueprintSpecDomainUseCase {
+	return &BlueprintSpecDomainUseCase{
+		remoteDoguRegistry,
+	}
+}
+
 func (useCase *BlueprintSpecDomainUseCase) ValidateDoguDependencies(spec domain.BlueprintSpec) error {
 	spec.Blueprint.GetWantedDogus()
 	//TODO

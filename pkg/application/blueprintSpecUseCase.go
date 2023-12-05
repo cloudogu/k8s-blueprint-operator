@@ -8,8 +8,16 @@ import (
 
 type BlueprintSpecUseCase struct {
 	repo          domainservice.BlueprintSpecRepository
-	domainUseCase domainservice.BlueprintSpecDomainUseCase
-	doguUseCase   DoguInstallationUseCase
+	domainUseCase *domainservice.BlueprintSpecDomainUseCase
+	doguUseCase   *DoguInstallationUseCase
+}
+
+func NewBlueprintSpecUseCase(
+	repo domainservice.BlueprintSpecRepository,
+	domainUseCase *domainservice.BlueprintSpecDomainUseCase,
+	doguUseCase *DoguInstallationUseCase,
+) *BlueprintSpecUseCase {
+	return &BlueprintSpecUseCase{repo: repo, domainUseCase: domainUseCase, doguUseCase: doguUseCase}
 }
 
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId string) error {
