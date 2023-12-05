@@ -117,3 +117,14 @@ func (blueprint *Blueprint) FindDoguByName(name string) (TargetDogu, error) {
 	}
 	return TargetDogu{}, fmt.Errorf("could not find dogu name %s in blueprint", name)
 }
+
+// GetWantedDogus returns a list of all dogus which should be installed
+func (blueprint *Blueprint) GetWantedDogus() []TargetDogu {
+	var wantedDogus []TargetDogu
+	for _, dogu := range blueprint.Dogus {
+		if dogu.TargetState == TargetStatePresent {
+			wantedDogus = append(wantedDogus, dogu)
+		}
+	}
+	return wantedDogus
+}
