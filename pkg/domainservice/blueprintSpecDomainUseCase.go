@@ -14,6 +14,7 @@ func (useCase *BlueprintSpecDomainUseCase) ValidateDoguDependencies(spec domain.
 	spec.Blueprint.GetWantedDogus()
 	//TODO
 	//_, _ = useCase.findAllDependencies(spec.Blueprint)
+	return nil
 }
 
 func (useCase *BlueprintSpecDomainUseCase) findDirectDependencies(blueprint domain.Blueprint) (map[string]core.Dogu, error) {
