@@ -32,7 +32,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -59,7 +59,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -96,7 +96,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -141,7 +141,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -188,7 +188,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -241,7 +241,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -294,7 +294,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, flags, []string{})
+		err := startOperator(testCtx, nil, nil, flags, []string{})
 
 		// then
 		require.NoError(t, err)

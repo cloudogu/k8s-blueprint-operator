@@ -1,4 +1,4 @@
-package ecosystem
+package blueprint
 
 import (
 	"context"
@@ -42,7 +42,7 @@ func Test_blueprintClient_Get(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -76,7 +76,7 @@ func Test_blueprintClient_List(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -106,7 +106,7 @@ func Test_blueprintClient_Watch(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -143,7 +143,7 @@ func Test_blueprintClient_Create(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -180,7 +180,7 @@ func Test_blueprintClient_Update(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -217,7 +217,7 @@ func Test_blueprintClient_UpdateStatus(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -243,7 +243,7 @@ func Test_blueprintClient_Delete(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -269,7 +269,7 @@ func Test_blueprintClient_DeleteCollection(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -302,7 +302,7 @@ func Test_blueprintClient_Patch(t *testing.T) {
 		config := rest.Config{
 			Host: server.URL,
 		}
-		client, err := NewForConfig(&config)
+		client, err := newForConfig(&config)
 		require.NoError(t, err)
 		dClient := client.Blueprints("test")
 
@@ -381,7 +381,7 @@ func Test_blueprintClient_UpdateStatusXXX(t *testing.T) {
 			config := rest.Config{
 				Host: server.URL,
 			}
-			client, err := NewForConfig(&config)
+			client, err := newForConfig(&config)
 			require.NoError(t, err)
 			dClient := client.Blueprints("test")
 

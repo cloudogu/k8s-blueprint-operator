@@ -1,8 +1,12 @@
 package pkg
 
 import (
+	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/blueprint"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type ApplicationContext struct {
@@ -15,9 +19,21 @@ type ApplicationContext struct {
 
 var ApplicationContextContainer *ApplicationContext
 
-func Bootstrap() {
+func Bootstrap(restConfig *rest.Config, namespace string) error {
+	k8sClientSet, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		return fmt.Errorf("unable to create k8s clientset: %w", err)
+	}
+
+	//TODO where will be the eventRecorder interface be located? here? Events must probably be written overall the operator.
+
+	ecosystemClient, err := blueprint.NewClientSet(restConfig, k8sClientSet)
+	if err != nil {
+		return fmt.Errorf("unable to create ecosystem client: %w", err)
+	}
+
 	var remoteDoguRegistry domainservice.RemoteDoguRegistry
-	var blueprintSpecRepository domainservice.BlueprintSpecRepository
+	blueprintSpecRepository := blueprint.NewRepository(namespace, ecosystemClient)
 	blueprintSpecDomainUseCase := domainservice.NewBlueprintSpecDomainUseCase(remoteDoguRegistry)
 	doguInstallationUseCase := &application.DoguInstallationUseCase{}
 
@@ -28,4 +44,5 @@ func Bootstrap() {
 		DoguInstallationUseCase:    doguInstallationUseCase,
 		blueprintSpecUseCase:       application.NewBlueprintSpecUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase, doguInstallationUseCase),
 	}
+	return nil
 }

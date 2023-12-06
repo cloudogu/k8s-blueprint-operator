@@ -1,4 +1,4 @@
-package ecosystem
+package blueprint
 
 import (
 	"github.com/stretchr/testify/require"
@@ -12,7 +12,7 @@ func TestNewForConfig(t *testing.T) {
 		config := &rest.Config{}
 
 		// when
-		clientSet, err := NewForConfig(config)
+		clientSet, err := newForConfig(config)
 
 		// then
 		require.NoError(t, err)
@@ -25,7 +25,7 @@ func TestEcoSystemV1Alpha1Client_Dogus(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		config := &rest.Config{}
-		clientSet, err := NewForConfig(config)
+		clientSet, err := newForConfig(config)
 		require.NoError(t, err)
 		require.NotNil(t, clientSet)
 

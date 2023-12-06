@@ -4,27 +4,28 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/api/ecosystem"
-	"k8s.io/client-go/kubernetes"
 	"os"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	config2 "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	"github.com/cloudogu/k8s-blueprint-operator/pkg"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/blueprint"
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/controller"
@@ -54,22 +55,28 @@ func init() {
 
 func main() {
 	ctx := ctrl.SetupSignalHandler()
-	pkg.Bootstrap()
-	err := startOperator(ctx, flag.CommandLine, os.Args)
+	restConfig := config2.GetConfigOrDie()
+	operatorConfig, err := config.NewOperatorConfig(Version)
+	if err != nil {
+		setupLog.Error(err, "unable to create operator config")
+		os.Exit(1)
+	}
+
+	err = pkg.Bootstrap(restConfig, operatorConfig.Namespace)
+	if err != nil {
+		setupLog.Error(err, "unable to bootstrap application context")
+		os.Exit(1)
+	}
+
+	err = startOperator(ctx, restConfig, operatorConfig, flag.CommandLine, os.Args)
 	if err != nil {
 		setupLog.Error(err, "unable to start operator")
 		os.Exit(1)
 	}
 }
 
-func startOperator(ctx context.Context, flags *flag.FlagSet, args []string) error {
-	operatorConfig, err := config.NewOperatorConfig(Version)
-	if err != nil {
-		return fmt.Errorf("unable to create operator config: %w", err)
-	}
-
+func startOperator(ctx context.Context, restConfig *rest.Config, operatorConfig *config.OperatorConfig, flags *flag.FlagSet, args []string) error {
 	options := getK8sManagerOptions(flags, args, operatorConfig)
-	restConfig := ctrl.GetConfigOrDie()
 
 	k8sManager, err := ctrl.NewManager(restConfig, options)
 	if err != nil {
@@ -147,7 +154,7 @@ func configureReconcilers(k8sManager controllerManager) error {
 		return fmt.Errorf("unable to create k8s clientset: %w", err)
 	}
 
-	ecosystemClientSet, err := ecosystem.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
+	ecosystemClientSet, err := blueprint.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
 	if err != nil {
 		return fmt.Errorf("unable to create ecosystem clientset: %w", err)
 	}

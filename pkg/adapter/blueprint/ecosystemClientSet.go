@@ -1,6 +1,7 @@
-package ecosystem
+package blueprint
 
 import (
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
@@ -17,19 +18,28 @@ type Interface interface {
 	EcosystemV1Alpha1() V1Alpha1Interface
 }
 
-// V1Alpha1Interface is a getter for the custom resources of this operator.
+// V1Alpha1Interface provides access for Kubernetes resources.
 type V1Alpha1Interface interface {
-	BlueprintGetter
+	blueprintGetter
 }
 
-type BlueprintGetter interface {
+// blueprintGetter provides a Kubernetes client for accessing Kubernetes Cloudogu EcoSystem Blueprint CRs.
+type blueprintGetter interface {
 	// Blueprints returns a client for blueprints in the given namespace.
 	Blueprints(namespace string) BlueprintInterface
 }
 
 // NewClientSet creates a new instance of the client set for this operator.
 func NewClientSet(config *rest.Config, clientSet *kubernetes.Clientset) (*ClientSet, error) {
-	blueprintClient, err := NewForConfig(config)
+	if config == nil {
+		return nil, fmt.Errorf("could not instantiate ecosystem client: rest config must not be nil")
+	}
+
+	if clientSet == nil {
+		return nil, fmt.Errorf("could not instantiate ecosystem client: client set must not be nil")
+	}
+
+	blueprintClient, err := newForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -51,8 +61,8 @@ func (cs *ClientSet) EcosystemV1Alpha1() V1Alpha1Interface {
 	return cs.ecosystemV1Alpha1
 }
 
-// NewForConfig creates a new V1Alpha1Client for a given rest.Config.
-func NewForConfig(c *rest.Config) (*V1Alpha1Client, error) {
+// newForConfig creates a new V1Alpha1Client for a given rest.Config.
+func newForConfig(c *rest.Config) (*V1Alpha1Client, error) {
 	config := *c
 	gv := schema.GroupVersion{Group: v1.GroupVersion.Group, Version: v1.GroupVersion.Version}
 	config.ContentConfig.GroupVersion = &gv

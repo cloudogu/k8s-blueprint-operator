@@ -1,4 +1,4 @@
-package ecosystem
+package blueprint
 
 import (
 	"context"
