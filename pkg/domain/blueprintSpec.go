@@ -70,7 +70,7 @@ func (spec *BlueprintSpec) Validate() error {
 	switch spec.Status {
 	case StatusPhaseNew: //continue
 	case StatusPhaseInvalid: //do not validate again
-		return errors.New("blueprint spec was marked invalid before. Do not revalidate")
+		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before. Do not revalidate"}
 	default: //do not validate again. for all other status it must be either status validated or a status beyond that
 		return nil
 	}

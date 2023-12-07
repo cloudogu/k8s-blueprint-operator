@@ -45,7 +45,7 @@ func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
 
 	require.NotNil(t, err, "should not evaluate again and should stop with an error")
 	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
+	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "blueprint spec was marked invalid before. Do not revalidate")
 }
 
@@ -56,7 +56,7 @@ func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
+	assert.ErrorAs(t, err, &invalidError)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, BlueprintSpecInvalidEvent{err}, spec.Events[0])
 }
@@ -70,7 +70,7 @@ func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 	err := spec.Validate()
 
 	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
+	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "blueprint spec is invalid")
 	assert.ErrorContains(t, err, "blueprint spec don't have an ID")
 	assert.ErrorContains(t, err, "blueprint is invalid")
@@ -85,8 +85,6 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlue
 
 	err := spec.validateMaskAgainstBlueprint()
 
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
 	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
 	assert.ErrorContains(t, err, "dogu nexus is missing in the blueprint")
 }
@@ -112,8 +110,6 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t
 
 	err := spec.validateMaskAgainstBlueprint()
 
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
 	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
 	assert.ErrorContains(t, err, "namespace switch is not allowed by default for dogu nexus. Activate feature flag for that")
 }
@@ -147,7 +143,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
 
 	require.NotNil(t, err)
 	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
+	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
 }
 
@@ -162,7 +158,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) 
 
 	require.NotNil(t, err)
 	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, invalidError)
+	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "cannot calculate effective blueprint on invalid blueprint spec")
 }
 
