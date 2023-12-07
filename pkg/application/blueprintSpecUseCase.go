@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -20,14 +21,14 @@ func NewBlueprintSpecUseCase(
 	return &BlueprintSpecUseCase{repo: repo, domainUseCase: domainUseCase, doguUseCase: doguUseCase}
 }
 
-func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId string) error {
-	blueprintSpec, err := useCase.repo.GetById(blueprintId)
+func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
 	}
 
 	validationError := blueprintSpec.Validate()
-	err = useCase.repo.Update(blueprintSpec)
+	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("cannot update blueprint spec after validation: %w", err)
 	}
@@ -35,8 +36,8 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(blueprintId
 	return validationError
 }
 
-func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(blueprintId string) error {
-	blueprintSpec, err := useCase.repo.GetById(blueprintId)
+func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error {
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
 	}
@@ -51,14 +52,14 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(blueprintI
 	return validationError
 }
 
-func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(blueprintId string) error {
-	blueprintSpec, err := useCase.repo.GetById(blueprintId)
+func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to calculate effective blueprint: %w", err)
 	}
 
 	calcError := blueprintSpec.CalculateEffectiveBlueprint()
-	err = useCase.repo.Update(blueprintSpec)
+	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
 		return err
 	}
