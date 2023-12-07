@@ -28,7 +28,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 	})
 	doguSpecsOfWantedDogus, err := useCase.remoteDoguRegistry.GetDogus(dogusToLoad)
 	if err != nil {
-		return fmt.Errorf("cannot load dogu specifications from remote registry for dogu dependency validation: %w", err)
+		return fmt.Errorf("cannot load or cannot find dogu specifications from remote registry for dogu dependency validation: %w", err)
 	}
 
 	for _, wantedDogu := range wantedDogus {

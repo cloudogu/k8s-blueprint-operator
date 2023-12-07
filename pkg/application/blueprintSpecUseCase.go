@@ -80,6 +80,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 	if validationError != nil {
 		validationError = fmt.Errorf("blueprint spec is invalid: %w", validationError)
 	}
+	//TODO: Maybe we should persist the status change, but then we have two validated status (statically and dynamically)
 	return validationError
 }
 
