@@ -49,7 +49,7 @@ type stubRemoteDoguRegistry struct {
 func (registry stubRemoteDoguRegistry) GetDogu(qualifiedDoguName string, version string) (*core.Dogu, error) {
 	dogu := registry.dogus[qualifiedDoguName][version]
 	if dogu == nil {
-		return nil, fmt.Errorf("dogu %s in version %s not found", qualifiedDoguName, version)
+		return nil, &NotFoundError{Message: fmt.Sprintf("dogu %s in version %s not found", qualifiedDoguName, version)}
 	}
 	return dogu, nil
 }

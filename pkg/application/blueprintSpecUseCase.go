@@ -27,12 +27,14 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec: %w", err)
 	}
+
 	switch blueprintSpec.Status {
 	case domain.StatusPhaseNew:
 		err := useCase.ValidateBlueprintSpecStatically(ctx, blueprintId)
 		if err != nil {
 			return err
 		}
+		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 	case domain.StatusPhaseInvalid:
 		return nil
 	case domain.StatusPhaseValidated:
@@ -40,8 +42,9 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 		if err != nil {
 			return err
 		}
+		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
-		return nil
+		return nil //unclear what to do here for now
 	case domain.StatusPhaseCompleted:
 		return nil
 	default:
@@ -93,7 +96,7 @@ func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Con
 	calcError := blueprintSpec.CalculateEffectiveBlueprint()
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot save blueprint spec after calculating the effective blueprint: %w", err)
 	}
 
 	return calcError

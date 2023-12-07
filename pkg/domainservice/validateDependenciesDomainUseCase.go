@@ -18,6 +18,11 @@ func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry)
 	}
 }
 
+// ValidateDependenciesForAllDogus checks if for all dogus in the blueprint there are also all dependencies in the blueprint.
+// The dependencies are validated against dogu specifications in a remote dogu registry.
+// This functions returns no error if everything is ok or
+// a domain.InvalidBlueprintError if there are dependencies missing or
+// an InternalError if there is any other error, e.g. with the connection to the remote dogu registry
 func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(effectiveBlueprint domain.EffectiveBlueprint) error {
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.TargetDogu) DoguToLoad {
@@ -28,15 +33,18 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 	})
 	doguSpecsOfWantedDogus, err := useCase.remoteDoguRegistry.GetDogus(dogusToLoad)
 	if err != nil {
-		return fmt.Errorf("cannot load or cannot find dogu specifications from remote registry for dogu dependency validation: %w", err)
+		var notFoundError *NotFoundError
+		if errors.As(err, &notFoundError) {
+			return &domain.InvalidBlueprintError{WrappedError: err, Message: "remote dogu registry has no dogu specification for at least one wanted dogu"}
+		} else { //should be InternalError
+			return &InternalError{WrappedError: err, Message: "cannot load dogu specifications from remote registry for dogu dependency validation"}
+		}
 	}
 
 	for _, wantedDogu := range wantedDogus {
 		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.GetQualifiedName()]
 		err = useCase.checkDoguDependencies(wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
 		if err != nil {
-			//TODO: there are 2 types of errors, either the blueprint is invalid or a dogu.json could not be loaded
-			//TODO: this error msg only applies to the first case
 			err = fmt.Errorf("dependencies for dogu '%s' are not satisfied blueprint: %w", wantedDogu.Name, err)
 		}
 	}

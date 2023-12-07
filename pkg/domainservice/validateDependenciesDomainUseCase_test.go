@@ -2,6 +2,9 @@ package domainservice
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"testing"
 )
 
@@ -34,17 +37,14 @@ func Test_checkDependencyVersion(t *testing.T) {
 }
 
 func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T) {
-
-	type fields struct {
-		remoteDoguRegistry RemoteDoguRegistry
-	}
 	type args struct {
 		effectiveBlueprint domain.EffectiveBlueprint
 	}
 	tests := []struct {
-		name    string
-		args    args
-		wantErr bool
+		name          string
+		args          args
+		wantErr       bool
+		errorContains string
 	}{
 		{
 			name: "all ok",
@@ -79,7 +79,8 @@ func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:       true,
+			errorContains: "dependencies for dogu 'redmine' are not satisfied blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
 		},
 		{
 			name: "unknown dogu",
@@ -90,7 +91,8 @@ func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T
 					},
 				},
 			},
-			wantErr: true,
+			wantErr:       true,
+			errorContains: "remote dogu registry has no dogu specification for at least one wanted dogu: dogu official/redmine2 in version 1.0.0-1 not found",
 		},
 		{
 			name: "package dependency",
@@ -107,9 +109,27 @@ func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
-			if err := useCase.ValidateDependenciesForAllDogus(tt.args.effectiveBlueprint); (err != nil) != tt.wantErr {
-				t.Errorf("ValidateDependenciesForAllDogus() error = %v, wantErr %v", err, tt.wantErr)
+			err := useCase.ValidateDependenciesForAllDogus(tt.args.effectiveBlueprint)
+			if err != nil {
+				if !tt.wantErr {
+					t.Errorf("ValidateDependenciesForAllDogus() error = %v, wantErr %v", err, tt.wantErr)
+				}
+				assert.ErrorContains(t, err, tt.errorContains)
 			}
 		})
 	}
+}
+
+func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
+	//given
+	RegistryMock := NewMockRemoteDoguRegistry(t)
+	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
+
+	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &InternalError{Message: "my error"})
+	//when
+	err := useCase.ValidateDependenciesForAllDogus(domain.EffectiveBlueprint{})
+	//then
+	require.Error(t, err)
+	var internalError *InternalError
+	assert.ErrorAs(t, err, &internalError)
 }

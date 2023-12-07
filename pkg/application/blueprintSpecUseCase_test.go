@@ -177,7 +177,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	repoMock.Test(t)
 	registryMock.Test(t)
 	require.Error(t, err)
-	assert.ErrorContains(t, err, "blueprint spec is invalid: cannot load or cannot find dogu specifications from remote registry for dogu dependency validation: dogu not found for testing")
+	assert.ErrorContains(t, err, "blueprint spec is invalid: cannot load dogu specifications from remote registry for dogu dependency validation: dogu not found for testing")
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *testing.T) {
