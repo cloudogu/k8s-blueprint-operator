@@ -36,7 +36,7 @@ func Test_checkDependencyVersion(t *testing.T) {
 	}
 }
 
-func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T) {
+func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T) {
 	type args struct {
 		effectiveBlueprint domain.EffectiveBlueprint
 	}
@@ -120,7 +120,7 @@ func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T
 	}
 }
 
-func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
+func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
 	//given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
 	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
