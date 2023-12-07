@@ -54,7 +54,7 @@ func init() {
 }
 
 func main() {
-	ctx := ctrl.SetupSignalHandler()
+	signalCtx := ctrl.SetupSignalHandler()
 	restConfig := config2.GetConfigOrDie()
 	operatorConfig, err := config.NewOperatorConfig(Version)
 	if err != nil {
@@ -62,11 +62,14 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = pkg.Bootstrap(restConfig, operatorConfig.Namespace)
+	bootstrap, err := pkg.Bootstrap(restConfig, operatorConfig.Namespace)
 	if err != nil {
 		setupLog.Error(err, "unable to bootstrap application context")
 		os.Exit(1)
 	}
+
+	// ctx allows now to get the application context with ctx.Value(config.ApplicationContextKey)
+	ctx := context.WithValue(signalCtx, config.ApplicationContextKey, bootstrap)
 
 	err = startOperator(ctx, restConfig, operatorConfig, flag.CommandLine, os.Args)
 	if err != nil {

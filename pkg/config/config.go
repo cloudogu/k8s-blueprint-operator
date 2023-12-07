@@ -15,7 +15,10 @@ const (
 	namespaceEnvVar  = "NAMESPACE"
 )
 
+const ApplicationContextKey = "applicationContext"
+
 var log = ctrl.Log.WithName("config")
+var Stage = StageProduction
 
 // OperatorConfig contains all configurable values for the dogu operator.
 type OperatorConfig struct {
@@ -24,8 +27,6 @@ type OperatorConfig struct {
 	// Namespace specifies the namespace that the operator is deployed to.
 	Namespace string
 }
-
-var Stage = StageProduction
 
 func IsStageDevelopment() bool {
 	return Stage == StageDevelopment
