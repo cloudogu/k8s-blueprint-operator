@@ -1,9 +1,8 @@
-package blueprint
+package kubernetes
 
 import (
 	"context"
 	"fmt"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
@@ -12,18 +11,18 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
 )
 
-type repo struct {
+type blueprintSpecRepo struct {
 	k8sNamespace    string
 	ecosystemClient Interface
 }
 
-// NewRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
-func NewRepository(k8sNamespace string, ecosystemClient Interface) domainservice.BlueprintSpecRepository {
-	return &repo{k8sNamespace: k8sNamespace, ecosystemClient: ecosystemClient}
+// NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
+func NewBlueprintSpecRepository(k8sNamespace string, ecosystemClient Interface) domainservice.BlueprintSpecRepository {
+	return &blueprintSpecRepo{k8sNamespace: k8sNamespace, ecosystemClient: ecosystemClient}
 }
 
 // GetById returns a Blueprint identified by its ID.
-func (repo *repo) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
+func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
 	blueprintCR, err := repo.ecosystemClient.EcosystemV1Alpha1().Blueprints(repo.k8sNamespace).Get(ctx, blueprintId, metav1.GetOptions{})
 	if err != nil {
 		return domain.BlueprintSpec{}, fmt.Errorf("error while accessing blueprint ID=%s: %w", blueprintId, err)
@@ -48,7 +47,7 @@ func (repo *repo) GetById(ctx context.Context, blueprintId string) (domain.Bluep
 }
 
 // Update updates a given BlueprintSpec.
-func (repo *repo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
+func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
 	return retry.OnConflict(func() error {
 		blueprintCli := repo.ecosystemClient.EcosystemV1Alpha1().Blueprints(repo.k8sNamespace)
 

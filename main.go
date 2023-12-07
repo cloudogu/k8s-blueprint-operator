@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/blueprint"
+	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/controller"
@@ -157,7 +157,7 @@ func configureReconcilers(k8sManager controllerManager) error {
 		return fmt.Errorf("unable to create k8s clientset: %w", err)
 	}
 
-	ecosystemClientSet, err := blueprint.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
+	ecosystemClientSet, err := kubernetes2.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
 	if err != nil {
 		return fmt.Errorf("unable to create ecosystem clientset: %w", err)
 	}

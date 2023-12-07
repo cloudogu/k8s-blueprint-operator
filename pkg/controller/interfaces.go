@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/blueprint"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -11,7 +11,7 @@ type eventRecorder interface {
 }
 
 type ecosystemClientSet interface {
-	blueprint.Interface
+	kubernetes.Interface
 }
 
 // used for mocks

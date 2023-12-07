@@ -3,7 +3,7 @@
 package controller
 
 import (
-	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/blueprint"
+	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	apiserverinternalv1alpha1 "k8s.io/client-go/kubernetes/typed/apiserverinternal/v1alpha1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 

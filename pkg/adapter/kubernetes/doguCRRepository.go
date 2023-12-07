@@ -1,4 +1,4 @@
-package adapter
+package kubernetes
 
 import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 

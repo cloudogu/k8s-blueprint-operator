@@ -1,4 +1,4 @@
-package blueprint
+package kubernetes
 
 import (
 	"github.com/stretchr/testify/require"
