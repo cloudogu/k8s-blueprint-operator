@@ -49,27 +49,32 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 		return nil
 	default:
 		return fmt.Errorf("could not handle change in blueprint spec with ID '%s': unknown status '%s'", blueprintId, blueprintSpec.Status)
-
 	}
-
-	return nil
 }
 
+// ValidateBlueprintSpecStatically checks the blueprintSpec for semantic errors and persists it.
+// returns a domain.InvalidBlueprintError if blueprint is invalid or
+// a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
 	}
 
-	validationError := blueprintSpec.Validate()
+	invalidBlueprintError := blueprintSpec.Validate()
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("cannot update blueprint spec after validation: %w", err)
 	}
 
-	return validationError
+	return invalidBlueprintError
 }
 
+// ValidateBlueprintSpecDynamically checks the blueprintSpec for semantic errors in combination with external data like dogu specs.
+// returns a domain.InvalidBlueprintError if blueprint is invalid or
+// a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error {
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
@@ -81,12 +86,18 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 	}
 	validationError := errors.Join(errorList...)
 	if validationError != nil {
-		validationError = fmt.Errorf("blueprint spec is invalid: %w", validationError)
+		validationError = &domain.InvalidBlueprintError{
+			WrappedError: validationError,
+			Message:      "blueprint spec is invalid",
+		}
 	}
 	//TODO: Maybe we should persist the status change, but then we have two validated status (statically and dynamically)
 	return validationError
 }
 
+// calculateEffectiveBlueprint load the blueprintSpec, lets it calculate the effective blueprint and persists it again.
+// returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
 func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {

@@ -19,9 +19,13 @@ type DoguInstallationRepository interface {
 }
 
 type BlueprintSpecRepository interface {
-	// GetById returns a Blueprint identified by its ID.
+	// GetById returns a BlueprintSpec identified by its ID or
+	// a NotFoundError if the BlueprintSpec was not found or
+	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error)
 	// Update updates a given BlueprintSpec.
+	// returns an InternalError if there is any error.
+	//TODO: Maybe we also need an ConcurrentModificationError
 	Update(ctx context.Context, blueprintSpec domain.BlueprintSpec) error
 }
 
@@ -51,7 +55,7 @@ type NotFoundError struct {
 // Error marks the struct as an error.
 func (e *NotFoundError) Error() string {
 	if e.WrappedError != nil {
-		fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
+		return fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
 	}
 	return e.Message
 }
@@ -70,7 +74,7 @@ type InternalError struct {
 // Error marks the struct as an error.
 func (e *InternalError) Error() string {
 	if e.WrappedError != nil {
-		fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
+		return fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
 	}
 	return e.Message
 }
