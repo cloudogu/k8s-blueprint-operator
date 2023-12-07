@@ -13,7 +13,7 @@ import (
 type ApplicationContext struct {
 	remoteDoguRegistry         domainservice.RemoteDoguRegistry
 	blueprintSpecRepository    domainservice.BlueprintSpecRepository
-	blueprintSpecDomainUseCase *domainservice.BlueprintSpecDomainUseCase
+	blueprintSpecDomainUseCase *domainservice.ValidateDependenciesDomainUseCase
 	DoguInstallationUseCase    *application.DoguInstallationUseCase
 	blueprintSpecUseCase       *application.BlueprintSpecUseCase
 }
@@ -34,7 +34,7 @@ func Bootstrap(restConfig *rest.Config, namespace string) (*ApplicationContext, 
 
 	var remoteDoguRegistry domainservice.RemoteDoguRegistry
 	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(namespace, ecosystemClient)
-	blueprintSpecDomainUseCase := domainservice.NewBlueprintSpecDomainUseCase(remoteDoguRegistry)
+	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	doguInstallationUseCase := &application.DoguInstallationUseCase{}
 	blueprintUseCase := application.NewBlueprintSpecUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase, doguInstallationUseCase)
 

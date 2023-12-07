@@ -8,17 +8,17 @@ import (
 )
 
 type BlueprintSpecUseCase struct {
-	repo          domainservice.BlueprintSpecRepository
-	domainUseCase *domainservice.BlueprintSpecDomainUseCase
-	doguUseCase   *DoguInstallationUseCase
+	repo                        domainservice.BlueprintSpecRepository
+	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase
+	doguUseCase                 *DoguInstallationUseCase
 }
 
 func NewBlueprintSpecUseCase(
 	repo domainservice.BlueprintSpecRepository,
-	domainUseCase *domainservice.BlueprintSpecDomainUseCase,
+	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase,
 	doguUseCase *DoguInstallationUseCase,
 ) *BlueprintSpecUseCase {
-	return &BlueprintSpecUseCase{repo: repo, domainUseCase: domainUseCase, doguUseCase: doguUseCase}
+	return &BlueprintSpecUseCase{repo: repo, validateDependenciesUseCase: validateDependenciesUseCase, doguUseCase: doguUseCase}
 }
 
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
@@ -43,7 +43,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 	}
 
 	errorList := []error{
-		useCase.domainUseCase.ValidateDependenciesForAllDogus(blueprintSpec.EffectiveBlueprint),
+		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(blueprintSpec.EffectiveBlueprint),
 	}
 	validationError := errors.Join(errorList...)
 	if validationError != nil {

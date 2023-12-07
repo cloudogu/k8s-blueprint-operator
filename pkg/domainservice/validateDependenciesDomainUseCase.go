@@ -8,17 +8,17 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
-type BlueprintSpecDomainUseCase struct {
+type ValidateDependenciesDomainUseCase struct {
 	remoteDoguRegistry RemoteDoguRegistry
 }
 
-func NewBlueprintSpecDomainUseCase(remoteDoguRegistry RemoteDoguRegistry) *BlueprintSpecDomainUseCase {
-	return &BlueprintSpecDomainUseCase{
+func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry) *ValidateDependenciesDomainUseCase {
+	return &ValidateDependenciesDomainUseCase{
 		remoteDoguRegistry,
 	}
 }
 
-func (useCase *BlueprintSpecDomainUseCase) ValidateDependenciesForAllDogus(effectiveBlueprint domain.EffectiveBlueprint) error {
+func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(effectiveBlueprint domain.EffectiveBlueprint) error {
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.TargetDogu) DoguToLoad {
 		return DoguToLoad{
@@ -44,7 +44,7 @@ func (useCase *BlueprintSpecDomainUseCase) ValidateDependenciesForAllDogus(effec
 	return err
 }
 
-func (useCase *BlueprintSpecDomainUseCase) checkDoguDependencies(
+func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 	wantedDogus []domain.TargetDogu,
 	knownDoguSpecs map[string]*core.Dogu,
 	dependenciesOfWantedDogu []core.Dependency,

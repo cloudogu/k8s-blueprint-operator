@@ -106,7 +106,7 @@ func TestBlueprintSpecDomainUseCase_ValidateDependenciesForAllDogus(t *testing.T
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			useCase := NewBlueprintSpecDomainUseCase(testDataDoguRegistry)
+			useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
 			if err := useCase.ValidateDependenciesForAllDogus(tt.args.effectiveBlueprint); (err != nil) != tt.wantErr {
 				t.Errorf("ValidateDependenciesForAllDogus() error = %v, wantErr %v", err, tt.wantErr)
 			}
