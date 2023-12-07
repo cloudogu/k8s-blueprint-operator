@@ -98,7 +98,7 @@ type EffectiveBlueprintCalculatedEvent struct {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := spec.Blueprint.FindDoguByName(doguMask.Name)
+		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name)
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %s is missing in the blueprint", doguMask.Name))
 		}

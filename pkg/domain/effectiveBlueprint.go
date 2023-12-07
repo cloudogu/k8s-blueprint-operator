@@ -16,3 +16,14 @@ type EffectiveBlueprint struct {
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigEncrypted RegistryConfig `json:"registryConfigEncrypted,omitempty"`
 }
+
+// GetWantedDogus returns a list of all dogus which should be installed
+func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []TargetDogu {
+	var wantedDogus []TargetDogu
+	for _, dogu := range effectiveBlueprint.Dogus {
+		if dogu.TargetState == TargetStatePresent {
+			wantedDogus = append(wantedDogus, dogu)
+		}
+	}
+	return wantedDogus
+}

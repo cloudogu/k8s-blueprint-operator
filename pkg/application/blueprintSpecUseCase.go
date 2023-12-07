@@ -42,14 +42,13 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(blueprintI
 	}
 
 	errorList := []error{
-		useCase.domainUseCase.ValidateDoguDependencies(blueprintSpec),
+		useCase.domainUseCase.ValidateDependenciesForAllDogus(blueprintSpec.EffectiveBlueprint),
 	}
 	validationError := errors.Join(errorList...)
 	if validationError != nil {
-		validationError = fmt.Errorf("")
+		validationError = fmt.Errorf("blueprint spec is invalid: %w", validationError)
 	}
-	//TODO
-	return nil
+	return validationError
 }
 
 func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(blueprintId string) error {

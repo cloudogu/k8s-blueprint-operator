@@ -25,5 +25,11 @@ type BlueprintSpecRepository interface {
 }
 
 type RemoteDoguRegistry interface {
-	GetDogu(qualifiedDoguName string, version string) (core.Dogu, error)
+	GetDogu(qualifiedDoguName string, version string) (*core.Dogu, error)
+	GetDogus(dogusToLoad []DoguToLoad) (map[string]*core.Dogu, error)
+}
+
+type DoguToLoad struct {
+	QualifiedDoguName string
+	Version           string
 }
