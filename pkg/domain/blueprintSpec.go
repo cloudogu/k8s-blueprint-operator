@@ -124,7 +124,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
 	default: //continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
 	}
-	//TODO: do deep copy
+
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
 		return err
