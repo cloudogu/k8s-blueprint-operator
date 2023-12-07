@@ -63,6 +63,9 @@ type BlueprintSpecInvalidEvent struct {
 
 type BlueprintSpecValidatedEvent struct{}
 
+// Validate checks the blueprintSpec for semantic errors and sets the status to the result.
+// returns a domain.InvalidBlueprintError if blueprint is invalid
+// or nil otherwise.
 func (spec *BlueprintSpec) Validate() error {
 	switch spec.Status {
 	case StatusPhaseNew: //continue
@@ -81,7 +84,10 @@ func (spec *BlueprintSpec) Validate() error {
 	errorList = append(errorList, spec.validateMaskAgainstBlueprint())
 	err := errors.Join(errorList...)
 	if err != nil {
-		err = fmt.Errorf("blueprint spec is invalid: %w", err)
+		err = &InvalidBlueprintError{
+			WrappedError: err,
+			Message:      "blueprint spec is invalid",
+		}
 		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 	} else {
