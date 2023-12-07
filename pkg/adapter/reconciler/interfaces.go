@@ -1,4 +1,4 @@
-package controller
+package reconciler
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
