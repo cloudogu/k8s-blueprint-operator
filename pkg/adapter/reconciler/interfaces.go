@@ -1,6 +1,7 @@
 package reconciler
 
 import (
+	"context"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -20,4 +21,8 @@ type ecosystemClientSet interface {
 //goland:noinspection GoUnusedType
 type controllerManager interface {
 	manager.Manager
+}
+
+type BlueprintChangeHandler interface {
+	HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error
 }

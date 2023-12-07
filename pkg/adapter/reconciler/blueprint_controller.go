@@ -2,7 +2,6 @@ package reconciler
 
 import (
 	"context"
-
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -11,12 +10,17 @@ import (
 
 // BlueprintReconciler reconciles a Blueprint object
 type BlueprintReconciler struct {
-	clientSet ecosystemClientSet
-	recorder  eventRecorder
+	clientSet              ecosystemClientSet
+	recorder               eventRecorder
+	blueprintChangeHandler BlueprintChangeHandler
 }
 
-func NewBlueprintReconciler(clientSet ecosystemClientSet, recorder eventRecorder) *BlueprintReconciler {
-	return &BlueprintReconciler{clientSet: clientSet, recorder: recorder}
+func NewBlueprintReconciler(
+	clientSet ecosystemClientSet,
+	recorder eventRecorder,
+	blueprintChangeHandler BlueprintChangeHandler,
+) *BlueprintReconciler {
+	return &BlueprintReconciler{clientSet: clientSet, recorder: recorder, blueprintChangeHandler: blueprintChangeHandler}
 }
 
 //+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
@@ -25,16 +29,16 @@ func NewBlueprintReconciler(clientSet ecosystemClientSet, recorder eventRecorder
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Blueprint object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.3/pkg/reconcile
 func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
-
+	logger := log.FromContext(ctx)
+	err := r.blueprintChangeHandler.HandleBlueprintSpecChange(ctx, req.Name)
+	if err != nil {
+		logger.Error(err, "error in blueprint reconciliation loop with blueprint", "resourceName", req.Name)
+		return ctrl.Result{}, err
+	}
 	return ctrl.Result{}, nil
 }
 

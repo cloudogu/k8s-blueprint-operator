@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,7 +21,7 @@ var testCtx = context.Background()
 const testBlueprint = "test-blueprint"
 
 func TestNewBlueprintReconciler(t *testing.T) {
-	reconciler := NewBlueprintReconciler(nil, nil)
+	reconciler := NewBlueprintReconciler(nil, nil, nil)
 	assert.NotNil(t, reconciler)
 }
 
@@ -71,13 +72,31 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 	t.Run("should succeed", func(t *testing.T) {
 		// given
 		request := ctrl.Request{NamespacedName: types.NamespacedName{Name: testBlueprint}}
-		sut := &BlueprintReconciler{}
+		mock := NewMockBlueprintChangeHandler(t)
+		sut := &BlueprintReconciler{blueprintChangeHandler: mock}
 
+		mock.EXPECT().HandleBlueprintSpecChange(testCtx, testBlueprint).Return(nil)
 		// when
 		actual, err := sut.Reconcile(testCtx, request)
 
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
+		mock.Test(t)
+	})
+	t.Run("should fail", func(t *testing.T) {
+		// given
+		request := ctrl.Request{NamespacedName: types.NamespacedName{Name: testBlueprint}}
+		mock := NewMockBlueprintChangeHandler(t)
+		sut := &BlueprintReconciler{blueprintChangeHandler: mock}
+
+		mock.EXPECT().HandleBlueprintSpecChange(testCtx, testBlueprint).Return(errors.New("test"))
+		// when
+		_, err := sut.Reconcile(testCtx, request)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "test")
+		mock.Test(t)
 	})
 }

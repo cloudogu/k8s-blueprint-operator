@@ -3,7 +3,6 @@
 package reconciler
 
 import (
-	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	apiserverinternalv1alpha1 "k8s.io/client-go/kubernetes/typed/apiserverinternal/v1alpha1"
 	appsv1 "k8s.io/client-go/kubernetes/typed/apps/v1"
 
@@ -54,6 +53,8 @@ import (
 	flowcontrolv1beta1 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta1"
 
 	flowcontrolv1beta2 "k8s.io/client-go/kubernetes/typed/flowcontrol/v1beta2"
+
+	kubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 
 	mock "github.com/stretchr/testify/mock"
 
@@ -1242,15 +1243,15 @@ func (_c *mockEcosystemClientSet_DiscoveryV1beta1_Call) RunAndReturn(run func() 
 }
 
 // EcosystemV1Alpha1 provides a mock function with given fields:
-func (_m *mockEcosystemClientSet) EcosystemV1Alpha1() ecosystem.V1Alpha1Interface {
+func (_m *mockEcosystemClientSet) EcosystemV1Alpha1() kubernetes.V1Alpha1Interface {
 	ret := _m.Called()
 
-	var r0 ecosystem.V1Alpha1Interface
-	if rf, ok := ret.Get(0).(func() ecosystem.V1Alpha1Interface); ok {
+	var r0 kubernetes.V1Alpha1Interface
+	if rf, ok := ret.Get(0).(func() kubernetes.V1Alpha1Interface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(ecosystem.V1Alpha1Interface)
+			r0 = ret.Get(0).(kubernetes.V1Alpha1Interface)
 		}
 	}
 
@@ -1274,12 +1275,12 @@ func (_c *mockEcosystemClientSet_EcosystemV1Alpha1_Call) Run(run func()) *mockEc
 	return _c
 }
 
-func (_c *mockEcosystemClientSet_EcosystemV1Alpha1_Call) Return(_a0 ecosystem.V1Alpha1Interface) *mockEcosystemClientSet_EcosystemV1Alpha1_Call {
+func (_c *mockEcosystemClientSet_EcosystemV1Alpha1_Call) Return(_a0 kubernetes.V1Alpha1Interface) *mockEcosystemClientSet_EcosystemV1Alpha1_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockEcosystemClientSet_EcosystemV1Alpha1_Call) RunAndReturn(run func() ecosystem.V1Alpha1Interface) *mockEcosystemClientSet_EcosystemV1Alpha1_Call {
+func (_c *mockEcosystemClientSet_EcosystemV1Alpha1_Call) RunAndReturn(run func() kubernetes.V1Alpha1Interface) *mockEcosystemClientSet_EcosystemV1Alpha1_Call {
 	_c.Call.Return(run)
 	return _c
 }
