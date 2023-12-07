@@ -11,11 +11,11 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	remoteDoguRegistry         domainservice.RemoteDoguRegistry
-	blueprintSpecRepository    domainservice.BlueprintSpecRepository
-	blueprintSpecDomainUseCase *domainservice.ValidateDependenciesDomainUseCase
+	RemoteDoguRegistry         domainservice.RemoteDoguRegistry
+	BlueprintSpecRepository    domainservice.BlueprintSpecRepository
+	BlueprintSpecDomainUseCase *domainservice.ValidateDependenciesDomainUseCase
 	DoguInstallationUseCase    *application.DoguInstallationUseCase
-	blueprintSpecUseCase       *application.BlueprintSpecUseCase
+	BlueprintSpecUseCase       *application.BlueprintSpecUseCase
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -39,10 +39,10 @@ func Bootstrap(restConfig *rest.Config, namespace string) (*ApplicationContext, 
 	blueprintUseCase := application.NewBlueprintSpecUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase, doguInstallationUseCase)
 
 	return &ApplicationContext{
-		remoteDoguRegistry:         remoteDoguRegistry,
-		blueprintSpecRepository:    blueprintSpecRepository,
-		blueprintSpecDomainUseCase: blueprintSpecDomainUseCase,
+		RemoteDoguRegistry:         remoteDoguRegistry,
+		BlueprintSpecRepository:    blueprintSpecRepository,
+		BlueprintSpecDomainUseCase: blueprintSpecDomainUseCase,
 		DoguInstallationUseCase:    doguInstallationUseCase,
-		blueprintSpecUseCase:       blueprintUseCase,
+		BlueprintSpecUseCase:       blueprintUseCase,
 	}, nil
 }
