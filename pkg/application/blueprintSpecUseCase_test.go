@@ -199,3 +199,82 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *test
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "cannot load blueprint spec to validate it: test-error")
 }
+
+func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_ok(t *testing.T) {
+	//given
+	repoMock := newMockBlueprintSpecRepository(t)
+	ctx := context.Background()
+	useCase := NewBlueprintSpecUseCase(repoMock, nil, nil)
+
+	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+		Id:     "testBlueprint1",
+		Status: domain.StatusPhaseValidated,
+	}, nil)
+	repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
+		Id:                   "testBlueprint1",
+		Blueprint:            domain.Blueprint{},
+		BlueprintMask:        domain.BlueprintMask{},
+		EffectiveBlueprint:   domain.EffectiveBlueprint{},
+		StateDiff:            domain.StateDiff{},
+		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
+		Status:               domain.StatusPhaseValidated,
+		Events:               []interface{}{domain.EffectiveBlueprintCalculatedEvent{}},
+	}).Return(nil)
+
+	//when
+	err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
+
+	//then
+	repoMock.Test(t)
+	require.NoError(t, err)
+}
+
+func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T) {
+	t.Run("cannot load", func(t *testing.T) {
+		//given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		useCase := NewBlueprintSpecUseCase(repoMock, nil, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{}, errors.New("test-error"))
+
+		//when
+		err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
+
+		//then
+		repoMock.Test(t)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot load blueprint spec to calculate effective blueprint: test-error")
+	})
+
+	t.Run("cannot save", func(t *testing.T) {
+		//given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		useCase := NewBlueprintSpecUseCase(repoMock, nil, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseValidated,
+		}, nil)
+
+		repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
+			Id:                   "testBlueprint1",
+			Blueprint:            domain.Blueprint{},
+			BlueprintMask:        domain.BlueprintMask{},
+			EffectiveBlueprint:   domain.EffectiveBlueprint{},
+			StateDiff:            domain.StateDiff{},
+			BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
+			Status:               domain.StatusPhaseValidated,
+			Events:               []interface{}{domain.EffectiveBlueprintCalculatedEvent{}},
+		}).Return(errors.New("test-error"))
+
+		//when
+		err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
+
+		//then
+		repoMock.Test(t)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot save blueprint spec after calculating the effective blueprint: test-error")
+	})
+}
