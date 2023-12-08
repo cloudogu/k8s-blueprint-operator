@@ -2,6 +2,7 @@ package util
 
 import (
 	"reflect"
+	"sort"
 	"strconv"
 	"testing"
 )
@@ -15,6 +16,7 @@ func TestGetDuplicates(t *testing.T) {
 		args args
 		want []string
 	}{
+		//results get sorted by the test, so that a direct comparison is possible
 		{name: "no duplicates", args: args{list: []string{"a", "b"}}, want: nil},
 		{name: "no duplicates", args: args{list: []string{"a", "a"}}, want: []string{"a"}},
 		{name: "no duplicates", args: args{list: []string{"a", "a", "a"}}, want: []string{"a"}},
@@ -23,6 +25,7 @@ func TestGetDuplicates(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := GetDuplicates(tt.args.list); !reflect.DeepEqual(got, tt.want) {
+				sort.Strings(got)
 				t.Errorf("GetDuplicates() = %v, want %v", got, tt.want)
 			}
 		})
