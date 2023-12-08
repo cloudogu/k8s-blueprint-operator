@@ -24,8 +24,10 @@ func TestGetDuplicates(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetDuplicates(tt.args.list); !reflect.DeepEqual(got, tt.want) {
-				sort.Strings(got)
+			got := GetDuplicates(tt.args.list)
+			sort.Strings(got)
+			sort.Strings(tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetDuplicates() = %v, want %v", got, tt.want)
 			}
 		})
