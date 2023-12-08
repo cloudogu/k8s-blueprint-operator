@@ -88,6 +88,26 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		assert.ErrorContains(t, err, "cannot load blueprint spec to validate it: test-error")
 	})
 
+	t.Run("cannot parse blueprint in repository", func(t *testing.T) {
+		//given
+		repoMock := newMockBlueprintSpecRepository(t)
+		registryMock := newMockRemoteDoguRegistry(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{}, &domain.InvalidBlueprintError{Message: "test-error"})
+		//when
+		err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
+
+		//then
+		repoMock.Test(t)
+		require.Error(t, err)
+		var expectedErrorType *domain.InvalidBlueprintError
+		assert.ErrorAs(t, err, &expectedErrorType)
+		assert.ErrorContains(t, err, "cannot load blueprint spec to validate it: test-error")
+	})
+
 	t.Run("internal error while loading blueprint spec", func(t *testing.T) {
 		//given
 		repoMock := newMockBlueprintSpecRepository(t)

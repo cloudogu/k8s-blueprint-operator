@@ -1,6 +1,7 @@
-package serializer
+package blueprintMaskV1
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +28,7 @@ func Test_ConvertToBlueprintMaskV1_ok(t *testing.T) {
 
 	require.Nil(t, err)
 	assert.Equal(t, BlueprintMaskV1{
-		GeneralBlueprintMask: GeneralBlueprintMask{BlueprintMaskAPIV1},
+		GeneralBlueprintMask: serializer.GeneralBlueprintMask{API: serializer.BlueprintMaskAPIV1},
 		Dogus:                convertedDogus,
 	}, maskV1)
 }
@@ -54,7 +55,7 @@ func Test_ConvertToBlueprintMask(t *testing.T) {
 	}
 
 	blueprintV2 := BlueprintMaskV1{
-		GeneralBlueprintMask: GeneralBlueprintMask{BlueprintMaskAPIV1},
+		GeneralBlueprintMask: serializer.GeneralBlueprintMask{API: serializer.BlueprintMaskAPIV1},
 		Dogus:                dogus,
 	}
 	blueprint, err := convertToBlueprintMask(blueprintV2)
@@ -75,7 +76,7 @@ func Test_ConvertToBlueprintMask(t *testing.T) {
 
 func Test_ConvertToBlueprintMask_errors(t *testing.T) {
 	maskV1 := BlueprintMaskV1{
-		GeneralBlueprintMask: GeneralBlueprintMask{BlueprintMaskAPIV1},
+		GeneralBlueprintMask: serializer.GeneralBlueprintMask{API: serializer.BlueprintMaskAPIV1},
 		Dogus: []MaskTargetDogu{
 			{Name: "dogu1", Version: "3.2.1-1", TargetState: "unknown"},
 			{Name: "official/dogu1", Version: "3.2.1-1", TargetState: "unknown"},

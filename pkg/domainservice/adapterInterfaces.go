@@ -21,6 +21,7 @@ type DoguInstallationRepository interface {
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or
+	// a domain.InvalidBlueprintError if the BlueprintSpec could not be parsed or
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error)
 	// Update updates a given BlueprintSpec.

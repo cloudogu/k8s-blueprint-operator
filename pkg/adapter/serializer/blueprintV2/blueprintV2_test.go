@@ -1,6 +1,7 @@
-package serializer
+package blueprintV2
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -55,7 +56,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 	require.Nil(t, err)
 	assert.Equal(t, BlueprintV2{
-		GeneralBlueprint: GeneralBlueprint{V2},
+		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
 		Components:       convertedComponents,
 		RegistryConfig: RegistryConfig{
@@ -88,7 +89,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	}
 
 	blueprintV2 := BlueprintV2{
-		GeneralBlueprint: GeneralBlueprint{V2},
+		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            dogus,
 		Components:       components,
 		RegistryConfig: RegistryConfig{
@@ -140,7 +141,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 
 func Test_ConvertToBlueprint_errors(t *testing.T) {
 	blueprintV2 := BlueprintV2{
-		GeneralBlueprint: GeneralBlueprint{V2},
+		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus: []TargetDogu{
 			{Name: "dogu1", Version: "3.2.1-1"},
 			{Name: "official/dogu1", Version: "3.2.1-1", TargetState: "unknown"},

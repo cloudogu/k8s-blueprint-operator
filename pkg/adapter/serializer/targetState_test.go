@@ -24,7 +24,7 @@ func Test_toDomainTargetState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := toDomainTargetState(tt.args.state)
+			got, err := ToDomainTargetState(tt.args.state)
 			if !tt.wantErr(t, err, fmt.Sprintf("toDomainTargetState(%v)", tt.args.state)) {
 				return
 			}
@@ -49,7 +49,7 @@ func Test_toSerializerTargetState(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := toSerializerTargetState(tt.args.domainState)
+			got, err := ToSerializerTargetState(tt.args.domainState)
 			if !tt.wantErr(t, err, fmt.Sprintf("toSerializerTargetState(%v)", tt.args.domainState)) {
 				return
 			}

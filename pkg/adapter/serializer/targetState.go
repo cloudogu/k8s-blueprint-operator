@@ -11,7 +11,7 @@ var ToID = map[string]domain.TargetState{
 	"absent":  domain.TargetStateAbsent,
 }
 
-func toDomainTargetState(stateString string) (domain.TargetState, error) {
+func ToDomainTargetState(stateString string) (domain.TargetState, error) {
 	// Note that if the string is not found then it will be set to the zero value, which is 'Created'.
 	id := ToID[stateString]
 	var err error
@@ -21,7 +21,7 @@ func toDomainTargetState(stateString string) (domain.TargetState, error) {
 	return id, err
 }
 
-func toSerializerTargetState(domainState domain.TargetState) (string, error) {
+func ToSerializerTargetState(domainState domain.TargetState) (string, error) {
 	convertedString := domainState.String()
 	if convertedString != "present" && ToID[convertedString] == 0 {
 		return "", fmt.Errorf("unknown target state ID: '%d'", domainState)

@@ -12,8 +12,10 @@ import (
 )
 
 type blueprintSpecRepo struct {
-	k8sNamespace    string
-	ecosystemClient Interface
+	k8sNamespace            string
+	ecosystemClient         Interface
+	blueprintSerializer     serializer.BlueprintSerializer
+	blueprintMaskSerializer serializer.BlueprintMaskSerializer
 }
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
@@ -28,12 +30,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		return domain.BlueprintSpec{}, fmt.Errorf("error while accessing blueprint ID=%s: %w", blueprintId, err)
 	}
 
-	blueprint, err := serializer.DeserializeBlueprint([]byte(blueprintCR.Spec.Blueprint))
+	blueprint, err := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
 	if err != nil {
 		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize blueprint for blueprint CR %s", blueprintId)
 	}
 
-	blueprintMask, err := serializer.DeserializeBlueprintMask([]byte(blueprintCR.Spec.BlueprintMask))
+	blueprintMask, err := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
 	if err != nil {
 		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize blueprint mask for blueprint CR %s", blueprintId)
 	}
@@ -57,7 +59,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 			return err
 		}
 
-		blueprintString, err := serializer.SerializeBlueprint(spec.Blueprint)
+		blueprintString, err := repo.blueprintSerializer.Serialize(spec.Blueprint)
 		if err != nil {
 			// TODO add logging and event writing
 			_, err2 := blueprintCli.UpdateStatusFailed(ctx, updatedBlueprint)
@@ -68,7 +70,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		}
 		updatedBlueprint.Spec.Blueprint = blueprintString
 
-		blueprintMaskString, err := serializer.SerializeBlueprintMask(spec.BlueprintMask)
+		blueprintMaskString, err := repo.blueprintMaskSerializer.Serialize(spec.BlueprintMask)
 		if err != nil {
 			// TODO add logging and event writing
 			_, err2 := blueprintCli.UpdateStatusFailed(ctx, updatedBlueprint)

@@ -1,29 +1,12 @@
-package serializer
+package blueprintMaskV1
 
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
-
-type BlueprintMaskApi string
-
-const (
-	BlueprintMaskAPIV1 BlueprintMaskApi = "v1"
-)
-
-// GeneralBlueprintMask defines the minimum set to parse the blueprint mask API version string in order to select the
-// right blueprint mask handling strategy. This is necessary in order to accommodate maximal changes in different
-// blueprint mask API versions.
-type GeneralBlueprintMask struct {
-	// API is used to distinguish between different versions of the used API and impacts directly the interpretation of
-	// this blueprint mask. Must not be empty.
-	//
-	// This field MUST NOT be MODIFIED or REMOVED because the API is paramount for distinguishing between different
-	// blueprint mask version implementations.
-	API BlueprintMaskApi `json:"blueprintMaskApi"`
-}
 
 // BlueprintMaskV1 describes an abstraction of CES components that should alter a blueprint definition before
 // applying it to a CES system via a blueprint upgrade. The blueprint mask should not change the blueprint JSON file
@@ -32,7 +15,7 @@ type GeneralBlueprintMask struct {
 // In general additions without changing the version are fine, as long as they don't change semantics. Removal or
 // renaming are breaking changes and require a new blueprint mask API version.
 type BlueprintMaskV1 struct {
-	GeneralBlueprintMask
+	serializer.GeneralBlueprintMask
 	// ID is the unique name of the set over all components. This blueprint mask ID should be used to distinguish
 	// from similar blueprint masks between humans in an easy way. Must not be empty.
 	ID string `json:"blueprintMaskId"`
@@ -56,7 +39,7 @@ type MaskTargetDogu struct {
 func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error) {
 	var errorList []error
 	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskTargetDogu) MaskTargetDogu {
-		newState, err := toSerializerTargetState(dogu.TargetState)
+		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return MaskTargetDogu{
 			Name:        dogu.GetQualifiedName(),
@@ -71,14 +54,14 @@ func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error
 	}
 
 	return BlueprintMaskV1{
-		GeneralBlueprintMask: GeneralBlueprintMask{API: BlueprintMaskAPIV1},
+		GeneralBlueprintMask: serializer.GeneralBlueprintMask{API: serializer.BlueprintMaskAPIV1},
 		Dogus:                convertedDogus,
 	}, nil
 }
 
 func convertToBlueprintMask(blueprintMask BlueprintMaskV1) (domain.BlueprintMask, error) {
 	switch blueprintMask.API {
-	case BlueprintMaskAPIV1:
+	case serializer.BlueprintMaskAPIV1:
 	default:
 		return domain.BlueprintMask{}, fmt.Errorf("unsupported Blueprint Mask API Version: %s", blueprintMask.API)
 	}
@@ -94,12 +77,12 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskTargetDogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguNamespace, doguName, err := splitDoguName(dogu.Name)
+		doguNamespace, doguName, err := serializer.SplitDoguName(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
 		}
-		state, err := toDomainTargetState(dogu.TargetState)
+		state, err := serializer.ToDomainTargetState(dogu.TargetState)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

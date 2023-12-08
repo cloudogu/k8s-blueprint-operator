@@ -1,31 +1,12 @@
-package serializer
+package blueprintV2
 
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
-	"strings"
 )
-
-type BlueprintApi string
-
-const (
-	V1 BlueprintApi = "v1"
-	V2 BlueprintApi = "v2"
-)
-
-// GeneralBlueprint defines the minimum set to parse the blueprint API version string in order to select the right
-// blueprint handling strategy. This is necessary in order to accommodate maximal changes in different blueprint API
-// versions.
-type GeneralBlueprint struct {
-	// API is used to distinguish between different versions of the used API and impacts directly the interpretation of
-	// this blueprint. Must not be empty.
-	//
-	// This field MUST NOT be MODIFIED or REMOVED because the API is paramount for distinguishing between different
-	// blueprint version implementations.
-	API BlueprintApi `json:"blueprintApi"`
-}
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
 // instances. When the same Blueprint is applied to two different CES instances it is required to leave two equal
@@ -34,7 +15,7 @@ type GeneralBlueprint struct {
 // In general additions without changing the version are fine, as long as they don't change semantics. Removal or
 // renaming are breaking changes and require a new blueprint API version.
 type BlueprintV2 struct {
-	GeneralBlueprint
+	serializer.GeneralBlueprint
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []TargetDogu `json:"dogus,omitempty"`
@@ -76,7 +57,7 @@ type TargetComponent struct {
 func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 	var errorList []error
 	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.TargetDogu) TargetDogu {
-		newState, err := toSerializerTargetState(dogu.TargetState)
+		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return TargetDogu{
 			Name:        dogu.GetQualifiedName(),
@@ -85,7 +66,7 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 		}
 	})
 	convertedComponents := util.Map(blueprint.Components, func(component domain.Component) TargetComponent {
-		newState, err := toSerializerTargetState(component.TargetState)
+		newState, err := serializer.ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
 		return TargetComponent{
 			Name:        component.Name,
@@ -100,7 +81,7 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 	}
 
 	return BlueprintV2{
-		GeneralBlueprint:        GeneralBlueprint{V2},
+		GeneralBlueprint:        serializer.GeneralBlueprint{serializer.V2},
 		Dogus:                   convertedDogus,
 		Components:              convertedComponents,
 		RegistryConfig:          RegistryConfig(blueprint.RegistryConfig),
@@ -111,10 +92,10 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 
 func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
 	switch blueprint.API {
-	case V1:
+	case serializer.V1:
 		return domain.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
 			"packages and cesapp version got removed in favour of components")
-	case V2:
+	case serializer.V2:
 	default:
 		return domain.Blueprint{}, fmt.Errorf("unsupported Blueprint API Version: %s", blueprint.API)
 	}
@@ -138,12 +119,12 @@ func convertDogus(dogus []TargetDogu) ([]domain.TargetDogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguNamespace, doguName, err := splitDoguName(dogu.Name)
+		doguNamespace, doguName, err := serializer.SplitDoguName(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
 		}
-		newState, err := toDomainTargetState(dogu.TargetState)
+		newState, err := serializer.ToDomainTargetState(dogu.TargetState)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
@@ -170,7 +151,7 @@ func convertComponents(components []TargetComponent) ([]domain.Component, error)
 	var errorList []error
 
 	for _, component := range components {
-		newState, err := toDomainTargetState(component.TargetState)
+		newState, err := serializer.ToDomainTargetState(component.TargetState)
 		errorList = append(errorList, err)
 		if err != nil {
 			errorList = append(errorList, err)
@@ -190,12 +171,4 @@ func convertComponents(components []TargetComponent) ([]domain.Component, error)
 	}
 
 	return convertedDogus, err
-}
-
-func splitDoguName(doguName string) (string, string, error) {
-	splitName := strings.Split(doguName, "/")
-	if len(splitName) != 2 {
-		return "", "", fmt.Errorf("dogu name needs to be in the form 'namespace/dogu' but is '%s'", doguName)
-	}
-	return splitName[0], splitName[1], nil
 }
