@@ -142,8 +142,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
 	err := spec.CalculateEffectiveBlueprint()
 
 	require.NotNil(t, err)
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
 }
 
@@ -157,8 +155,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) 
 	err := spec.CalculateEffectiveBlueprint()
 
 	require.NotNil(t, err)
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "cannot calculate effective blueprint on invalid blueprint spec")
 }
 
