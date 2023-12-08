@@ -19,12 +19,12 @@ func (useCase *DoguInstallationUseCase) validateDoguHealth() error {
 	return useCase.doguDomainUseCase.ValidateDoguHealth(installedDogus)
 }
 
-func (useCase *DoguInstallationUseCase) installDogu(doguName string) error {
+func (useCase *DoguInstallationUseCase) installDogu(dogu string, version string) error {
 	//TODO
 	return nil
 }
 
-func (useCase *DoguInstallationUseCase) uninstallDogu(doguName string) error {
+func (useCase *DoguInstallationUseCase) uninstallDogu(qualifiedDoguName string) error {
 	//TODO
 	return nil
 }

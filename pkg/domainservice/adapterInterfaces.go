@@ -3,19 +3,19 @@ package domainservice
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 
 	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 type DoguInstallationRepository interface {
-	GetByName(doguName string) (ecosystem.DoguInstallation, error)
+	//GetByName(doguName string) (ecosystem.DoguInstallation, error)
 	GetAll() ([]ecosystem.DoguInstallation, error)
-	Create(ecosystem.DoguInstallation) error
-	Update(ecosystem.DoguInstallation) error
-	Delete(ecosystem.DoguInstallation) error
+	//Create(ecosystem.DoguInstallation) error
+	//Update(ecosystem.DoguInstallation) error
+	//Delete(ecosystem.DoguInstallation) error
 }
 
 type BlueprintSpecRepository interface {
