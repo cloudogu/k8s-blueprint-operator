@@ -24,10 +24,13 @@ type BlueprintMaskSerializer interface {
 	Deserialize(rawBlueprint string) (domain.BlueprintMask, error)
 }
 
+// BlueprintApi represents an API version for a specific serialized format of domain.Blueprint.
 type BlueprintApi string
 
 const (
+	// V1 is the API version of the BlueprintV1 json format of the classic-CES and which is used with the cesapp.
 	V1 BlueprintApi = "v1"
+	// V2 is the API version of the BlueprintV2 json format used in the MultiNode-CES inside kubernetes, e.g. for Blueprint-CRs.
 	V2 BlueprintApi = "v2"
 )
 
@@ -43,9 +46,11 @@ type GeneralBlueprint struct {
 	API BlueprintApi `json:"blueprintApi"`
 }
 
+// BlueprintMaskApi represents an API version for a specific serialized format of domain.BlueprintMask.
 type BlueprintMaskApi string
 
 const (
+	// BlueprintMaskAPIV1 is the API version used by the Classic-CES and the MultiNode-CES as it has no environment specific fields.
 	BlueprintMaskAPIV1 BlueprintMaskApi = "v1"
 )
 
