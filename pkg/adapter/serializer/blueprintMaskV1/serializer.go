@@ -29,12 +29,12 @@ func (b Serializer) Deserialize(rawBlueprint string) (domain.BlueprintMask, erro
 	err := json.Unmarshal([]byte(rawBlueprint), &blueprintMaskDTO)
 
 	if err != nil {
-		return domain.BlueprintMask{}, fmt.Errorf("cannot deserialize blueprint mask: %w", err)
+		return domain.BlueprintMask{}, &domain.InvalidBlueprintError{WrappedError: err, Message: "cannot deserialize blueprint mask"}
 	}
 	mask, err := convertToBlueprintMask(blueprintMaskDTO)
 
 	if err != nil {
-		return domain.BlueprintMask{}, fmt.Errorf("cannot deserialize blueprint mask: %w", err)
+		return domain.BlueprintMask{}, &domain.InvalidBlueprintError{WrappedError: err, Message: "cannot deserialize blueprint mask"}
 	}
 
 	return mask, nil

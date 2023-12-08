@@ -236,3 +236,13 @@ func TestDeserializeBlueprint_errors(t *testing.T) {
 		})
 	}
 }
+
+func TestDeserializeBlueprint_testErrorType(t *testing.T) {
+	serializer := Serializer{}
+
+	_, err := serializer.Deserialize(`{}`)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "cannot deserialize blueprint")
+	var expectedErrorType *domain.InvalidBlueprintError
+	assert.ErrorAs(t, err, &expectedErrorType)
+}
