@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
+	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"testing"
 
@@ -21,6 +22,17 @@ import (
 )
 
 var testCtx = context.Background()
+var testOperatorConfig = &config2.OperatorConfig{
+	Version:   nil,
+	Namespace: "test",
+}
+
+type stubHandler struct {
+}
+
+func (s stubHandler) HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error {
+	return nil
+}
 
 func Test_startOperator(t *testing.T) {
 	t.Run("should fail to create operator config", func(t *testing.T) {
@@ -32,11 +44,11 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "unable to create operator config")
+		assert.ErrorContains(t, err, "unable to start manager: must specify Config")
 	})
 	t.Run("should fail to create controller manager", func(t *testing.T) {
 		// given
@@ -59,7 +71,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
@@ -96,7 +108,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
@@ -141,7 +153,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
@@ -188,7 +200,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
@@ -241,7 +253,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.Error(t, err)
@@ -294,7 +306,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, nil, flags, []string{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
 
 		// then
 		require.NoError(t, err)
