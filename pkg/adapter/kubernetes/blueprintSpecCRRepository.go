@@ -2,6 +2,7 @@ package kubernetes
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -9,35 +10,49 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 )
 
 type blueprintSpecRepo struct {
-	k8sNamespace            string
-	ecosystemClient         Interface
+	blueprintClient         BlueprintInterface
 	blueprintSerializer     serializer.BlueprintSerializer
 	blueprintMaskSerializer serializer.BlueprintMaskSerializer
 }
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
-func NewBlueprintSpecRepository(k8sNamespace string, ecosystemClient Interface) domainservice.BlueprintSpecRepository {
-	return &blueprintSpecRepo{k8sNamespace: k8sNamespace, ecosystemClient: ecosystemClient}
+func NewBlueprintSpecRepository(
+	blueprintClient BlueprintInterface,
+	blueprintSerializer serializer.BlueprintSerializer,
+	blueprintMaskSerializer serializer.BlueprintMaskSerializer,
+) domainservice.BlueprintSpecRepository {
+	return &blueprintSpecRepo{
+		blueprintClient:         blueprintClient,
+		blueprintSerializer:     blueprintSerializer,
+		blueprintMaskSerializer: blueprintMaskSerializer,
+	}
 }
 
 // GetById returns a Blueprint identified by its ID.
 func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
-	blueprintCR, err := repo.ecosystemClient.EcosystemV1Alpha1().Blueprints(repo.k8sNamespace).Get(ctx, blueprintId, metav1.GetOptions{})
+	blueprintCR, err := repo.blueprintClient.Get(ctx, blueprintId, metav1.GetOptions{})
 	if err != nil {
-		return domain.BlueprintSpec{}, fmt.Errorf("error while accessing blueprint ID=%s: %w", blueprintId, err)
+		if k8sErrors.IsNotFound(err) {
+			return domain.BlueprintSpec{}, &domainservice.NotFoundError{
+				WrappedError: err,
+				Message:      fmt.Sprintf("cannot load Blueprint CR '%s' as it does not exist", blueprintId),
+			}
+		}
+		return domain.BlueprintSpec{}, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("error while loading blueprint CR '%s'", blueprintId),
+		}
 	}
 
-	blueprint, err := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
+	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
+	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
+	err = errors.Join(blueprintErr, maskErr)
 	if err != nil {
-		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize blueprint for blueprint CR %s", blueprintId)
-	}
-
-	blueprintMask, err := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
-	if err != nil {
-		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize blueprint mask for blueprint CR %s", blueprintId)
+		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize Blueprint CR %s: %w", blueprintId, err)
 	}
 
 	return domain.BlueprintSpec{
@@ -51,9 +66,8 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 // Update updates a given BlueprintSpec.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
 	return retry.OnConflict(func() error {
-		blueprintCli := repo.ecosystemClient.EcosystemV1Alpha1().Blueprints(repo.k8sNamespace)
 
-		updatedBlueprint, err := blueprintCli.Get(ctx, spec.Id, metav1.GetOptions{})
+		updatedBlueprint, err := repo.blueprintClient.Get(ctx, spec.Id, metav1.GetOptions{})
 		if err != nil {
 			// TODO add logging and event writing
 			return err
@@ -62,7 +76,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		blueprintString, err := repo.blueprintSerializer.Serialize(spec.Blueprint)
 		if err != nil {
 			// TODO add logging and event writing
-			_, err2 := blueprintCli.UpdateStatusFailed(ctx, updatedBlueprint)
+			_, err2 := repo.blueprintClient.UpdateStatusFailed(ctx, updatedBlueprint)
 			if err2 != nil {
 				return fmt.Errorf("could not serialize blueprint for blueprint CR %s and also failed to update blueprint: %w", spec.Id, err)
 			}
@@ -73,7 +87,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		blueprintMaskString, err := repo.blueprintMaskSerializer.Serialize(spec.BlueprintMask)
 		if err != nil {
 			// TODO add logging and event writing
-			_, err2 := blueprintCli.UpdateStatusFailed(ctx, updatedBlueprint)
+			_, err2 := repo.blueprintClient.UpdateStatusFailed(ctx, updatedBlueprint)
 			if err2 != nil {
 				return fmt.Errorf("could not serialize blueprint mask for blueprint CR %s and also failed to update blueprint: %w", spec.Id, err)
 			}

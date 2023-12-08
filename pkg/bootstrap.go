@@ -41,7 +41,7 @@ func Bootstrap(restConfig *rest.Config, namespace string) (*ApplicationContext, 
 	blueprintMaskSerializer := blueprintMaskV1.Serializer{}
 
 	var remoteDoguRegistry domainservice.RemoteDoguRegistry
-	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(namespace, ecosystemClient)
+	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(ecosystemClient.EcosystemV1Alpha1().Blueprints(namespace), blueprintSerializer, blueprintMaskSerializer)
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	doguInstallationUseCase := &application.DoguInstallationUseCase{}
 	blueprintUseCase := application.NewBlueprintSpecUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase, doguInstallationUseCase)
