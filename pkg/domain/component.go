@@ -6,12 +6,12 @@ import "github.com/pkg/errors"
 // after a blueprint was applied.
 type Component struct {
 	// Name defines the name of the component. Must not be empty.
-	Name string `json:"name"`
+	Name string
 	// Version defines the version of the package that is to be installed. Must not be empty if the targetState is
 	// "present"; otherwise it is optional and is not going to be interpreted.
-	Version string `json:"version"`
+	Version string
 	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState TargetState
 }
 
 // Validate checks if the component is semantically correct.

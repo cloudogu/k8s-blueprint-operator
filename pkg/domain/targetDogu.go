@@ -12,12 +12,12 @@ type TargetDogu struct {
 	// Namespace defines the namespace of the dogu, e.g. "official". Must not be empty.
 	Namespace string
 	// Name defines the name of the dogu excluding the namespace, e.g. "nginx". Must not be empty.
-	Name string `json:"name"`
+	Name string
 	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
-	Version string `json:"version"`
+	Version string
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState TargetState
 }
 
 func (dogu TargetDogu) GetQualifiedName() string {

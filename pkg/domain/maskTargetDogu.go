@@ -12,12 +12,12 @@ type MaskTargetDogu struct {
 	// Namespace defines the namespace of the dogu, e.g. "official". Must not be empty.
 	Namespace string
 	// Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty. If you set another namespace than in the normal blueprint, a
-	Name string `json:"name"`
+	Name string
 	// Version defines the version of the dogu that is to be installed. This version is optional and overrides
 	// the version of the dogu from the blueprint.
-	Version string `json:"version"`
+	Version string
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState `json:"targetState"`
+	TargetState TargetState
 }
 
 func (dogu MaskTargetDogu) GetQualifiedName() string {
