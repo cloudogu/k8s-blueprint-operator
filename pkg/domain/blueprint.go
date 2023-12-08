@@ -79,7 +79,7 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 func (blueprint *Blueprint) validateRegistryConfig() error {
 	for key, value := range blueprint.RegistryConfig {
 		if len(key) == 0 {
-			return fmt.Errorf("a config key is empty")
+			return fmt.Errorf("a Config key is empty")
 		}
 
 		err := validateKeysNotEmpty(value)
@@ -94,7 +94,7 @@ func (blueprint *Blueprint) validateRegistryConfig() error {
 func validateKeysNotEmpty(config map[string]interface{}) error {
 	for key, value := range config {
 		if len(key) == 0 {
-			return fmt.Errorf("a config key is empty")
+			return fmt.Errorf("a Config key is empty")
 		}
 
 		switch vTyped := value.(type) {

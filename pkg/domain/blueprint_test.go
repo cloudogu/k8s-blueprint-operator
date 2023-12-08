@@ -160,7 +160,7 @@ func TestValidationGlobalEmptyKeyError(t *testing.T) {
 	err := blueprint.Validate()
 	assert.NotNil(t, err)
 
-	assert.Contains(t, err.Error(), "blueprint is invalid: a config key is empty")
+	assert.Contains(t, err.Error(), "blueprint is invalid: a Config key is empty")
 }
 
 func TestSetDoguRegistryKeysSuccessful(t *testing.T) {

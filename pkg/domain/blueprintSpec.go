@@ -12,7 +12,7 @@ type BlueprintSpec struct {
 	EffectiveBlueprint   EffectiveBlueprint
 	StateDiff            StateDiff
 	BlueprintUpgradePlan BlueprintUpgradePlan
-	config               BlueprintConfiguration
+	Config               BlueprintConfiguration
 	Status               StatusPhase
 	Events               []interface{}
 }
@@ -36,9 +36,9 @@ const (
 
 type BlueprintConfiguration struct {
 	// Force blueprint upgrade even when a dogu is unhealthy
-	ignoreDoguHealth bool
+	IgnoreDoguHealth bool
 	// allowNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
-	allowDoguNamespaceSwitch bool
+	AllowDoguNamespaceSwitch bool
 }
 
 type StateDiff struct{}
@@ -108,7 +108,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %s is missing in the blueprint", doguMask.Name))
 		}
-		if !spec.config.allowDoguNamespaceSwitch && dogu.Namespace != doguMask.Namespace {
+		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Namespace != doguMask.Namespace {
 			errorList = append(errorList, fmt.Errorf(
 				"namespace switch is not allowed by default for dogu %s. Activate feature flag for that", doguMask.Name),
 			)
@@ -173,7 +173,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) (TargetDogu, 
 			effectiveDogu.Version = maskDogu.Version
 		}
 		if maskDogu.Namespace != dogu.Namespace {
-			if spec.config.allowDoguNamespaceSwitch {
+			if spec.Config.AllowDoguNamespaceSwitch {
 				effectiveDogu.Namespace = maskDogu.Namespace
 			} else {
 				return TargetDogu{}, errors.New("changing the dogu namespace is only allowed with the changeDoguNamespace flag")

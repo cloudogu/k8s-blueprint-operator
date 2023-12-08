@@ -93,7 +93,7 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchAllowed(t *t
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
 		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
-		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: true},
+		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
 	}
 
 	err := spec.validateMaskAgainstBlueprint()
@@ -105,7 +105,7 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
 		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
-		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: false},
+		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
 	}
 
 	err := spec.validateMaskAgainstBlueprint()
@@ -240,7 +240,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: false},
+		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
 		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()
@@ -261,7 +261,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
 		BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-		config:        BlueprintConfiguration{allowDoguNamespaceSwitch: true},
+		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
 		Status:        StatusPhaseValidated,
 	}
 	err := spec.CalculateEffectiveBlueprint()

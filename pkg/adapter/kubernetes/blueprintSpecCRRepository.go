@@ -56,10 +56,17 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 
 	return domain.BlueprintSpec{
-		Id:            blueprintId,
-		Blueprint:     blueprint,
-		BlueprintMask: blueprintMask,
-		Status:        domain.StatusPhase(blueprintCR.Status.Phase),
+		Id:                   blueprintId,
+		Blueprint:            blueprint,
+		BlueprintMask:        blueprintMask,
+		EffectiveBlueprint:   domain.EffectiveBlueprint{},
+		StateDiff:            domain.StateDiff{},
+		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
+		Status:               domain.StatusPhase(blueprintCR.Status.Phase),
+		Config: domain.BlueprintConfiguration{
+			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
+			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
+		},
 	}, nil
 }
 

@@ -22,7 +22,7 @@ var ctx = context.Background()
 func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	blueprintId := "MyBlueprint"
 
-	t.Run("all ok with empty blueprint", func(t *testing.T) {
+	t.Run("all ok", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
@@ -31,8 +31,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{},
 			Spec: v1.BlueprintSpec{
-				Blueprint:     `{"blueprintApi": "v2"}`,
-				BlueprintMask: `{"blueprintMaskAPI": "v1"}`,
+				Blueprint:                `{"blueprintApi": "v2"}`,
+				BlueprintMask:            `{"blueprintMaskAPI": "v1"}`,
+				AllowDoguNamespaceSwitch: true,
+				IgnoreDoguHealth:         true,
 			},
 			Status: v1.BlueprintStatus{},
 		}
@@ -43,7 +45,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 		//then
 		require.NoError(t, err)
-		assert.Equal(t, domain.BlueprintSpec{Id: blueprintId}, spec)
+		assert.Equal(t, domain.BlueprintSpec{Id: blueprintId, Config: domain.BlueprintConfiguration{
+			IgnoreDoguHealth:         true,
+			AllowDoguNamespaceSwitch: true,
+		}}, spec)
 	})
 
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
