@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"time"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,14 +13,17 @@ type BlueprintSpec struct {
 	Blueprint string `json:"blueprint"`
 	// BlueprintMask json can further restrict the desired state from the blueprint.
 	BlueprintMask string `json:"blueprintMask,omitempty"`
+	// IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
+	IgnoreDoguHealth bool `json:"ignoreDoguHealth,omitempty"`
+	// AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
+	// in comparison to the blueprint.
+	AllowDoguNamespaceSwitch bool `json:"AllowDoguNamespaceSwitch,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
 	// Phase represents the processing state of the blueprint
 	Phase StatusPhase `json:"phase,omitempty"`
-	// RequeueTimeNanos contains the time in nanoseconds to wait until the next requeue.
-	RequeueTimeNanos time.Duration `json:"requeueTimeNanos,omitempty"`
 }
 
 type StatusPhase string
