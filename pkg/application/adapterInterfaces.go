@@ -5,14 +5,18 @@ import (
 )
 
 // interface duplication for mocks
+
+//nolint:all
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
 
+//nolint:all
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
 
+//nolint:all
 type remoteDoguRegistry interface {
 	domainservice.RemoteDoguRegistry
 }
