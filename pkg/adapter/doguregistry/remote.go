@@ -12,7 +12,7 @@ import (
 )
 
 type Remote struct {
-	registry remote.Registry
+	registry cesappLibRemoteRegistry
 }
 
 func NewRemote(registry remote.Registry) *Remote {
