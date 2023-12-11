@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type blueprintSpecRepo struct {
@@ -70,39 +70,32 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}, nil
 }
 
-// Update updates a given BlueprintSpec.
+// Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
 	return retry.OnConflict(func() error {
-
-		updatedBlueprint, err := repo.blueprintClient.Get(ctx, spec.Id, metav1.GetOptions{})
-		if err != nil {
-			// TODO add logging and event writing
-			return err
+		updatedBlueprint := v1.Blueprint{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:              spec.Id,
+				ResourceVersion:   "",
+				CreationTimestamp: metav1.Time{},
+			},
+			Status: v1.BlueprintStatus{
+				Phase: v1.StatusPhase(spec.Status),
+			},
 		}
 
-		blueprintString, err := repo.blueprintSerializer.Serialize(spec.Blueprint)
+		_, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 		if err != nil {
-			// TODO add logging and event writing
-			_, err2 := repo.blueprintClient.UpdateStatusFailed(ctx, updatedBlueprint)
-			if err2 != nil {
-				return fmt.Errorf("could not serialize blueprint for blueprint CR %s and also failed to update blueprint: %w", spec.Id, err)
+			if k8sErrors.IsConflict(err) {
+				return &domainservice.ConflictError{
+					WrappedError: err,
+					Message:      fmt.Sprintf("cannot update blueprint CR '%s' as it was modified in the meantime", spec.Id),
+				}
 			}
-			return fmt.Errorf("could not serialize blueprint for blueprint CR %s: %w", spec.Id, err)
+			return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
 		}
-		updatedBlueprint.Spec.Blueprint = blueprintString
-
-		blueprintMaskString, err := repo.blueprintMaskSerializer.Serialize(spec.BlueprintMask)
-		if err != nil {
-			// TODO add logging and event writing
-			_, err2 := repo.blueprintClient.UpdateStatusFailed(ctx, updatedBlueprint)
-			if err2 != nil {
-				return fmt.Errorf("could not serialize blueprint mask for blueprint CR %s and also failed to update blueprint: %w", spec.Id, err)
-			}
-			return fmt.Errorf("could not serialize blueprint mask for blueprint CR %s: %w", spec.Id, err)
-		}
-		updatedBlueprint.Spec.BlueprintMask = blueprintMaskString
-
-		// TODO add to Status: effective Blueprint, statediff, upgradePlan?
+		// TODO add to Status: effective Blueprint, stateDiff, upgradePlan?
 
 		return err
 	})
