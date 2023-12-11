@@ -10,6 +10,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -119,35 +120,112 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 func Test_blueprintSpecRepo_Update(t *testing.T) {
 	blueprintId := "MyBlueprint"
+
 	t.Run("all ok", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
 		expected := v1.Blueprint{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       v1.BlueprintSpec{},
-			Status:     v1.BlueprintStatus{},
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: blueprintId,
+			},
+			Spec: v1.BlueprintSpec{},
+			Status: v1.BlueprintStatus{
+				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+			},
 		}
-		restClientMock.EXPECT().UpdateStatus(ctx, expected, metav1.UpdateOptions{}).Return(&expected, nil)
-		_, err := restClientMock.Update(ctx, &v1.Blueprint{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
-			Spec:       v1.BlueprintSpec{},
-			Status:     v1.BlueprintStatus{},
-		}, metav1.UpdateOptions{})
+		restClientMock.EXPECT().
+			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
+			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+				assert.Equal(t, &expected, blueprint)
+				return blueprint, nil
+			})
 
 		//when
-		err = repo.Update(ctx, domain.BlueprintSpec{
-			Id:     "myBlueprint",
-			Status: "",
+		err := repo.Update(ctx, domain.BlueprintSpec{
+			Id:     blueprintId,
+			Status: domain.StatusPhaseValidated,
+			Events: nil,
+		})
+
+		//then
+		require.NoError(t, err)
+	})
+
+	t.Run("conflict error", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		expected := v1.Blueprint{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: blueprintId,
+			},
+			Spec: v1.BlueprintSpec{},
+			Status: v1.BlueprintStatus{
+				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+			},
+		}
+		expectedError := k8sErrors.NewConflict(
+			schema.GroupResource{Group: "blueprints", Resource: blueprintId},
+			blueprintId,
+			fmt.Errorf("test-error"),
+		)
+		restClientMock.EXPECT().
+			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
+			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+				assert.Equal(t, &expected, blueprint)
+				return nil, expectedError
+			})
+
+		//when
+		err := repo.Update(ctx, domain.BlueprintSpec{
+			Id:     blueprintId,
+			Status: domain.StatusPhaseValidated,
 			Events: nil,
 		})
 
 		//then
 		require.Error(t, err)
-		var expectedErrorType *domainservice.NotFoundError
+		var expectedErrorType *domainservice.ConflictError
 		assert.ErrorAs(t, err, &expectedErrorType)
-		assert.ErrorContains(t, err, fmt.Sprintf("cannot load Blueprint CR '%s' as it does not exist:", blueprintId))
+		assert.ErrorIs(t, err, expectedError)
+	})
+
+	t.Run("internal error", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		expected := v1.Blueprint{
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				Name: blueprintId,
+			},
+			Spec: v1.BlueprintSpec{},
+			Status: v1.BlueprintStatus{
+				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+			},
+		}
+		expectedError := fmt.Errorf("test-error")
+		restClientMock.EXPECT().
+			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
+			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+				assert.Equal(t, &expected, blueprint)
+				return nil, expectedError
+			})
+
+		//when
+		err := repo.Update(ctx, domain.BlueprintSpec{
+			Id:     blueprintId,
+			Status: domain.StatusPhaseValidated,
+			Events: nil,
+		})
+
+		//then
+		require.Error(t, err)
+		var expectedErrorType *domainservice.InternalError
+		assert.ErrorAs(t, err, &expectedErrorType)
+		assert.ErrorIs(t, err, expectedError)
 	})
 }

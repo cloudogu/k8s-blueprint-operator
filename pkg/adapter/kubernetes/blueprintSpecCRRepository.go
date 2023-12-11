@@ -8,7 +8,6 @@ import (
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -72,31 +71,29 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
-	return retry.OnConflict(func() error {
-		updatedBlueprint := v1.Blueprint{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:              spec.Id,
-				ResourceVersion:   "",
-				CreationTimestamp: metav1.Time{},
-			},
-			Status: v1.BlueprintStatus{
-				Phase: v1.StatusPhase(spec.Status),
-			},
-		}
+	updatedBlueprint := v1.Blueprint{
+		TypeMeta: metav1.TypeMeta{},
+		ObjectMeta: metav1.ObjectMeta{
+			Name:              spec.Id,
+			ResourceVersion:   "",
+			CreationTimestamp: metav1.Time{},
+		},
+		Status: v1.BlueprintStatus{
+			Phase: v1.StatusPhase(spec.Status),
+		},
+	}
 
-		_, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
-		if err != nil {
-			if k8sErrors.IsConflict(err) {
-				return &domainservice.ConflictError{
-					WrappedError: err,
-					Message:      fmt.Sprintf("cannot update blueprint CR '%s' as it was modified in the meantime", spec.Id),
-				}
+	_, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
+	if err != nil {
+		if k8sErrors.IsConflict(err) {
+			return &domainservice.ConflictError{
+				WrappedError: err,
+				Message:      fmt.Sprintf("cannot update blueprint CR '%s' as it was modified in the meantime", spec.Id),
 			}
-			return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
 		}
-		// TODO add to Status: effective Blueprint, stateDiff, upgradePlan?
+		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
+	}
+	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan?
 
-		return err
-	})
+	return err
 }
