@@ -45,17 +45,10 @@ func (r *Remote) GetDogus(dogusToLoad []domainservice.DoguToLoad) (map[string]*c
 	var errs []error
 	for _, doguRef := range dogusToLoad {
 		dogu, err := r.GetDogu(doguRef.QualifiedDoguName, doguRef.Version)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
+		errs = append(errs, err)
 
 		dogus[doguRef.QualifiedDoguName] = dogu
 	}
 
-	if len(errs) != 0 {
-		return nil, errors.Join(errs...)
-	}
-
-	return dogus, nil
+	return dogus, errors.Join(errs...)
 }
