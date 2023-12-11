@@ -84,3 +84,22 @@ func (e *InternalError) Error() string {
 func (e *InternalError) Unwrap() error {
 	return e.WrappedError
 }
+
+// ConflictError is a common error indicating that the aggregate was modified in the meantime.
+type ConflictError struct {
+	WrappedError error
+	Message      string
+}
+
+// Error marks the struct as an error.
+func (e *ConflictError) Error() string {
+	if e.WrappedError != nil {
+		return fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
+	}
+	return e.Message
+}
+
+// Unwrap is used to make it work with errors.Is, errors.As.
+func (e *ConflictError) Unwrap() error {
+	return e.WrappedError
+}
