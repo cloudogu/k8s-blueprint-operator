@@ -118,5 +118,36 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 }
 
 func Test_blueprintSpecRepo_Update(t *testing.T) {
+	blueprintId := "MyBlueprint"
+	t.Run("all ok", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		expected := v1.Blueprint{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec:       v1.BlueprintSpec{},
+			Status:     v1.BlueprintStatus{},
+		}
+		restClientMock.EXPECT().UpdateStatus(ctx, expected, metav1.UpdateOptions{}).Return(&expected, nil)
+		_, err := restClientMock.Update(ctx, &v1.Blueprint{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Spec:       v1.BlueprintSpec{},
+			Status:     v1.BlueprintStatus{},
+		}, metav1.UpdateOptions{})
 
+		//when
+		err = repo.Update(ctx, domain.BlueprintSpec{
+			Id:     "myBlueprint",
+			Status: "",
+			Events: nil,
+		})
+
+		//then
+		require.Error(t, err)
+		var expectedErrorType *domainservice.NotFoundError
+		assert.ErrorAs(t, err, &expectedErrorType)
+		assert.ErrorContains(t, err, fmt.Sprintf("cannot load Blueprint CR '%s' as it does not exist:", blueprintId))
+	})
 }
