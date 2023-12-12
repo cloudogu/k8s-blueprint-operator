@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -291,5 +292,56 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		var expectedErrorType *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedErrorType)
 		assert.ErrorIs(t, err, expectedError)
+	})
+}
+
+func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
+	blueprintId := "MyBlueprint"
+	t.Run("publish events", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		restClientMock.EXPECT().UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).Return(nil, nil)
+
+		var events []interface{}
+		events = append(events,
+			domain.BlueprintSpecValidatedEvent{},
+			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
+		)
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", "test-error")
+
+		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+
+		//then
+		require.NoError(t, err)
+	})
+	t.Run("publish unknown event", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		restClientMock.EXPECT().UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).Return(nil, nil)
+
+		var events []interface{}
+		events = append(
+			events,
+			"myString",
+			struct{ key1 string }{key1: "val1"},
+		)
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "Unknown", "unknown event of type 'string': myString")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "Unknown", "unknown event of type 'struct { key1 string }': {key1:val1}")
+
+		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+
+		//then
+		require.NoError(t, err)
 	})
 }

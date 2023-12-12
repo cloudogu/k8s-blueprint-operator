@@ -146,7 +146,7 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 			ev := event.(domain.BlueprintSpecInvalidEvent)
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
 		default:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown error of type '%T'", event))
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}
 	}
 }
