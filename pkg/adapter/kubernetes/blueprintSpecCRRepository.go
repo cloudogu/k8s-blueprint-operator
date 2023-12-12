@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const resourceVersionKey = "resourceVersion"
+
 type blueprintSpecRepo struct {
 	blueprintClient         BlueprintInterface
 	blueprintSerializer     serializer.BlueprintSerializer
@@ -53,6 +55,8 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	if err != nil {
 		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize Blueprint CR %s: %w", blueprintId, err)
 	}
+	persistenceContext := make(map[string]interface{}, 1)
+	persistenceContext[resourceVersionKey] = blueprintCR.GetResourceVersion()
 
 	return domain.BlueprintSpec{
 		Id:                   blueprintId,
@@ -61,11 +65,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		EffectiveBlueprint:   domain.EffectiveBlueprint{},
 		StateDiff:            domain.StateDiff{},
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-		Status:               domain.StatusPhase(blueprintCR.Status.Phase),
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 		},
+		Status:             domain.StatusPhase(blueprintCR.Status.Phase),
+		PersistenceContext: persistenceContext,
 	}, nil
 }
 

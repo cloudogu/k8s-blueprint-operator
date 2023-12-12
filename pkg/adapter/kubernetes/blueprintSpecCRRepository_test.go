@@ -29,8 +29,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
 
 		cr := &v1.Blueprint{
-			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
+			TypeMeta: metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{
+				ResourceVersion: "abc",
+			},
 			Spec: v1.BlueprintSpec{
 				Blueprint:                `{"blueprintApi": "v2"}`,
 				BlueprintMask:            `{"blueprintMaskAPI": "v1"}`,
@@ -46,10 +48,16 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 		//then
 		require.NoError(t, err)
-		assert.Equal(t, domain.BlueprintSpec{Id: blueprintId, Config: domain.BlueprintConfiguration{
-			IgnoreDoguHealth:         true,
-			AllowDoguNamespaceSwitch: true,
-		}}, spec)
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = "abc"
+		assert.Equal(t, domain.BlueprintSpec{
+			Id: blueprintId,
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth:         true,
+				AllowDoguNamespaceSwitch: true,
+			},
+			PersistenceContext: persistenceContext,
+		}, spec)
 	})
 
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
