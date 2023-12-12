@@ -1,10 +1,13 @@
 package domain
 
 import (
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var version1_2_3, _ = core.ParseVersion("1.2.3")
 
 func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
 	component := Component{Name: "present-component", TargetState: TargetStatePresent}
@@ -16,7 +19,7 @@ func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
 }
 
 func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
-	component := Component{Name: "present/component", Version: "", TargetState: TargetStatePresent}
+	component := Component{Name: "present/component", Version: core.Version{}, TargetState: TargetStatePresent}
 
 	err := component.Validate()
 
@@ -25,7 +28,7 @@ func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
 }
 
 func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
-	component := Component{Version: "1.2.3", TargetState: TargetStatePresent}
+	component := Component{Version: version1_2_3, TargetState: TargetStatePresent}
 
 	err := component.Validate()
 
@@ -34,7 +37,7 @@ func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
 }
 
 func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
-	component := Component{Name: "", Version: "1.2.3", TargetState: TargetStatePresent}
+	component := Component{Name: "", Version: version1_2_3, TargetState: TargetStatePresent}
 
 	err := component.Validate()
 
@@ -43,7 +46,7 @@ func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
 }
 
 func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) {
-	component := Component{Name: "present-component", Version: "1.2.3"}
+	component := Component{Name: "present-component", Version: version1_2_3}
 
 	err := component.Validate()
 

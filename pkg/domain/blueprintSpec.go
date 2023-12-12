@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 )
 
 type BlueprintSpec struct {
@@ -173,7 +174,8 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	}
 	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name)
 	if noMaskDoguErr == nil {
-		if maskDogu.Version != "" {
+		emptyVersion := core.Version{}
+		if maskDogu.Version != emptyVersion {
 			effectiveDogu.Version = maskDogu.Version
 		}
 		if maskDogu.Namespace != dogu.Namespace {

@@ -2,10 +2,17 @@ package blueprintV2
 
 import (
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
+)
+
+var (
+	version1_2_0_1, _ = core.ParseVersion("1.2.0-1")
+	version3_0_2_2, _ = core.ParseVersion("3.0.2-2")
+	version0_2_1_1, _ = core.ParseVersion("0.2.1-1")
 )
 
 func TestSerializeBlueprint_ok(t *testing.T) {
@@ -29,8 +36,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
+					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
@@ -40,8 +47,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", Version: "0.2.1-1", TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","components":[{"name":"blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`,
@@ -100,7 +107,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: -1},
+			{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: -1},
 		},
 	}
 
@@ -133,8 +140,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
+					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
@@ -143,8 +150,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", Version: "0.2.1-1", TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -23,7 +24,8 @@ func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) 
 }
 
 func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
-	dogu := MaskDogu{Namespace: "present", Name: "dogu", Version: "2018-1"}
+	version, _ := core.ParseVersion("2018-1")
+	dogu := MaskDogu{Namespace: "present", Name: "dogu", Version: version}
 
 	err := dogu.validate()
 

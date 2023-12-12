@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"slices"
 )
 
@@ -15,7 +16,7 @@ type MaskDogu struct {
 	Name string
 	// Version defines the version of the dogu that is to be installed. This version is optional and overrides
 	// the version of the dogu from the blueprint.
-	Version string
+	Version core.Version
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
 }

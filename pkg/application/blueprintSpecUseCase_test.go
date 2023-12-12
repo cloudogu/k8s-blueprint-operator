@@ -198,12 +198,13 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
 	useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
 
+	version, _ := core.ParseVersion("1.0.0-1")
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
 		Id: "testBlueprint1",
 		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
 			Namespace:   "official",
 			Name:        "redmine",
-			Version:     "1.0.0-1",
+			Version:     version,
 			TargetState: domain.TargetStatePresent,
 		}}},
 		Status: domain.StatusPhaseValidated,
@@ -212,7 +213,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{
 		{
 			QualifiedDoguName: "official/redmine",
-			Version:           "1.0.0-1",
+			Version:           version.Raw,
 		},
 	}).Return(nil, errors.New("dogu not found for testing"))
 

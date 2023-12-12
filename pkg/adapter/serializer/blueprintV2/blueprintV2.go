@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
@@ -61,7 +62,7 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 		errorList = append(errorList, err)
 		return TargetDogu{
 			Name:        dogu.GetQualifiedName(),
-			Version:     dogu.Version,
+			Version:     dogu.Version.Raw,
 			TargetState: newState,
 		}
 	})
@@ -70,7 +71,7 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 		errorList = append(errorList, err)
 		return TargetComponent{
 			Name:        component.Name,
-			Version:     component.Version,
+			Version:     component.Version.Raw,
 			TargetState: newState,
 		}
 	})
@@ -129,11 +130,18 @@ func convertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 			errorList = append(errorList, err)
 			continue
 		}
-
+		var version core.Version
+		if dogu.Version != "" {
+			version, err = core.ParseVersion(dogu.Version)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("could not parse version of TargetDogu: %w", err))
+				continue
+			}
+		}
 		convertedDogus = append(convertedDogus, domain.Dogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
-			Version:     dogu.Version,
+			Version:     version,
 			TargetState: newState,
 		})
 	}
@@ -147,7 +155,7 @@ func convertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 }
 
 func convertComponents(components []TargetComponent) ([]domain.Component, error) {
-	var convertedDogus []domain.Component
+	var convertedComponents []domain.Component
 	var errorList []error
 
 	for _, component := range components {
@@ -157,18 +165,25 @@ func convertComponents(components []TargetComponent) ([]domain.Component, error)
 			errorList = append(errorList, err)
 			continue
 		}
-
-		convertedDogus = append(convertedDogus, domain.Component{
+		var version core.Version
+		if component.Version != "" {
+			version, err = core.ParseVersion(component.Version)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("could not parse version of TargetComponent: %w", err))
+				continue
+			}
+		}
+		convertedComponents = append(convertedComponents, domain.Component{
 			Name:        component.Name,
-			Version:     component.Version,
+			Version:     version,
 			TargetState: newState,
 		})
 	}
 
 	err := errors.Join(errorList...)
 	if err != nil {
-		return convertedDogus, fmt.Errorf("cannot convert blueprint components: %w", err)
+		return convertedComponents, fmt.Errorf("cannot convert blueprint components: %w", err)
 	}
 
-	return convertedDogus, err
+	return convertedComponents, err
 }

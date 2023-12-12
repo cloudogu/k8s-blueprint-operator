@@ -1,15 +1,18 @@
 package domain
 
 import (
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
+var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
+
 func Test_Validate(t *testing.T) {
 	dogus := []MaskDogu{
-		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_0, TargetState: TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: version3_2_1_0, TargetState: TargetStatePresent},
 	}
 	blueprintMask := BlueprintMask{
 		Dogus: dogus,

@@ -1,6 +1,7 @@
 package blueprintV2
 
 import (
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
@@ -8,19 +9,25 @@ import (
 	"testing"
 )
 
+var (
+	version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
+	version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
+	version1_2_3_3, _ = core.ParseVersion("1.2.3-3")
+)
+
 func Test_ConvertToBlueprintV2(t *testing.T) {
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
-		{Namespace: "present", Name: "dogu4", Version: "1.2.3-3"},
+		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: "1.2.3-3"},
+		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Name: "present/component4", Version: version1_2_3_3},
 	}
 	blueprint := domain.Blueprint{
 		Dogus:      dogus,
@@ -41,17 +48,17 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	blueprintV2, err := ConvertToBlueprintV2(blueprint)
 
 	convertedDogus := []TargetDogu{
-		{Name: "absent/dogu1", Version: "3.2.1-1", TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: "3.2.1-2", TargetState: "present"},
-		{Name: "present/dogu4", Version: "1.2.3-3", TargetState: "present"},
+		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []TargetComponent{
-		{Name: "component1", Version: "3.2.1-1", TargetState: "absent"},
+		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: "3.2.1-2", TargetState: "present"},
-		{Name: "present/component4", Version: "1.2.3-3", TargetState: "present"},
+		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	require.Nil(t, err)
@@ -75,17 +82,17 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 func Test_ConvertToBlueprint(t *testing.T) {
 	dogus := []TargetDogu{
-		{Name: "absent/dogu1", Version: "3.2.1-1", TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: "3.2.1-2", TargetState: "present"},
-		{Name: "present/dogu4", Version: "1.2.3-3"},
+		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu4", Version: version1_2_3_3.Raw},
 	}
 
 	components := []TargetComponent{
-		{Name: "component1", Version: "3.2.1-1", TargetState: "absent"},
+		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: "3.2.1-2", TargetState: "present"},
-		{Name: "present/component4", Version: "1.2.3-3"},
+		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/component4", Version: version1_2_3_3.Raw},
 	}
 
 	blueprintV2 := BlueprintV2{
@@ -109,17 +116,17 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	require.Nil(t, err)
 
 	convertedDogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
-		{Namespace: "present", Name: "dogu4", Version: "1.2.3-3"},
+		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	convertedComponents := []domain.Component{
-		{Name: "component1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
+		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
 		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: "1.2.3-3"},
+		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Name: "present/component4", Version: version1_2_3_3},
 	}
 
 	assert.Equal(t, domain.Blueprint{
@@ -143,12 +150,14 @@ func Test_ConvertToBlueprint_errors(t *testing.T) {
 	blueprintV2 := BlueprintV2{
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus: []TargetDogu{
-			{Name: "dogu1", Version: "3.2.1-1"},
-			{Name: "official/dogu1", Version: "3.2.1-1", TargetState: "unknown"},
-			{Name: "name/space/dogu2", Version: "3.2.1-2"},
+			{Name: "dogu1", Version: version3_2_1_1.Raw},
+			{Name: "official/dogu1", Version: version3_2_1_1.Raw, TargetState: "unknown"},
+			{Name: "name/space/dogu2", Version: version3_2_1_2.Raw},
+			{Name: "official/dogu3", Version: "abc"},
 		},
 		Components: []TargetComponent{
-			{Name: "component1", Version: "3.2.1-1", TargetState: "not known state"},
+			{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "not known state"},
+			{Name: "official/dogu3", Version: "abc"},
 		},
 	}
 
@@ -163,4 +172,6 @@ func Test_ConvertToBlueprint_errors(t *testing.T) {
 
 	require.ErrorContains(t, err, "cannot convert blueprint components: ")
 	require.ErrorContains(t, err, "unknown targetState 'not known state'")
+	require.ErrorContains(t, err, "could not parse version of TargetDogu: failed to parse major version abc")
+	require.ErrorContains(t, err, "could not parse version of TargetComponent: failed to parse major version abc")
 }

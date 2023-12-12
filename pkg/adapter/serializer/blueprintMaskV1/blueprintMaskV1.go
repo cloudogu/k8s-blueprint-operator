@@ -3,6 +3,7 @@ package blueprintMaskV1
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
@@ -43,7 +44,7 @@ func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error
 		errorList = append(errorList, err)
 		return MaskTargetDogu{
 			Name:        dogu.GetQualifiedName(),
-			Version:     dogu.Version,
+			Version:     dogu.Version.Raw,
 			TargetState: newState,
 		}
 	})
@@ -87,10 +88,18 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 			errorList = append(errorList, err)
 			continue
 		}
+		var version core.Version
+		if dogu.Version != "" {
+			version, err = core.ParseVersion(dogu.Version)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("could not parse version of MaskTargetDogu: %w", err))
+				continue
+			}
+		}
 		convertedDogus = append(convertedDogus, domain.MaskDogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
-			Version:     dogu.Version,
+			Version:     version,
 			TargetState: state,
 		})
 	}

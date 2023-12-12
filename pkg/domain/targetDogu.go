@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"slices"
 )
 
@@ -15,7 +16,7 @@ type Dogu struct {
 	Name string
 	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
-	Version string
+	Version core.Version
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
 }
@@ -36,7 +37,8 @@ func (dogu Dogu) validate() error {
 	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
 		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
-	if dogu.TargetState != TargetStateAbsent && dogu.Version == "" {
+	emptyVersion := core.Version{}
+	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
 		errorList = append(errorList, fmt.Errorf("dogu field Version must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	//TODO: parse version and validate the real format with cesapp-lib
