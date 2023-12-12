@@ -25,8 +25,8 @@ type BlueprintSpecRepository interface {
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error)
 	// Update updates a given BlueprintSpec.
-	// returns an InternalError if there is any error.
-	//TODO: Maybe we also need an ConcurrentModificationError
+	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or
+	// returns an InternalError if there is any other error
 	Update(ctx context.Context, blueprintSpec domain.BlueprintSpec) error
 }
 
