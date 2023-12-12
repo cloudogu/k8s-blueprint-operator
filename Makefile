@@ -1,8 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=k8s-blueprint-operator
 VERSION=0.1.0
-## Image URL to use all building/pushing image targets
-IMAGE_DEV=${K3CES_REGISTRY_URL_PREFIX}/${ARTIFACT_ID}:${VERSION}
 IMAGE=cloudogu/${ARTIFACT_ID}:${VERSION}
 GOTAG=1.21
 MAKEFILES_VERSION=9.0.1
@@ -23,13 +21,15 @@ include build/make/clean.mk
 include build/make/digital-signature.mk
 include build/make/mocks.mk
 
-PRE_COMPILE=generate
-K8S_RESOURCE_TEMP_FOLDER ?= $(TARGET_DIR)
-K8S_PRE_GENERATE_TARGETS=k8s-create-temporary-resource template-dev-only-image-pull-policy
-
-K8S_CRD_COMPONENT_SOURCE=$(WORKDIR)/k8s/helm-crd/templates/k8s.cloudogu.com_blueprints.yaml
-CRD_SRC_GO=$(WORKDIR)/pkg/api/v1/blueprint_types.go
-K8S_COPY_CRD_TARGET_DIR=$(WORKDIR)/pkg/api/v1
+K8S_COMPONENT_SOURCE_VALUES = ${HELM_SOURCE_DIR}/values.yaml
+K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
+PRE_COMPILE=generate-deepcopy
+HELM_PRE_APPLY_TARGETS=template-stage template-log-level template-image-pull-policy
+HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
+HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
+CRD_POST_MANIFEST_TARGETS = crd-add-labels
+CHECK_VAR_TARGETS=check-all-vars
+IMAGE_IMPORT_TARGET=image-import
 
 include build/make/k8s-controller.mk
 
