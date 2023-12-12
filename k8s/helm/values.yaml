@@ -1,8 +1,8 @@
-controllerManager:
+manager:
   image:
-    repository: k3ces.local:30099/k8s-blueprint-operator
+    repository: cloudogu/k8s-blueprint-operator
     tag: 0.1.0
-  imagePullPolicy: Always
+  imagePullPolicy: IfNotPresent
   env:
     logLevel: debug
     stage: development
