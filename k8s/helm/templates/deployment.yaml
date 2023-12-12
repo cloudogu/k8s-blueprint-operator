@@ -6,7 +6,7 @@ metadata:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-controller-manager
 spec:
-  replicas: 1
+  replicas: {{ .Values.manager.replicas | default 1 }}
   selector:
     matchLabels:
       control-plane: controller-manager
