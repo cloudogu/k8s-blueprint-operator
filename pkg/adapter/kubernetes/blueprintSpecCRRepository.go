@@ -8,6 +8,7 @@ import (
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -23,6 +24,7 @@ type blueprintSpecRepo struct {
 	blueprintClient         BlueprintInterface
 	blueprintSerializer     serializer.BlueprintSerializer
 	blueprintMaskSerializer serializer.BlueprintMaskSerializer
+	eventRecorder           eventRecorder
 }
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
@@ -30,11 +32,13 @@ func NewBlueprintSpecRepository(
 	blueprintClient BlueprintInterface,
 	blueprintSerializer serializer.BlueprintSerializer,
 	blueprintMaskSerializer serializer.BlueprintMaskSerializer,
+	eventRecorder eventRecorder,
 ) domainservice.BlueprintSpecRepository {
 	return &blueprintSpecRepo{
 		blueprintClient:         blueprintClient,
 		blueprintSerializer:     blueprintSerializer,
 		blueprintMaskSerializer: blueprintMaskSerializer,
+		eventRecorder:           eventRecorder,
 	}
 }
 
@@ -106,9 +110,10 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		}
 		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
 	}
+	repo.publishEvents(&updatedBlueprint, spec.Events)
 	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan?
 
-	return err
+	return nil
 }
 
 // getResourceVersion reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
@@ -129,5 +134,19 @@ func getResourceVersion(ctx context.Context, spec domain.BlueprintSpec) (resourc
 		logger.Error(err, "This is normally written while loading the blueprintSpec over this repository. "+
 			"Do you tried to persist a newly blueprintSpec with repo.Update()?")
 		return resourceVersionValue{}, err
+	}
+}
+
+func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []interface{}) {
+	for _, event := range events {
+		switch event.(type) {
+		case domain.BlueprintSpecValidatedEvent:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
+		case domain.BlueprintSpecInvalidEvent:
+			ev := event.(domain.BlueprintSpecInvalidEvent)
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
+		default:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown error of type '%T'", event))
+		}
 	}
 }

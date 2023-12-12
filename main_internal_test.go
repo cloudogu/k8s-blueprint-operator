@@ -44,7 +44,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -71,7 +71,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -93,8 +93,8 @@ func Test_startOperator(t *testing.T) {
 		restConfig := &rest.Config{}
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-backup-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetConfig().Return(restConfig)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
+		//ctrlManMock.EXPECT().GetConfig().Return(restConfig)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(runtime.NewScheme())
 
@@ -108,7 +108,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -134,8 +134,7 @@ func Test_startOperator(t *testing.T) {
 		restConfig := &rest.Config{}
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-backup-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetConfig().Return(restConfig)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
@@ -153,7 +152,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -180,8 +179,7 @@ func Test_startOperator(t *testing.T) {
 		restConfig := &rest.Config{}
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-backup-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetConfig().Return(restConfig)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
@@ -200,7 +198,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -229,8 +227,7 @@ func Test_startOperator(t *testing.T) {
 		restConfig := &rest.Config{}
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-backup-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetConfig().Return(restConfig)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
@@ -253,7 +250,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
 
 		// then
 		require.Error(t, err)
@@ -282,8 +279,7 @@ func Test_startOperator(t *testing.T) {
 		restConfig := &rest.Config{}
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-backup-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetConfig().Return(restConfig)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
@@ -306,7 +302,7 @@ func Test_startOperator(t *testing.T) {
 		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
 
 		// when
-		err := startOperator(testCtx, nil, testOperatorConfig, flags, []string{}, stubHandler{})
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
 
 		// then
 		require.NoError(t, err)

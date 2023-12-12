@@ -10,17 +10,13 @@ import (
 
 // BlueprintReconciler reconciles a Blueprint object
 type BlueprintReconciler struct {
-	clientSet              ecosystemClientSet
-	recorder               eventRecorder
 	blueprintChangeHandler BlueprintChangeHandler
 }
 
 func NewBlueprintReconciler(
-	clientSet ecosystemClientSet,
-	recorder eventRecorder,
 	blueprintChangeHandler BlueprintChangeHandler,
 ) *BlueprintReconciler {
-	return &BlueprintReconciler{clientSet: clientSet, recorder: recorder, blueprintChangeHandler: blueprintChangeHandler}
+	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
 }
 
 //+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;create;update;patch;delete

@@ -26,7 +26,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	t.Run("all ok", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		cr := &v1.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
@@ -61,7 +62,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		cr := &v1.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
@@ -89,7 +91,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	t.Run("internal error while loading", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(nil, k8sErrors.NewInternalError(errors.New("test-error")))
 
@@ -107,7 +110,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	t.Run("not found error while loading", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		restClientMock.EXPECT().
 			Get(ctx, blueprintId, metav1.GetOptions{}).
@@ -130,7 +134,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	t.Run("all ok", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
@@ -166,7 +171,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	t.Run("no version counter", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		//when
 		err := repo.Update(ctx, domain.BlueprintSpec{
@@ -183,7 +189,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	t.Run("version counter of different type", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		//when
 		persistenceContext := make(map[string]interface{})
@@ -203,7 +210,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	t.Run("conflict error", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
@@ -247,7 +255,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	t.Run("internal error", func(t *testing.T) {
 		//given
 		restClientMock := NewMockBlueprintInterface(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{

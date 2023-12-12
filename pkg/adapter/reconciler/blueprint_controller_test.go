@@ -21,7 +21,7 @@ var testCtx = context.Background()
 const testBlueprint = "test-blueprint"
 
 func TestNewBlueprintReconciler(t *testing.T) {
-	reconciler := NewBlueprintReconciler(nil, nil, nil)
+	reconciler := NewBlueprintReconciler(nil)
 	assert.NotNil(t, reconciler)
 }
 
