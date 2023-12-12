@@ -29,10 +29,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
 
 		cr := &v1.Blueprint{
-			TypeMeta: metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{
-				ResourceVersion: "abc",
-			},
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: v1.BlueprintSpec{
 				Blueprint:                `{"blueprintApi": "v2"}`,
 				BlueprintMask:            `{"blueprintMaskAPI": "v1"}`,
@@ -49,7 +47,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		//then
 		require.NoError(t, err)
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = "abc"
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
 		assert.Equal(t, domain.BlueprintSpec{
 			Id: blueprintId,
 			Config: domain.BlueprintConfiguration{
@@ -67,7 +65,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 		cr := &v1.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
-			ObjectMeta: metav1.ObjectMeta{},
+			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: v1.BlueprintSpec{
 				Blueprint:     `{}`,
 				BlueprintMask: `{}`,
@@ -136,7 +134,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: blueprintId,
+				Name:            blueprintId,
+				ResourceVersion: "abc",
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
@@ -151,6 +150,25 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			})
 
 		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		err := repo.Update(ctx, domain.BlueprintSpec{
+			Id:                 blueprintId,
+			Status:             domain.StatusPhaseValidated,
+			Events:             nil,
+			PersistenceContext: persistenceContext,
+		})
+
+		//then
+		require.NoError(t, err)
+	})
+
+	t.Run("no version counter", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+
+		//when
 		err := repo.Update(ctx, domain.BlueprintSpec{
 			Id:     blueprintId,
 			Status: domain.StatusPhaseValidated,
@@ -158,7 +176,28 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		})
 
 		//then
-		require.NoError(t, err)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "no resourceVersion was provided over the persistenceContext in the given blueprintSpec")
+	})
+
+	t.Run("version counter of different type", func(t *testing.T) {
+		//given
+		restClientMock := NewMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{})
+
+		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = 1
+		err := repo.Update(ctx, domain.BlueprintSpec{
+			Id:                 blueprintId,
+			Status:             domain.StatusPhaseValidated,
+			Events:             nil,
+			PersistenceContext: persistenceContext,
+		})
+
+		//then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "resourceVersion in blueprintSpec is not a 'resourceVersionValue' but 'int'")
 	})
 
 	t.Run("conflict error", func(t *testing.T) {
@@ -168,7 +207,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: blueprintId,
+				Name:            blueprintId,
+				ResourceVersion: "abc",
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
@@ -188,10 +228,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			})
 
 		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{
-			Id:     blueprintId,
-			Status: domain.StatusPhaseValidated,
-			Events: nil,
+			Id:                 blueprintId,
+			Status:             domain.StatusPhaseValidated,
+			Events:             nil,
+			PersistenceContext: persistenceContext,
 		})
 
 		//then
@@ -208,7 +251,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expected := v1.Blueprint{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
-				Name: blueprintId,
+				Name:            blueprintId,
+				ResourceVersion: "abc",
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
@@ -224,10 +268,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			})
 
 		//when
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{
-			Id:     blueprintId,
-			Status: domain.StatusPhaseValidated,
-			Events: nil,
+			Id:                 blueprintId,
+			Status:             domain.StatusPhaseValidated,
+			Events:             nil,
+			PersistenceContext: persistenceContext,
 		})
 
 		//then
