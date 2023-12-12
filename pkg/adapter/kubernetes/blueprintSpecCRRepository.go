@@ -139,11 +139,10 @@ func getResourceVersion(ctx context.Context, spec domain.BlueprintSpec) (resourc
 
 func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []interface{}) {
 	for _, event := range events {
-		switch event.(type) {
+		switch ev := event.(type) {
 		case domain.BlueprintSpecValidatedEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
 		case domain.BlueprintSpecInvalidEvent:
-			ev := event.(domain.BlueprintSpecInvalidEvent)
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
