@@ -38,7 +38,7 @@ type MaskTargetDogu struct {
 
 func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error) {
 	var errorList []error
-	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskTargetDogu) MaskTargetDogu {
+	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskDogu) MaskTargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return MaskTargetDogu{
@@ -72,8 +72,8 @@ func convertToBlueprintMask(blueprintMask BlueprintMaskV1) (domain.BlueprintMask
 	return domain.BlueprintMask{Dogus: convertedDogus}, nil
 }
 
-func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskTargetDogu, error) {
-	var convertedDogus []domain.MaskTargetDogu
+func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
+	var convertedDogus []domain.MaskDogu
 	var errorList []error
 
 	for _, dogu := range dogus {
@@ -87,7 +87,7 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskTargetDogu, error) {
 			errorList = append(errorList, err)
 			continue
 		}
-		convertedDogus = append(convertedDogus, domain.MaskTargetDogu{
+		convertedDogus = append(convertedDogus, domain.MaskDogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
 			Version:     dogu.Version,

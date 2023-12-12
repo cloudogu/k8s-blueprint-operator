@@ -5,7 +5,7 @@ package domain
 type EffectiveBlueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []TargetDogu
+	Dogus []Dogu
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
@@ -18,8 +18,8 @@ type EffectiveBlueprint struct {
 }
 
 // GetWantedDogus returns a list of all dogus which should be installed
-func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []TargetDogu {
-	var wantedDogus []TargetDogu
+func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
+	var wantedDogus []Dogu
 	for _, dogu := range effectiveBlueprint.Dogus {
 		if dogu.TargetState == TargetStatePresent {
 			wantedDogus = append(wantedDogus, dogu)

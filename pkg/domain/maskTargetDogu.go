@@ -6,9 +6,9 @@ import (
 	"slices"
 )
 
-// MaskTargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
+// MaskDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
 // was applied for a blueprintMask.
-type MaskTargetDogu struct {
+type MaskDogu struct {
 	// Namespace defines the namespace of the dogu, e.g. "official". Must not be empty.
 	Namespace string
 	// Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty. If you set another namespace than in the normal blueprint, a
@@ -20,11 +20,11 @@ type MaskTargetDogu struct {
 	TargetState TargetState
 }
 
-func (dogu MaskTargetDogu) GetQualifiedName() string {
+func (dogu MaskDogu) GetQualifiedName() string {
 	return fmt.Sprintf("%s/%s", dogu.Namespace, dogu.Name)
 }
 
-func (dogu MaskTargetDogu) validate() error {
+func (dogu MaskDogu) validate() error {
 	var errorList []error
 	if dogu.Namespace == "" {
 		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu.GetQualifiedName()))

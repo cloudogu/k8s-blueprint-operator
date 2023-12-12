@@ -12,7 +12,7 @@ import (
 type BlueprintMask struct {
 	// Dogus contains a set of dogus which alters the states of the dogus in the blueprint this mask is applied on.
 	// The names and target states of all dogus must not be empty.
-	Dogus []MaskTargetDogu
+	Dogus []MaskDogu
 }
 
 // Validate checks the structure and data of a blueprint mask and returns an error if there are any problems
@@ -42,7 +42,7 @@ func (blueprintMask *BlueprintMask) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskTargetDogu) string { return dogu.Name })
+	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) string { return dogu.Name })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -50,11 +50,11 @@ func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprintMask *BlueprintMask) FindDoguByName(name string) (MaskTargetDogu, error) {
+func (blueprintMask *BlueprintMask) FindDoguByName(name string) (MaskDogu, error) {
 	for doguIndex, dogu := range blueprintMask.Dogus {
 		if dogu.Name == name {
 			return blueprintMask.Dogus[doguIndex], nil
 		}
 	}
-	return MaskTargetDogu{}, fmt.Errorf("could not find dogu name %s in blueprint", name)
+	return MaskDogu{}, fmt.Errorf("could not find dogu name %s in blueprint", name)
 }

@@ -25,7 +25,7 @@ func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry)
 // an InternalError if there is any other error, e.g. with the connection to the remote dogu registry
 func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(effectiveBlueprint domain.EffectiveBlueprint) error {
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
-	dogusToLoad := util.Map(wantedDogus, func(dogu domain.TargetDogu) DoguToLoad {
+	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) DoguToLoad {
 		return DoguToLoad{
 			QualifiedDoguName: dogu.GetQualifiedName(),
 			Version:           dogu.Version,
@@ -53,7 +53,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 }
 
 func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
-	wantedDogus []domain.TargetDogu,
+	wantedDogus []domain.Dogu,
 	knownDoguSpecs map[string]*core.Dogu,
 	dependenciesOfWantedDogu []core.Dependency,
 ) error {
@@ -73,7 +73,7 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 
 func checkDoguDependency(
 	dependencyOfWantedDogu core.Dependency,
-	wantedDogus []domain.TargetDogu,
+	wantedDogus []domain.Dogu,
 	knownDoguSpecs map[string]*core.Dogu,
 ) error {
 	// this also works with namespace changes as only the simple dogu name get searched
@@ -86,7 +86,7 @@ func checkDoguDependency(
 	return checkDependencyVersion(dependencyInBlueprint, dependencyDoguSpec.Version)
 }
 
-func checkDependencyVersion(doguInBlueprint domain.TargetDogu, expectedVersion string) error {
+func checkDependencyVersion(doguInBlueprint domain.Dogu, expectedVersion string) error {
 	// it does not count as an error if no version is specified as the field is optional
 	if expectedVersion == "" {
 		return nil

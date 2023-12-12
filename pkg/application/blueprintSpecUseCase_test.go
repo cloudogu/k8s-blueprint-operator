@@ -200,7 +200,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
 		Id: "testBlueprint1",
-		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.TargetDogu{{
+		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
 			Namespace:   "official",
 			Name:        "redmine",
 			Version:     "1.0.0-1",

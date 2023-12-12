@@ -56,7 +56,7 @@ type TargetComponent struct {
 
 func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 	var errorList []error
-	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.TargetDogu) TargetDogu {
+	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.Dogu) TargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return TargetDogu{
@@ -81,7 +81,7 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 	}
 
 	return BlueprintV2{
-		GeneralBlueprint:        serializer.GeneralBlueprint{serializer.V2},
+		GeneralBlueprint:        serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:                   convertedDogus,
 		Components:              convertedComponents,
 		RegistryConfig:          RegistryConfig(blueprint.RegistryConfig),
@@ -114,8 +114,8 @@ func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
 	}, nil
 }
 
-func convertDogus(dogus []TargetDogu) ([]domain.TargetDogu, error) {
-	var convertedDogus []domain.TargetDogu
+func convertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
+	var convertedDogus []domain.Dogu
 	var errorList []error
 
 	for _, dogu := range dogus {
@@ -130,7 +130,7 @@ func convertDogus(dogus []TargetDogu) ([]domain.TargetDogu, error) {
 			continue
 		}
 
-		convertedDogus = append(convertedDogus, domain.TargetDogu{
+		convertedDogus = append(convertedDogus, domain.Dogu{
 			Namespace:   doguNamespace,
 			Name:        doguName,
 			Version:     dogu.Version,

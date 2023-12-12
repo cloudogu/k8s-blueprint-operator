@@ -9,7 +9,7 @@ import (
 )
 
 func Test_ConvertToBlueprintV2(t *testing.T) {
-	dogus := []domain.TargetDogu{
+	dogus := []domain.Dogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
 		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
@@ -108,7 +108,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 
 	require.Nil(t, err)
 
-	convertedDogus := []domain.TargetDogu{
+	convertedDogus := []domain.Dogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
 		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},

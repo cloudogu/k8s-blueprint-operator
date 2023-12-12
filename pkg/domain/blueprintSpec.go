@@ -152,8 +152,8 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	return nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogus() ([]TargetDogu, error) {
-	var effectiveDogus []TargetDogu
+func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
+	var effectiveDogus []Dogu
 	for _, dogu := range spec.Blueprint.Dogus {
 		effectiveDogu, err := spec.calculateEffectiveDogu(dogu)
 		if err != nil {
@@ -164,8 +164,8 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]TargetDogu, error) {
 	return effectiveDogus, nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) (TargetDogu, error) {
-	effectiveDogu := TargetDogu{
+func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
+	effectiveDogu := Dogu{
 		Namespace:   dogu.Namespace,
 		Name:        dogu.Name,
 		Version:     dogu.Version,
@@ -180,7 +180,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu TargetDogu) (TargetDogu, 
 			if spec.Config.AllowDoguNamespaceSwitch {
 				effectiveDogu.Namespace = maskDogu.Namespace
 			} else {
-				return TargetDogu{}, errors.New("changing the dogu namespace is only allowed with the changeDoguNamespace flag")
+				return Dogu{}, errors.New("changing the dogu namespace is only allowed with the changeDoguNamespace flag")
 			}
 		}
 		effectiveDogu.TargetState = maskDogu.TargetState

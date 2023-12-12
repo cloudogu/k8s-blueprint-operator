@@ -9,7 +9,7 @@ import (
 )
 
 func Test_ConvertToBlueprintMaskV1_ok(t *testing.T) {
-	dogus := []domain.MaskTargetDogu{
+	dogus := []domain.MaskDogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
 		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},
@@ -34,7 +34,7 @@ func Test_ConvertToBlueprintMaskV1_ok(t *testing.T) {
 }
 
 func Test_ConvertToBlueprintMaskV1_error(t *testing.T) {
-	dogus := []domain.MaskTargetDogu{
+	dogus := []domain.MaskDogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: -1},
 	}
 	blueprint := domain.BlueprintMask{Dogus: dogus}
@@ -62,7 +62,7 @@ func Test_ConvertToBlueprintMask(t *testing.T) {
 
 	require.Nil(t, err)
 
-	convertedDogus := []domain.MaskTargetDogu{
+	convertedDogus := []domain.MaskDogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-1", TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
 		{Namespace: "present", Name: "dogu3", Version: "3.2.1-2", TargetState: domain.TargetStatePresent},

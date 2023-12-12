@@ -63,8 +63,8 @@ func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 
 func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{{Name: "no namespace"}}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Name: "no namespace"}}},
+		Blueprint:     Blueprint{Dogus: []Dogu{{Name: "no namespace"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Name: "no namespace"}}},
 	}
 
 	err := spec.Validate()
@@ -79,8 +79,8 @@ func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 
 func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlueprint(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "official", Name: "nexus"}}},
+		Blueprint:     Blueprint{Dogus: []Dogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Namespace: "official", Name: "nexus"}}},
 	}
 
 	err := spec.validateMaskAgainstBlueprint()
@@ -91,8 +91,8 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlue
 
 func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchAllowed(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
+		Blueprint:     Blueprint{Dogus: []Dogu{{Namespace: "official", Name: "nexus"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Namespace: "premium", Name: "nexus"}}},
 		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
 	}
 
@@ -103,8 +103,8 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchAllowed(t *t
 
 func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{{Namespace: "official", Name: "nexus"}}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{{Namespace: "premium", Name: "nexus"}}},
+		Blueprint:     Blueprint{Dogus: []Dogu{{Namespace: "official", Name: "nexus"}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Namespace: "premium", Name: "nexus"}}},
 		Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
 	}
 
@@ -115,7 +115,7 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
 		{Namespace: "absent", Name: "dogu3", Version: "3.2.1-3", TargetState: TargetStateAbsent},
@@ -123,7 +123,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: dogus},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		Status:        StatusPhaseValidated,
 	}
 
@@ -134,8 +134,8 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		Blueprint:     Blueprint{Dogus: []Dogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		Status:        StatusPhaseNew,
 	}
 
@@ -147,8 +147,8 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) {
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []TargetDogu{}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskTargetDogu{}},
+		Blueprint:     Blueprint{Dogus: []Dogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		Status:        StatusPhaseInvalid,
 	}
 
@@ -159,12 +159,12 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) 
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
 	}
 
-	maskedDogus := []MaskTargetDogu{
+	maskedDogus := []MaskDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-2", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
@@ -178,17 +178,17 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) 
 
 	require.Nil(t, err)
 	require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-2", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
-	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-2", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 		{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStatePresent},
 	}
 
-	maskedDogus := []MaskTargetDogu{
+	maskedDogus := []MaskDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStateAbsent},
 		{Namespace: "official", Name: "dogu2", TargetState: TargetStateAbsent},
 	}
@@ -202,16 +202,16 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T)
 
 	require.Nil(t, err)
 	require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
-	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: "3.2.1-2", TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", TargetState: TargetStateAbsent},
 	}
 
-	maskedDogus := []MaskTargetDogu{
+	maskedDogus := []MaskDogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
 
@@ -225,15 +225,15 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *tes
 	require.Nil(t, err)
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 	//TODO: Is that the correct behavior? (absent dogus can be made present?)
-	assert.Equal(t, TargetDogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
 
-	maskedDogus := []MaskTargetDogu{
+	maskedDogus := []MaskDogu{
 		{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
 
@@ -250,11 +250,11 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "official", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
 
-	maskedDogus := []MaskTargetDogu{
+	maskedDogus := []MaskDogu{
 		{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent},
 	}
 
@@ -268,5 +268,5 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 
 	require.Nil(t, err, "with the feature flag namespace changes should be allowed")
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, TargetDogu{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "premium", Name: "dogu1", Version: "3.2.1-1", TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }

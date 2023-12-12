@@ -8,7 +8,7 @@ import (
 )
 
 func Test_validate_ok(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "absent", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: TargetStateAbsent},
 		{Namespace: "present", Name: "dogu3", Version: "3.2.1-0", TargetState: TargetStatePresent},
@@ -28,7 +28,7 @@ func Test_validate_ok(t *testing.T) {
 	require.Nil(t, err)
 }
 func Test_validate_multipleErrors(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Version: "3.2.1-2"},
 	}
 	components := []Component{
@@ -45,7 +45,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 }
 
 func Test_validateDogus_ok(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "absent", Name: "dogu", Version: "1.2.3-9", TargetState: TargetStateAbsent},
 		{Namespace: "absent", Name: "versionIsOptionalForStateAbsent", TargetState: TargetStateAbsent},
 		{Namespace: "present", Name: "dogu", Version: "3.2.1-2", TargetState: TargetStatePresent},
@@ -59,7 +59,7 @@ func Test_validateDogus_ok(t *testing.T) {
 }
 
 func Test_validateDogus_multipleErrors(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Name: "test"},
 		{Version: "3.2.1-2"},
 	}
@@ -98,7 +98,7 @@ func Test_validateComponents_multipleErrors(t *testing.T) {
 }
 
 func Test_validateDoguUniqueness(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Name: "present/dogu1", Version: "3.2.1-0", TargetState: TargetStatePresent},
 		{Name: "present/dogu1", Version: "1.2.3-4"},
 		{Name: "present/dogu2", Version: "1.2.3-4"},
@@ -167,7 +167,7 @@ func TestSetDoguRegistryKeysSuccessful(t *testing.T) {
 	dogu1 := map[string]interface{}{"keyDogu1": "valDogu1"}
 	dogu2 := map[string]interface{}{"keyDogu2": "valDogu2"}
 	dogu3 := map[string]interface{}{"keyDogu3": "valDogu3"}
-	dogus := []TargetDogu{
+	dogus := []Dogu{
 		{Namespace: "present", Name: "dogu1", Version: "3.2.1-0", TargetState: TargetStatePresent},
 		{Namespace: "present", Name: "dogu2", Version: "1.2.3-4", TargetState: TargetStatePresent},
 		{Namespace: "present", Name: "dogu3", Version: "1.2.3-4", TargetState: TargetStatePresent},

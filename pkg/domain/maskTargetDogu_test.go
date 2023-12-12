@@ -7,7 +7,7 @@ import (
 )
 
 func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testing.T) {
-	dogu := MaskTargetDogu{Namespace: "present", Name: "dogu", TargetState: TargetStatePresent}
+	dogu := MaskDogu{Namespace: "present", Name: "dogu", TargetState: TargetStatePresent}
 
 	err := dogu.validate()
 
@@ -15,7 +15,7 @@ func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testi
 }
 
 func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := MaskTargetDogu{Namespace: "present", Name: "dogu", TargetState: TargetStateAbsent}
+	dogu := MaskDogu{Namespace: "present", Name: "dogu", TargetState: TargetStateAbsent}
 
 	err := dogu.validate()
 
@@ -23,7 +23,7 @@ func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) 
 }
 
 func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
-	dogu := MaskTargetDogu{Namespace: "present", Name: "dogu", Version: "2018-1"}
+	dogu := MaskDogu{Namespace: "present", Name: "dogu", Version: "2018-1"}
 
 	err := dogu.validate()
 
@@ -32,7 +32,7 @@ func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
-	dogu := MaskTargetDogu{Namespace: "official"}
+	dogu := MaskDogu{Namespace: "official"}
 
 	err := dogu.validate()
 
@@ -41,7 +41,7 @@ func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
-	dogu := MaskTargetDogu{Namespace: "official", Name: "dogu1", TargetState: -1}
+	dogu := MaskDogu{Namespace: "official", Name: "dogu1", TargetState: -1}
 
 	err := dogu.validate()
 

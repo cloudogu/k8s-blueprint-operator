@@ -28,7 +28,7 @@ func TestSerializeBlueprintMask_ok(t *testing.T) {
 		{
 			"dogus in blueprint mask",
 			args{spec: domain.BlueprintMask{
-				Dogus: []domain.MaskTargetDogu{
+				Dogus: []domain.MaskDogu{
 					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
 					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
 				},
@@ -51,7 +51,7 @@ func TestSerializeBlueprintMask_ok(t *testing.T) {
 func TestSerializeBlueprintMask_error(t *testing.T) {
 	serializer := Serializer{}
 	mask := domain.BlueprintMask{
-		Dogus: []domain.MaskTargetDogu{
+		Dogus: []domain.MaskDogu{
 			{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: -1},
 		},
 	}
@@ -84,7 +84,7 @@ func TestDeserializeBlueprintMask_ok(t *testing.T) {
 			"dogus in blueprint mask",
 			args{spec: `{"blueprintMaskApi":"v1","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.BlueprintMask{
-				Dogus: []domain.MaskTargetDogu{
+				Dogus: []domain.MaskDogu{
 					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
 					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
 				}},

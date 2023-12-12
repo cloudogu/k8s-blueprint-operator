@@ -28,7 +28,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		{
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
-				Dogus: []domain.TargetDogu{
+				Dogus: []domain.Dogu{
 					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
 					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
 				},
@@ -99,7 +99,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
-		Dogus: []domain.TargetDogu{
+		Dogus: []domain.Dogu{
 			{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: -1},
 		},
 	}
@@ -132,7 +132,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
-				Dogus: []domain.TargetDogu{
+				Dogus: []domain.Dogu{
 					{Namespace: "official", Name: "nginx", Version: "1.2.0-1", TargetState: domain.TargetStatePresent},
 					{Namespace: "premium", Name: "jira", Version: "3.0.2-2", TargetState: domain.TargetStateAbsent},
 				}},

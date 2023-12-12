@@ -15,7 +15,7 @@ import (
 type Blueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []TargetDogu
+	Dogus []Dogu
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
@@ -47,13 +47,13 @@ func (blueprint *Blueprint) Validate() error {
 }
 
 func (blueprint *Blueprint) validateDogus() error {
-	errorList := util.Map(blueprint.Dogus, func(dogu TargetDogu) error { return dogu.validate() })
+	errorList := util.Map(blueprint.Dogus, func(dogu Dogu) error { return dogu.validate() })
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu TargetDogu) string { return dogu.Name })
+	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) string { return dogu.Name })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
