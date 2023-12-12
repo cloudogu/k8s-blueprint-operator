@@ -14,7 +14,11 @@ type BlueprintSpec struct {
 	BlueprintUpgradePlan BlueprintUpgradePlan
 	Config               BlueprintConfiguration
 	Status               StatusPhase
-	Events               []interface{}
+	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
+	// This field has a generic map type as the values within it highly depend on the used type of repository.
+	// This field should be ignored in the whole domain.
+	PersistenceContext map[string]interface{}
+	Events             []interface{}
 }
 
 type StatusPhase string
