@@ -1,0 +1,25 @@
+manager:
+  replicas: 1
+  image:
+    repository: cloudogu/k8s-blueprint-operator
+    tag: 0.1.0
+  imagePullPolicy: IfNotPresent
+  env:
+    logLevel: info
+    stage: production
+  resourceLimits:
+    cpu: 500m
+    memory: 128Mi
+  resourceRequests:
+    cpu: 10m
+    memory: 64Mi
+kubeRbacProxy:
+  image:
+    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    tag: v0.15.0
+  resourceLimits:
+    cpu: 500m
+    memory: 128Mi
+  resourceRequests:
+    cpu: 5m
+    memory: 64Mi

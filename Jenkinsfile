@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('github.com/cloudogu/ces-build-lib@1.67.0')
+@Library('github.com/cloudogu/ces-build-lib@2.0.1')
 import com.cloudogu.ces.cesbuildlib.*
 
 // Creating necessary git objects
@@ -21,8 +21,9 @@ repositoryName = "k8s-blueprint-operator"
 project = "github.com/${repositoryOwner}/${repositoryName}"
 registry = "registry.cloudogu.com"
 registry_namespace = "k8s"
-helmTemplateDir = "target/helm/${repositoryName}/templates"
-helmCrdTemplateDir = "target/helm/${repositoryName}-crd/templates"
+helmTargetDir = "target/k8s"
+helmChartDir = "${helmTargetDir}/helm"
+helmCRDChartDir = "${helmTargetDir}/helm-crd"
 
 // Configuration of branches
 productionReleaseBranch = "main"
@@ -63,23 +64,16 @@ node('docker') {
                             }
 
                             stage('Generate k8s Resources') {
-                                make 'k8s-create-temporary-resource'
-                                archiveArtifacts 'target/*.yaml'
+                                make 'crd-helm-generate'
+                                make 'helm-generate'
+                                archiveArtifacts "${helmTargetDir}/**/*"
                             }
 
-                            stage('Generate Helm Resources') {
-                                String controllerVersion = makefile.getVersion()
-                                make 'helm-package-release'
-                                sh ".bin/helm template ${repositoryName} target/helm/${repositoryName}-${controllerVersion}.tgz --output-dir=target/helm"
-
-                                make 'crd-helm-package'
-                                sh ".bin/helm template ${repositoryName}-crd target/helm-crd/${repositoryName}-crd-${controllerVersion}.tgz --output-dir=target/helm"
+                            stage("Lint helm") {
+                                make 'crd-helm-lint'
+                                make 'helm-lint'
                             }
                         }
-
-        stage("Lint k8s Resources") {
-            stageLintK8SResources(makefile)
-        }
 
         stage('SonarQube') {
             stageStaticAnalysisSonarQube()
@@ -99,18 +93,18 @@ node('docker') {
                 imageName = k3d.buildAndPushToLocalRegistry("cloudogu/${repositoryName}", controllerVersion)
             }
 
-            GString sourceDeploymentYaml = "${helmTemplateDir}/${repositoryName}_${controllerVersion}.yaml"
             stage('Update development resources') {
-                docker.image('mikefarah/yq:4.22.1')
+                def repository = imageName.substring(0, imageName.lastIndexOf(":"))
+                docker.image("golang:${goVersion}")
                         .mountJenkinsUser()
                         .inside("--volume ${WORKSPACE}:/workdir -w /workdir") {
-                            sh "yq -i '(select(.kind == \"Deployment\").spec.template.spec.containers[]|select(.name == \"manager\")).image=\"${imageName}\"' ${sourceDeploymentYaml}"
+                            sh "STAGE=development IMAGE_DEV=${repository} make helm-values-replace-image-repo"
                         }
             }
 
             stage('Deploy Manager') {
-                k3d.kubectl("apply -f ${helmCrdTemplateDir}")
-                k3d.kubectl("apply -f ${helmTemplateDir}")
+                k3d.helm("install ${repositoryName}-crd ${helmCRDChartDir}")
+                k3d.helm("install ${repositoryName} ${helmChartDir}")
             }
 
             stage('Wait for Ready Rollout') {
@@ -133,18 +127,6 @@ void gitWithCredentials(String command) {
                 returnStdout: true
         )
     }
-}
-
-void stageLintK8SResources(Makefile makefile) {
-    String kubevalImage = "cytopia/kubeval:0.13"
-    String controllerVersion = makefile.getVersion()
-
-    docker
-            .image(kubevalImage)
-            .inside("-v ${WORKSPACE}/target:/data -t --entrypoint=")
-                    {
-                        sh "kubeval /data/${repositoryName}_${controllerVersion}.yaml --ignore-missing-schemas"
-                    }
 }
 
 void stageStaticAnalysisReviewDog() {
@@ -209,29 +191,8 @@ void stageAutomaticRelease(Makefile makefile) {
             }
         }
 
-        stage('Finish Release') {
-            gitflow.finishRelease(releaseVersion, productionReleaseBranch)
-        }
-
         stage('Sign after Release') {
             gpg.createSignature()
-        }
-
-        stage('Regenerate resources for release') {
-            new Docker(this)
-                    .image("golang:${goVersion}")
-                    .mountJenkinsUser()
-                    .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}")
-                            {
-                                make 'k8s-create-temporary-resource'
-                            }
-        }
-
-        stage('Push to Registry') {
-            GString targetOperatorResourceYaml = "target/${repositoryName}_${controllerVersion}.yaml"
-
-            DoguRegistry registry = new DoguRegistry(this)
-            registry.pushK8sYaml(targetOperatorResourceYaml, repositoryName, "k8s", "${controllerVersion}")
         }
 
         stage('Push Helm chart to Harbor') {
@@ -241,17 +202,22 @@ void stageAutomaticRelease(Makefile makefile) {
                     .inside("--volume ${WORKSPACE}:/go/src/${project} -w /go/src/${project}")
                             {
                                 // Package operator-chart & crd-chart
-                                make 'helm-package-release'
+                                make 'helm-package'
                                 make 'crd-helm-package'
+                                archiveArtifacts "${helmTargetDir}/**/*"
 
                                 // Push charts
                                 withCredentials([usernamePassword(credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
                                     sh ".bin/helm registry login ${registry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
 
-                                    sh ".bin/helm push target/helm/${repositoryName}-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
-                                    sh ".bin/helm push target/helm-crd/${repositoryName}-crd-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
+                                    sh ".bin/helm push ${helmChartDir}/${repositoryName}-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
+                                    sh ".bin/helm push ${helmCRDChartDir}/${repositoryName}-crd-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
                                 }
                             }
+        }
+
+        stage('Finish Release') {
+            gitflow.finishRelease(releaseVersion, productionReleaseBranch)
         }
 
         stage('Add Github-Release') {
