@@ -97,10 +97,8 @@ func getEnvVar(name string) (string, error) {
 
 // GetRemoteConfiguration creates a remote configuration with the configured values.
 func GetRemoteConfiguration() (*core.Remote, error) {
-	urlSchema, err := getEnvVar(doguRegistryURLSchemaEnvVar)
-	if err != nil {
-		return nil, err
-	}
+	// We can safely ignore this error since the url schema variable is optional.
+	urlSchema, _ := getEnvVar(doguRegistryURLSchemaEnvVar)
 
 	if urlSchema != "index" {
 		log.Info("URLSchema is not index. Setting it to default.")
