@@ -9,4 +9,9 @@ metadata:
     app.kubernetes.io/created-by: k8s-blueprint-operator
   name: blueprint-sample
 spec:
-  # TODO(user): Add fields here
+  blueprint: |
+    {"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"}]}
+  blueprintMask: |
+    {"blueprintMaskApi":"v1"}
+  ignoreDoguHealth: false
+  allowDoguNamespaceSwitch: false
