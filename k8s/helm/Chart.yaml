@@ -22,3 +22,6 @@ version: 0.0.0-replaceme
 # follow Semantic Versioning. They should reflect the version the application is using.
 # It is recommended to use it with quotes.
 appVersion: "0.0.0-replaceme"
+
+annotations:
+  "k8s.cloudogu.com/ces-dependency/k8s-blueprint-operator-crd": "0.x.x-0"

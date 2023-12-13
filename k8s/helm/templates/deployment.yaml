@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: controller-manager
+  {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
+  name: {{ include "k8s-blueprint-operator.name" . }}-controller-manager
+spec:
+  replicas: {{ .Values.manager.replicas | default 1 }}
+  selector:
+    matchLabels:
+      control-plane: controller-manager
+    {{- include "k8s-blueprint-operator.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        kubectl.kubernetes.io/default-container: manager
+      labels:
+        control-plane: controller-manager
+      {{- include "k8s-blueprint-operator.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - args:
+            - --secure-listen-address=0.0.0.0:8443
+            - --upstream=http://127.0.0.1:8080/
+            - --v=0
+          image: {{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}
+          name: kube-rbac-proxy
+          ports:
+            - containerPort: 8443
+              name: https
+              protocol: TCP
+          resources:
+            limits: {{- toYaml .Values.manager.resourceLimits | nindent
+            14 }}
+            requests: {{- toYaml .Values.manager.resourceRequests | nindent
+            14 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+        - args:
+            - --health-probe-bind-address=:8081
+            - --metrics-bind-address=127.0.0.1:8080
+            - --leader-elect
+          env:
+          - name: STAGE
+            value: {{ quote .Values.manager.env.stage | default "production"}}
+          - name: LOG_LEVEL
+            value: {{ quote .Values.manager.env.logLevel | default "info" }}
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+          image: {{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8081
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          name: manager
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8081
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            limits: {{- toYaml .Values.manager.resourceLimits | nindent
+            14 }}
+            requests: {{- toYaml .Values.manager.resourceRequests | nindent
+            14 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccountName: {{ include "k8s-blueprint-operator.name" . }}-controller-manager
+      terminationGracePeriodSeconds: 10
