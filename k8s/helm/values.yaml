@@ -5,8 +5,8 @@ manager:
     tag: 0.1.0
   imagePullPolicy: IfNotPresent
   env:
-    logLevel: debug
-    stage: development
+    logLevel: info
+    stage: production
   resourceLimits:
     cpu: 500m
     memory: 128Mi
