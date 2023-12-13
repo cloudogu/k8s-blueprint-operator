@@ -103,8 +103,8 @@ node('docker') {
             }
 
             stage('Deploy Manager') {
-                k3d.kubectl("apply -f ${helmCrdTemplateDir}")
-                k3d.kubectl("apply -f ${helmTemplateDir}")
+                k3d.helm("install ${repositoryName}-crd ${helmCRDChartDir}")
+                k3d.helm("install ${repositoryName} ${helmChartDir}")
             }
 
             stage('Wait for Ready Rollout') {
