@@ -37,6 +37,12 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 	case domain.StatusPhaseInvalid:
 		return nil
+	case domain.StatusPhaseStaticallyValidated:
+		err := useCase.ValidateBlueprintSpecDynamically(ctx, blueprintId)
+		if err != nil {
+			return err
+		}
+		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 	case domain.StatusPhaseValidated:
 		err := useCase.calculateEffectiveBlueprint(ctx, blueprintId)
 		if err != nil {
@@ -46,6 +52,8 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 	case domain.StatusPhaseInProgress:
 		return nil //unclear what to do here for now
 	case domain.StatusPhaseCompleted:
+		return nil
+	case domain.StatusPhaseFailed:
 		return nil
 	default:
 		return fmt.Errorf("could not handle change in blueprint spec with ID '%s': unknown status '%s'", blueprintId, blueprintSpec.Status)
@@ -59,13 +67,23 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
+		var invalidError *domain.InvalidBlueprintError
+		if errors.As(err, &invalidError) {
+			blueprintSpec.MarkInvalid(err)
+			updateErr := useCase.repo.Update(ctx, blueprintSpec)
+			if updateErr != nil {
+				return updateErr
+			}
+			return fmt.Errorf("blueprint spec syntax is invalid: %w", err)
+		} else {
+			return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
+		}
 	}
 
-	invalidBlueprintError := blueprintSpec.Validate()
+	invalidBlueprintError := blueprintSpec.ValidateStatically()
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot update blueprint spec after validation: %w", err)
+		return fmt.Errorf("cannot update blueprint spec after static validation: %w", err)
 	}
 
 	return invalidBlueprintError
@@ -91,7 +109,11 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 			Message:      "blueprint spec is invalid",
 		}
 	}
-	//TODO: Maybe we should persist the status change, but then we have two validated status (statically and dynamically)
+	blueprintSpec.ValidateDynamically(validationError)
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot update blueprint spec after dynamic validation: %w", err)
+	}
 	return validationError
 }
 

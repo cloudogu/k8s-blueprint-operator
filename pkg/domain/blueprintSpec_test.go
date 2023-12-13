@@ -15,28 +15,28 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
 	require.Equal(t, StatusPhaseNew, spec.Status, "Status new should be the default")
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseValidated, spec.Status)
+	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, BlueprintSpecValidatedEvent{}, spec.Events[0])
 }
 
 func Test_BlueprintSpec_Validate_inStatusValidated(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseValidated}
+	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseStaticallyValidated}
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseValidated, spec.Status)
+	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
 	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
 }
 
 func Test_BlueprintSpec_Validate_inStatusInProgress(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInProgress}
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
 	assert.Equal(t, StatusPhaseInProgress, spec.Status, "should stay in the old status")
@@ -46,7 +46,7 @@ func Test_BlueprintSpec_Validate_inStatusInProgress(t *testing.T) {
 func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInvalid}
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	require.NotNil(t, err, "should not evaluate again and should stop with an error")
 	var invalidError *InvalidBlueprintError
@@ -57,7 +57,7 @@ func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 	spec := BlueprintSpec{}
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
@@ -72,7 +72,7 @@ func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Name: "no namespace"}}},
 	}
 
-	err := spec.Validate()
+	err := spec.ValidateStatically()
 
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)

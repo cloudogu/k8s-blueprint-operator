@@ -27,6 +27,8 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
+	// StatusPhaseStaticallyValidated marks the given blueprint spec as validated.
+	StatusPhaseStaticallyValidated StatusPhase = "staticallyValidated"
 	// StatusPhaseValidated marks the given blueprint spec as validated.
 	StatusPhaseValidated StatusPhase = "validated"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
@@ -68,10 +70,15 @@ type BlueprintSpecInvalidEvent struct {
 
 type BlueprintSpecValidatedEvent struct{}
 
-// Validate checks the blueprintSpec for semantic errors and sets the status to the result.
+type EffectiveBlueprintCalculatedEvent struct {
+	EffectiveBlueprint EffectiveBlueprint
+}
+
+// ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
+// Here will be only checked, what can be checked without any external information, e.g. without dogu specification.
 // returns a domain.InvalidBlueprintError if blueprint is invalid
 // or nil otherwise.
-func (spec *BlueprintSpec) Validate() error {
+func (spec *BlueprintSpec) ValidateStatically() error {
 	switch spec.Status {
 	case StatusPhaseNew: //continue
 	case StatusPhaseInvalid: //do not validate again
@@ -96,14 +103,10 @@ func (spec *BlueprintSpec) Validate() error {
 		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 	} else {
-		spec.Status = StatusPhaseValidated
+		spec.Status = StatusPhaseStaticallyValidated
 		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
 	}
 	return err
-}
-
-type EffectiveBlueprintCalculatedEvent struct {
-	effectiveBlueprint EffectiveBlueprint
 }
 
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
@@ -125,6 +128,25 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 		err = fmt.Errorf("blueprint mask does not match the blueprint: %w", err)
 	}
 	return err
+}
+
+// ValidateDynamically sets the Status either to StatusPhaseInvalid or StatusPhaseValidated
+// depending on if the dependencies or versions of the elements in the blueprint are invalid.
+// returns a domain.InvalidBlueprintError if blueprint is invalid
+// or nil otherwise.
+func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
+	var err error
+	if possibleInvalidDependenciesError != nil {
+		err = &InvalidBlueprintError{
+			WrappedError: possibleInvalidDependenciesError,
+			Message:      "blueprint spec is invalid",
+		}
+		spec.Status = StatusPhaseInvalid
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+	} else {
+		spec.Status = StatusPhaseValidated
+		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
+	}
 }
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
@@ -149,7 +171,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		RegistryConfigEncrypted: spec.Blueprint.RegistryConfigEncrypted,
 	}
 
-	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{effectiveBlueprint: spec.EffectiveBlueprint})
+	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: spec.EffectiveBlueprint})
 	return nil
 }
 
@@ -189,4 +211,9 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	}
 
 	return effectiveDogu, nil
+}
+
+func (spec *BlueprintSpec) MarkInvalid(err error) {
+	spec.Status = StatusPhaseInvalid
+	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 }

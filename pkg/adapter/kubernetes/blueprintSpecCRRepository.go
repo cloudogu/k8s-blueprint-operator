@@ -58,19 +58,10 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
-	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
-	err = errors.Join(blueprintErr, maskErr)
-	if err != nil {
-		return domain.BlueprintSpec{}, fmt.Errorf("could not deserialize Blueprint CR %s: %w", blueprintId, err)
-	}
 	persistenceContext := make(map[string]interface{}, 1)
 	persistenceContext[resourceVersionKey] = resourceVersionValue{blueprintCR.GetResourceVersion()}
-
-	return domain.BlueprintSpec{
+	blueprintSpec := domain.BlueprintSpec{
 		Id:                   blueprintId,
-		Blueprint:            blueprint,
-		BlueprintMask:        blueprintMask,
 		EffectiveBlueprint:   domain.EffectiveBlueprint{},
 		StateDiff:            domain.StateDiff{},
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
@@ -80,7 +71,18 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 		Status:             domain.StatusPhase(blueprintCR.Status.Phase),
 		PersistenceContext: persistenceContext,
-	}, nil
+	}
+
+	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
+	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
+	serializationErr := errors.Join(blueprintErr, maskErr)
+	if serializationErr != nil {
+		return blueprintSpec, fmt.Errorf("could not deserialize Blueprint CR %s: %w", blueprintId, serializationErr)
+	}
+
+	blueprintSpec.Blueprint = blueprint
+	blueprintSpec.BlueprintMask = blueprintMask
+	return blueprintSpec, nil
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
@@ -111,7 +113,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
 	}
 	repo.publishEvents(&updatedBlueprint, spec.Events)
-	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan?
+	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan
 
 	return nil
 }
@@ -144,6 +146,8 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
 		case domain.BlueprintSpecInvalidEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
+		case domain.EffectiveBlueprintCalculatedEvent:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}

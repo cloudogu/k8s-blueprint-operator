@@ -26,7 +26,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	}, nil)
 	repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
 		Id:     "testBlueprint1",
-		Status: domain.StatusPhaseValidated,
+		Status: domain.StatusPhaseStaticallyValidated,
 		Events: []interface{}{domain.BlueprintSpecValidatedEvent{}},
 	}).Return(nil)
 
@@ -95,17 +95,19 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		ctx := context.Background()
 		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
 		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
-
-		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{}, &domain.InvalidBlueprintError{Message: "test-error"})
+		invalidError := domain.InvalidBlueprintError{Message: "test-error"}
+		var events []interface{}
+		events = append(events, domain.BlueprintSpecInvalidEvent{ValidationError: &invalidError})
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{Id: "testBlueprint1"}, &invalidError)
+		repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseInvalid, Events: events}).Return(nil)
 		//when
 		err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var expectedErrorType *domain.InvalidBlueprintError
 		assert.ErrorAs(t, err, &expectedErrorType)
-		assert.ErrorContains(t, err, "cannot load blueprint spec to validate it: test-error")
+		assert.ErrorContains(t, err, "blueprint spec syntax is invalid: test-error")
 	})
 
 	t.Run("internal error while loading blueprint spec", func(t *testing.T) {
@@ -150,7 +152,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		require.Error(t, err)
 		var invalidError *domainservice.InternalError
 		assert.ErrorAs(t, err, &invalidError)
-		assert.ErrorContains(t, err, "cannot update blueprint spec after validation: test-error")
+		assert.ErrorContains(t, err, "cannot update blueprint spec after static validation: test-error")
 	})
 
 }
@@ -169,17 +171,16 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 		Id:     "testBlueprint1",
 		Status: domain.StatusPhaseValidated,
 	}, nil)
-	// at the moment the state won't get persisted
-	//repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
-	//	Id:                   "testBlueprint1",
-	//	Blueprint:            domain.Blueprint{},
-	//	BlueprintMask:        domain.BlueprintMask{},
-	//	EffectiveBlueprint:   domain.EffectiveBlueprint{},
-	//	StateDiff:            domain.StateDiff{},
-	//	BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-	//	Status:               domain.StatusPhaseValidated,
-	//	Events:               []interface{}{},
-	//}).Return(nil)
+	repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
+		Id:                   "testBlueprint1",
+		Blueprint:            domain.Blueprint{},
+		BlueprintMask:        domain.BlueprintMask{},
+		EffectiveBlueprint:   domain.EffectiveBlueprint{},
+		StateDiff:            domain.StateDiff{},
+		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
+		Status:               domain.StatusPhaseValidated,
+		Events:               []interface{}{domain.BlueprintSpecValidatedEvent{}},
+	}).Return(nil)
 
 	// when
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
@@ -209,6 +210,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 		}}},
 		Status: domain.StatusPhaseValidated,
 	}, nil)
+	var expectedUpdatedSpec domain.BlueprintSpec
+	repoMock.EXPECT().Update(ctx, mock.Anything).Return(nil).Run(func(ctx context.Context, blueprintSpec domain.BlueprintSpec) {
+		expectedUpdatedSpec = blueprintSpec
+	})
 
 	registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{
 		{
@@ -221,12 +226,16 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
 
 	// then
-	repoMock.Test(t)
-	registryMock.Test(t)
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "blueprint spec is invalid: cannot load dogu specifications from remote registry for dogu dependency validation: dogu not found for testing")
+
+	assert.Equal(t, "testBlueprint1", expectedUpdatedSpec.Id)
+	assert.Equal(t, domain.StatusPhaseInvalid, expectedUpdatedSpec.Status)
+	require.Equal(t, 1, len(expectedUpdatedSpec.Events))
+	assert.IsType(t, domain.BlueprintSpecInvalidEvent{}, expectedUpdatedSpec.Events[0])
+	assert.ErrorContains(t, expectedUpdatedSpec.Events[0].(domain.BlueprintSpecInvalidEvent).ValidationError, "blueprint spec is invalid: ")
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *testing.T) {
