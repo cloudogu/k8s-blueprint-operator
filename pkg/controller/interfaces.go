@@ -1,7 +1,7 @@
-package main
+package controller
 
 import (
-	"github.com/go-logr/logr"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/api/ecosystem"
 	"k8s.io/client-go/tools/record"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -10,14 +10,14 @@ type eventRecorder interface {
 	record.EventRecorder
 }
 
-type controllerManager interface {
-	manager.Manager
+type ecosystemClientSet interface {
+	ecosystem.Interface
 }
 
 // used for mocks
 
 //nolint:unused
 //goland:noinspection GoUnusedType
-type logSink interface {
-	logr.LogSink
+type controllerManager interface {
+	manager.Manager
 }

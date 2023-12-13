@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 )
 
@@ -81,12 +80,4 @@ func getEnvVar(name string) (string, error) {
 		return "", fmt.Errorf("environment variable %s must be set", name)
 	}
 	return env, nil
-}
-
-// used for mocks
-
-//nolint:unused
-//goland:noinspection GoUnusedType
-type logSink interface {
-	logr.LogSink
 }
