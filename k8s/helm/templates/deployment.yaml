@@ -57,22 +57,22 @@ spec:
             valueFrom:
               secretKeyRef:
                 key: endpoint
-                name: k8s-blueprint-operator-dogu-registry
+                name: k8s-dogu-operator-dogu-registry
           - name: DOGU_REGISTRY_USERNAME
             valueFrom:
               secretKeyRef:
                 key: username
-                name: k8s-blueprint-operator-dogu-registry
+                name: k8s-dogu-operator-dogu-registry
           - name: DOGU_REGISTRY_PASSWORD
             valueFrom:
               secretKeyRef:
                 key: password
-                name: k8s-blueprint-operator-dogu-registry
+                name: k8s-dogu-operator-dogu-registry
           - name: DOGU_REGISTRY_URLSCHEMA
             valueFrom:
               secretKeyRef:
                 key: urlschema
-                name: k8s-blueprint-operator-dogu-registry
+                name: k8s-dogu-operator-dogu-registry
                 optional: true
           image: {{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}
           livenessProbe:
