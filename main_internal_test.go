@@ -78,10 +78,115 @@ func Test_startOperator(t *testing.T) {
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "unable to start manager")
 	})
+	t.Run("should fail to get dogu registry endpoint", func(t *testing.T) {
+		// given
+		t.Setenv("NAMESPACE", "ecosystem")
+		t.Setenv("STAGE", "development")
+
+		oldNewManagerFunc := ctrl.NewManager
+		oldGetConfigFunc := ctrl.GetConfigOrDie
+		defer func() {
+			ctrl.NewManager = oldNewManagerFunc
+			ctrl.GetConfigOrDie = oldGetConfigFunc
+		}()
+
+		restConfig := &rest.Config{}
+		recorderMock := newMockEventRecorder(t)
+		ctrlManMock := newMockControllerManager(t)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
+
+		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+			return ctrlManMock, nil
+		}
+		ctrl.GetConfigOrDie = func() *rest.Config {
+			return restConfig
+		}
+
+		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
+
+		// when
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry config: environment variable DOGU_REGISTRY_ENDPOINT must be set")
+	})
+	t.Run("should fail to get dogu registry username", func(t *testing.T) {
+		// given
+		t.Setenv("NAMESPACE", "ecosystem")
+		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+
+		oldNewManagerFunc := ctrl.NewManager
+		oldGetConfigFunc := ctrl.GetConfigOrDie
+		defer func() {
+			ctrl.NewManager = oldNewManagerFunc
+			ctrl.GetConfigOrDie = oldGetConfigFunc
+		}()
+
+		restConfig := &rest.Config{}
+		recorderMock := newMockEventRecorder(t)
+		ctrlManMock := newMockControllerManager(t)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
+
+		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+			return ctrlManMock, nil
+		}
+		ctrl.GetConfigOrDie = func() *rest.Config {
+			return restConfig
+		}
+
+		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
+
+		// when
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry credentials: environment variable DOGU_REGISTRY_USERNAME must be set")
+	})
+	t.Run("should fail to get dogu registry password", func(t *testing.T) {
+		// given
+		t.Setenv("NAMESPACE", "ecosystem")
+		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+
+		oldNewManagerFunc := ctrl.NewManager
+		oldGetConfigFunc := ctrl.GetConfigOrDie
+		defer func() {
+			ctrl.NewManager = oldNewManagerFunc
+			ctrl.GetConfigOrDie = oldGetConfigFunc
+		}()
+
+		restConfig := &rest.Config{}
+		recorderMock := newMockEventRecorder(t)
+		ctrlManMock := newMockControllerManager(t)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
+
+		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+			return ctrlManMock, nil
+		}
+		ctrl.GetConfigOrDie = func() *rest.Config {
+			return restConfig
+		}
+
+		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
+
+		// when
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry credentials: environment variable DOGU_REGISTRY_PASSWORD must be set")
+	})
 	t.Run("should fail to configure reconciler", func(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -118,6 +223,9 @@ func Test_startOperator(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -163,6 +271,9 @@ func Test_startOperator(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -209,6 +320,9 @@ func Test_startOperator(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -261,6 +375,9 @@ func Test_startOperator(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
