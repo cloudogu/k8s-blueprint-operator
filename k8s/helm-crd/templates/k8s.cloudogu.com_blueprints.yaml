@@ -33,7 +33,7 @@ spec:
             spec:
               description: Spec defines the desired state of the Blueprint.
               properties:
-                AllowDoguNamespaceSwitch:
+                allowDoguNamespaceSwitch:
                   description: AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask in comparison to the blueprint.
                   type: boolean
                 blueprint:

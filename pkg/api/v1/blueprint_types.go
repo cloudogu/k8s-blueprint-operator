@@ -17,7 +17,7 @@ type BlueprintSpec struct {
 	IgnoreDoguHealth bool `json:"ignoreDoguHealth,omitempty"`
 	// AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
 	// in comparison to the blueprint.
-	AllowDoguNamespaceSwitch bool `json:"AllowDoguNamespaceSwitch,omitempty"`
+	AllowDoguNamespaceSwitch bool `json:"allowDoguNamespaceSwitch,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
