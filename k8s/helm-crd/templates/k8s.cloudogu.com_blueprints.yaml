@@ -33,12 +33,18 @@ spec:
             spec:
               description: Spec defines the desired state of the Blueprint.
               properties:
+                AllowDoguNamespaceSwitch:
+                  description: AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask in comparison to the blueprint.
+                  type: boolean
                 blueprint:
                   description: Blueprint json with the desired state of the ecosystem.
                   type: string
                 blueprintMask:
                   description: BlueprintMask json can further restrict the desired state from the blueprint.
                   type: string
+                ignoreDoguHealth:
+                  description: IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
+                  type: boolean
               required:
                 - blueprint
               type: object
@@ -48,10 +54,6 @@ spec:
                 phase:
                   description: Phase represents the processing state of the blueprint
                   type: string
-                requeueTimeNanos:
-                  description: RequeueTimeNanos contains the time in nanoseconds to wait until the next requeue.
-                  format: int64
-                  type: integer
               type: object
           type: object
       served: true
