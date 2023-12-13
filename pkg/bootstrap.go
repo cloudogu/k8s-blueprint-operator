@@ -48,7 +48,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		eventRecorder,
 	)
 
-	remoteDoguRegistry, err := createRemoteDoguRegistry(err)
+	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +70,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}, nil
 }
 
-func createRemoteDoguRegistry(err error) (*doguregistry.Remote, error) {
+func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 	remoteConfig, err := config.GetRemoteConfiguration()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get remote dogu registry config: %w", err)
