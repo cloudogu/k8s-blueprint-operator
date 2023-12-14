@@ -36,7 +36,6 @@ func (dogu MaskDogu) validate() error {
 	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
 		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
-	//TODO: parse version and validate the real format with cesapp-lib
 	err := errors.Join(errorList...)
 	if err != nil {
 		err = fmt.Errorf("dogu mask is invalid: %w", err)

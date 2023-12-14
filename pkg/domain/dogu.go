@@ -41,7 +41,6 @@ func (dogu Dogu) validate() error {
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
 		errorList = append(errorList, fmt.Errorf("dogu field Version must not be empty: %s", dogu.GetQualifiedName()))
 	}
-	//TODO: parse version and validate the real format with cesapp-lib
 	err := errors.Join(errorList...)
 	if err != nil {
 		err = fmt.Errorf("dogu is invalid: %w", err)
