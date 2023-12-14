@@ -82,14 +82,14 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 	switch spec.Status {
 	case StatusPhaseNew: //continue
 	case StatusPhaseInvalid: //do not validate again
-		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before. Do not revalidate"}
+		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before: do not revalidate"}
 	default: //do not validate again. for all other status it must be either status validated or a status beyond that
 		return nil
 	}
 	var errorList []error
 
 	if spec.Id == "" {
-		errorList = append(errorList, errors.New("blueprint spec don't have an ID"))
+		errorList = append(errorList, errors.New("blueprint spec doesn't have an ID"))
 	}
 	errorList = append(errorList, spec.Blueprint.Validate())
 	errorList = append(errorList, spec.BlueprintMask.Validate())
@@ -114,11 +114,11 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	for _, doguMask := range spec.BlueprintMask.Dogus {
 		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name)
 		if noDoguFoundError != nil {
-			errorList = append(errorList, fmt.Errorf("dogu %s is missing in the blueprint", doguMask.Name))
+			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
 		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Namespace != doguMask.Namespace {
 			errorList = append(errorList, fmt.Errorf(
-				"namespace switch is not allowed by default for dogu %s. Activate feature flag for that", doguMask.Name),
+				"namespace switch is not allowed by default for dogu %q: activate the feature flag for that", doguMask.Name),
 			)
 		}
 	}

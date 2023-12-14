@@ -56,5 +56,5 @@ func (blueprintMask *BlueprintMask) FindDoguByName(name string) (MaskDogu, error
 			return blueprintMask.Dogus[doguIndex], nil
 		}
 	}
-	return MaskDogu{}, fmt.Errorf("could not find dogu name %s in blueprint", name)
+	return MaskDogu{}, fmt.Errorf("could not find dogu name %q in blueprint", name)
 }

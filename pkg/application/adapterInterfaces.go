@@ -6,17 +6,17 @@ import (
 
 // interface duplication for mocks
 
-//nolint:all
+//nolint:unused
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
 
-//nolint:all
+//nolint:unused
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
 
-//nolint:all
+//nolint:unused
 type remoteDoguRegistry interface {
 	domainservice.RemoteDoguRegistry
 }

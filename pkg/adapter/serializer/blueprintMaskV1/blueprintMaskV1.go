@@ -11,7 +11,7 @@ import (
 
 // BlueprintMaskV1 describes an abstraction of CES components that should alter a blueprint definition before
 // applying it to a CES system via a blueprint upgrade. The blueprint mask should not change the blueprint JSON file
-// itself, but is applied to the information in it to generate a new, effective blueprint.
+// itself, but is applied to the information in it to generate a new effective blueprint.
 //
 // In general additions without changing the version are fine, as long as they don't change semantics. Removal or
 // renaming are breaking changes and require a new blueprint mask API version.

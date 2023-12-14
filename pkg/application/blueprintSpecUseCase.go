@@ -60,7 +60,7 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 	case domain.StatusPhaseFailed:
 		return nil
 	default:
-		return fmt.Errorf("could not handle change in blueprint spec with ID '%s': unknown status '%s'", blueprintId, blueprintSpec.Status)
+		return fmt.Errorf("could not handle change in blueprint spec with ID %q: unknown status %q", blueprintId, blueprintSpec.Status)
 	}
 }
 

@@ -79,7 +79,7 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 func (blueprint *Blueprint) validateRegistryConfig() error {
 	for key, value := range blueprint.RegistryConfig {
 		if len(key) == 0 {
-			return fmt.Errorf("a Config key is empty")
+			return fmt.Errorf("a registry config key is empty")
 		}
 
 		err := validateKeysNotEmpty(value)

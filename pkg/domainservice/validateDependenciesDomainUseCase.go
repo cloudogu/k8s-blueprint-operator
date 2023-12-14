@@ -45,7 +45,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.GetQualifiedName()]
 		err = useCase.checkDoguDependencies(wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
 		if err != nil {
-			err = fmt.Errorf("dependencies for dogu '%s' are not satisfied blueprint: %w", wantedDogu.Name, err)
+			err = fmt.Errorf("dependencies for dogu '%s' are not satisfied in blueprint: %w", wantedDogu.Name, err)
 		}
 	}
 
@@ -93,14 +93,14 @@ func checkDependencyVersion(doguInBlueprint domain.Dogu, expectedVersion string)
 	}
 	comparator, err := core.ParseVersionComparator(expectedVersion)
 	if err != nil {
-		return fmt.Errorf("failed to parse ParseVersionComparator of version %s for doguDependency %s: %w", expectedVersion, doguInBlueprint.Name, err)
+		return fmt.Errorf("failed to parse version comparator of version %s for dogu dependency %s: %w", expectedVersion, doguInBlueprint.Name, err)
 	}
 	allows, err := comparator.Allows(doguInBlueprint.Version)
 	if err != nil {
 		return fmt.Errorf("an error occurred when comparing the versions: %w", err)
 	}
 	if !allows {
-		return fmt.Errorf("%s parsed Version does not fulfill version requirement of %s dogu %s", doguInBlueprint.Version.Raw, expectedVersion, doguInBlueprint.Name)
+		return fmt.Errorf("parsed version %s does not fulfill version requirement of %s dogu %s", doguInBlueprint.Version.Raw, expectedVersion, doguInBlueprint.Name)
 	}
 	return nil // no error, dependency is ok
 }

@@ -49,12 +49,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		if k8sErrors.IsNotFound(err) {
 			return domain.BlueprintSpec{}, &domainservice.NotFoundError{
 				WrappedError: err,
-				Message:      fmt.Sprintf("cannot load Blueprint CR '%s' as it does not exist", blueprintId),
+				Message:      fmt.Sprintf("cannot load blueprint CR %q as it does not exist", blueprintId),
 			}
 		}
 		return domain.BlueprintSpec{}, &domainservice.InternalError{
 			WrappedError: err,
-			Message:      fmt.Sprintf("error while loading blueprint CR '%s'", blueprintId),
+			Message:      fmt.Sprintf("error while loading blueprint CR %q", blueprintId),
 		}
 	}
 
@@ -77,7 +77,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
-		return blueprintSpec, fmt.Errorf("could not deserialize Blueprint CR %s: %w", blueprintId, serializationErr)
+		return blueprintSpec, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
 	blueprintSpec.Blueprint = blueprint
@@ -107,10 +107,10 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		if k8sErrors.IsConflict(err) {
 			return &domainservice.ConflictError{
 				WrappedError: err,
-				Message:      fmt.Sprintf("cannot update blueprint CR '%s' as it was modified in the meantime", spec.Id),
+				Message:      fmt.Sprintf("cannot update blueprint CR %q as it was modified in the meantime", spec.Id),
 			}
 		}
-		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR '%s'", spec.Id)}
+		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
 	}
 	repo.publishEvents(&updatedBlueprint, spec.Events)
 	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan
@@ -134,7 +134,7 @@ func getResourceVersion(ctx context.Context, spec domain.BlueprintSpec) (resourc
 	} else {
 		err := errors.New("no resourceVersion was provided over the persistenceContext in the given blueprintSpec")
 		logger.Error(err, "This is normally written while loading the blueprintSpec over this repository. "+
-			"Do you tried to persist a newly blueprintSpec with repo.Update()?")
+			"Did you try to persist a new blueprintSpec with repo.Update()?")
 		return resourceVersionValue{}, err
 	}
 }

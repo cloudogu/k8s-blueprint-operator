@@ -18,7 +18,7 @@ func ToDomainTargetState(stateString string) (domain.TargetState, error) {
 	id := ToID[stateString]
 	var err error
 	if id == domain.TargetStatePresent && stateString != "present" && stateString != "" {
-		err = fmt.Errorf("unknown targetState '%s'", stateString)
+		err = fmt.Errorf("unknown target state %q", stateString)
 	}
 	return id, err
 }

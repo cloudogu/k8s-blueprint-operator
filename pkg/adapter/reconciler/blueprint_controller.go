@@ -32,7 +32,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger := log.FromContext(ctx)
 	err := r.blueprintChangeHandler.HandleBlueprintSpecChange(ctx, req.Name)
 	if err != nil {
-		logger.Error(err, "error in blueprint reconciliation loop with blueprint", "resourceName", req.Name)
+		logger.Error(err, "error in blueprint reconciliation loop", "resourceName", req.Name)
 		return ctrl.Result{}, err
 	}
 	return ctrl.Result{}, nil

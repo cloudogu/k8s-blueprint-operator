@@ -134,7 +134,7 @@ func convertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 		if dogu.Version != "" {
 			version, err = core.ParseVersion(dogu.Version)
 			if err != nil {
-				errorList = append(errorList, fmt.Errorf("could not parse version of TargetDogu: %w", err))
+				errorList = append(errorList, fmt.Errorf("could not parse version of target dogu %q: %w", dogu.Name, err))
 				continue
 			}
 		}
@@ -169,7 +169,7 @@ func convertComponents(components []TargetComponent) ([]domain.Component, error)
 		if component.Version != "" {
 			version, err = core.ParseVersion(component.Version)
 			if err != nil {
-				errorList = append(errorList, fmt.Errorf("could not parse version of TargetComponent: %w", err))
+				errorList = append(errorList, fmt.Errorf("could not parse version of target component %q: %w", component.Name, err))
 				continue
 			}
 		}

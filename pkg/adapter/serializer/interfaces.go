@@ -21,7 +21,7 @@ type BlueprintMaskSerializer interface {
 
 	// Deserialize translates a string into a domain.BlueprintMask.
 	// Returns a domain.InvalidBlueprintError if the given string has syntax or simple semantic errors.
-	Deserialize(rawBlueprint string) (domain.BlueprintMask, error)
+	Deserialize(rawBlueprintMask string) (domain.BlueprintMask, error)
 }
 
 // BlueprintApi represents an API version for a specific serialized format of domain.Blueprint.
