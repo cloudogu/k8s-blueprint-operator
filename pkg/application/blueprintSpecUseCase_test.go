@@ -371,6 +371,34 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T
 }
 
 func TestBlueprintSpecUseCase_HandleBlueprintSpecChange(t *testing.T) {
+
+	t.Run("do all steps with blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		registryMock := newMockRemoteDoguRegistry(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		updatedSpec := domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseNew,
+		}
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").RunAndReturn(func(ctx context.Context, s string) (domain.BlueprintSpec, error) {
+			return updatedSpec, nil // always return what was last saved
+		})
+		repoMock.EXPECT().Update(ctx, mock.Anything).Return(nil).Run(func(ctx context.Context, blueprintSpec domain.BlueprintSpec) {
+			updatedSpec = blueprintSpec
+		})
+		registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{}).Return(map[string]*core.Dogu{}, nil)
+
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseValidated, updatedSpec.Status)
+	})
+
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
