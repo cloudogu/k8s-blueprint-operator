@@ -23,10 +23,10 @@ func (b Serializer) Serialize(mask domain.BlueprintMask) (string, error) {
 	return string(serializedMask), nil
 }
 
-func (b Serializer) Deserialize(rawBlueprint string) (domain.BlueprintMask, error) {
+func (b Serializer) Deserialize(rawBlueprintMask string) (domain.BlueprintMask, error) {
 	blueprintMaskDTO := BlueprintMaskV1{}
 
-	err := json.Unmarshal([]byte(rawBlueprint), &blueprintMaskDTO)
+	err := json.Unmarshal([]byte(rawBlueprintMask), &blueprintMaskDTO)
 
 	if err != nil {
 		return domain.BlueprintMask{}, &domain.InvalidBlueprintError{WrappedError: err, Message: "cannot deserialize blueprint mask"}
