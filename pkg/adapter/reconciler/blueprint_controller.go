@@ -47,10 +47,10 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger := logger.WithValues("error", err)
 		if errors.As(err, &internalError) {
 			logger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-			return ctrl.Result{Requeue: true}, err
+			return ctrl.Result{}, err //automatic requeue
 		} else if errors.As(err, &conflictError) {
 			logger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
-			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, err
+			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 		} else if errors.As(err, &notFoundError) {
 			logger.Info("blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
 			return ctrl.Result{Requeue: false}, nil
@@ -59,7 +59,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{Requeue: false}, nil
 		}
 		logger.Error(err, "an unknown error type occurred. Retry with default backoff")
-		return ctrl.Result{Requeue: true}, err
+		return ctrl.Result{}, err //automatic requeue
 	}
 	return ctrl.Result{}, nil
 }
