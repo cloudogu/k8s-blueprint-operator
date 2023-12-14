@@ -84,7 +84,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		require.Error(t, err)
 		var expectedErrorType *domain.InvalidBlueprintError
 		assert.ErrorAs(t, err, &expectedErrorType)
-		assert.ErrorContains(t, err, fmt.Sprintf("could not deserialize Blueprint CR %s: ", blueprintId))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not deserialize blueprint CR %q: ", blueprintId))
 		assert.ErrorContains(t, err, "cannot deserialize blueprint")
 		assert.ErrorContains(t, err, "cannot deserialize blueprint mask")
 	})
@@ -104,7 +104,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		require.Error(t, err)
 		var expectedErrorType *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedErrorType)
-		assert.ErrorContains(t, err, fmt.Sprintf("error while loading blueprint CR '%s':", blueprintId))
+		assert.ErrorContains(t, err, fmt.Sprintf("error while loading blueprint CR %q:", blueprintId))
 		assert.ErrorContains(t, err, "test-error")
 	})
 
@@ -125,7 +125,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		require.Error(t, err)
 		var expectedErrorType *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &expectedErrorType)
-		assert.ErrorContains(t, err, fmt.Sprintf("cannot load Blueprint CR '%s' as it does not exist:", blueprintId))
+		assert.ErrorContains(t, err, fmt.Sprintf("cannot load blueprint CR %q as it does not exist:", blueprintId))
 	})
 }
 

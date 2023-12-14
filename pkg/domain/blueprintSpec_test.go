@@ -51,7 +51,7 @@ func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
 	require.NotNil(t, err, "should not evaluate again and should stop with an error")
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
-	assert.ErrorContains(t, err, "blueprint spec was marked invalid before. Do not revalidate")
+	assert.ErrorContains(t, err, "blueprint spec was marked invalid before: do not revalidate")
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
@@ -77,7 +77,7 @@ func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
 	assert.ErrorContains(t, err, "blueprint spec is invalid")
-	assert.ErrorContains(t, err, "blueprint spec don't have an ID")
+	assert.ErrorContains(t, err, "blueprint spec doesn't have an ID")
 	assert.ErrorContains(t, err, "blueprint is invalid")
 	assert.ErrorContains(t, err, "blueprint mask is invalid")
 }
@@ -91,7 +91,7 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_maskForDoguWhichIsNotInBlue
 	err := spec.validateMaskAgainstBlueprint()
 
 	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
-	assert.ErrorContains(t, err, "dogu nexus is missing in the blueprint")
+	assert.ErrorContains(t, err, "dogu \"nexus\" is missing in the blueprint")
 }
 
 func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchAllowed(t *testing.T) {
@@ -116,7 +116,7 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t
 	err := spec.validateMaskAgainstBlueprint()
 
 	assert.ErrorContains(t, err, "blueprint mask does not match the blueprint")
-	assert.ErrorContains(t, err, "namespace switch is not allowed by default for dogu nexus. Activate feature flag for that")
+	assert.ErrorContains(t, err, "namespace switch is not allowed by default for dogu \"nexus\": activate the feature flag for that")
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {

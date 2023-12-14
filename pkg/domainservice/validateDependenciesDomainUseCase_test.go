@@ -87,7 +87,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 				},
 			},
 			wantErr:       true,
-			errorContains: "dependencies for dogu 'redmine' are not satisfied blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
+			errorContains: "dependencies for dogu 'redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
 		},
 		{
 			name: "unknown dogu",

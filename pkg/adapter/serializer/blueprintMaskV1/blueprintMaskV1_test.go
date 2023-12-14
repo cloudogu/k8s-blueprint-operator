@@ -101,6 +101,6 @@ func Test_ConvertToBlueprintMask_errors(t *testing.T) {
 	require.ErrorContains(t, err, "syntax of blueprintMaskV1 is not correct: ")
 	require.ErrorContains(t, err, "dogu name needs to be in the form 'namespace/dogu' but is 'dogu1'")
 	require.ErrorContains(t, err, "dogu name needs to be in the form 'namespace/dogu' but is 'name/space/dogu2'")
-	require.ErrorContains(t, err, "unknown targetState 'unknown'")
+	require.ErrorContains(t, err, "unknown target state \"unknown\"")
 	require.ErrorContains(t, err, "could not parse version of MaskTargetDogu: failed to parse major version abc")
 }

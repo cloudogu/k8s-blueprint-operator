@@ -168,10 +168,10 @@ func Test_ConvertToBlueprint_errors(t *testing.T) {
 	require.ErrorContains(t, err, "cannot convert blueprint dogus: ")
 	require.ErrorContains(t, err, "dogu name needs to be in the form 'namespace/dogu' but is 'dogu1'")
 	require.ErrorContains(t, err, "dogu name needs to be in the form 'namespace/dogu' but is 'name/space/dogu2'")
-	require.ErrorContains(t, err, "unknown targetState 'unknown'")
+	require.ErrorContains(t, err, "unknown target state \"unknown\"")
 
 	require.ErrorContains(t, err, "cannot convert blueprint components: ")
-	require.ErrorContains(t, err, "unknown targetState 'not known state'")
-	require.ErrorContains(t, err, "could not parse version of TargetDogu: failed to parse major version abc")
-	require.ErrorContains(t, err, "could not parse version of TargetComponent: failed to parse major version abc")
+	require.ErrorContains(t, err, "unknown target state \"not known state\"")
+	require.ErrorContains(t, err, "could not parse version of target dogu \"official/dogu3\": failed to parse major version abc")
+	require.ErrorContains(t, err, "could not parse version of target component \"official/dogu3\": failed to parse major version abc")
 }

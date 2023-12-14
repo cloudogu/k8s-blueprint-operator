@@ -63,7 +63,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError, "error should be an InvalidBlueprintError")
-	assert.ErrorContains(t, err, "blueprint spec is invalid: blueprint spec don't have an ID")
+	assert.ErrorContains(t, err, "blueprint spec is invalid: blueprint spec doesn't have an ID")
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testing.T) {
