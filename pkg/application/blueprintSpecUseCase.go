@@ -24,13 +24,15 @@ func NewBlueprintSpecUseCase(
 }
 
 func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.HandleBlueprintSpecChange")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
-	logger.Info("handle blueprint", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
+	logger := log.FromContext(ctx).
+		WithName("BlueprintSpecUseCase.HandleBlueprintSpecChange").
+		WithValues("blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
+	logger.Info("handle blueprint") //log with id and status values.
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec: %w", err)
 	}
-
+	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	switch blueprintSpec.Status {
 	case domain.StatusPhaseNew:
 		err := useCase.ValidateBlueprintSpecStatically(ctx, blueprintId)
@@ -51,23 +53,23 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 		if err != nil {
 			return err
 		}
-		//return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 		return nil
 	case domain.StatusPhaseInProgress:
-		return nil //unclear what to do here for now
+		return nil
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
 		return nil
 	default:
-		return fmt.Errorf("could not handle change in blueprint spec with ID %q: unknown status %q", blueprintId, blueprintSpec.Status)
+		return fmt.Errorf("could not handle unknown status of blueprint")
 	}
 }
 
 // ValidateBlueprintSpecStatically checks the blueprintSpec for semantic errors and persists it.
 // returns a domain.InvalidBlueprintError if blueprint is invalid or
 // a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
-// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
+// a domainservice.ConflictError if there was a concurrent write.
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.ValidateBlueprintSpecStatically")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
@@ -89,6 +91,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context
 	invalidBlueprintError := blueprintSpec.ValidateStatically()
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
+		// InternalError or ConflictError, both should be handled by the caller
 		return fmt.Errorf("cannot update blueprint spec after static validation: %w", err)
 	}
 

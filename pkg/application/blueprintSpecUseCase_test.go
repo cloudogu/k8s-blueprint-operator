@@ -34,7 +34,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 	//then
-	repoMock.Test(t)
 	require.NoError(t, err)
 }
 
@@ -59,7 +58,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 	//then
-	repoMock.Test(t)
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError, "error should be an InvalidBlueprintError")
@@ -81,7 +79,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var invalidError *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &invalidError)
@@ -123,7 +120,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var invalidError *domainservice.InternalError
 		assert.ErrorAs(t, err, &invalidError)
@@ -148,7 +144,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		err := useCase.ValidateBlueprintSpecStatically(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var invalidError *domainservice.InternalError
 		assert.ErrorAs(t, err, &invalidError)
@@ -186,8 +181,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
 
 	// then
-	repoMock.Test(t)
-	registryMock.Test(t)
 	require.NoError(t, err)
 }
 
@@ -253,8 +246,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *test
 		err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
 
 		// then
-		repoMock.Test(t)
-		registryMock.Test(t)
 		require.Error(t, err)
 		var invalidError *domainservice.InternalError
 		assert.ErrorAs(t, err, &invalidError)
@@ -274,8 +265,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *test
 		err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
 
 		// then
-		repoMock.Test(t)
-		registryMock.Test(t)
 		require.Error(t, err)
 		var invalidError *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &invalidError)
@@ -308,7 +297,6 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_ok(t *testing.T) {
 	err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
 
 	// then
-	repoMock.Test(t)
 	require.NoError(t, err)
 }
 
@@ -325,7 +313,6 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T
 		err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var errorToCheck *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &errorToCheck)
@@ -344,7 +331,6 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T
 		err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var errorToCheck *domainservice.InternalError
 		assert.ErrorAs(t, err, &errorToCheck)
@@ -377,10 +363,145 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T
 		err := useCase.calculateEffectiveBlueprint(ctx, "testBlueprint1")
 
 		//then
-		repoMock.Test(t)
 		require.Error(t, err)
 		var errorToCheck *domainservice.InternalError
 		assert.ErrorAs(t, err, &errorToCheck)
 		assert.ErrorContains(t, err, "cannot save blueprint spec after calculating the effective blueprint: test-error")
+	})
+}
+
+func TestBlueprintSpecUseCase_HandleBlueprintSpecChange(t *testing.T) {
+	t.Run("cannot load blueprint spec initially", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		registryMock := newMockRemoteDoguRegistry(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		expectedError := &domainservice.InternalError{
+			WrappedError: nil,
+			Message:      "test-error",
+		}
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{}, expectedError)
+
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, expectedError)
+	})
+
+	t.Run("new with validation error", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		registryMock := newMockRemoteDoguRegistry(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseNew,
+			Blueprint: domain.Blueprint{Dogus: []domain.Dogu{
+				{Namespace: "official", Name: "DoguWithNoVersion", TargetState: domain.TargetStatePresent},
+			}},
+		}, nil)
+		repoMock.EXPECT().Update(ctx, mock.Anything).Return(nil).Run(func(ctx context.Context, blueprintSpec domain.BlueprintSpec) {
+			assert.Equal(t, domain.StatusPhaseInvalid, blueprintSpec.Status)
+		})
+
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+	})
+
+	t.Run("handle invalid blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(newMockRemoteDoguRegistry(t))
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseInvalid,
+		}, nil)
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle in progress blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(newMockRemoteDoguRegistry(t))
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseInProgress,
+		}, nil)
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle completed blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(newMockRemoteDoguRegistry(t))
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseCompleted,
+		}, nil)
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle failed blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(newMockRemoteDoguRegistry(t))
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseFailed,
+		}, nil)
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle unknown status in blueprint", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		ctx := context.Background()
+		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(newMockRemoteDoguRegistry(t))
+		useCase := NewBlueprintSpecUseCase(repoMock, validateUseCase, nil)
+
+		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: "unknown",
+		}, nil)
+		// when
+		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, "could not handle unknown status of blueprint")
 	})
 }
