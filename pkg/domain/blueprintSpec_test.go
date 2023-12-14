@@ -275,3 +275,19 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 	assert.Equal(t, Dogu{Namespace: "premium", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
+
+func TestBlueprintSpec_MarkInvalid(t *testing.T) {
+	spec := BlueprintSpec{
+		Config: BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
+		Status: StatusPhaseValidated,
+	}
+	expectedErr := &InvalidBlueprintError{
+		WrappedError: nil,
+		Message:      "test-error",
+	}
+	spec.MarkInvalid(expectedErr)
+
+	assert.Equal(t, StatusPhaseInvalid, spec.Status)
+	require.Equal(t, 1, len(spec.Events))
+	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
+}
