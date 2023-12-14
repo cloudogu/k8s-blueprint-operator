@@ -115,7 +115,6 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
 	}
 	repo.publishEvents(CRAfterUpdate, spec.Events)
-	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan
 
 	return nil
 }
