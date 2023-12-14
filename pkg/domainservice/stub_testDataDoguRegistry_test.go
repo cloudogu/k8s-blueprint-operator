@@ -30,6 +30,15 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 				},
 			},
 		},
+		"helloworld/bluespice": {
+			"1.0.0-1": &core.Dogu{
+				Name:    "helloworld/bluespice",
+				Version: "1.0.0-1",
+				Dependencies: []core.Dependency{
+					{Type: core.DependencyTypeDogu, Name: "official/mysql", Version: "1.0.0-1"},
+				},
+			},
+		},
 		"official/k8s-ces-control": {
 			"1.0.0-1": &core.Dogu{
 				Name:    "official/k8s-ces-control",

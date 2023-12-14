@@ -140,3 +140,22 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_inter
 	var internalError *InternalError
 	assert.ErrorAs(t, err, &internalError)
 }
+
+func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_collectDependencyErrors(t *testing.T) {
+	//given
+	useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
+	//when
+	err := useCase.ValidateDependenciesForAllDogus(domain.EffectiveBlueprint{
+		Dogus: []domain.Dogu{
+			{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
+			{Namespace: "helloworld", Name: "bluespice", Version: version1_0_0_1},
+		},
+	})
+	//then
+	require.Error(t, err)
+	var expectedErrorType *domain.InvalidBlueprintError
+	require.ErrorAs(t, err, &expectedErrorType)
+	assert.ErrorContains(t, err, "dependencies are not satisfied in effective blueprint")
+	assert.ErrorContains(t, err, "dependencies for dogu 'redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint")
+	assert.ErrorContains(t, err, "dependencies for dogu 'bluespice' are not satisfied in blueprint: dependency 'official/mysql' in version '1.0.0-1' is not a present dogu in the effective blueprint")
+}

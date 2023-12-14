@@ -41,14 +41,21 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 		}
 	}
 
+	var errorList []error
 	for _, wantedDogu := range wantedDogus {
 		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.GetQualifiedName()]
 		err = useCase.checkDoguDependencies(wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
 		if err != nil {
-			err = fmt.Errorf("dependencies for dogu '%s' are not satisfied in blueprint: %w", wantedDogu.Name, err)
+			errorList = append(errorList, fmt.Errorf("dependencies for dogu '%s' are not satisfied in blueprint: %w", wantedDogu.Name, err))
 		}
 	}
-
+	err = errors.Join(errorList...)
+	if err != nil {
+		err = &domain.InvalidBlueprintError{
+			WrappedError: err,
+			Message:      "dependencies are not satisfied in effective blueprint",
+		}
+	}
 	return err
 }
 
