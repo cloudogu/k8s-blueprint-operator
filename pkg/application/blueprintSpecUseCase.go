@@ -28,8 +28,10 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 	logger := log.FromContext(ctx).
 		WithName("BlueprintSpecUseCase.HandleBlueprintSpecChange").
 		WithValues("blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
+
 	logger.Info("handle blueprint") //log with id and status values.
 	if err != nil {
+		logger.Error(err, "cannot load blueprint spec")
 		return fmt.Errorf("cannot load blueprint spec: %w", err)
 	}
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.

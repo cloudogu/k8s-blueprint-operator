@@ -87,6 +87,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
+	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
 	resourceVersion, err := getResourceVersion(ctx, spec)
 	if err != nil {
 		return err
@@ -102,7 +103,8 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 			Phase: v1.StatusPhase(spec.Status),
 		},
 	}
-	_, err = repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
+	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
+	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
 			return &domainservice.ConflictError{
@@ -112,7 +114,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		}
 		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
 	}
-	repo.publishEvents(&updatedBlueprint, spec.Events)
+	repo.publishEvents(CRAfterUpdate, spec.Events)
 	// TODO add to Status: effective Blueprint, stateDiff, upgradePlan
 
 	return nil
@@ -147,7 +149,7 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 		case domain.BlueprintSpecInvalidEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
 		case domain.EffectiveBlueprintCalculatedEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}
