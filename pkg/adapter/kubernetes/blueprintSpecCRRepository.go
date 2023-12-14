@@ -143,6 +143,8 @@ func getResourceVersion(ctx context.Context, spec domain.BlueprintSpec) (resourc
 func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []interface{}) {
 	for _, event := range events {
 		switch ev := event.(type) {
+		case domain.BlueprintSpecStaticallyValidatedEvent:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidatedEvent", "")
 		case domain.BlueprintSpecValidatedEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
 		case domain.BlueprintSpecInvalidEvent:

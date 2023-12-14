@@ -20,7 +20,7 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	require.Nil(t, err)
 	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, BlueprintSpecValidatedEvent{}, spec.Events[0])
+	assert.Equal(t, BlueprintSpecStaticallyValidatedEvent{}, spec.Events[0])
 }
 
 func Test_BlueprintSpec_Validate_inStatusValidated(t *testing.T) {

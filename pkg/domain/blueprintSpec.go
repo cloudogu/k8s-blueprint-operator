@@ -68,6 +68,7 @@ type BlueprintSpecInvalidEvent struct {
 	ValidationError error
 }
 
+type BlueprintSpecStaticallyValidatedEvent struct{}
 type BlueprintSpecValidatedEvent struct{}
 
 type EffectiveBlueprintCalculatedEvent struct {
@@ -104,7 +105,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 	} else {
 		spec.Status = StatusPhaseStaticallyValidated
-		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
+		spec.Events = append(spec.Events, BlueprintSpecStaticallyValidatedEvent{})
 	}
 	return err
 }

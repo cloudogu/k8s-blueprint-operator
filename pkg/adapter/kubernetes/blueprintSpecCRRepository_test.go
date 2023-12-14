@@ -306,12 +306,15 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 
 		var events []interface{}
 		events = append(events,
+			domain.BlueprintSpecStaticallyValidatedEvent{},
 			domain.BlueprintSpecValidatedEvent{},
+			domain.EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: domain.EffectiveBlueprint{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidatedEvent", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", "effective blueprint: {Dogus:[] Components:[] RegistryConfig:map[] RegistryConfigAbsent:[] RegistryConfigEncrypted:map[]}")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", "test-error")
-
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}

@@ -27,7 +27,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	repoMock.EXPECT().Update(ctx, domain.BlueprintSpec{
 		Id:     "testBlueprint1",
 		Status: domain.StatusPhaseStaticallyValidated,
-		Events: []interface{}{domain.BlueprintSpecValidatedEvent{}},
+		Events: []interface{}{domain.BlueprintSpecStaticallyValidatedEvent{}},
 	}).Return(nil)
 
 	//when
