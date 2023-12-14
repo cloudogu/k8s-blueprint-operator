@@ -29,15 +29,8 @@ func (blueprintMask *BlueprintMask) Validate() error {
 }
 
 func (blueprintMask *BlueprintMask) validateDogus() error {
-	for _, dogu := range blueprintMask.Dogus {
-
-		err := dogu.validate()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	errorList := util.Map(blueprintMask.Dogus, func(maskDogu MaskDogu) error { return maskDogu.validate() })
+	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
