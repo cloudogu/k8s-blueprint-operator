@@ -3,11 +3,9 @@ package kubernetes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -314,83 +312,4 @@ func Test_blueprintClient_Patch(t *testing.T) {
 		// then
 		require.NoError(t, err)
 	})
-}
-
-func Test_blueprintClient_UpdateStatusXXX(t *testing.T) {
-	for _, testCase := range []struct {
-		functionName   string
-		expectedStatus k8sv1.StatusPhase
-	}{
-		{
-			functionName:   "UpdateStatusInProgress",
-			expectedStatus: k8sv1.StatusPhase("inProgress"),
-		},
-		{
-			functionName:   "UpdateStatusCompleted",
-			expectedStatus: k8sv1.StatusPhase("completed"),
-		},
-		{
-			functionName:   "UpdateStatusInvalid",
-			expectedStatus: k8sv1.StatusPhase("invalid"),
-		},
-		{
-			functionName:   "UpdateStatusFailed",
-			expectedStatus: k8sv1.StatusPhase("failed"),
-		},
-		{
-			functionName:   "UpdateStatusRetrying",
-			expectedStatus: k8sv1.StatusPhase("retrying"),
-		},
-	} {
-		t.Run(fmt.Sprintf("%s success", testCase.functionName), func(t *testing.T) {
-			// given
-			blueprint := &k8sv1.Blueprint{ObjectMeta: v1.ObjectMeta{Name: "testblueprint", Namespace: "test"}}
-
-			server := httptest.NewServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
-				switch request.Method {
-				case http.MethodGet:
-					assert.Equal(t, "/apis/k8s.cloudogu.com/v1/namespaces/test/blueprints/testblueprint", request.URL.Path)
-					assert.Equal(t, http.NoBody, request.Body)
-
-					writer.Header().Add("content-type", "application/json")
-					blueprint := &k8sv1.Blueprint{ObjectMeta: v1.ObjectMeta{Name: "testblueprint", Namespace: "test"}}
-					blueprintBytes, err := json.Marshal(blueprint)
-					require.NoError(t, err)
-					_, err = writer.Write(blueprintBytes)
-					require.NoError(t, err)
-					writer.WriteHeader(200)
-				case http.MethodPut:
-					assert.Equal(t, "/apis/k8s.cloudogu.com/v1/namespaces/test/blueprints/testblueprint/status", request.URL.Path)
-					bytes, err := io.ReadAll(request.Body)
-					require.NoError(t, err)
-
-					createdBlueprint := &k8sv1.Blueprint{}
-					require.NoError(t, json.Unmarshal(bytes, createdBlueprint))
-					assert.Equal(t, "testblueprint", createdBlueprint.Name)
-					assert.Equal(t, testCase.expectedStatus, createdBlueprint.Status.Phase)
-
-					writer.Header().Add("content-type", "application/json")
-					_, err = writer.Write(bytes)
-					require.NoError(t, err)
-					writer.WriteHeader(200)
-				default:
-					assert.Fail(t, "method should be get or put")
-				}
-			}))
-
-			config := rest.Config{
-				Host: server.URL,
-			}
-			client, err := newForConfig(&config)
-			require.NoError(t, err)
-			dClient := client.Blueprints("test")
-
-			// when
-			returnValues := reflect.ValueOf(dClient).MethodByName(testCase.functionName).Call([]reflect.Value{reflect.ValueOf(testCtx), reflect.ValueOf(blueprint)})
-			err, _ = returnValues[1].Interface().(error)
-
-			// then
-			require.NoError(t, err)
-		})
-	}
 }

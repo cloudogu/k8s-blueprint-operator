@@ -1,6 +1,7 @@
 package domainservice
 
 import (
+	"context"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,8 @@ var (
 	version1_0_0_1, _ = core.ParseVersion("1.0.0-1")
 	version2_0_0_1, _ = core.ParseVersion("2.0.0-1")
 	version2_0_0_3, _ = core.ParseVersion("2.0.0-3")
+
+	ctx = context.Background()
 )
 
 func Test_checkDependencyVersion(t *testing.T) {
@@ -116,7 +119,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
-			err := useCase.ValidateDependenciesForAllDogus(tt.args.effectiveBlueprint)
+			err := useCase.ValidateDependenciesForAllDogus(ctx, tt.args.effectiveBlueprint)
 			if err != nil {
 				if !tt.wantErr {
 					t.Errorf("ValidateDependenciesForAllDogus() error = %v, wantErr %v", err, tt.wantErr)
@@ -127,6 +130,24 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 	}
 }
 
+func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFoundError(t *testing.T) {
+	//given
+	RegistryMock := NewMockRemoteDoguRegistry(t)
+	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
+
+	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &NotFoundError{Message: "my error"})
+	//when
+	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
+		Dogus: []domain.Dogu{
+			{Namespace: "official", Name: "unknownDogu", Version: version1_0_0_1},
+		},
+	})
+	//then
+	require.Error(t, err)
+	var errorType *NotFoundError
+	assert.ErrorAs(t, err, &errorType)
+}
+
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
 	//given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
@@ -134,7 +155,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_inter
 
 	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &InternalError{Message: "my error"})
 	//when
-	err := useCase.ValidateDependenciesForAllDogus(domain.EffectiveBlueprint{})
+	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{})
 	//then
 	require.Error(t, err)
 	var internalError *InternalError
@@ -145,7 +166,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_colle
 	//given
 	useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
 	//when
-	err := useCase.ValidateDependenciesForAllDogus(domain.EffectiveBlueprint{
+	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
 			{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
 			{Namespace: "helloworld", Name: "bluespice", Version: version1_0_0_1},

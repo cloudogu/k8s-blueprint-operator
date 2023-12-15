@@ -5,8 +5,6 @@ import (
 	"time"
 
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
-
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
@@ -23,21 +21,6 @@ type BlueprintInterface interface {
 
 	// UpdateStatus was generated because the type contains a Status member.
 	UpdateStatus(ctx context.Context, blueprint *v1.Blueprint, opts metav1.UpdateOptions) (*v1.Blueprint, error)
-
-	// UpdateStatusInProgress sets the status of the blueprint to "in progress".
-	UpdateStatusInProgress(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error)
-
-	// UpdateStatusCompleted sets the status of the blueprint to "completed".
-	UpdateStatusCompleted(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error)
-
-	// UpdateStatusFailed sets the status of the blueprint to "failed".
-	UpdateStatusFailed(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error)
-
-	// UpdateStatusRetrying sets the status of the blueprint to "retrying".
-	UpdateStatusRetrying(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error)
-
-	// UpdateStatusInvalid sets the status of the blueprint to "invalid".
-	UpdateStatusInvalid(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error)
 
 	// Delete takes name of the blueprint and deletes it. Returns an error if one occurs.
 	Delete(ctx context.Context, name string, opts metav1.DeleteOptions) error
@@ -61,49 +44,6 @@ type BlueprintInterface interface {
 type blueprintClient struct {
 	client rest.Interface
 	ns     string
-}
-
-// UpdateStatusInProgress sets the status of the blueprint to "inProgress".
-func (d *blueprintClient) UpdateStatusInProgress(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error) {
-	return d.updateStatusWithRetry(ctx, blueprint, v1.StatusPhaseInProgress)
-}
-
-// UpdateStatusCompleted sets the status of the blueprint to "completed".
-func (d *blueprintClient) UpdateStatusCompleted(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error) {
-	return d.updateStatusWithRetry(ctx, blueprint, v1.StatusPhaseCompleted)
-}
-
-// UpdateStatusInvalid sets the status of the blueprint to "invalid".
-func (d *blueprintClient) UpdateStatusInvalid(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error) {
-	return d.updateStatusWithRetry(ctx, blueprint, v1.StatusPhaseInvalid)
-}
-
-// UpdateStatusFailed sets the status of the blueprint to "failed".
-func (d *blueprintClient) UpdateStatusFailed(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error) {
-	return d.updateStatusWithRetry(ctx, blueprint, v1.StatusPhaseFailed)
-}
-
-// UpdateStatusRetrying sets the status of the blueprint to "retrying".
-func (d *blueprintClient) UpdateStatusRetrying(ctx context.Context, blueprint *v1.Blueprint) (*v1.Blueprint, error) {
-	return d.updateStatusWithRetry(ctx, blueprint, v1.StatusPhaseRetrying)
-}
-
-func (d *blueprintClient) updateStatusWithRetry(ctx context.Context, blueprint *v1.Blueprint, targetStatus v1.StatusPhase) (*v1.Blueprint, error) {
-	var resultBlueprint *v1.Blueprint
-	err := retry.OnConflict(func() error {
-		updatedBlueprint, err := d.Get(ctx, blueprint.GetName(), metav1.GetOptions{})
-		if err != nil {
-			return err
-		}
-
-		// do not overwrite the whole status, so we do not lose other values from the Status object
-		// esp. a potentially set requeue time
-		updatedBlueprint.Status.Phase = targetStatus
-		resultBlueprint, err = d.UpdateStatus(ctx, updatedBlueprint, metav1.UpdateOptions{})
-		return err
-	})
-
-	return resultBlueprint, err
 }
 
 // Get takes name of the blueprint, and returns the corresponding blueprint object, and an error if there is any.

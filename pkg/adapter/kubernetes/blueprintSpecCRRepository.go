@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -60,16 +61,20 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 	persistenceContext := make(map[string]interface{}, 1)
 	persistenceContext[resourceVersionKey] = resourceVersionValue{blueprintCR.GetResourceVersion()}
+	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
+	if err != nil {
+		return domain.BlueprintSpec{}, err
+	}
 	blueprintSpec := domain.BlueprintSpec{
 		Id:                   blueprintId,
-		EffectiveBlueprint:   domain.EffectiveBlueprint{},
+		EffectiveBlueprint:   effectiveBlueprint,
 		StateDiff:            domain.StateDiff{},
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 		},
-		Status:             domain.StatusPhase(blueprintCR.Status.Phase),
+		Status:             blueprintCR.Status.Phase,
 		PersistenceContext: persistenceContext,
 	}
 
@@ -92,6 +97,11 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 	if err != nil {
 		return err
 	}
+	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprintV1(spec.EffectiveBlueprint)
+	if err != nil {
+		return err
+	}
+
 	updatedBlueprint := v1.Blueprint{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -100,7 +110,8 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 			CreationTimestamp: metav1.Time{},
 		},
 		Status: v1.BlueprintStatus{
-			Phase: v1.StatusPhase(spec.Status),
+			Phase:              spec.Status,
+			EffectiveBlueprint: effectiveBlueprint,
 		},
 	}
 	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)

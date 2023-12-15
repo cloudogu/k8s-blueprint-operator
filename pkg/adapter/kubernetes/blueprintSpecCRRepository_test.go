@@ -145,7 +145,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
-				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+				Phase: domain.StatusPhaseValidated,
 			},
 		}
 		restClientMock.EXPECT().
@@ -221,7 +221,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
-				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+				Phase: domain.StatusPhaseValidated,
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -266,7 +266,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			},
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
-				Phase: v1.StatusPhase(domain.StatusPhaseValidated),
+				Phase: domain.StatusPhaseValidated,
 			},
 		}
 		expectedError := fmt.Errorf("test-error")

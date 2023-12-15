@@ -1,11 +1,13 @@
 package domainservice
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ValidateDependenciesDomainUseCase struct {
@@ -23,7 +25,8 @@ func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry)
 // This functions returns no error if everything is ok or
 // a domain.InvalidBlueprintError if there are dependencies missing or
 // an InternalError if there is any other error, e.g. with the connection to the remote dogu registry
-func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(effectiveBlueprint domain.EffectiveBlueprint) error {
+func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error {
+	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.ValidateDependenciesForAllDogus")
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) DoguToLoad {
 		return DoguToLoad{
@@ -31,6 +34,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 			Version:           dogu.Version.Raw,
 		}
 	})
+	logger.Info("load dogu specifications...", "wantedDogus", wantedDogus)
 	doguSpecsOfWantedDogus, err := useCase.remoteDoguRegistry.GetDogus(dogusToLoad)
 	if err != nil {
 		var notFoundError *NotFoundError
@@ -40,11 +44,13 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 			return &InternalError{WrappedError: err, Message: "cannot load dogu specifications from remote registry for dogu dependency validation"}
 		}
 	}
+	logger.Info("dogu specifications loaded", "specs", doguSpecsOfWantedDogus)
 
 	var errorList []error
 	for _, wantedDogu := range wantedDogus {
 		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.GetQualifiedName()]
-		err = useCase.checkDoguDependencies(wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
+		logger.Info(fmt.Sprintf("check dependencies of %q in version %q", wantedDogu.Name, wantedDogu.Version.Raw))
+		err = useCase.checkDoguDependencies(ctx, wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
 		if err != nil {
 			errorList = append(errorList, fmt.Errorf("dependencies for dogu '%s' are not satisfied in blueprint: %w", wantedDogu.Name, err))
 		}
@@ -60,14 +66,18 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 }
 
 func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
+	ctx context.Context,
 	wantedDogus []domain.Dogu,
 	knownDoguSpecs map[string]*core.Dogu,
 	dependenciesOfWantedDogu []core.Dependency,
 ) error {
+	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.checkDoguDependencies")
 	var problems []error
 
 	for _, dependencyOfWantedDogu := range dependenciesOfWantedDogu {
+		logger.Info(fmt.Sprintf("check dependency %q in version %q...", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version))
 		if dependencyOfWantedDogu.Type != core.DependencyTypeDogu {
+			logger.Info(fmt.Sprintf("dogu has a dependency %q of type %q. At the moment only dogu dependencies are validated.", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Type))
 			continue
 		}
 		// check if dogu exists in blueprint and version is ok

@@ -289,7 +289,7 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_ok(t *testing.T) {
 		EffectiveBlueprint:   domain.EffectiveBlueprint{},
 		StateDiff:            domain.StateDiff{},
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-		Status:               domain.StatusPhaseValidated,
+		Status:               domain.StatusPhaseEffectiveBlueprintGenerated,
 		Events:               []interface{}{domain.EffectiveBlueprintCalculatedEvent{}},
 	}).Return(nil)
 
@@ -355,7 +355,7 @@ func TestBlueprintSpecUseCase_calculateEffectiveBlueprint_repoError(t *testing.T
 			EffectiveBlueprint:   domain.EffectiveBlueprint{},
 			StateDiff:            domain.StateDiff{},
 			BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-			Status:               domain.StatusPhaseValidated,
+			Status:               domain.StatusPhaseEffectiveBlueprintGenerated,
 			Events:               []interface{}{domain.EffectiveBlueprintCalculatedEvent{}},
 		}).Return(&domainservice.InternalError{Message: "test-error"})
 
@@ -396,7 +396,7 @@ func TestBlueprintSpecUseCase_HandleBlueprintSpecChange(t *testing.T) {
 		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseValidated, updatedSpec.Status)
+		assert.Equal(t, domain.StatusPhaseEffectiveBlueprintGenerated, updatedSpec.Status)
 	})
 
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {

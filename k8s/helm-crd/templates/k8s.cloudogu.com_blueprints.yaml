@@ -51,6 +51,64 @@ spec:
             status:
               description: Status defines the observed state of the Blueprint.
               properties:
+                effectiveBlueprint:
+                  description: EffectiveBlueprint is the blueprint after applying the blueprint mask.
+                  properties:
+                    components:
+                      description: Packages contains a set of exact package versions which should be present or absent in the CES instance after which this blueprint was applied. The packages must correspond to the used operation system package manager. Optional.
+                      items:
+                        properties:
+                          name:
+                            description: Name defines the name of the component including its namespace, f. i. "official/nginx". Must not be empty.
+                            type: string
+                          targetState:
+                            description: TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
+                            type: string
+                          version:
+                            description: Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
+                            type: string
+                        required:
+                          - name
+                          - targetState
+                          - version
+                        type: object
+                      type: array
+                    dogus:
+                      description: Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
+                      items:
+                        description: TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint was applied.
+                        properties:
+                          name:
+                            description: Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty.
+                            type: string
+                          targetState:
+                            description: TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
+                            type: string
+                          version:
+                            description: Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
+                            type: string
+                        required:
+                          - name
+                          - targetState
+                          - version
+                        type: object
+                      type: array
+                    registryConfig:
+                      additionalProperties:
+                        type: string
+                      description: Used to configure registry globalRegistryEntries on blueprint upgrades
+                      type: object
+                    registryConfigAbsent:
+                      description: Used to remove registry globalRegistryEntries on blueprint upgrades
+                      items:
+                        type: string
+                      type: array
+                    registryConfigEncrypted:
+                      additionalProperties:
+                        type: string
+                      description: Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
+                      type: object
+                  type: object
                 phase:
                   description: Phase represents the processing state of the blueprint
                   type: string

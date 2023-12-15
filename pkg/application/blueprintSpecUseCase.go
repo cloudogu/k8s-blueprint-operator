@@ -56,6 +56,8 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 			return err
 		}
 		return nil
+	case domain.StatusPhaseEffectiveBlueprintGenerated:
+		return nil
 	case domain.StatusPhaseInProgress:
 		return nil
 	case domain.StatusPhaseCompleted:
@@ -105,7 +107,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context
 // a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.ValidateBlueprintSpecStatically")
+	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.ValidateBlueprintSpecDynamically")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	logger.Info("dynamically validate blueprint spec", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
 	if err != nil {
@@ -113,7 +115,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 	}
 
 	errorList := []error{
-		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(blueprintSpec.EffectiveBlueprint),
+		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprintSpec.EffectiveBlueprint),
 	}
 	validationError := errors.Join(errorList...)
 	if validationError != nil {
@@ -134,7 +136,7 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 // returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
 func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.ValidateBlueprintSpecStatically")
+	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.calculateEffectiveBlueprint")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	logger.Info("calculate effective blueprint", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
 	if err != nil {

@@ -31,6 +31,8 @@ const (
 	StatusPhaseStaticallyValidated StatusPhase = "staticallyValidated"
 	// StatusPhaseValidated marks the given blueprint spec as validated.
 	StatusPhaseValidated StatusPhase = "validated"
+	// StatusPhaseEffectiveBlueprintGenerated marks the given blueprint spec as validated.
+	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -136,9 +138,8 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 // returns a domain.InvalidBlueprintError if blueprint is invalid
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
-	var err error
 	if possibleInvalidDependenciesError != nil {
-		err = &InvalidBlueprintError{
+		err := &InvalidBlueprintError{
 			WrappedError: possibleInvalidDependenciesError,
 			Message:      "blueprint spec is invalid",
 		}
@@ -152,6 +153,8 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	switch spec.Status {
+	case StatusPhaseEffectiveBlueprintGenerated:
+		return nil //do not regenerate effective blueprint
 	case StatusPhaseNew: // stop
 		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
 	case StatusPhaseInvalid: // stop
@@ -171,7 +174,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		RegistryConfigAbsent:    spec.Blueprint.RegistryConfigAbsent,
 		RegistryConfigEncrypted: spec.Blueprint.RegistryConfigEncrypted,
 	}
-
+	spec.Status = StatusPhaseEffectiveBlueprintGenerated
 	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: spec.EffectiveBlueprint})
 	return nil
 }
