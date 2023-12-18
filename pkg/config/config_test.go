@@ -84,3 +84,35 @@ func TestNewOperatorConfig(t *testing.T) {
 		assert.Equal(t, expected, actual)
 	})
 }
+
+func TestGetRemoteConfiguration(t *testing.T) {
+	t.Run("index config", func(t *testing.T) {
+
+		t.Setenv(doguRegistryURLSchemaEnvVar, "index")
+		t.Setenv(doguRegistryEndpointEnvVar, "endpoint/dogus")
+
+		config, err := GetRemoteConfiguration()
+
+		require.NoError(t, err)
+		assert.Equal(t, "endpoint/dogus", config.Endpoint)
+		assert.Equal(t, registryCacheDir, config.CacheDir)
+		assert.Equal(t, "index", config.URLSchema)
+	})
+
+	t.Run("default config", func(t *testing.T) {
+		t.Setenv(doguRegistryEndpointEnvVar, "endpoint/dogus")
+		config, err := GetRemoteConfiguration()
+
+		require.NoError(t, err)
+		assert.Equal(t, "endpoint/", config.Endpoint)
+		assert.Equal(t, registryCacheDir, config.CacheDir)
+		assert.Equal(t, "default", config.URLSchema)
+	})
+
+	t.Run("no endpoint env var", func(t *testing.T) {
+		_, err := GetRemoteConfiguration()
+
+		require.Error(t, err)
+	})
+
+}
