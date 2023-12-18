@@ -57,6 +57,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				IgnoreDoguHealth:         true,
 				AllowDoguNamespaceSwitch: true,
 			},
+			EffectiveBlueprint: domain.EffectiveBlueprint{
+				RegistryConfig:          domain.RegistryConfig{},
+				RegistryConfigEncrypted: domain.RegistryConfig{},
+			},
 			PersistenceContext: persistenceContext,
 		}, spec)
 	})

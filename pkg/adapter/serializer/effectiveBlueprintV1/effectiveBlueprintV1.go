@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"strings"
 )
 
 var configKeySeparator = "/"
@@ -109,16 +110,18 @@ func convertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.EffectiveBlueprint, error) {
 	convertedDogus, doguErr := convertDogus(blueprint.Dogus)
 	convertedComponents, compErr := convertComponents(blueprint.Components)
-	err := errors.Join(doguErr, compErr)
+	convertedConfig, configError := convertToRegistryConfig(blueprint.RegistryConfig)
+	convertedEncryptedConfig, encryptedConfigError := convertToRegistryConfig(blueprint.RegistryConfig)
+	err := errors.Join(doguErr, compErr, configError, encryptedConfigError)
 	if err != nil {
 		return domain.EffectiveBlueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
 	return domain.EffectiveBlueprint{
 		Dogus:                   convertedDogus,
 		Components:              convertedComponents,
-		RegistryConfig:          convertToRegistryConfig(blueprint.RegistryConfig),
+		RegistryConfig:          convertedConfig,
 		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
-		RegistryConfigEncrypted: convertToRegistryConfig(blueprint.RegistryConfigEncrypted),
+		RegistryConfigEncrypted: convertedEncryptedConfig,
 	}, nil
 }
 
@@ -195,9 +198,60 @@ func convertComponents(components []TargetComponent) ([]domain.Component, error)
 	return convertedComponents, err
 }
 
-func convertToRegistryConfig(flattenedConfig map[string]string) domain.RegistryConfig {
-	//TODO: implement this
-	return nil
+func convertToRegistryConfig(flattenedConfig map[string]string) (domain.RegistryConfig, error) {
+	// convert to map[string]interface{} map, as this is needed for the recursion
+	intermediateMap := make(map[string]interface{}, len(flattenedConfig))
+	for key, val := range flattenedConfig {
+		intermediateMap[key] = val
+	}
+	// expand key structure
+	widenedMap := widenMap(intermediateMap)
+	//convert it to domain.RegistryConfig (which has at least depth 2)
+	config := domain.RegistryConfig{}
+	for key1, val1 := range widenedMap {
+		switch subMap := val1.(type) {
+		case map[string]interface{}:
+			for key2, val2 := range subMap {
+				if config[key1] == nil {
+					config[key1] = make(map[string]interface{})
+				}
+				config[key1][key2] = val2
+			}
+		default:
+			return domain.RegistryConfig{}, fmt.Errorf("registry config is invalid: values need to be at least at depth 2: key %v is invalid", key1)
+		}
+	}
+	return config, nil
+}
+
+func widenMap(currentMap map[string]interface{}) map[string]interface{} {
+	newMap := make(map[string]interface{})
+	for key, val := range currentMap {
+		// split keys: key1/key2/key3 -> key1, key2, key3
+		key1, key2, found := strings.Cut(key, configKeySeparator)
+		if !found {
+			newMap[key] = val
+			continue
+		}
+		// if there is a subKey, check for further subKeys
+		// there could be other keys with the same first key before, therefore append if there already is a map
+		if newMap[key1] != nil {
+			existingSubMap, isMap := newMap[key1].(map[string]interface{})
+			if !isMap {
+				// there could be sth like "key1/key2": val", "key1/key2/key3": "val"
+				// this case is illegal. let the shorter key take preference for now.
+				continue
+			}
+			existingSubMap[key2] = val
+			newMap[key1] = widenMap(existingSubMap)
+			continue
+		}
+		// if this is the first time, this sub key appears
+		newMap[key1] = widenMap(map[string]interface{}{
+			key2: val,
+		})
+	}
+	return newMap
 }
 
 func flattenRegistryConfig(config domain.RegistryConfig) map[string]string {
