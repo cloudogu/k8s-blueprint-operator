@@ -74,13 +74,8 @@ func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.Effecti
 }
 
 func convertToRegistryConfig(flattenedConfig map[string]string) (domain.RegistryConfig, error) {
-	// convert to map[string]interface{} map, as this is needed for the recursion
-	intermediateMap := make(map[string]interface{}, len(flattenedConfig))
-	for key, val := range flattenedConfig {
-		intermediateMap[key] = val
-	}
 	// expand key structure
-	widenedMap := widenMap(intermediateMap)
+	widenedMap := widenMap(flattenedConfig)
 	//convert it to domain.RegistryConfig (which has at least depth 2)
 	config := domain.RegistryConfig{}
 	for key1, val1 := range widenedMap {
@@ -99,34 +94,28 @@ func convertToRegistryConfig(flattenedConfig map[string]string) (domain.Registry
 	return config, nil
 }
 
-func widenMap(currentMap map[string]interface{}) map[string]interface{} {
-	newMap := make(map[string]interface{})
+func widenMap(currentMap map[string]string) map[string]interface{} {
+	newMap := map[string]interface{}{}
 	for key, val := range currentMap {
-		// split keys: key1/key2/key3 -> key1, key2, key3
-		key1, key2, found := strings.Cut(key, configKeySeparator)
-		if !found {
-			newMap[key] = val
-			continue
-		}
-		// if there is a subKey, check for further subKeys
-		// there could be other keys with the same first key before, therefore append if there already is a map
-		if newMap[key1] != nil {
-			existingSubMap, isMap := newMap[key1].(map[string]interface{})
-			if !isMap {
-				// there could be sth like "key1/key2": val", "key1/key2/key3": "val"
-				// this case is illegal. let the shorter key take preference for now.
-				continue
-			}
-			existingSubMap[key2] = val
-			newMap[key1] = widenMap(existingSubMap)
-			continue
-		}
-		// if this is the first time, this sub key appears
-		newMap[key1] = widenMap(map[string]interface{}{
-			key2: val,
-		})
+		keys := strings.Split(key, configKeySeparator)
+		setKey(keys, val, newMap)
 	}
 	return newMap
+}
+
+func setKey(keys []string, value string, initialMap map[string]interface{}) {
+	currentMap := initialMap
+	length := len(keys)
+	for i, key := range keys {
+		if i == length-1 {
+			currentMap[key] = value
+			break
+		}
+		if currentMap[key] == nil {
+			currentMap[key] = map[string]interface{}{}
+		}
+		currentMap = currentMap[key].(map[string]interface{})
+	}
 }
 
 func flattenRegistryConfig(config domain.RegistryConfig) map[string]string {

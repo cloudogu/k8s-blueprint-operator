@@ -144,87 +144,6 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 }
 
 func Test_widenMap(t *testing.T) {
-	tests := []struct {
-		name  string
-		given map[string]interface{}
-		want  map[string]interface{}
-	}{
-		{
-			name:  "nil",
-			given: nil,
-			want:  map[string]interface{}{},
-		},
-		{
-			name:  "no keys",
-			given: map[string]interface{}{},
-			want:  map[string]interface{}{},
-		},
-		{
-			name: "depth 1",
-			given: map[string]interface{}{
-				"key": "val",
-			},
-			want: map[string]interface{}{
-				"key": "val",
-			},
-		},
-		{
-			name: "depth 2",
-			given: map[string]interface{}{
-				"key/key2": "val",
-			},
-			want: map[string]interface{}{
-				"key": map[string]interface{}{
-					"key2": "val",
-				},
-			},
-		},
-		{
-			name: "depth 3",
-			given: map[string]interface{}{
-				"key/key2/key3": "val",
-			},
-			want: map[string]interface{}{
-				"key": map[string]interface{}{
-					"key2": map[string]interface{}{
-						"key3": "val",
-					},
-				},
-			},
-		},
-		{
-			name: "multiple sub keys",
-			given: map[string]interface{}{
-				"key1/key2/key3.1": "val",
-				"key1/key2/key3.2": "val",
-			},
-			want: map[string]interface{}{
-				"key1": map[string]interface{}{
-					"key2": map[string]interface{}{
-						"key3.1": "val",
-						"key3.2": "val",
-					},
-				},
-			},
-		},
-		{
-			name: "there is a value and a sub map for a key",
-			given: map[string]interface{}{
-				"key1/key2":      "val",
-				"key1/key2/key3": "val",
-			},
-			want: map[string]interface{}{
-				"key1": map[string]interface{}{
-					"key2": "val",
-				},
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, widenMap(tt.given), "widenMap(%v)", tt.given)
-		})
-	}
 }
 
 func Test_convertToRegistryConfig(t *testing.T) {
@@ -278,6 +197,90 @@ func Test_convertToRegistryConfig(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "convertToRegistryConfig(%v)", tt.dto)
+		})
+	}
+}
+
+func Test_setKey(t *testing.T) {
+	t.Run("test simple key", func(t *testing.T) {
+		theMap := map[string]interface{}{}
+
+		setKey([]string{"key1"}, "val", theMap)
+
+		assert.Equal(t, map[string]interface{}{
+			"key1": "val",
+		}, theMap)
+	})
+
+	t.Run("with filled map", func(t *testing.T) {
+		theMap := map[string]interface{}{
+			"key1": "val",
+		}
+
+		setKey([]string{"key2"}, "val", theMap)
+
+		assert.Equal(t, map[string]interface{}{
+			"key1": "val",
+			"key2": "val",
+		}, theMap)
+	})
+
+	t.Run("depth 2", func(t *testing.T) {
+		theMap := map[string]interface{}{}
+
+		setKey([]string{"key1", "key2"}, "val", theMap)
+		setKey([]string{"key1", "key2"}, "val", theMap)
+
+		assert.Equal(t, map[string]interface{}{
+			"key1": map[string]interface{}{
+				"key2": "val",
+			},
+		}, theMap)
+	})
+}
+
+func Test_widenMap1(t *testing.T) {
+	type args struct {
+		currentMap map[string]string
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]interface{}
+	}{
+		{
+			name: "nil",
+			args: args{
+				currentMap: nil,
+			},
+			want: map[string]interface{}{},
+		},
+		{
+			name: "depth 3",
+			args: args{
+				currentMap: map[string]string{
+					"1/2/3.1":     "v1",
+					"1/2/3.2":     "v2",
+					"1/2/3.3/4.1": "v3",
+					"1/2/3.3/4.2": "v4",
+				},
+			},
+			want: map[string]interface{}{
+				"1": map[string]interface{}{
+					"2": map[string]interface{}{
+						"3.1": "v1",
+						"3.2": "v2",
+						"3.3": map[string]interface{}{
+							"4.1": "v3",
+							"4.2": "v4"},
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, widenMap(tt.args.currentMap), "widenMap(%v)", tt.args.currentMap)
 		})
 	}
 }
