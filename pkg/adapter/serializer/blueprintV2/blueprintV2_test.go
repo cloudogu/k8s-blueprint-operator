@@ -47,14 +47,14 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 	blueprintV2, err := ConvertToBlueprintV2(blueprint)
 
-	convertedDogus := []TargetDogu{
+	convertedDogus := []serializer.TargetDogu{
 		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
 		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	convertedComponents := []TargetComponent{
+	convertedComponents := []serializer.TargetComponent{
 		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
 		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
@@ -81,14 +81,14 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 }
 
 func Test_ConvertToBlueprint(t *testing.T) {
-	dogus := []TargetDogu{
+	dogus := []serializer.TargetDogu{
 		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
 		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw},
 	}
 
-	components := []TargetComponent{
+	components := []serializer.TargetComponent{
 		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
 		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
@@ -149,13 +149,13 @@ func Test_ConvertToBlueprint(t *testing.T) {
 func Test_ConvertToBlueprint_errors(t *testing.T) {
 	blueprintV2 := BlueprintV2{
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
-		Dogus: []TargetDogu{
+		Dogus: []serializer.TargetDogu{
 			{Name: "dogu1", Version: version3_2_1_1.Raw},
 			{Name: "official/dogu1", Version: version3_2_1_1.Raw, TargetState: "unknown"},
 			{Name: "name/space/dogu2", Version: version3_2_1_2.Raw},
 			{Name: "official/dogu3", Version: "abc"},
 		},
-		Components: []TargetComponent{
+		Components: []serializer.TargetComponent{
 			{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "not known state"},
 			{Name: "official/dogu3", Version: "abc"},
 		},

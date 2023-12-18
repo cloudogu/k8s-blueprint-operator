@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
@@ -152,8 +153,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
-					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
-					Components:              []effectiveBlueprintV1.TargetComponent{},
+					Dogus:                   []serializer.TargetDogu{},
+					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
@@ -235,8 +236,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
-					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
-					Components:              []effectiveBlueprintV1.TargetComponent{},
+					Dogus:                   []serializer.TargetDogu{},
+					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
@@ -287,8 +288,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
-					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
-					Components:              []effectiveBlueprintV1.TargetComponent{},
+					Dogus:                   []serializer.TargetDogu{},
+					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},

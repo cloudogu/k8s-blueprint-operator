@@ -3,7 +3,6 @@ package effectiveBlueprintV1
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
@@ -20,38 +19,16 @@ var configKeySeparator = "/"
 type EffectiveBlueprintV1 struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []TargetDogu `json:"dogus,omitempty"`
+	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
 	// Packages contains a set of exact package versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. The packages must correspond to the used operation system package manager. Optional.
-	Components []TargetComponent `json:"components,omitempty"`
+	Components []serializer.TargetComponent `json:"components,omitempty"`
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig map[string]string `json:"registryConfig,omitempty"`
 	// Used to remove registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigAbsent []string `json:"registryConfigAbsent,omitempty"`
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigEncrypted map[string]string `json:"registryConfigEncrypted,omitempty"`
-}
-
-// TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
-// was applied.
-type TargetDogu struct {
-	// Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty.
-	Name string `json:"name"`
-	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
-	// otherwise it is optional and is not going to be interpreted.
-	Version string `json:"version"`
-	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState string `json:"targetState"`
-}
-
-type TargetComponent struct {
-	// Name defines the name of the component including its namespace, f. i. "official/nginx". Must not be empty.
-	Name string `json:"name"`
-	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
-	// otherwise it is optional and is not going to be interpreted.
-	Version string `json:"version"`
-	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
-	TargetState string `json:"targetState"`
 }
 
 func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (EffectiveBlueprintV1, error) {
@@ -79,12 +56,12 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 	}, nil
 }
 
-func convertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
+func convertToDoguDTOs(dogus []domain.Dogu) ([]serializer.TargetDogu, error) {
 	var errorList []error
-	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
+	converted := util.Map(dogus, func(dogu domain.Dogu) serializer.TargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
-		return TargetDogu{
+		return serializer.TargetDogu{
 			Name:        dogu.GetQualifiedName(),
 			Version:     dogu.Version.Raw,
 			TargetState: newState,
@@ -93,12 +70,12 @@ func convertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
 	return converted, errors.Join(errorList...)
 }
 
-func convertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
+func convertToComponentDTOs(components []domain.Component) ([]serializer.TargetComponent, error) {
 	var errorList []error
-	converted := util.Map(components, func(component domain.Component) TargetComponent {
+	converted := util.Map(components, func(component domain.Component) serializer.TargetComponent {
 		newState, err := serializer.ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
-		return TargetComponent{
+		return serializer.TargetComponent{
 			Name:        component.Name,
 			Version:     component.Version.Raw,
 			TargetState: newState,
@@ -108,8 +85,8 @@ func convertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 }
 
 func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.EffectiveBlueprint, error) {
-	convertedDogus, doguErr := convertDogus(blueprint.Dogus)
-	convertedComponents, compErr := convertComponents(blueprint.Components)
+	convertedDogus, doguErr := serializer.ConvertDogus(blueprint.Dogus)
+	convertedComponents, compErr := serializer.ConvertComponents(blueprint.Components)
 	convertedConfig, configError := convertToRegistryConfig(blueprint.RegistryConfig)
 	convertedEncryptedConfig, encryptedConfigError := convertToRegistryConfig(blueprint.RegistryConfig)
 	err := errors.Join(doguErr, compErr, configError, encryptedConfigError)
@@ -123,79 +100,6 @@ func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.Effecti
 		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
 		RegistryConfigEncrypted: convertedEncryptedConfig,
 	}, nil
-}
-
-func convertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
-	var convertedDogus []domain.Dogu
-	var errorList []error
-
-	for _, dogu := range dogus {
-		doguNamespace, doguName, err := serializer.SplitDoguName(dogu.Name)
-		if err != nil {
-			errorList = append(errorList, err)
-			continue
-		}
-		newState, err := serializer.ToDomainTargetState(dogu.TargetState)
-		if err != nil {
-			errorList = append(errorList, err)
-			continue
-		}
-		var version core.Version
-		if dogu.Version != "" {
-			version, err = core.ParseVersion(dogu.Version)
-			if err != nil {
-				errorList = append(errorList, fmt.Errorf("could not parse version of target dogu %q: %w", dogu.Name, err))
-				continue
-			}
-		}
-		convertedDogus = append(convertedDogus, domain.Dogu{
-			Namespace:   doguNamespace,
-			Name:        doguName,
-			Version:     version,
-			TargetState: newState,
-		})
-	}
-
-	err := errors.Join(errorList...)
-	if err != nil {
-		return convertedDogus, fmt.Errorf("cannot convert blueprint dogus: %w", err)
-	}
-
-	return convertedDogus, err
-}
-
-func convertComponents(components []TargetComponent) ([]domain.Component, error) {
-	var convertedComponents []domain.Component
-	var errorList []error
-
-	for _, component := range components {
-		newState, err := serializer.ToDomainTargetState(component.TargetState)
-		errorList = append(errorList, err)
-		if err != nil {
-			errorList = append(errorList, err)
-			continue
-		}
-		var version core.Version
-		if component.Version != "" {
-			version, err = core.ParseVersion(component.Version)
-			if err != nil {
-				errorList = append(errorList, fmt.Errorf("could not parse version of target component %q: %w", component.Name, err))
-				continue
-			}
-		}
-		convertedComponents = append(convertedComponents, domain.Component{
-			Name:        component.Name,
-			Version:     version,
-			TargetState: newState,
-		})
-	}
-
-	err := errors.Join(errorList...)
-	if err != nil {
-		return convertedComponents, fmt.Errorf("cannot convert blueprint components: %w", err)
-	}
-
-	return convertedComponents, err
 }
 
 func convertToRegistryConfig(flattenedConfig map[string]string) (domain.RegistryConfig, error) {

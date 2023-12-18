@@ -3,6 +3,7 @@ package effectiveBlueprintV1
 import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -50,14 +51,14 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	blueprintV2, err := ConvertToEffectiveBlueprintV1(blueprint)
 
 	//then
-	convertedDogus := []TargetDogu{
+	convertedDogus := []serializer.TargetDogu{
 		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
 		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	convertedComponents := []TargetComponent{
+	convertedComponents := []serializer.TargetComponent{
 		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
 		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
@@ -80,14 +81,14 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 
 func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	//given
-	convertedDogus := []TargetDogu{
+	convertedDogus := []serializer.TargetDogu{
 		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
 		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	convertedComponents := []TargetComponent{
+	convertedComponents := []serializer.TargetComponent{
 		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
 		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
