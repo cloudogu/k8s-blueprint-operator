@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 // TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -56,4 +57,18 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 	}
 
 	return convertedDogus, err
+}
+
+func ConvertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
+	var errorList []error
+	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
+		newState, err := ToSerializerTargetState(dogu.TargetState)
+		errorList = append(errorList, err)
+		return TargetDogu{
+			Name:        dogu.GetQualifiedName(),
+			Version:     dogu.Version.Raw,
+			TargetState: newState,
+		}
+	})
+	return converted, errors.Join(errorList...)
 }

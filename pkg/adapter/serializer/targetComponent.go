@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type TargetComponent struct {
@@ -49,4 +50,18 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 	}
 
 	return convertedComponents, err
+}
+
+func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
+	var errorList []error
+	converted := util.Map(components, func(component domain.Component) TargetComponent {
+		newState, err := ToSerializerTargetState(component.TargetState)
+		errorList = append(errorList, err)
+		return TargetComponent{
+			Name:        component.Name,
+			Version:     component.Version.Raw,
+			TargetState: newState,
+		}
+	})
+	return converted, errors.Join(errorList...)
 }

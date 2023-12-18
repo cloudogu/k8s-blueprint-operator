@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
@@ -33,27 +32,10 @@ type BlueprintV2 struct {
 type RegistryConfig map[string]map[string]interface{}
 
 func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
-	var errorList []error
-	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.Dogu) serializer.TargetDogu {
-		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
-		errorList = append(errorList, err)
-		return serializer.TargetDogu{
-			Name:        dogu.GetQualifiedName(),
-			Version:     dogu.Version.Raw,
-			TargetState: newState,
-		}
-	})
-	convertedComponents := util.Map(blueprint.Components, func(component domain.Component) serializer.TargetComponent {
-		newState, err := serializer.ToSerializerTargetState(component.TargetState)
-		errorList = append(errorList, err)
-		return serializer.TargetComponent{
-			Name:        component.Name,
-			Version:     component.Version.Raw,
-			TargetState: newState,
-		}
-	})
+	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
+	convertedComponents, compError := serializer.ConvertToComponentDTOs(blueprint.Components)
 
-	err := errors.Join(errorList...)
+	err := errors.Join(doguError, compError)
 	if err != nil {
 		return BlueprintV2{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
 	}

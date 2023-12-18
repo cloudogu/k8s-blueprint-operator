@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"strings"
 )
 
@@ -33,8 +32,8 @@ type EffectiveBlueprintV1 struct {
 
 func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (EffectiveBlueprintV1, error) {
 	var errorList []error
-	convertedDogus, doguError := convertToDoguDTOs(blueprint.Dogus)
-	convertedComponents, componentError := convertToComponentDTOs(blueprint.Components)
+	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
+	convertedComponents, componentError := serializer.ConvertToComponentDTOs(blueprint.Components)
 	errorList = append(errorList, doguError, componentError)
 
 	err := errors.Join(errorList...)
@@ -54,34 +53,6 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 		RegistryConfigAbsent:    registryConfigAbsent,
 		RegistryConfigEncrypted: flattenRegistryConfig(blueprint.RegistryConfigEncrypted),
 	}, nil
-}
-
-func convertToDoguDTOs(dogus []domain.Dogu) ([]serializer.TargetDogu, error) {
-	var errorList []error
-	converted := util.Map(dogus, func(dogu domain.Dogu) serializer.TargetDogu {
-		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
-		errorList = append(errorList, err)
-		return serializer.TargetDogu{
-			Name:        dogu.GetQualifiedName(),
-			Version:     dogu.Version.Raw,
-			TargetState: newState,
-		}
-	})
-	return converted, errors.Join(errorList...)
-}
-
-func convertToComponentDTOs(components []domain.Component) ([]serializer.TargetComponent, error) {
-	var errorList []error
-	converted := util.Map(components, func(component domain.Component) serializer.TargetComponent {
-		newState, err := serializer.ToSerializerTargetState(component.TargetState)
-		errorList = append(errorList, err)
-		return serializer.TargetComponent{
-			Name:        component.Name,
-			Version:     component.Version.Raw,
-			TargetState: newState,
-		}
-	})
-	return converted, errors.Join(errorList...)
 }
 
 func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.EffectiveBlueprint, error) {
