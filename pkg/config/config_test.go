@@ -116,3 +116,27 @@ func TestGetRemoteConfiguration(t *testing.T) {
 	})
 
 }
+
+func TestGetRemoteCredentials(t *testing.T) {
+	t.Run("default config", func(t *testing.T) {
+		t.Setenv(doguRegistryUsernameEnvVar, "user")
+		t.Setenv(doguRegistryPasswordEnvVar, "pass")
+		config, err := GetRemoteCredentials()
+
+		require.NoError(t, err)
+		assert.Equal(t, "user", config.Username)
+		assert.Equal(t, "pass", config.Password)
+	})
+	t.Run("no user", func(t *testing.T) {
+		t.Setenv(doguRegistryPasswordEnvVar, "pass")
+		_, err := GetRemoteCredentials()
+
+		require.Error(t, err)
+	})
+	t.Run("no pass", func(t *testing.T) {
+		t.Setenv(doguRegistryUsernameEnvVar, "user")
+		_, err := GetRemoteCredentials()
+
+		require.Error(t, err)
+	})
+}
