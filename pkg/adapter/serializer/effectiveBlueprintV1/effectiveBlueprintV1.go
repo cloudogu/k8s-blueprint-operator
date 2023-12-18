@@ -55,7 +55,32 @@ type TargetComponent struct {
 
 func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (EffectiveBlueprintV1, error) {
 	var errorList []error
-	convertedDogus := util.Map(blueprint.Dogus, func(dogu domain.Dogu) TargetDogu {
+	convertedDogus, doguError := convertToDoguDTOs(blueprint.Dogus)
+	convertedComponents, componentError := convertToComponentDTOs(blueprint.Components)
+	errorList = append(errorList, doguError, componentError)
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		return EffectiveBlueprintV1{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
+	}
+
+	registryConfigAbsent := blueprint.RegistryConfigAbsent
+	if registryConfigAbsent == nil {
+		registryConfigAbsent = []string{}
+	}
+
+	return EffectiveBlueprintV1{
+		Dogus:                   convertedDogus,
+		Components:              convertedComponents,
+		RegistryConfig:          flattenRegistryConfig(blueprint.RegistryConfig),
+		RegistryConfigAbsent:    registryConfigAbsent,
+		RegistryConfigEncrypted: flattenRegistryConfig(blueprint.RegistryConfigEncrypted),
+	}, nil
+}
+
+func convertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
+	var errorList []error
+	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return TargetDogu{
@@ -64,7 +89,12 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 			TargetState: newState,
 		}
 	})
-	convertedComponents := util.Map(blueprint.Components, func(component domain.Component) TargetComponent {
+	return converted, errors.Join(errorList...)
+}
+
+func convertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
+	var errorList []error
+	converted := util.Map(components, func(component domain.Component) TargetComponent {
 		newState, err := serializer.ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
 		return TargetComponent{
@@ -73,19 +103,7 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 			TargetState: newState,
 		}
 	})
-
-	err := errors.Join(errorList...)
-	if err != nil {
-		return EffectiveBlueprintV1{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
-	}
-
-	return EffectiveBlueprintV1{
-		Dogus:                   convertedDogus,
-		Components:              convertedComponents,
-		RegistryConfig:          flattenRegistryConfig(blueprint.RegistryConfig),
-		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
-		RegistryConfigEncrypted: flattenRegistryConfig(blueprint.RegistryConfigEncrypted),
-	}, nil
+	return converted, errors.Join(errorList...)
 }
 
 func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.EffectiveBlueprint, error) {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -146,6 +147,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
+				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
+					Components:              []effectiveBlueprintV1.TargetComponent{},
+					RegistryConfig:          map[string]string{},
+					RegistryConfigAbsent:    []string{},
+					RegistryConfigEncrypted: map[string]string{},
+				},
 			},
 		}
 		restClientMock.EXPECT().
@@ -222,6 +230,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
+				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
+					Components:              []effectiveBlueprintV1.TargetComponent{},
+					RegistryConfig:          map[string]string{},
+					RegistryConfigAbsent:    []string{},
+					RegistryConfigEncrypted: map[string]string{},
+				},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -267,6 +282,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
+				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+					Dogus:                   []effectiveBlueprintV1.TargetDogu{},
+					Components:              []effectiveBlueprintV1.TargetComponent{},
+					RegistryConfig:          map[string]string{},
+					RegistryConfigAbsent:    []string{},
+					RegistryConfigEncrypted: map[string]string{},
+				},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
