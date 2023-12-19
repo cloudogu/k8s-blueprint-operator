@@ -45,18 +45,18 @@ func (useCase *BlueprintSpecUseCase) HandleBlueprintSpecChange(ctx context.Conte
 	case domain.StatusPhaseInvalid:
 		return nil
 	case domain.StatusPhaseStaticallyValidated:
+		err := useCase.calculateEffectiveBlueprint(ctx, blueprintId)
+		if err != nil {
+			return err
+		}
+		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
+	case domain.StatusPhaseEffectiveBlueprintGenerated:
 		err := useCase.ValidateBlueprintSpecDynamically(ctx, blueprintId)
 		if err != nil {
 			return err
 		}
 		return useCase.HandleBlueprintSpecChange(ctx, blueprintId)
 	case domain.StatusPhaseValidated:
-		err := useCase.calculateEffectiveBlueprint(ctx, blueprintId)
-		if err != nil {
-			return err
-		}
-		return nil
-	case domain.StatusPhaseEffectiveBlueprintGenerated:
 		return nil
 	case domain.StatusPhaseInProgress:
 		return nil

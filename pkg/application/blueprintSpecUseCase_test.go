@@ -396,7 +396,7 @@ func TestBlueprintSpecUseCase_HandleBlueprintSpecChange(t *testing.T) {
 		err := useCase.HandleBlueprintSpecChange(ctx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseEffectiveBlueprintGenerated, updatedSpec.Status)
+		assert.Equal(t, domain.StatusPhaseValidated, updatedSpec.Status)
 	})
 
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {
