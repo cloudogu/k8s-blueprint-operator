@@ -11,11 +11,17 @@ import (
 )
 
 type DoguInstallationRepository interface {
-	//GetByName(doguName string) (ecosystem.DoguInstallation, error)
-	GetAll() ([]ecosystem.DoguInstallation, error)
-	//Create(ecosystem.DoguInstallation) error
-	//Update(ecosystem.DoguInstallation) error
-	//Delete(ecosystem.DoguInstallation) error
+	// GetByName returns the ecosystem.DoguInstallation or
+	// a NotFoundError if the dogu is not installed or
+	// an InternalError if there is any other error.
+	GetByName(ctx context.Context, doguName string) (ecosystem.DoguInstallation, error)
+	// GetAllByName returns the installation info of all dogus given in the list of doguNames or
+	// a NotFoundError if any dogu is not installed or
+	// an InternalError if there is any other error.
+	GetAllByName(ctx context.Context, doguNames []string) ([]ecosystem.DoguInstallation, error)
+	//Create(ctx context.Context, dogu ecosystem.DoguInstallation) error
+	//Update(ctx context.Context, dogu ecosystem.DoguInstallation) error
+	//Delete(ctx context.Context, dogu ecosystem.DoguInstallation) error
 }
 
 type BlueprintSpecRepository interface {
