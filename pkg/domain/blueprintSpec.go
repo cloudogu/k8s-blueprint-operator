@@ -208,7 +208,8 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 			if spec.Config.AllowDoguNamespaceSwitch {
 				effectiveDogu.Namespace = maskDogu.Namespace
 			} else {
-				return Dogu{}, errors.New("changing the dogu namespace is only allowed with the changeDoguNamespace flag")
+				return Dogu{}, fmt.Errorf(
+					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.GetQualifiedName(), maskDogu.GetQualifiedName())
 			}
 		}
 		effectiveDogu.TargetState = maskDogu.TargetState

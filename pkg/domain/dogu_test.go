@@ -15,7 +15,7 @@ func Test_TargetDogu_validate_errorOnMissingDoguName(t *testing.T) {
 	err := blueprint.Validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "dogu name must not be empty")
 }
 
 func Test_TargetDogu_validate_errorOnEmptyDoguName(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_TargetDogu_validate_errorOnEmptyDoguName(t *testing.T) {
 	err := dogu.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "dogu name must not be empty")
 }
 
 func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) {
@@ -33,7 +33,7 @@ func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) 
 	err := dogu.validate()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu field Version must not be empty")
+	assert.Contains(t, err.Error(), "dogu version must not be empty")
 }
 
 func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {

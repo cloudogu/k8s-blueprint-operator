@@ -43,7 +43,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 
 	require.NotNil(t, err)
 	assert.Contains(t, err.Error(), "blueprint is invalid")
-	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
+	assert.Contains(t, err.Error(), "dogu name must not be empty")
 	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
@@ -71,8 +71,8 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 	err := blueprint.validateDogus()
 
 	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu field Name must not be empty")
-	assert.Contains(t, err.Error(), "dogu field Version must not be empty")
+	assert.Contains(t, err.Error(), "dogu name must not be empty")
+	assert.Contains(t, err.Error(), "dogu version must not be empty")
 }
 
 func Test_validateComponents_ok(t *testing.T) {

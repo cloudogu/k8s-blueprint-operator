@@ -29,17 +29,17 @@ func (dogu Dogu) GetQualifiedName() string {
 func (dogu Dogu) validate() error {
 	var errorList []error
 	if dogu.Namespace == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Namespace must not be empty: %s", dogu.GetQualifiedName()))
+		errorList = append(errorList, fmt.Errorf("dogu namespace must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	if dogu.Name == "" {
-		errorList = append(errorList, fmt.Errorf("dogu field Name must not be empty: %s", dogu.GetQualifiedName()))
+		errorList = append(errorList, fmt.Errorf("dogu name must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
 		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.GetQualifiedName()))
 	}
 	emptyVersion := core.Version{}
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
-		errorList = append(errorList, fmt.Errorf("dogu field Version must not be empty: %s", dogu.GetQualifiedName()))
+		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.GetQualifiedName()))
 	}
 	err := errors.Join(errorList...)
 	if err != nil {

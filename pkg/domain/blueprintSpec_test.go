@@ -251,7 +251,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 	err := spec.CalculateEffectiveBlueprint()
 
 	require.NotNil(t, err, "without the feature flag, namespace changes are not allowed")
-	require.ErrorContains(t, err, "changing the dogu namespace is only allowed with the changeDoguNamespace flag")
+	require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/dogu1\" -> \"premium/dogu1\"")
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
