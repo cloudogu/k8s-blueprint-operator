@@ -12,7 +12,7 @@ func (useCase DoguInstallationDomainUseCase) ValidateDoguHealth(installedDogus [
 	var healthErrors []error
 	for _, dogu := range installedDogus {
 		if dogu.Health != ecosystem.Healhty {
-			healthErrors = append(healthErrors, fmt.Errorf("dogu %s is unhealthy", dogu.Name))
+			healthErrors = append(healthErrors, fmt.Errorf("dogu %q is unhealthy", dogu.Name))
 		}
 	}
 
