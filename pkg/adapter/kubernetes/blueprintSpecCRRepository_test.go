@@ -51,7 +51,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		//then
 		require.NoError(t, err)
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		assert.Equal(t, domain.BlueprintSpec{
 			Id: blueprintId,
 			Config: domain.BlueprintConfiguration{
@@ -170,7 +170,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
@@ -197,7 +197,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "no resourceVersion was provided over the persistenceContext in the given blueprintSpec")
+		assert.ErrorContains(t, err, "no blueprintSpecRepoContext was provided over the persistenceContext in the given blueprintSpec")
 	})
 
 	t.Run("version counter of different type", func(t *testing.T) {
@@ -208,7 +208,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = 1
+		persistenceContext[blueprintSpecRepoContextKey] = 1
 		err := repo.Update(ctx, domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
@@ -218,7 +218,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "resourceVersion in blueprintSpec is not a 'resourceVersionValue' but 'int'")
+		assert.ErrorContains(t, err, "ersistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but 'int'")
 	})
 
 	t.Run("conflict error", func(t *testing.T) {
@@ -258,7 +258,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
@@ -306,7 +306,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
@@ -344,7 +344,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", "test-error")
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
 
 		//then
@@ -368,7 +368,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 
 		//when
 		persistenceContext := make(map[string]interface{})
-		persistenceContext[resourceVersionKey] = resourceVersionValue{"abc"}
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
 
 		//then

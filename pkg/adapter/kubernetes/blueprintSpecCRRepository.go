@@ -15,10 +15,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const resourceVersionKey = "resourceVersion"
+const blueprintSpecRepoContextKey = "blueprintSpecRepoContext"
 
-type resourceVersionValue struct {
-	string
+type blueprintSpecRepoContext struct {
+	resourceVersion string
 }
 
 type blueprintSpecRepo struct {
@@ -60,7 +60,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 
 	persistenceContext := make(map[string]interface{}, 1)
-	persistenceContext[resourceVersionKey] = resourceVersionValue{blueprintCR.GetResourceVersion()}
+	persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{
+		resourceVersion: blueprintCR.GetResourceVersion(),
+	}
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
 		return domain.BlueprintSpec{}, err
@@ -93,7 +95,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
-	resourceVersion, err := getResourceVersion(ctx, spec)
+	persistenceContext, err := getPersistenceContext(ctx, spec)
 	if err != nil {
 		return err
 	}
@@ -106,7 +108,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              spec.Id,
-			ResourceVersion:   resourceVersion.string,
+			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
 		Status: v1.BlueprintStatus{
@@ -130,24 +132,24 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 	return nil
 }
 
-// getResourceVersion reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
-func getResourceVersion(ctx context.Context, spec domain.BlueprintSpec) (resourceVersionValue, error) {
+// getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
+func getPersistenceContext(ctx context.Context, spec domain.BlueprintSpec) (blueprintSpecRepoContext, error) {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
-	rawResourceVersion, versionExists := spec.PersistenceContext[resourceVersionKey]
+	rawField, versionExists := spec.PersistenceContext[blueprintSpecRepoContextKey]
 	if versionExists {
-		resourceVersion, isString := rawResourceVersion.(resourceVersionValue)
-		if isString {
-			return resourceVersion, nil
+		context, isContext := rawField.(blueprintSpecRepoContext)
+		if isContext {
+			return context, nil
 		} else {
-			err := fmt.Errorf("resourceVersion in blueprintSpec is not a 'resourceVersionValue' but '%T'", rawResourceVersion)
+			err := fmt.Errorf("persistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but '%T'", rawField)
 			logger.Error(err, "does this value come from a different repository?")
-			return resourceVersionValue{}, err
+			return blueprintSpecRepoContext{}, err
 		}
 	} else {
-		err := errors.New("no resourceVersion was provided over the persistenceContext in the given blueprintSpec")
+		err := errors.New("no blueprintSpecRepoContext was provided over the persistenceContext in the given blueprintSpec")
 		logger.Error(err, "This is normally written while loading the blueprintSpec over this repository. "+
 			"Did you try to persist a new blueprintSpec with repo.Update()?")
-		return resourceVersionValue{}, err
+		return blueprintSpecRepoContext{}, err
 	}
 }
 
