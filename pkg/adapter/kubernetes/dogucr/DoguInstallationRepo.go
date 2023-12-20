@@ -48,6 +48,12 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string
 }
 
 func parseDoguCR(cr *v1.Dogu) (ecosystem.DoguInstallation, error) {
+	if cr == nil {
+		return ecosystem.DoguInstallation{}, &domainservice.InternalError{
+			WrappedError: nil,
+			Message:      "Cannot parse dogu CR as it is nil",
+		}
+	}
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
 	namespace, _, nameErr := serializer.SplitDoguName(cr.Spec.Name)
@@ -62,12 +68,6 @@ func parseDoguCR(cr *v1.Dogu) (ecosystem.DoguInstallation, error) {
 	persistenceContext := make(map[string]interface{}, 1)
 	persistenceContext[doguInstallationRepoContextKey] = doguInstallationRepoContext{
 		resourceVersion: cr.GetResourceVersion(),
-	}
-	if err != nil {
-		return ecosystem.DoguInstallation{}, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "Cannot load dogu CR as it cannot be parsed correctly",
-		}
 	}
 	return ecosystem.DoguInstallation{
 		Namespace:          namespace,
