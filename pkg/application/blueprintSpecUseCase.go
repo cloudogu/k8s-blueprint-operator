@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -105,7 +106,8 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecStatically(ctx context
 // ValidateBlueprintSpecDynamically checks the blueprintSpec for semantic errors in combination with external data like dogu specs.
 // returns a domain.InvalidBlueprintError if blueprint is invalid or
 // a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
-// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
+// a domainservice.ConflictError if there was a concurrent write.
 func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.ValidateBlueprintSpecDynamically")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
@@ -134,7 +136,8 @@ func (useCase *BlueprintSpecUseCase) ValidateBlueprintSpecDynamically(ctx contex
 
 // calculateEffectiveBlueprint load the blueprintSpec, lets it calculate the effective blueprint and persists it again.
 // returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
-// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec.
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
+// a domainservice.ConflictError if there was a concurrent write.
 func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.calculateEffectiveBlueprint")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
@@ -152,13 +155,28 @@ func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Con
 	return calcError
 }
 
+// DetermineStateDiff loads the state of the ecosystem and compares it to the blueprint. It creates a declarative diff.
+// returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
+// a domainservice.ConflictError if there was a concurrent write.
+// any error if there is any other error.
 func (useCase *BlueprintSpecUseCase) DetermineStateDiff(ctx context.Context, blueprintId string) error {
+	//TODO: we should also move the stateDiff use case to its own file as its own service because it will have a lot of dependencies.
+	//TODO: this file here can be for static and dynamic validation only.
+	//TODO: The handling-loop (the big status switch) can be its own file and service too (it will have enough dependencies by itself)
 	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.DetermineStateDiff")
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
-	logger.Info("determine state diff to the cluster", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
+	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
 	}
-	//TODO
-	return nil
+	//TODO: load DoguInstallations with DoguInstallationRepo
+	var installedDogus map[string]*ecosystem.DoguInstallation
+	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus)
+
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot save blueprint spec after Determining the state diff to the ecosystem: %w", err)
+	}
+	return stateDiffError
 }

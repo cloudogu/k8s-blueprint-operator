@@ -67,6 +67,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	if err != nil {
 		return domain.BlueprintSpec{}, err
 	}
+	//TODO: also read the new state diff
 	blueprintSpec := domain.BlueprintSpec{
 		Id:                   blueprintId,
 		EffectiveBlueprint:   effectiveBlueprint,
@@ -116,6 +117,9 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 			EffectiveBlueprint: effectiveBlueprint,
 		},
 	}
+	//TODO: also write the new state diff
+	//TODO: create a new serializer (to a DTO) for it (have a look at the effective blueprint)
+	//TODO: do not use the domain-types directly for the CR (but they can be very similar)
 	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
 	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
@@ -167,5 +171,6 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}
+		//TODO: also handle the new event for state diffs
 	}
 }
