@@ -50,8 +50,6 @@ type BlueprintConfiguration struct {
 	AllowDoguNamespaceSwitch bool
 }
 
-type StateDiff struct{}
-
 type BlueprintUpgradePlan struct {
 	DogusToInstall   []string
 	DogusToUpgrade   []string
