@@ -101,7 +101,7 @@ func getPersistenceContext(ctx context.Context, spec ecosystem.DoguInstallation)
 	}
 }
 
-func (repo *doguInstallationRepo) GetAllByName(ctx context.Context, doguNames []string) ([]ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetAll(ctx context.Context) ([]ecosystem.DoguInstallation, error) {
 	//TODO implement me
 	panic("implement me")
 }

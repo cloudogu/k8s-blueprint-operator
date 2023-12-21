@@ -13,7 +13,7 @@ type DoguInstallationUseCase struct {
 
 func (useCase *DoguInstallationUseCase) validateDoguHealth(ctx context.Context) error {
 	//TODO: this is only a stub to get an idea of the upcoming implementation
-	installedDogus, err := useCase.doguRepo.GetAllByName(ctx, []string{})
+	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot evaluate dogu health states: %w", err)
 	}
