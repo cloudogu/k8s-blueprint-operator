@@ -151,3 +151,14 @@ func (useCase *BlueprintSpecUseCase) calculateEffectiveBlueprint(ctx context.Con
 
 	return calcError
 }
+
+func (useCase *BlueprintSpecUseCase) DetermineStateDiff(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("BlueprintSpecUseCase.DetermineStateDiff")
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	logger.Info("determine state diff to the cluster", "blueprintId", blueprintId, "blueprintStatus", blueprintSpec.Status)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec to validate it: %w", err)
+	}
+	//TODO
+	return nil
+}
