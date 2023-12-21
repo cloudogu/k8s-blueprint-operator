@@ -218,6 +218,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	return effectiveDogu, nil
 }
 
+// MarkInvalid is used to mark the blueprint as invalid after dynamically validating it.
 func (spec *BlueprintSpec) MarkInvalid(err error) {
 	spec.Status = StatusPhaseInvalid
 	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
