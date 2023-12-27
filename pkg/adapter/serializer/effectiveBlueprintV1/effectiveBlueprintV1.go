@@ -114,7 +114,7 @@ func setKey(keys []string, value string, initialMap map[string]interface{}) {
 		if currentMap[key] == nil {
 			currentMap[key] = map[string]interface{}{}
 		}
-		currentMap = currentMap[key].(map[string]interface{})
+		currentMap, _ = currentMap[key].(map[string]interface{})
 	}
 }
 
