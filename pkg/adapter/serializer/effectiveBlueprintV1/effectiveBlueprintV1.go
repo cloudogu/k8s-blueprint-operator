@@ -19,8 +19,8 @@ type EffectiveBlueprintV1 struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
-	// Packages contains a set of exact package versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. The packages must correspond to the used operation system package manager. Optional.
+	// Components contains a set of exact component versions which should be present or absent in the CES instance after which
+	// this blueprint was applied. Optional.
 	Components []serializer.TargetComponent `json:"components,omitempty"`
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig map[string]string `json:"registryConfig,omitempty"`
