@@ -4,29 +4,30 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/api/ecosystem"
-	"k8s.io/client-go/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/cache"
+	config2 "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
+	"github.com/cloudogu/k8s-blueprint-operator/pkg"
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -53,38 +54,60 @@ func init() {
 
 func main() {
 	ctx := ctrl.SetupSignalHandler()
-
-	err := startOperator(ctx, flag.CommandLine, os.Args)
+	restConfig := config2.GetConfigOrDie()
+	operatorConfig, err := config.NewOperatorConfig(Version)
+	if err != nil {
+		setupLog.Error(err, "unable to create operator config")
+		os.Exit(1)
+	}
+	err = startOperator(ctx, restConfig, operatorConfig, flag.CommandLine, os.Args)
 	if err != nil {
 		setupLog.Error(err, "unable to start operator")
 		os.Exit(1)
 	}
 }
 
-func startOperator(ctx context.Context, flags *flag.FlagSet, args []string) error {
-	operatorConfig, err := config.NewOperatorConfig(Version)
-	if err != nil {
-		return fmt.Errorf("unable to create operator config: %w", err)
-	}
-
-	options := getK8sManagerOptions(flags, args, operatorConfig)
-	restConfig := ctrl.GetConfigOrDie()
-
-	k8sManager, err := ctrl.NewManager(restConfig, options)
+func startOperator(
+	ctx context.Context,
+	restConfig *rest.Config,
+	operatorConfig *config.OperatorConfig,
+	flags *flag.FlagSet,
+	args []string,
+) error {
+	k8sManager, err := NewK8sManager(restConfig, operatorConfig, flags, args)
 	if err != nil {
 		return fmt.Errorf("unable to start manager: %w", err)
 	}
 
-	err = configureManager(k8sManager)
+	var recorder eventRecorder = k8sManager.GetEventRecorderFor("k8s-blueprint-operator")
+	bootstrap, err := pkg.Bootstrap(restConfig, recorder, operatorConfig.Namespace)
+	if err != nil {
+		return fmt.Errorf("unable to bootstrap application context: %w", err)
+	}
+
+	err = configureManager(k8sManager, bootstrap.Reconciler)
 	if err != nil {
 		return fmt.Errorf("unable to configure manager: %w", err)
 	}
 
-	return startK8sManager(ctx, k8sManager)
+	err = startK8sManager(ctx, k8sManager)
+	if err != nil {
+		return fmt.Errorf("unable to start operator: %w", err)
+	}
+	return err
 }
 
-func configureManager(k8sManager controllerManager) error {
-	err := configureReconcilers(k8sManager)
+func NewK8sManager(
+	restConfig *rest.Config,
+	operatorConfig *config.OperatorConfig,
+	flags *flag.FlagSet, args []string,
+) (manager.Manager, error) {
+	options := getK8sManagerOptions(flags, args, operatorConfig)
+	return ctrl.NewManager(restConfig, options)
+}
+
+func configureManager(k8sManager controllerManager, blueprintReconciler *reconciler.BlueprintReconciler) error {
+	err := blueprintReconciler.SetupWithManager(k8sManager)
 	if err != nil {
 		return fmt.Errorf("unable to configure reconciler: %w", err)
 	}
@@ -136,27 +159,6 @@ func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options
 	ctrlOpts.LeaderElection = enableLeaderElection
 
 	return ctrlOpts, zapOpts
-}
-
-func configureReconcilers(k8sManager controllerManager) error {
-	var recorder eventRecorder = k8sManager.GetEventRecorderFor("k8s-backup-operator")
-
-	k8sClientSet, err := kubernetes.NewForConfig(k8sManager.GetConfig())
-	if err != nil {
-		return fmt.Errorf("unable to create k8s clientset: %w", err)
-	}
-
-	ecosystemClientSet, err := ecosystem.NewClientSet(k8sManager.GetConfig(), k8sClientSet)
-	if err != nil {
-		return fmt.Errorf("unable to create ecosystem clientset: %w", err)
-	}
-
-	if err := controller.NewBlueprintReconciler(ecosystemClientSet, recorder).SetupWithManager(k8sManager); err != nil {
-		return fmt.Errorf("unable to configure reconciler: %w", err)
-	}
-	// +kubebuilder:scaffold:builder
-
-	return nil
 }
 
 func addChecks(k8sManager controllerManager) error {

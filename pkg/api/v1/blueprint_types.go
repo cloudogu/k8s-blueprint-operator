@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"time"
-
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -15,32 +15,20 @@ type BlueprintSpec struct {
 	Blueprint string `json:"blueprint"`
 	// BlueprintMask json can further restrict the desired state from the blueprint.
 	BlueprintMask string `json:"blueprintMask,omitempty"`
+	// IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
+	IgnoreDoguHealth bool `json:"ignoreDoguHealth,omitempty"`
+	// AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
+	// in comparison to the blueprint.
+	AllowDoguNamespaceSwitch bool `json:"allowDoguNamespaceSwitch,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
 type BlueprintStatus struct {
 	// Phase represents the processing state of the blueprint
-	Phase StatusPhase `json:"phase,omitempty"`
-	// RequeueTimeNanos contains the time in nanoseconds to wait until the next requeue.
-	RequeueTimeNanos time.Duration `json:"requeueTimeNanos,omitempty"`
+	Phase domain.StatusPhase `json:"phase,omitempty"`
+	// EffectiveBlueprint is the blueprint after applying the blueprint mask.
+	EffectiveBlueprint effectiveBlueprintV1.EffectiveBlueprintV1 `json:"effectiveBlueprint,omitempty"`
 }
-
-type StatusPhase string
-
-const (
-	// StatusPhaseNew marks a newly created blueprint-CR.
-	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseCompleted marks the blueprint as successfully applied.
-	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseInvalid marks the given blueprint or the blueprint mask as not correct.
-	StatusPhaseInvalid StatusPhase = "invalid"
-	// StatusPhaseRetrying marks the blueprint as not applicable for now (e.g. dogu health state) but a retry is queued.
-	StatusPhaseRetrying StatusPhase = "retrying"
-	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
-	StatusPhaseFailed StatusPhase = "failed"
-	// StatusPhaseInProgress marks that the blueprint is currently being processed.
-	StatusPhaseInProgress StatusPhase = "inProgress"
-)
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status

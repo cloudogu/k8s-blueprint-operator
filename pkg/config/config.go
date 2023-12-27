@@ -3,9 +3,12 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/Masterminds/semver/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
+
+	"github.com/cloudogu/cesapp-lib/core"
 )
 
 const (
@@ -15,7 +18,19 @@ const (
 	namespaceEnvVar  = "NAMESPACE"
 )
 
+const (
+	doguRegistryEndpointEnvVar  = "DOGU_REGISTRY_ENDPOINT"
+	doguRegistryUsernameEnvVar  = "DOGU_REGISTRY_USERNAME"
+	doguRegistryPasswordEnvVar  = "DOGU_REGISTRY_PASSWORD"
+	doguRegistryURLSchemaEnvVar = "DOGU_REGISTRY_URLSCHEMA"
+)
+
+const registryCacheDir = "/tmp/dogu-registry-cache"
+
+const ApplicationContextKey = "applicationContext"
+
 var log = ctrl.Log.WithName("config")
+var Stage = StageProduction
 
 // OperatorConfig contains all configurable values for the dogu operator.
 type OperatorConfig struct {
@@ -24,8 +39,6 @@ type OperatorConfig struct {
 	// Namespace specifies the namespace that the operator is deployed to.
 	Namespace string
 }
-
-var Stage = StageProduction
 
 func IsStageDevelopment() bool {
 	return Stage == StageDevelopment
@@ -80,4 +93,50 @@ func getEnvVar(name string) (string, error) {
 		return "", fmt.Errorf("environment variable %s must be set", name)
 	}
 	return env, nil
+}
+
+// GetRemoteConfiguration creates a remote configuration with the configured values.
+func GetRemoteConfiguration() (*core.Remote, error) {
+	// We can safely ignore this error since the url schema variable is optional.
+	urlSchema, _ := getEnvVar(doguRegistryURLSchemaEnvVar)
+
+	if urlSchema != "index" {
+		log.Info("URLSchema is not index. Setting it to default.")
+		urlSchema = "default"
+	}
+
+	endpoint, err := getEnvVar(doguRegistryEndpointEnvVar)
+	if err != nil {
+		return nil, err
+	}
+
+	if urlSchema == "default" {
+		// trim suffix 'dogus' or 'dogus/' to provide maximum compatibility with the old remote configuration of the operator
+		endpoint = strings.TrimSuffix(endpoint, "dogus/")
+		endpoint = strings.TrimSuffix(endpoint, "dogus")
+	}
+
+	return &core.Remote{
+		Endpoint:  endpoint,
+		CacheDir:  registryCacheDir,
+		URLSchema: urlSchema,
+	}, nil
+}
+
+// GetRemoteCredentials creates a remote credential pair with the configured values.
+func GetRemoteCredentials() (*core.Credentials, error) {
+	username, err := getEnvVar(doguRegistryUsernameEnvVar)
+	if err != nil {
+		return nil, err
+	}
+
+	password, err := getEnvVar(doguRegistryPasswordEnvVar)
+	if err != nil {
+		return nil, err
+	}
+
+	return &core.Credentials{
+		Username: username,
+		Password: password,
+	}, nil
 }
