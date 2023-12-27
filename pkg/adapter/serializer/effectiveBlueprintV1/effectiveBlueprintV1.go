@@ -19,8 +19,8 @@ type EffectiveBlueprintV1 struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
-	// Packages contains a set of exact package versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. The packages must correspond to the used operation system package manager. Optional.
+	// Components contains a set of exact component versions which should be present or absent in the CES instance after which
+	// this blueprint was applied. Optional.
 	Components []serializer.TargetComponent `json:"components,omitempty"`
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig map[string]string `json:"registryConfig,omitempty"`
@@ -88,7 +88,7 @@ func convertToRegistryConfig(flattenedConfig map[string]string) (domain.Registry
 				config[key1][key2] = val2
 			}
 		default:
-			return domain.RegistryConfig{}, fmt.Errorf("registry config is invalid: values need to be at least at depth 2: key %v is invalid", key1)
+			return domain.RegistryConfig{}, fmt.Errorf("registry config is invalid: values need to be at least at depth 2: key %q is invalid", key1)
 		}
 	}
 	return config, nil
@@ -114,7 +114,7 @@ func setKey(keys []string, value string, initialMap map[string]interface{}) {
 		if currentMap[key] == nil {
 			currentMap[key] = map[string]interface{}{}
 		}
-		currentMap = currentMap[key].(map[string]interface{})
+		currentMap, _ = currentMap[key].(map[string]interface{})
 	}
 }
 

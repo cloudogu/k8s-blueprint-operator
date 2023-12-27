@@ -11,7 +11,7 @@ import (
 type TargetComponent struct {
 	// Name defines the name of the component including its namespace, f. i. "official/nginx". Must not be empty.
 	Name string `json:"name"`
-	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
+	// Version defines the version of the component that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
