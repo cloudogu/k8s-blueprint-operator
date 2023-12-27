@@ -88,7 +88,7 @@ func convertToRegistryConfig(flattenedConfig map[string]string) (domain.Registry
 				config[key1][key2] = val2
 			}
 		default:
-			return domain.RegistryConfig{}, fmt.Errorf("registry config is invalid: values need to be at least at depth 2: key %v is invalid", key1)
+			return domain.RegistryConfig{}, fmt.Errorf("registry config is invalid: values need to be at least at depth 2: key %q is invalid", key1)
 		}
 	}
 	return config, nil
