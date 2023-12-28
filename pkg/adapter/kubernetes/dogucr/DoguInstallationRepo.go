@@ -102,6 +102,29 @@ func getPersistenceContext(ctx context.Context, spec ecosystem.DoguInstallation)
 }
 
 func (repo *doguInstallationRepo) GetAll(ctx context.Context) ([]ecosystem.DoguInstallation, error) {
-	//TODO implement me
-	panic("implement me")
+	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("error while listing dogu CRs"),
+		}
+	}
+
+	var errs []error
+	var doguInstallations []ecosystem.DoguInstallation
+	for _, cr := range crList.Items {
+		doguInstallation, err := parseDoguCR(&cr)
+		errs = append(errs, err)
+		doguInstallations = append(doguInstallations, doguInstallation)
+	}
+
+	err = errors.Join(errs...)
+	if err != nil {
+		return nil, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      "failed to parse some dogu CRs",
+		}
+	}
+
+	return doguInstallations, nil
 }
