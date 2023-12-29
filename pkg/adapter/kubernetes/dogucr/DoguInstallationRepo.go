@@ -4,15 +4,18 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/cloudogu/cesapp-lib/core"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
 const doguInstallationRepoContextKey = "doguInstallationRepoContext"
@@ -29,16 +32,16 @@ type doguInstallationRepo struct {
 func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface) domainservice.DoguInstallationRepository {
 	return &doguInstallationRepo{doguClient: doguClient}
 }
-func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string) (ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string) (*ecosystem.DoguInstallation, error) {
 	cr, err := repo.doguClient.Get(ctx, doguName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return ecosystem.DoguInstallation{}, &domainservice.NotFoundError{
+			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("cannot load dogu CR %q as it does not exist", doguName),
 			}
 		}
-		return ecosystem.DoguInstallation{}, &domainservice.InternalError{
+		return nil, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      fmt.Sprintf("error while loading dogu CR %q", doguName),
 		}
@@ -47,9 +50,9 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string
 	return parseDoguCR(cr)
 }
 
-func parseDoguCR(cr *v1.Dogu) (ecosystem.DoguInstallation, error) {
+func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	if cr == nil {
-		return ecosystem.DoguInstallation{}, &domainservice.InternalError{
+		return nil, &domainservice.InternalError{
 			WrappedError: nil,
 			Message:      "Cannot parse dogu CR as it is nil",
 		}
@@ -59,7 +62,7 @@ func parseDoguCR(cr *v1.Dogu) (ecosystem.DoguInstallation, error) {
 	namespace, _, nameErr := serializer.SplitDoguName(cr.Spec.Name)
 	err := errors.Join(versionErr, nameErr)
 	if err != nil {
-		return ecosystem.DoguInstallation{}, &domainservice.InternalError{
+		return nil, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      "Cannot load dogu CR as it cannot be parsed correctly",
 		}
@@ -69,7 +72,7 @@ func parseDoguCR(cr *v1.Dogu) (ecosystem.DoguInstallation, error) {
 	persistenceContext[doguInstallationRepoContextKey] = doguInstallationRepoContext{
 		resourceVersion: cr.GetResourceVersion(),
 	}
-	return ecosystem.DoguInstallation{
+	return &ecosystem.DoguInstallation{
 		Namespace:          namespace,
 		Name:               cr.Name,
 		Version:            version,
@@ -101,7 +104,7 @@ func getPersistenceContext(ctx context.Context, spec ecosystem.DoguInstallation)
 	}
 }
 
-func (repo *doguInstallationRepo) GetAll(ctx context.Context) ([]ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error) {
 	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, &domainservice.InternalError{
@@ -111,11 +114,11 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) ([]ecosystem.DoguI
 	}
 
 	var errs []error
-	var doguInstallations []ecosystem.DoguInstallation
+	doguInstallations := make(map[string]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
 		doguInstallation, err := parseDoguCR(&cr)
 		errs = append(errs, err)
-		doguInstallations = append(doguInstallations, doguInstallation)
+		doguInstallations[doguInstallation.Name] = doguInstallation
 	}
 
 	err = errors.Join(errs...)

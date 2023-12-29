@@ -14,11 +14,11 @@ type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
 	// a NotFoundError if the dogu is not installed or
 	// an InternalError if there is any other error.
-	GetByName(ctx context.Context, doguName string) (ecosystem.DoguInstallation, error)
+	GetByName(ctx context.Context, doguName string) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
 	// a NotFoundError if any dogu is not installed or
 	// an InternalError if there is any other error.
-	GetAll(ctx context.Context) ([]ecosystem.DoguInstallation, error)
+	GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error)
 	//Create(ctx context.Context, dogu ecosystem.DoguInstallation) error
 	//Update(ctx context.Context, dogu ecosystem.DoguInstallation) error
 	//Delete(ctx context.Context, dogu ecosystem.DoguInstallation) error
@@ -29,11 +29,11 @@ type BlueprintSpecRepository interface {
 	// a NotFoundError if the BlueprintSpec was not found or
 	// a domain.InvalidBlueprintError together with a BlueprintSpec without blueprint and mask if the BlueprintSpec could not be parsed or
 	// an InternalError if there is any other error.
-	GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error)
+	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
 	// Update updates a given BlueprintSpec.
 	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or
 	// returns an InternalError if there is any other error
-	Update(ctx context.Context, blueprintSpec domain.BlueprintSpec) error
+	Update(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error
 }
 
 type RemoteDoguRegistry interface {

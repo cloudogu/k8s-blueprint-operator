@@ -44,16 +44,16 @@ func NewBlueprintSpecRepository(
 }
 
 // GetById returns a Blueprint identified by its ID.
-func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
+func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error) {
 	blueprintCR, err := repo.blueprintClient.Get(ctx, blueprintId, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return domain.BlueprintSpec{}, &domainservice.NotFoundError{
+			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("cannot load blueprint CR %q as it does not exist", blueprintId),
 			}
 		}
-		return domain.BlueprintSpec{}, &domainservice.InternalError{
+		return nil, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      fmt.Sprintf("error while loading blueprint CR %q", blueprintId),
 		}
@@ -65,10 +65,10 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
-		return domain.BlueprintSpec{}, err
+		return nil, err
 	}
 	//TODO: also read the new state diff
-	blueprintSpec := domain.BlueprintSpec{
+	blueprintSpec := &domain.BlueprintSpec{
 		Id:                   blueprintId,
 		EffectiveBlueprint:   effectiveBlueprint,
 		StateDiff:            domain.StateDiff{},
@@ -85,7 +85,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
-		return blueprintSpec, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
+		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
 	blueprintSpec.Blueprint = blueprint
@@ -94,7 +94,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
-func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
+func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
 	persistenceContext, err := getPersistenceContext(ctx, spec)
 	if err != nil {
@@ -137,13 +137,13 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 }
 
 // getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
-func getPersistenceContext(ctx context.Context, spec domain.BlueprintSpec) (blueprintSpecRepoContext, error) {
+func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blueprintSpecRepoContext, error) {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
 	rawField, versionExists := spec.PersistenceContext[blueprintSpecRepoContextKey]
 	if versionExists {
-		context, isContext := rawField.(blueprintSpecRepoContext)
+		repoContext, isContext := rawField.(blueprintSpecRepoContext)
 		if isContext {
-			return context, nil
+			return repoContext, nil
 		} else {
 			err := fmt.Errorf("persistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but '%T'", rawField)
 			logger.Error(err, "does this value come from a different repository?")

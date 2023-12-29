@@ -27,13 +27,6 @@ var testOperatorConfig = &config2.OperatorConfig{
 	Namespace: "test",
 }
 
-type stubHandler struct {
-}
-
-func (s stubHandler) HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error {
-	return nil
-}
-
 func Test_startOperator(t *testing.T) {
 	t.Run("should fail to create operator config", func(t *testing.T) {
 		// given

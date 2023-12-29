@@ -14,5 +14,5 @@ type controllerManager interface {
 }
 
 type BlueprintChangeHandler interface {
-	HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error
+	HandleChange(ctx context.Context, blueprintId string) error
 }

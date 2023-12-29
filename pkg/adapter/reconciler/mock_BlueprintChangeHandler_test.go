@@ -21,8 +21,8 @@ func (_m *MockBlueprintChangeHandler) EXPECT() *MockBlueprintChangeHandler_Expec
 	return &MockBlueprintChangeHandler_Expecter{mock: &_m.Mock}
 }
 
-// HandleBlueprintSpecChange provides a mock function with given fields: ctx, blueprintId
-func (_m *MockBlueprintChangeHandler) HandleBlueprintSpecChange(ctx context.Context, blueprintId string) error {
+// HandleChange provides a mock function with given fields: ctx, blueprintId
+func (_m *MockBlueprintChangeHandler) HandleChange(ctx context.Context, blueprintId string) error {
 	ret := _m.Called(ctx, blueprintId)
 
 	var r0 error
@@ -35,31 +35,31 @@ func (_m *MockBlueprintChangeHandler) HandleBlueprintSpecChange(ctx context.Cont
 	return r0
 }
 
-// MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleBlueprintSpecChange'
-type MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call struct {
+// MockBlueprintChangeHandler_HandleChange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleChange'
+type MockBlueprintChangeHandler_HandleChange_Call struct {
 	*mock.Call
 }
 
-// HandleBlueprintSpecChange is a helper method to define mock.On call
+// HandleChange is a helper method to define mock.On call
 //   - ctx context.Context
 //   - blueprintId string
-func (_e *MockBlueprintChangeHandler_Expecter) HandleBlueprintSpecChange(ctx interface{}, blueprintId interface{}) *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call {
-	return &MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call{Call: _e.mock.On("HandleBlueprintSpecChange", ctx, blueprintId)}
+func (_e *MockBlueprintChangeHandler_Expecter) HandleChange(ctx interface{}, blueprintId interface{}) *MockBlueprintChangeHandler_HandleChange_Call {
+	return &MockBlueprintChangeHandler_HandleChange_Call{Call: _e.mock.On("HandleChange", ctx, blueprintId)}
 }
 
-func (_c *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call) Run(run func(ctx context.Context, blueprintId string)) *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call {
+func (_c *MockBlueprintChangeHandler_HandleChange_Call) Run(run func(ctx context.Context, blueprintId string)) *MockBlueprintChangeHandler_HandleChange_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call) Return(_a0 error) *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call {
+func (_c *MockBlueprintChangeHandler_HandleChange_Call) Return(_a0 error) *MockBlueprintChangeHandler_HandleChange_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call) RunAndReturn(run func(context.Context, string) error) *MockBlueprintChangeHandler_HandleBlueprintSpecChange_Call {
+func (_c *MockBlueprintChangeHandler_HandleChange_Call) RunAndReturn(run func(context.Context, string) error) *MockBlueprintChangeHandler_HandleChange_Call {
 	_c.Call.Return(run)
 	return _c
 }

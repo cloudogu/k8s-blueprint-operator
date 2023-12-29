@@ -30,13 +30,13 @@ func Test_parseDoguCR(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    ecosystem.DoguInstallation
+		want    *ecosystem.DoguInstallation
 		wantErr bool
 	}{
 		{
 			name:    "nil",
 			args:    args{cr: nil},
-			want:    ecosystem.DoguInstallation{},
+			want:    nil,
 			wantErr: true,
 		},
 		{
@@ -60,7 +60,7 @@ func Test_parseDoguCR(t *testing.T) {
 					Health: v1.AvailableHealthStatus,
 				},
 			}},
-			want: ecosystem.DoguInstallation{
+			want: &ecosystem.DoguInstallation{
 				Namespace: "official",
 				Name:      "postgresql",
 				Version:   version3_2_1_4,
@@ -94,7 +94,7 @@ func Test_parseDoguCR(t *testing.T) {
 					Health: v1.AvailableHealthStatus,
 				},
 			}},
-			want:    ecosystem.DoguInstallation{},
+			want:    nil,
 			wantErr: true,
 		},
 	}
@@ -144,7 +144,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 		//then
 		require.NoError(t, err)
-		assert.Equal(t, ecosystem.DoguInstallation{
+		assert.Equal(t, &ecosystem.DoguInstallation{
 			Namespace:          "official",
 			Name:               "postgresql",
 			Version:            version3_2_1_4,

@@ -8,7 +8,7 @@ import (
 
 type DoguInstallationDomainUseCase struct{}
 
-func (useCase DoguInstallationDomainUseCase) ValidateDoguHealth(installedDogus []ecosystem.DoguInstallation) error {
+func (useCase DoguInstallationDomainUseCase) ValidateDoguHealth(installedDogus map[string]*ecosystem.DoguInstallation) error {
 	var healthErrors []error
 	for _, dogu := range installedDogus {
 		if dogu.Health != ecosystem.AvailableHealthStatus {
@@ -20,5 +20,6 @@ func (useCase DoguInstallationDomainUseCase) ValidateDoguHealth(installedDogus [
 	if err != nil {
 		err = fmt.Errorf("dogus are unhealthy: %w", err)
 	}
-	return err
+
+	return nil
 }
