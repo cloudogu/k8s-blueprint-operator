@@ -23,30 +23,33 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		stateDiffMock := newMockStateDiffUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock)
 
-		updatedSpec := &domain.BlueprintSpec{
+		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseNew,
 		}
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(updatedSpec, nil)
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
-				updatedSpec.Status = domain.StatusPhaseStaticallyValidated
+				blueprintSpec.Status = domain.StatusPhaseStaticallyValidated
 			})
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
-				updatedSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
+				blueprintSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
 			})
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
-				updatedSpec.Status = domain.StatusPhaseValidated
+				blueprintSpec.Status = domain.StatusPhaseValidated
 			})
-		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil)
+		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseStateDiffDetermined
+			})
 
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseValidated, updatedSpec.Status)
+		assert.Equal(t, domain.StatusPhaseStateDiffDetermined, blueprintSpec.Status)
 	})
 
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {

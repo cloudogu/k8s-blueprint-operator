@@ -77,6 +77,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 			return err
 		}
 
+		return useCase.HandleChange(ctx, blueprintId)
+	case domain.StatusPhaseStateDiffDetermined:
 		return nil
 	case domain.StatusPhaseInProgress:
 		return nil
