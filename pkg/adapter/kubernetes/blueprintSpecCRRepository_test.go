@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -62,6 +63,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				RegistryConfig:          domain.RegistryConfig{},
 				RegistryConfigEncrypted: domain.RegistryConfig{},
 			},
+			StateDiff:          domain.StateDiff{DoguDiffs: make([]domain.DoguDiff, 0)},
 			PersistenceContext: persistenceContext,
 		}, spec)
 	})
@@ -159,6 +161,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
 			},
 		}
 		restClientMock.EXPECT().
@@ -242,6 +245,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -294,6 +298,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")

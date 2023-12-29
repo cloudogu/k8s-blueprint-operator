@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -67,11 +68,16 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	if err != nil {
 		return nil, err
 	}
-	//TODO: also read the new state diff
+
+	stateDiff, err := stateDiffV1.ConvertToDomainModel(blueprintCR.Status.StateDiff)
+	if err != nil {
+		return nil, err
+	}
+
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                   blueprintId,
 		EffectiveBlueprint:   effectiveBlueprint,
-		StateDiff:            domain.StateDiff{},
+		StateDiff:            stateDiff,
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
@@ -100,6 +106,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	if err != nil {
 		return err
 	}
+
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprintV1(spec.EffectiveBlueprint)
 	if err != nil {
 		return err
@@ -115,11 +122,10 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		Status: v1.BlueprintStatus{
 			Phase:              spec.Status,
 			EffectiveBlueprint: effectiveBlueprint,
+			StateDiff:          stateDiffV1.ConvertToDTO(spec.StateDiff),
 		},
 	}
-	//TODO: also write the new state diff
-	//TODO: create a new serializer (to a DTO) for it (have a look at the effective blueprint)
-	//TODO: do not use the domain-types directly for the CR (but they can be very similar)
+
 	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
 	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
@@ -168,9 +174,10 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
 		case domain.EffectiveBlueprintCalculatedEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
+		case domain.StateDiffDeterminedEvent:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "StateDiffDeterminedEvent", fmt.Sprintf("state diff: %+v", ev.StateDiff))
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}
-		//TODO: also handle the new event for state diffs
 	}
 }
