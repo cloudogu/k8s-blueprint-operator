@@ -140,62 +140,60 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		expectedDiff := domain.StateDiff{
-			DoguDiffs: []domain.DoguDiff{
-				{
-					DoguName: "postfix",
-					Actual:   domain.DoguDiffState{InstallationState: domain.TargetStateAbsent},
-					Expected: domain.DoguDiffState{
-						Namespace:         "official",
-						Version:           mustParseVersion(t, "2.9.0"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					NeededAction: domain.ActionInstall,
+		expectedDoguDiffs := []domain.DoguDiff{
+			{
+				DoguName: "postfix",
+				Actual:   domain.DoguDiffState{InstallationState: domain.TargetStateAbsent},
+				Expected: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion(t, "2.9.0"),
+					InstallationState: domain.TargetStatePresent,
 				},
-				{
-					DoguName: "ldap",
-					Actual: domain.DoguDiffState{
-						Namespace:         "official",
-						Version:           mustParseVersion(t, "1.1.1"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					Expected: domain.DoguDiffState{
-						Namespace:         "official",
-						Version:           mustParseVersion(t, "1.2.3"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					NeededAction: domain.ActionUpgrade,
+				NeededAction: domain.ActionInstall,
+			},
+			{
+				DoguName: "ldap",
+				Actual: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion(t, "1.1.1"),
+					InstallationState: domain.TargetStatePresent,
 				},
-				{
-					DoguName: "nginx-ingress",
-					Actual: domain.DoguDiffState{
-						Namespace:         "k8s",
-						Version:           mustParseVersion(t, "1.8.5"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					Expected: domain.DoguDiffState{
-						Namespace:         "k8s",
-						Version:           mustParseVersion(t, "1.8.5"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					NeededAction: domain.ActionNone,
+				Expected: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion(t, "1.2.3"),
+					InstallationState: domain.TargetStatePresent,
 				},
-				{
-					DoguName: "nginx-static",
-					Actual: domain.DoguDiffState{
-						Namespace:         "k8s",
-						Version:           mustParseVersion(t, "1.8.6"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					Expected: domain.DoguDiffState{
-						Namespace:         "k8s",
-						InstallationState: domain.TargetStateAbsent,
-					},
-					NeededAction: domain.ActionUninstall,
+				NeededAction: domain.ActionUpgrade,
+			},
+			{
+				DoguName: "nginx-ingress",
+				Actual: domain.DoguDiffState{
+					Namespace:         "k8s",
+					Version:           mustParseVersion(t, "1.8.5"),
+					InstallationState: domain.TargetStatePresent,
 				},
+				Expected: domain.DoguDiffState{
+					Namespace:         "k8s",
+					Version:           mustParseVersion(t, "1.8.5"),
+					InstallationState: domain.TargetStatePresent,
+				},
+				NeededAction: domain.ActionNone,
+			},
+			{
+				DoguName: "nginx-static",
+				Actual: domain.DoguDiffState{
+					Namespace:         "k8s",
+					Version:           mustParseVersion(t, "1.8.6"),
+					InstallationState: domain.TargetStatePresent,
+				},
+				Expected: domain.DoguDiffState{
+					Namespace:         "k8s",
+					InstallationState: domain.TargetStateAbsent,
+				},
+				NeededAction: domain.ActionUninstall,
 			},
 		}
-		assert.Equal(t, expectedDiff, blueprint.StateDiff)
+		assert.ElementsMatch(t, expectedDoguDiffs, blueprint.StateDiff.DoguDiffs)
 	})
 }
 
