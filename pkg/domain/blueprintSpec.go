@@ -36,6 +36,10 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
+	// StatusPhaseDogusHealthy marks that all currently installed dogus are healthy.
+	StatusPhaseDogusHealthy StatusPhase = "dogusHealthy"
+	// StatusPhaseDogusUnhealthy marks that some currently installed dogus are unhealthy.
+	StatusPhaseDogusUnhealthy StatusPhase = "dogusUnhealthy"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -73,6 +77,11 @@ type BlueprintSpecInvalidEvent struct {
 
 type BlueprintSpecStaticallyValidatedEvent struct{}
 type BlueprintSpecValidatedEvent struct{}
+
+type DogusHealthyEvent struct{}
+type DogusUnhealthyEvent struct {
+	HealthResult DoguHealthResult
+}
 
 type EffectiveBlueprintCalculatedEvent struct {
 	EffectiveBlueprint EffectiveBlueprint
@@ -254,4 +263,27 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	spec.Status = StatusPhaseStateDiffDetermined
 	spec.Events = append(spec.Events, StateDiffDeterminedEvent{StateDiff: spec.StateDiff})
 	return nil
+}
+
+func (spec *BlueprintSpec) CheckDoguHealth(installedDogus map[string]*ecosystem.DoguInstallation) {
+	var unhealthyDogus []UnhealthyDogu
+	for _, dogu := range installedDogus {
+		if dogu.Health != ecosystem.AvailableHealthStatus {
+			unhealthyDogu := UnhealthyDogu{
+				Namespace: dogu.Namespace,
+				Name:      dogu.Name,
+				Version:   dogu.Version,
+				Health:    dogu.Health,
+			}
+			unhealthyDogus = append(unhealthyDogus, unhealthyDogu)
+		}
+	}
+
+	if len(unhealthyDogus) > 0 {
+		spec.Status = StatusPhaseDogusUnhealthy
+		spec.Events = append(spec.Events, DogusUnhealthyEvent{HealthResult: DoguHealthResult{UnhealthyDogus: unhealthyDogus}})
+	} else {
+		spec.Status = StatusPhaseDogusHealthy
+		spec.Events = append(spec.Events, DogusHealthyEvent{})
+	}
 }

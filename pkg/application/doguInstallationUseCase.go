@@ -4,29 +4,45 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type DoguInstallationUseCase struct {
+	blueprintSpecRepo domainservice.BlueprintSpecRepository
 	doguRepo          domainservice.DoguInstallationRepository
-	doguDomainUseCase domainservice.DoguInstallationDomainUseCase
 }
 
-func (useCase *DoguInstallationUseCase) validateDoguHealth(ctx context.Context) error {
-	//TODO: this is only a stub to get an idea of the upcoming implementation
+func NewDoguInstallationUseCase(
+	blueprintSpecRepo domainservice.BlueprintSpecRepository,
+	doguRepo domainservice.DoguInstallationRepository,
+) *DoguInstallationUseCase {
+	return &DoguInstallationUseCase{
+		blueprintSpecRepo: blueprintSpecRepo,
+		doguRepo:          doguRepo,
+	}
+}
+
+func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth").
+		WithValues("blueprintId", blueprintId)
+
+	logger.Info("getting blueprint spec for checking dogu health")
+	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q to check dogu health: %w", blueprintId, err)
+	}
+
 	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot evaluate dogu health states: %w", err)
 	}
 
-	return useCase.doguDomainUseCase.ValidateDoguHealth(installedDogus)
-}
+	blueprintSpec.CheckDoguHealth(installedDogus)
 
-func (useCase *DoguInstallationUseCase) installDogu(ctx context.Context, doguName string, version string) error {
-	//TODO
-	return nil
-}
+	err = useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot save blueprint spec %q after Determining the state diff to the ecosystem: %w", blueprintId, err)
+	}
 
-func (useCase *DoguInstallationUseCase) uninstallDogu(ctx context.Context, doguName string) error {
-	//TODO
 	return nil
 }

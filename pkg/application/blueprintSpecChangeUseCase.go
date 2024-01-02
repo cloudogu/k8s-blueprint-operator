@@ -15,6 +15,7 @@ type BlueprintSpecChangeUseCase struct {
 	validation         blueprintSpecValidationUseCase
 	effectiveBlueprint effectiveBlueprintUseCase
 	stateDiff          stateDiffUseCase
+	doguInstall        doguInstallationUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -22,12 +23,14 @@ func NewBlueprintSpecChangeUseCase(
 	validation blueprintSpecValidationUseCase,
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
+	doguInstall doguInstallationUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:               repo,
 		validation:         validation,
 		effectiveBlueprint: effectiveBlueprint,
 		stateDiff:          stateDiff,
+		doguInstall:        doguInstall,
 	}
 }
 
@@ -59,6 +62,10 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseValidated:
 		return useCase.determineStateDiff(ctx, blueprintId)
 	case domain.StatusPhaseStateDiffDetermined:
+		return useCase.checkDoguHealth(ctx, blueprintId)
+	case domain.StatusPhaseDogusHealthy:
+		return nil
+	case domain.StatusPhaseDogusUnhealthy:
 		return nil
 	case domain.StatusPhaseInProgress:
 		return nil
@@ -100,6 +107,15 @@ func (useCase *BlueprintSpecChangeUseCase) validateDynamically(ctx context.Conte
 
 func (useCase *BlueprintSpecChangeUseCase) determineStateDiff(ctx context.Context, blueprintId string) error {
 	err := useCase.stateDiff.DetermineStateDiff(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) checkDoguHealth(ctx context.Context, blueprintId string) error {
+	err := useCase.doguInstall.CheckDoguHealth(ctx, blueprintId)
 	if err != nil {
 		return err
 	}

@@ -342,12 +342,16 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			domain.BlueprintSpecValidatedEvent{},
 			domain.EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: domain.EffectiveBlueprint{}},
 			domain.StateDiffDeterminedEvent{StateDiff: domain.StateDiff{}},
+			domain.DogusHealthyEvent{},
+			domain.DogusUnhealthyEvent{HealthResult: domain.DoguHealthResult{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidatedEvent", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", "effective blueprint: {Dogus:[] Components:[] RegistryConfig:map[] RegistryConfigAbsent:[] RegistryConfigEncrypted:map[]}")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDeterminedEvent", "state diff: {DoguDiffs:[]}")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusHealthyEvent", "")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusUnhealthyEvent", "health result: {UnhealthyDogus:[]}")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", "test-error")
 		//when
 		persistenceContext := make(map[string]interface{})

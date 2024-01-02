@@ -69,7 +69,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
-	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintSpecRepository, blueprintValidationUseCase, effectiveBlueprintUseCase, stateDiffUseCase)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo)
+	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
+		blueprintSpecRepository, blueprintValidationUseCase,
+		effectiveBlueprintUseCase, stateDiffUseCase,
+		doguInstallationUseCase,
+	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
@@ -81,6 +86,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
 		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
 		StateDiffUseCase:               stateDiffUseCase,
+		DoguInstallationUseCase:        doguInstallationUseCase,
 		BlueprintSerializer:            blueprintSerializer,
 		BlueprintMaskSerializer:        blueprintMaskSerializer,
 		Reconciler:                     blueprintReconciler,
