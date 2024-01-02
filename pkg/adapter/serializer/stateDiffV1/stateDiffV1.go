@@ -11,23 +11,23 @@ import (
 // StateDiffV1 is the result of comparing the EffectiveBlueprint to the current cluster state.
 // It describes what operations need to be done to achieve the desired state of the blueprint.
 type StateDiffV1 struct {
-	DoguDiffs []DoguDiffV1
+	DoguDiffs []DoguDiffV1 `json:"doguDiffs,omitempty"`
 }
 
 // DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state.
 // It contains the operation that needs to be done to achieve this desired state.
 type DoguDiffV1 struct {
-	DoguName     string
-	Actual       DoguDiffV1State
-	Expected     DoguDiffV1State
-	NeededAction DoguActionV1
+	DoguName     string          `json:"doguName"`
+	Actual       DoguDiffV1State `json:"actual"`
+	Expected     DoguDiffV1State `json:"expected"`
+	NeededAction DoguActionV1    `json:"neededAction"`
 }
 
 // DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
 type DoguDiffV1State struct {
-	Namespace         string
-	Version           string
-	InstallationState string
+	Namespace         string `json:"namespace,omitempty"`
+	Version           string `json:"version,omitempty"`
+	InstallationState string `json:"installationState"`
 }
 
 // DoguActionV1 is the action that needs to be done for a dogu

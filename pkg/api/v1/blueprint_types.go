@@ -31,7 +31,7 @@ type BlueprintStatus struct {
 	EffectiveBlueprint effectiveBlueprintV1.EffectiveBlueprintV1 `json:"effectiveBlueprint,omitempty"`
 	// StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
 	// It describes what operations need to be done to achieve the desired state of the blueprint.
-	StateDiff stateDiffV1.StateDiffV1
+	StateDiff stateDiffV1.StateDiffV1 `json:"stateDiff,omitempty"`
 }
 
 //+kubebuilder:object:root=true
