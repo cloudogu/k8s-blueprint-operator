@@ -49,35 +49,15 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	switch blueprintSpec.Status {
 	case domain.StatusPhaseNew:
-		err := useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprintId)
-		if err != nil {
-			return err
-		}
-
-		return useCase.HandleChange(ctx, blueprintId)
+		return useCase.validateStatically(ctx, blueprintId)
 	case domain.StatusPhaseInvalid:
 		return nil
 	case domain.StatusPhaseStaticallyValidated:
-		err := useCase.effectiveBlueprint.CalculateEffectiveBlueprint(ctx, blueprintId)
-		if err != nil {
-			return err
-		}
-
-		return useCase.HandleChange(ctx, blueprintId)
+		return useCase.calculateEffectiveBlueprint(ctx, blueprintId)
 	case domain.StatusPhaseEffectiveBlueprintGenerated:
-		err := useCase.validation.ValidateBlueprintSpecDynamically(ctx, blueprintId)
-		if err != nil {
-			return err
-		}
-
-		return useCase.HandleChange(ctx, blueprintId)
+		return useCase.validateDynamically(ctx, blueprintId)
 	case domain.StatusPhaseValidated:
-		err := useCase.stateDiff.DetermineStateDiff(ctx, blueprintId)
-		if err != nil {
-			return err
-		}
-
-		return useCase.HandleChange(ctx, blueprintId)
+		return useCase.determineStateDiff(ctx, blueprintId)
 	case domain.StatusPhaseStateDiffDetermined:
 		return nil
 	case domain.StatusPhaseInProgress:
@@ -89,4 +69,40 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}
+}
+
+func (useCase *BlueprintSpecChangeUseCase) validateStatically(ctx context.Context, blueprintId string) error {
+	err := useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
+	err := useCase.effectiveBlueprint.CalculateEffectiveBlueprint(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) validateDynamically(ctx context.Context, blueprintId string) error {
+	err := useCase.validation.ValidateBlueprintSpecDynamically(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) determineStateDiff(ctx context.Context, blueprintId string) error {
+	err := useCase.stateDiff.DetermineStateDiff(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
 }
