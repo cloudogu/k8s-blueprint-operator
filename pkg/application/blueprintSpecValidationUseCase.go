@@ -77,16 +77,14 @@ func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(
 
 	logger.Info("dynamically validate blueprint spec", "blueprintStatus", blueprintSpec.Status)
 
-	errorList := []error{
-		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprintSpec.EffectiveBlueprint),
-	}
-	validationError := errors.Join(errorList...)
+	validationError := useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprintSpec.EffectiveBlueprint)
 	if validationError != nil {
 		validationError = &domain.InvalidBlueprintError{
 			WrappedError: validationError,
 			Message:      "blueprint spec is invalid",
 		}
 	}
+
 	blueprintSpec.ValidateDynamically(validationError)
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
