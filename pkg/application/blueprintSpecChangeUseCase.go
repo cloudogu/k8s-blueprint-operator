@@ -39,8 +39,9 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	logger.Info("getting changed blueprint") //log with id
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
-		logger.Error(err, "cannot load blueprint spec")
-		return fmt.Errorf("cannot load blueprint spec: %w", err)
+		errMsg := "cannot load blueprint spec"
+		logger.Error(err, errMsg)
+		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
 	logger = logger.WithValues("blueprintStatus", blueprintSpec.Status)
