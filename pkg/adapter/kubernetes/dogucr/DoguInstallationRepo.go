@@ -109,7 +109,7 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosy
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
-			Message:      fmt.Sprintf("error while listing dogu CRs"),
+			Message:      "error while listing dogu CRs",
 		}
 	}
 
