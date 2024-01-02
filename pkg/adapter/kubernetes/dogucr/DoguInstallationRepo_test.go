@@ -23,6 +23,8 @@ var persistenceContext = map[string]interface{}{
 	doguInstallationRepoContextKey: doguInstallationRepoContext{resourceVersion: crResourceVersion},
 }
 
+var testCtx = context.Background()
+
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
 		cr *v1.Dogu
@@ -115,11 +117,10 @@ func Test_parseDoguCR(t *testing.T) {
 func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		//given
-		ctx := context.Background()
 		k8sMock := NewMockDoguInterface(t)
 		repo := NewDoguInstallationRepo(k8sMock)
 		//when
-		k8sMock.EXPECT().Get(ctx, "postgresql", metav1.GetOptions{}).Return(
+		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			&v1.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
@@ -140,7 +141,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 				},
 			}, nil)
 
-		dogu, err := repo.GetByName(ctx, "postgresql")
+		dogu, err := repo.GetByName(testCtx, "postgresql")
 
 		//then
 		require.NoError(t, err)
@@ -157,16 +158,15 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 	t.Run("not found error", func(t *testing.T) {
 		//given
-		ctx := context.Background()
 		k8sMock := NewMockDoguInterface(t)
 		repo := NewDoguInstallationRepo(k8sMock)
 		//when
-		k8sMock.EXPECT().Get(ctx, "postgresql", metav1.GetOptions{}).Return(
+		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
 			k8sErrors.NewNotFound(schema.GroupResource{}, "postgresql"),
 		)
 
-		_, err := repo.GetByName(ctx, "postgresql")
+		_, err := repo.GetByName(testCtx, "postgresql")
 
 		//then
 		require.Error(t, err)
@@ -176,20 +176,123 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 	t.Run("internal error", func(t *testing.T) {
 		//given
-		ctx := context.Background()
 		k8sMock := NewMockDoguInterface(t)
 		repo := NewDoguInstallationRepo(k8sMock)
 		//when
-		k8sMock.EXPECT().Get(ctx, "postgresql", metav1.GetOptions{}).Return(
+		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
 			k8sErrors.NewInternalError(errors.New("test-error")),
 		)
 
-		_, err := repo.GetByName(ctx, "postgresql")
+		_, err := repo.GetByName(testCtx, "postgresql")
 
 		//then
 		require.Error(t, err)
 		var expectedError *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedError)
+	})
+}
+
+func Test_doguInstallationRepo_GetAll(t *testing.T) {
+	t.Run("should fail to list dogus", func(t *testing.T) {
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(nil, assert.AnError)
+
+		sut := &doguInstallationRepo{doguClient: doguClientMock}
+
+		// when
+		_, err := sut.GetAll(testCtx)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		expectedError := &domainservice.InternalError{}
+		assert.ErrorAs(t, err, &expectedError)
+		assert.ErrorContains(t, err, "error while listing dogu CRs")
+	})
+	t.Run("should fail for multiple dogus", func(t *testing.T) {
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		doguList := &v1.DoguList{Items: []v1.Dogu{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgresql",
+				},
+				Spec: v1.DoguSpec{
+					Name:    "official/postgresql",
+					Version: "invalid",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ldap",
+				},
+				Spec: v1.DoguSpec{
+					Name:    "official/ldap",
+					Version: "invalid",
+				},
+			},
+		}}
+		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
+
+		sut := &doguInstallationRepo{doguClient: doguClientMock}
+
+		// when
+		_, err := sut.GetAll(testCtx)
+
+		// then
+		require.Error(t, err)
+		expectedError := &domainservice.InternalError{}
+		assert.ErrorAs(t, err, &expectedError)
+		assert.ErrorContains(t, err, "failed to parse some dogu CRs")
+	})
+	t.Run("should succeed for multiple dogus", func(t *testing.T) {
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		doguList := &v1.DoguList{Items: []v1.Dogu{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgresql",
+				},
+				Spec: v1.DoguSpec{
+					Name:    "official/postgresql",
+					Version: "1.2.3-1",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "ldap",
+				},
+				Spec: v1.DoguSpec{
+					Name:    "official/ldap",
+					Version: "3.2.1-3",
+				},
+			},
+		}}
+		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
+
+		sut := &doguInstallationRepo{doguClient: doguClientMock}
+
+		// when
+		actual, err := sut.GetAll(testCtx)
+
+		// then
+		require.NoError(t, err)
+		expectedDoguInstallations := map[string]*ecosystem.DoguInstallation{
+			"postgresql": {
+				Namespace:          "official",
+				Name:               "postgresql",
+				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
+				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
+			},
+			"ldap": {
+				Namespace:          "official",
+				Name:               "ldap",
+				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
+				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
+			},
+		}
+		assert.Equal(t, expectedDoguInstallations, actual)
 	})
 }

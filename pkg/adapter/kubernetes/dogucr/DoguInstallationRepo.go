@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/cloudogu/cesapp-lib/core"
 	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -83,27 +81,6 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	}, nil
 }
 
-// getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
-func getPersistenceContext(ctx context.Context, spec ecosystem.DoguInstallation) (doguInstallationRepoContext, error) {
-	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
-	rawField, versionExists := spec.PersistenceContext[doguInstallationRepoContextKey]
-	if versionExists {
-		persistenceCtx, isContext := rawField.(doguInstallationRepoContext)
-		if isContext {
-			return persistenceCtx, nil
-		} else {
-			err := fmt.Errorf("persistence context in doguInstallation is not a 'doguInstallationRepoContext' but '%T'", rawField)
-			logger.Error(err, "does this value come from a different repository?")
-			return doguInstallationRepoContext{}, err
-		}
-	} else {
-		err := errors.New("no doguInstallationRepoContext was provided over the persistenceContext in the given doguInstallation")
-		logger.Error(err, "This is normally written while loading the doguInstallation over this repository. "+
-			"Did you try to persist a new doguInstallation with repo.Update()?")
-		return doguInstallationRepoContext{}, err
-	}
-}
-
 func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error) {
 	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -117,7 +94,10 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosy
 	doguInstallations := make(map[string]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
 		doguInstallation, err := parseDoguCR(&cr)
-		errs = append(errs, err)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
 		doguInstallations[doguInstallation.Name] = doguInstallation
 	}
 
