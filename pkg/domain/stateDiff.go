@@ -6,10 +6,13 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// StateDiff represents the diff between the defined state in the effective blueprint and the actual state in the ecosystem.
+// If there is state in the ecosystem which is not represented in the effective blueprint, then the expected state is the actual state.
 type StateDiff struct {
 	DoguDiffs []DoguDiff
 }
 
+// DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
 	DoguName     string
 	Actual       DoguDiffState
@@ -17,12 +20,14 @@ type DoguDiff struct {
 	NeededAction Action
 }
 
+// DoguDiffState contains all fields to make a diff for dogus in repect to another DoguDiffState.
 type DoguDiffState struct {
 	Namespace         string
 	Version           core.Version
 	InstallationState TargetState
 }
 
+// Action represents a needed Action for a dogu to reach the expected state.
 type Action string
 
 const (
@@ -99,7 +104,7 @@ func getNeededAction(expected DoguDiffState, actual DoguDiffState) Action {
 	if expected.InstallationState == actual.InstallationState {
 		switch expected.InstallationState {
 		case TargetStatePresent:
-			// dogu should state installed, but maybe an upgrade, downgrade or a namespace switch?
+			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
 			if expected.Namespace != actual.Namespace {
 				return ActionSwitchNamespace
 			}
@@ -107,7 +112,9 @@ func getNeededAction(expected DoguDiffState, actual DoguDiffState) Action {
 				return ActionUpgrade
 			} else if expected.Version.IsEqualTo(actual.Version) {
 				return ActionNone
-			} else { // os older
+			} else { // is older
+				// if downgrades are allowed is not important here.
+				// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
 				return ActionDowngrade
 			}
 		case TargetStateAbsent:
