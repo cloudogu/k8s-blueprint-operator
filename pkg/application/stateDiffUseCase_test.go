@@ -68,7 +68,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should fail to update blueprint", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseEffectiveBlueprintGenerated}
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
@@ -118,7 +118,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Status: domain.StatusPhaseEffectiveBlueprintGenerated,
+			Status: domain.StatusPhaseValidated,
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
