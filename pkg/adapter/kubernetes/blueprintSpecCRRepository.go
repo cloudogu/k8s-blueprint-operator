@@ -163,25 +163,8 @@ func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blu
 	}
 }
 
-func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []interface{}) {
+func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []domain.Event) {
 	for _, event := range events {
-		switch ev := event.(type) {
-		case domain.BlueprintSpecStaticallyValidatedEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidatedEvent", "")
-		case domain.BlueprintSpecValidatedEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
-		case domain.BlueprintSpecInvalidEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
-		case domain.EffectiveBlueprintCalculatedEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
-		case domain.StateDiffDeterminedEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "StateDiffDeterminedEvent", fmt.Sprintf("state diff: %+v", ev.StateDiff))
-		case domain.DogusHealthyEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "DogusHealthyEvent", "")
-		case domain.DogusUnhealthyEvent:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "DogusUnhealthyEvent", fmt.Sprintf("health result: %+v", ev.HealthResult))
-		default:
-			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
-		}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, event.Name(), event.Message())
 	}
 }

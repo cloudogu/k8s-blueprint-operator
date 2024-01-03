@@ -264,6 +264,25 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("handle ignore dogu health", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock)
+
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseIgnoreDoguHealth,
+		}, nil)
+		// when
+		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
 	t.Run("handle unhealthy dogus", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)

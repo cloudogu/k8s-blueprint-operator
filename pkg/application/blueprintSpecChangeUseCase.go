@@ -63,6 +63,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return useCase.determineStateDiff(ctx, blueprintId)
 	case domain.StatusPhaseStateDiffDetermined:
 		return useCase.checkDoguHealth(ctx, blueprintId)
+	case domain.StatusPhaseIgnoreDoguHealth:
+		fallthrough
 	case domain.StatusPhaseDogusHealthy:
 		return nil
 	case domain.StatusPhaseDogusUnhealthy:

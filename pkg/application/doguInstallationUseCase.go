@@ -34,14 +34,14 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context, blu
 
 	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot evaluate dogu health states: %w", err)
+		return fmt.Errorf("cannot evaluate dogu health states for blueprint spec %q: %w", blueprintId, err)
 	}
 
 	blueprintSpec.CheckDoguHealth(installedDogus)
 
 	err = useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot save blueprint spec %q after Determining the state diff to the ecosystem: %w", blueprintId, err)
+		return fmt.Errorf("cannot save blueprint spec %q after checking the dogu health: %w", blueprintId, err)
 	}
 
 	return nil

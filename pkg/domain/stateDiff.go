@@ -6,8 +6,26 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+type DoguDiffs []DoguDiff
+
+func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+	for _, doguDiff := range dd {
+		switch doguDiff.NeededAction {
+		case ActionInstall:
+			toInstall += 1
+		case ActionUpgrade:
+			toUpgrade += 1
+		case ActionUninstall:
+			toUninstall += 1
+		default:
+			other += 1
+		}
+	}
+	return
+}
+
 type StateDiff struct {
-	DoguDiffs []DoguDiff
+	DoguDiffs DoguDiffs
 }
 
 type DoguDiff struct {

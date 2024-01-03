@@ -354,3 +354,53 @@ func Test_determineDoguDiffs(t *testing.T) {
 		})
 	}
 }
+
+func TestDoguDiffs_Statistics(t *testing.T) {
+	tests := []struct {
+		name            string
+		dd              DoguDiffs
+		wantToInstall   int
+		wantToUpgrade   int
+		wantToUninstall int
+		wantOther       int
+	}{
+		{
+			name:            "0 overall",
+			dd:              DoguDiffs{},
+			wantToInstall:   0,
+			wantToUpgrade:   0,
+			wantToUninstall: 0,
+			wantOther:       0,
+		},
+		{
+			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
+			dd: DoguDiffs{
+				{NeededAction: ActionNone},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUninstall},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUpgrade},
+				{NeededAction: ActionSwitchNamespace},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionDowngrade},
+				{NeededAction: ActionUninstall},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUpgrade},
+				{NeededAction: ActionUpgrade},
+			},
+			wantToInstall:   4,
+			wantToUpgrade:   3,
+			wantToUninstall: 2,
+			wantOther:       3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotToInstall, gotToUpgrade, gotToUninstall, gotOther := tt.dd.Statistics()
+			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
+			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
+			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
+			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
+		})
+	}
+}
