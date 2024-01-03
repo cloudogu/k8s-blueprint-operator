@@ -307,7 +307,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				RegistryConfigAbsent:    nil,
 				RegistryConfigEncrypted: nil,
 			},
-			Status: StatusPhaseEffectiveBlueprintGenerated,
+			Status: StatusPhaseValidated,
 		}
 
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
@@ -324,7 +324,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
 
-	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseValidated}
+	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
 	for _, initialStatus := range notAllowedStatus {
 		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
 			//given
