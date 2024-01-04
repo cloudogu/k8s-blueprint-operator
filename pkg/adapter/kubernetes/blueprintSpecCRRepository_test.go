@@ -161,7 +161,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		restClientMock.EXPECT().
@@ -245,7 +245,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -298,7 +298,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: make([]stateDiffV1.DoguDiffV1, 0)},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
