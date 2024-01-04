@@ -1,7 +1,9 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -290,4 +292,69 @@ func TestBlueprintSpec_MarkInvalid(t *testing.T) {
 	assert.Equal(t, StatusPhaseInvalid, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
+}
+
+func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
+	// not every single case is tested here as this is a rather coarse-grained function
+	// have a look at the tests for the more specialized functions used in the command, to see all possible combinations of diffs.
+	t.Run("all ok with empty blueprint", func(t *testing.T) {
+		//given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Dogus:                   []Dogu{},
+				Components:              nil,
+				RegistryConfig:          nil,
+				RegistryConfigAbsent:    nil,
+				RegistryConfigEncrypted: nil,
+			},
+			Status: StatusPhaseValidated,
+		}
+
+		installedDogus := map[string]*ecosystem.DoguInstallation{}
+
+		//when
+		err := spec.DetermineStateDiff(installedDogus)
+
+		//then
+		stateDiff := StateDiff{DoguDiffs: []DoguDiff{}}
+		require.NoError(t, err)
+		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
+		require.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, StateDiffDeterminedEvent{stateDiff}, spec.Events[0])
+		assert.Equal(t, stateDiff, spec.StateDiff)
+	})
+
+	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
+	for _, initialStatus := range notAllowedStatus {
+		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
+			//given
+			spec := BlueprintSpec{
+				Status: initialStatus,
+			}
+			installedDogus := map[string]*ecosystem.DoguInstallation{}
+			//when
+			err := spec.DetermineStateDiff(installedDogus)
+
+			//then
+			assert.Error(t, err)
+			assert.Equal(t, spec.Status, initialStatus)
+			require.Equal(t, 0, len(spec.Events))
+			assert.ErrorContains(t, err, fmt.Sprintf("cannot determine state diff in status phase %q", initialStatus))
+		})
+	}
+	t.Run("do not re-determine state diff", func(t *testing.T) {
+		initialStatus := StatusPhaseCompleted
+		//given
+		spec := BlueprintSpec{
+			Status: initialStatus,
+		}
+		installedDogus := map[string]*ecosystem.DoguInstallation{}
+		//when
+		err := spec.DetermineStateDiff(installedDogus)
+
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, spec.Status, initialStatus)
+		require.Equal(t, 0, len(spec.Events))
+	})
 }

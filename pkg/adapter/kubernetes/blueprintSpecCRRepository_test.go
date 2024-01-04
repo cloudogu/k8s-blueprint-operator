@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -52,7 +53,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		require.NoError(t, err)
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		assert.Equal(t, domain.BlueprintSpec{
+		assert.Equal(t, &domain.BlueprintSpec{
 			Id: blueprintId,
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:         true,
@@ -62,6 +63,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				RegistryConfig:          domain.RegistryConfig{},
 				RegistryConfigEncrypted: domain.RegistryConfig{},
 			},
+			StateDiff:          domain.StateDiff{DoguDiffs: make([]domain.DoguDiff, 0)},
 			PersistenceContext: persistenceContext,
 		}, spec)
 	})
@@ -159,6 +161,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		restClientMock.EXPECT().
@@ -171,7 +174,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, domain.BlueprintSpec{
+		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
@@ -189,7 +192,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		//when
-		err := repo.Update(ctx, domain.BlueprintSpec{
+		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:     blueprintId,
 			Status: domain.StatusPhaseValidated,
 			Events: nil,
@@ -209,7 +212,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = 1
-		err := repo.Update(ctx, domain.BlueprintSpec{
+		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
@@ -242,6 +245,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -259,7 +263,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, domain.BlueprintSpec{
+		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
@@ -294,6 +298,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
+				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
@@ -307,7 +312,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, domain.BlueprintSpec{
+		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
 			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
@@ -336,16 +341,18 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			domain.BlueprintSpecStaticallyValidatedEvent{},
 			domain.BlueprintSpecValidatedEvent{},
 			domain.EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: domain.EffectiveBlueprint{}},
+			domain.StateDiffDeterminedEvent{StateDiff: domain.StateDiff{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidatedEvent", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidatedEvent", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", "effective blueprint: {Dogus:[] Components:[] RegistryConfig:map[] RegistryConfigAbsent:[] RegistryConfigEncrypted:map[]}")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDeterminedEvent", "state diff: {DoguDiffs:[]}")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", "test-error")
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+		err := repo.Update(ctx, &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
 
 		//then
 		require.NoError(t, err)
@@ -369,7 +376,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+		err := repo.Update(ctx, &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
 
 		//then
 		require.NoError(t, err)

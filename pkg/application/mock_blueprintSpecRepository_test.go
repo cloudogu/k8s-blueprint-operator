@@ -23,18 +23,20 @@ func (_m *mockBlueprintSpecRepository) EXPECT() *mockBlueprintSpecRepository_Exp
 }
 
 // GetById provides a mock function with given fields: ctx, blueprintId
-func (_m *mockBlueprintSpecRepository) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
+func (_m *mockBlueprintSpecRepository) GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error) {
 	ret := _m.Called(ctx, blueprintId)
 
-	var r0 domain.BlueprintSpec
+	var r0 *domain.BlueprintSpec
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (domain.BlueprintSpec, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*domain.BlueprintSpec, error)); ok {
 		return rf(ctx, blueprintId)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) domain.BlueprintSpec); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.BlueprintSpec); ok {
 		r0 = rf(ctx, blueprintId)
 	} else {
-		r0 = ret.Get(0).(domain.BlueprintSpec)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.BlueprintSpec)
+		}
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -65,22 +67,22 @@ func (_c *mockBlueprintSpecRepository_GetById_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *mockBlueprintSpecRepository_GetById_Call) Return(_a0 domain.BlueprintSpec, _a1 error) *mockBlueprintSpecRepository_GetById_Call {
+func (_c *mockBlueprintSpecRepository_GetById_Call) Return(_a0 *domain.BlueprintSpec, _a1 error) *mockBlueprintSpecRepository_GetById_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintSpecRepository_GetById_Call) RunAndReturn(run func(context.Context, string) (domain.BlueprintSpec, error)) *mockBlueprintSpecRepository_GetById_Call {
+func (_c *mockBlueprintSpecRepository_GetById_Call) RunAndReturn(run func(context.Context, string) (*domain.BlueprintSpec, error)) *mockBlueprintSpecRepository_GetById_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: ctx, blueprintSpec
-func (_m *mockBlueprintSpecRepository) Update(ctx context.Context, blueprintSpec domain.BlueprintSpec) error {
+func (_m *mockBlueprintSpecRepository) Update(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	ret := _m.Called(ctx, blueprintSpec)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, domain.BlueprintSpec) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
 		r0 = rf(ctx, blueprintSpec)
 	} else {
 		r0 = ret.Error(0)
@@ -96,14 +98,14 @@ type mockBlueprintSpecRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintSpec domain.BlueprintSpec
+//   - blueprintSpec *domain.BlueprintSpec
 func (_e *mockBlueprintSpecRepository_Expecter) Update(ctx interface{}, blueprintSpec interface{}) *mockBlueprintSpecRepository_Update_Call {
 	return &mockBlueprintSpecRepository_Update_Call{Call: _e.mock.On("Update", ctx, blueprintSpec)}
 }
 
-func (_c *mockBlueprintSpecRepository_Update_Call) Run(run func(ctx context.Context, blueprintSpec domain.BlueprintSpec)) *mockBlueprintSpecRepository_Update_Call {
+func (_c *mockBlueprintSpecRepository_Update_Call) Run(run func(ctx context.Context, blueprintSpec *domain.BlueprintSpec)) *mockBlueprintSpecRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(domain.BlueprintSpec))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -113,7 +115,7 @@ func (_c *mockBlueprintSpecRepository_Update_Call) Return(_a0 error) *mockBluepr
 	return _c
 }
 
-func (_c *mockBlueprintSpecRepository_Update_Call) RunAndReturn(run func(context.Context, domain.BlueprintSpec) error) *mockBlueprintSpecRepository_Update_Call {
+func (_c *mockBlueprintSpecRepository_Update_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockBlueprintSpecRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

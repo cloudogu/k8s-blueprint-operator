@@ -13,3 +13,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#4] Process Blueprint CRs in cluster
 - [#4] Calculate effective blueprint
 - [#4] introduce flag `allowDoguNamespaceSwitch` for dogu namespace switch
+- [#7] Create diff between effective blueprint and cluster state

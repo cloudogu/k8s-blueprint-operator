@@ -37,7 +37,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
 
-	err := r.blueprintChangeHandler.HandleBlueprintSpecChange(ctx, req.Name)
+	err := r.blueprintChangeHandler.HandleChange(ctx, req.Name)
 
 	var internalError *domainservice.InternalError
 	var conflictError *domainservice.ConflictError

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 type BlueprintSpec struct {
@@ -31,8 +32,10 @@ const (
 	StatusPhaseStaticallyValidated StatusPhase = "staticallyValidated"
 	// StatusPhaseValidated marks the given blueprint spec as validated.
 	StatusPhaseValidated StatusPhase = "validated"
-	// StatusPhaseEffectiveBlueprintGenerated marks the given blueprint spec as validated.
+	// StatusPhaseEffectiveBlueprintGenerated marks that the effective blueprint was generated out of the blueprint and the mask.
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
+	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
+	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -49,8 +52,6 @@ type BlueprintConfiguration struct {
 	// allowNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
 }
-
-type StateDiff struct{}
 
 type BlueprintUpgradePlan struct {
 	DogusToInstall   []string
@@ -75,6 +76,10 @@ type BlueprintSpecValidatedEvent struct{}
 
 type EffectiveBlueprintCalculatedEvent struct {
 	EffectiveBlueprint EffectiveBlueprint
+}
+
+type StateDiffDeterminedEvent struct {
+	StateDiff StateDiff
 }
 
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
@@ -218,7 +223,35 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	return effectiveDogu, nil
 }
 
+// MarkInvalid is used to mark the blueprint as invalid after dynamically validating it.
 func (spec *BlueprintSpec) MarkInvalid(err error) {
 	spec.Status = StatusPhaseInvalid
 	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+}
+
+// DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.
+// if sth. is not in the lists of installed things, it is considered not installed.
+// installedDogus are a map in the form of simpleDoguName->*DoguInstallation. There should be no nil values.
+// The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
+// If there are not allowed actions should be considered at the start of the execution of the blueprint.
+// returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
+func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosystem.DoguInstallation) error {
+	switch spec.Status {
+	case StatusPhaseNew:
+		fallthrough
+	case StatusPhaseStaticallyValidated:
+		fallthrough
+	case StatusPhaseEffectiveBlueprintGenerated:
+		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
+	case StatusPhaseValidated: // this is the state, the blueprint spec should be
+	default:
+		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
+	}
+	spec.StateDiff = StateDiff{
+		DoguDiffs: determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus),
+		// there will be more diffs, e.g. for components and registry keys
+	}
+	spec.Status = StatusPhaseStateDiffDetermined
+	spec.Events = append(spec.Events, StateDiffDeterminedEvent{StateDiff: spec.StateDiff})
+	return nil
 }

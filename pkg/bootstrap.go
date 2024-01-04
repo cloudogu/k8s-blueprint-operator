@@ -2,7 +2,8 @@ package pkg
 
 import (
 	"fmt"
-
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
+	"github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
@@ -22,14 +23,18 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	RemoteDoguRegistry         domainservice.RemoteDoguRegistry
-	BlueprintSpecRepository    domainservice.BlueprintSpecRepository
-	BlueprintSpecDomainUseCase *domainservice.ValidateDependenciesDomainUseCase
-	DoguInstallationUseCase    *application.DoguInstallationUseCase
-	BlueprintSpecUseCase       *application.BlueprintSpecUseCase
-	BlueprintSerializer        serializer.BlueprintSerializer
-	BlueprintMaskSerializer    serializer.BlueprintMaskSerializer
-	Reconciler                 *reconciler.BlueprintReconciler
+	RemoteDoguRegistry             domainservice.RemoteDoguRegistry
+	DoguInstallationRepository     domainservice.DoguInstallationRepository
+	BlueprintSpecRepository        domainservice.BlueprintSpecRepository
+	BlueprintSpecDomainUseCase     *domainservice.ValidateDependenciesDomainUseCase
+	DoguInstallationUseCase        *application.DoguInstallationUseCase
+	BlueprintSpecChangeUseCase     *application.BlueprintSpecChangeUseCase
+	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
+	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
+	StateDiffUseCase               *application.StateDiffUseCase
+	BlueprintSerializer            serializer.BlueprintSerializer
+	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
+	Reconciler                     *reconciler.BlueprintReconciler
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -39,6 +44,11 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ecosystemClientSet, err := createEcosystemClientSet(restConfig)
 	if err != nil {
 		return nil, err
+	}
+
+	dogusInterface, err := ecoSystem.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
 	}
 
 	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(
@@ -53,20 +63,27 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
+	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
+
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
-	doguInstallationUseCase := &application.DoguInstallationUseCase{}
-	blueprintUseCase := application.NewBlueprintSpecUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase, doguInstallationUseCase)
-	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintUseCase)
+	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
+	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
+	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintSpecRepository, blueprintValidationUseCase, effectiveBlueprintUseCase, stateDiffUseCase)
+	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
-		RemoteDoguRegistry:         remoteDoguRegistry,
-		BlueprintSpecRepository:    blueprintSpecRepository,
-		BlueprintSpecDomainUseCase: blueprintSpecDomainUseCase,
-		DoguInstallationUseCase:    doguInstallationUseCase,
-		BlueprintSpecUseCase:       blueprintUseCase,
-		BlueprintSerializer:        blueprintSerializer,
-		BlueprintMaskSerializer:    blueprintMaskSerializer,
-		Reconciler:                 blueprintReconciler,
+		RemoteDoguRegistry:             remoteDoguRegistry,
+		DoguInstallationRepository:     doguInstallationRepo,
+		BlueprintSpecRepository:        blueprintSpecRepository,
+		BlueprintSpecDomainUseCase:     blueprintSpecDomainUseCase,
+		BlueprintSpecChangeUseCase:     blueprintChangeUseCase,
+		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
+		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
+		StateDiffUseCase:               stateDiffUseCase,
+		BlueprintSerializer:            blueprintSerializer,
+		BlueprintMaskSerializer:        blueprintMaskSerializer,
+		Reconciler:                     blueprintReconciler,
 	}, nil
 }
 

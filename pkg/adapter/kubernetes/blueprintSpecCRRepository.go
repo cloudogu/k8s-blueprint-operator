@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -44,16 +45,16 @@ func NewBlueprintSpecRepository(
 }
 
 // GetById returns a Blueprint identified by its ID.
-func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (domain.BlueprintSpec, error) {
+func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error) {
 	blueprintCR, err := repo.blueprintClient.Get(ctx, blueprintId, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
-			return domain.BlueprintSpec{}, &domainservice.NotFoundError{
+			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("cannot load blueprint CR %q as it does not exist", blueprintId),
 			}
 		}
-		return domain.BlueprintSpec{}, &domainservice.InternalError{
+		return nil, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      fmt.Sprintf("error while loading blueprint CR %q", blueprintId),
 		}
@@ -65,12 +66,18 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
-		return domain.BlueprintSpec{}, err
+		return nil, err
 	}
-	blueprintSpec := domain.BlueprintSpec{
+
+	stateDiff, err := stateDiffV1.ConvertToDomainModel(blueprintCR.Status.StateDiff)
+	if err != nil {
+		return nil, err
+	}
+
+	blueprintSpec := &domain.BlueprintSpec{
 		Id:                   blueprintId,
 		EffectiveBlueprint:   effectiveBlueprint,
-		StateDiff:            domain.StateDiff{},
+		StateDiff:            stateDiff,
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
@@ -84,7 +91,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
-		return blueprintSpec, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
+		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
 	blueprintSpec.Blueprint = blueprint
@@ -93,12 +100,13 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
-func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.BlueprintSpec) error {
+func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
 	persistenceContext, err := getPersistenceContext(ctx, spec)
 	if err != nil {
 		return err
 	}
+
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprintV1(spec.EffectiveBlueprint)
 	if err != nil {
 		return err
@@ -114,8 +122,10 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 		Status: v1.BlueprintStatus{
 			Phase:              spec.Status,
 			EffectiveBlueprint: effectiveBlueprint,
+			StateDiff:          stateDiffV1.ConvertToDTO(spec.StateDiff),
 		},
 	}
+
 	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
 	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
@@ -133,13 +143,13 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec domain.Blueprint
 }
 
 // getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
-func getPersistenceContext(ctx context.Context, spec domain.BlueprintSpec) (blueprintSpecRepoContext, error) {
+func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blueprintSpecRepoContext, error) {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
 	rawField, versionExists := spec.PersistenceContext[blueprintSpecRepoContextKey]
 	if versionExists {
-		context, isContext := rawField.(blueprintSpecRepoContext)
+		repoContext, isContext := rawField.(blueprintSpecRepoContext)
 		if isContext {
-			return context, nil
+			return repoContext, nil
 		} else {
 			err := fmt.Errorf("persistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but '%T'", rawField)
 			logger.Error(err, "does this value come from a different repository?")
@@ -164,6 +174,8 @@ func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events [
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "BlueprintSpecInvalidEvent", ev.ValidationError.Error())
 		case domain.EffectiveBlueprintCalculatedEvent:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "EffectiveBlueprintCalculatedEvent", fmt.Sprintf("effective blueprint: %+v", ev.EffectiveBlueprint))
+		case domain.StateDiffDeterminedEvent:
+			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "StateDiffDeterminedEvent", fmt.Sprintf("state diff: %+v", ev.StateDiff))
 		default:
 			repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, "Unknown", fmt.Sprintf("unknown event of type '%T': %+v", event, event))
 		}
