@@ -53,6 +53,17 @@ type DoguToLoad struct {
 	Version           string
 }
 
+type MaintenanceMode interface {
+	GetLock() (MaintenanceLock, error)
+	Activate(content MaintenancePageModel) error
+	Deactivate() error
+}
+
+type MaintenanceLock interface {
+	IsActive() bool
+	IsOurs() bool
+}
+
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.
 type NotFoundError struct {
 	WrappedError error
