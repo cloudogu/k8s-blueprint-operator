@@ -112,6 +112,50 @@ spec:
                 phase:
                   description: Phase represents the processing state of the blueprint
                   type: string
+                stateDiff:
+                  description: StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state. It describes what operations need to be done to achieve the desired state of the blueprint.
+                  properties:
+                    doguDiffs:
+                      items:
+                        description: DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                        properties:
+                          actual:
+                            description: DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
+                            properties:
+                              installationState:
+                                type: string
+                              namespace:
+                                type: string
+                              version:
+                                type: string
+                            required:
+                              - installationState
+                            type: object
+                          doguName:
+                            type: string
+                          expected:
+                            description: DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
+                            properties:
+                              installationState:
+                                type: string
+                              namespace:
+                                type: string
+                              version:
+                                type: string
+                            required:
+                              - installationState
+                            type: object
+                          neededAction:
+                            description: DoguActionV1 is the action that needs to be done for a dogu to achieve the desired state in the cluster.
+                            type: string
+                        required:
+                          - actual
+                          - doguName
+                          - expected
+                          - neededAction
+                        type: object
+                      type: array
+                  type: object
               type: object
           type: object
       served: true
