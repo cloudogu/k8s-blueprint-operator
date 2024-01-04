@@ -11,13 +11,13 @@ import (
 // StateDiffV1 is the result of comparing the EffectiveBlueprint to the current cluster state.
 // It describes what operations need to be done to achieve the desired state of the blueprint.
 type StateDiffV1 struct {
-	DoguDiffs []DoguDiffV1 `json:"doguDiffs,omitempty"`
+	// DoguDiffs maps simple dogu names to the determined diff.
+	DoguDiffs map[string]DoguDiffV1 `json:"doguDiffs,omitempty"`
 }
 
 // DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state.
 // It contains the operation that needs to be done to achieve this desired state.
 type DoguDiffV1 struct {
-	DoguName     string          `json:"doguName"`
 	Actual       DoguDiffV1State `json:"actual"`
 	Expected     DoguDiffV1State `json:"expected"`
 	NeededAction DoguActionV1    `json:"neededAction"`
@@ -35,9 +35,9 @@ type DoguDiffV1State struct {
 type DoguActionV1 string
 
 func ConvertToDTO(domainModel domain.StateDiff) StateDiffV1 {
-	doguDiffsV1 := make([]DoguDiffV1, len(domainModel.DoguDiffs))
-	for i, doguDiff := range domainModel.DoguDiffs {
-		doguDiffsV1[i] = convertToDoguDiffDTO(doguDiff)
+	doguDiffsV1 := make(map[string]DoguDiffV1, len(domainModel.DoguDiffs))
+	for _, doguDiff := range domainModel.DoguDiffs {
+		doguDiffsV1[doguDiff.DoguName] = convertToDoguDiffDTO(doguDiff)
 	}
 
 	return StateDiffV1{
@@ -48,7 +48,6 @@ func ConvertToDTO(domainModel domain.StateDiff) StateDiffV1 {
 
 func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiffV1 {
 	return DoguDiffV1{
-		DoguName: domainModel.DoguName,
 		Actual: DoguDiffV1State{
 			Namespace:         domainModel.Actual.Namespace,
 			Version:           domainModel.Actual.Version.Raw,
@@ -66,11 +65,11 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiffV1 {
 func ConvertToDomainModel(dto StateDiffV1) (domain.StateDiff, error) {
 	var errs []error
 
-	doguDiffs := make([]domain.DoguDiff, len(dto.DoguDiffs))
-	for i, doguDiff := range dto.DoguDiffs {
-		doguDiffDomainModel, err := convertToDoguDiffDomainModel(doguDiff)
+	doguDiffs := make([]domain.DoguDiff, 0)
+	for doguName, doguDiff := range dto.DoguDiffs {
+		doguDiffDomainModel, err := convertToDoguDiffDomainModel(doguName, doguDiff)
 		errs = append(errs, err)
-		doguDiffs[i] = doguDiffDomainModel
+		doguDiffs = append(doguDiffs, doguDiffDomainModel)
 	}
 
 	err := errors.Join(errs...)
@@ -83,7 +82,7 @@ func ConvertToDomainModel(dto StateDiffV1) (domain.StateDiff, error) {
 	}, nil
 }
 
-func convertToDoguDiffDomainModel(dto DoguDiffV1) (domain.DoguDiff, error) {
+func convertToDoguDiffDomainModel(doguName string, dto DoguDiffV1) (domain.DoguDiff, error) {
 	var actualVersion core.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {
@@ -114,11 +113,11 @@ func convertToDoguDiffDomainModel(dto DoguDiffV1) (domain.DoguDiff, error) {
 
 	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr)
 	if err != nil {
-		return domain.DoguDiff{}, fmt.Errorf("failed to convert dogu diff dto %q to domain model: %w", dto.DoguName, err)
+		return domain.DoguDiff{}, fmt.Errorf("failed to convert dogu diff dto %q to domain model: %w", doguName, err)
 	}
 
 	return domain.DoguDiff{
-		DoguName: dto.DoguName,
+		DoguName: doguName,
 		Actual: domain.DoguDiffState{
 			Namespace:         dto.Actual.Namespace,
 			Version:           actualVersion,

@@ -229,12 +229,12 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosystem.DoguInstallation) error {
 	switch spec.Status {
 	case StatusPhaseNew:
-		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
+		fallthrough
 	case StatusPhaseStaticallyValidated:
+		fallthrough
+	case StatusPhaseEffectiveBlueprintGenerated:
 		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
-	case StatusPhaseValidated:
-		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
-	case StatusPhaseEffectiveBlueprintGenerated: // this is the state, the blueprint spec should be
+	case StatusPhaseValidated: // this is the state, the blueprint spec should be
 	default:
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}

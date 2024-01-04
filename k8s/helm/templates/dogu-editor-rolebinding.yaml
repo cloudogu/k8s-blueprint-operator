@@ -3,11 +3,11 @@ kind: RoleBinding
 metadata:
   labels:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
-  name: {{ include "k8s-blueprint-operator.name" . }}-blueprint-editor-rolebinding
+  name: {{ include "k8s-blueprint-operator.name" . }}-dogu-editor-rolebinding
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "k8s-blueprint-operator.name" . }}-blueprint-editor-role
+  name: {{ include "k8s-blueprint-operator.name" . }}-dogu-editor-role
 subjects:
   - kind: ServiceAccount
     name: {{ include "k8s-blueprint-operator.name" . }}-controller-manager

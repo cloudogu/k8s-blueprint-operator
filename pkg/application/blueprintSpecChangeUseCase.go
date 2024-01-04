@@ -34,6 +34,11 @@ func NewBlueprintSpecChangeUseCase(
 	}
 }
 
+// HandleChange further executes a blueprint spec given by the blueprintId until it is fully applied or an error occurred.
+// Returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
+// a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
+// a domainservice.ConflictError if there was a concurrent write or
+// a domain.InvalidBlueprintError if the blueprint is invalid.
 func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).
 		WithName("BlueprintSpecChangeUseCase.HandleChange").
@@ -42,8 +47,9 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	logger.Info("getting changed blueprint") //log with id
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
-		logger.Error(err, "cannot load blueprint spec")
-		return fmt.Errorf("cannot load blueprint spec: %w", err)
+		errMsg := "cannot load blueprint spec"
+		logger.Error(err, errMsg)
+		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
 	logger = logger.WithValues("blueprintStatus", blueprintSpec.Status)
