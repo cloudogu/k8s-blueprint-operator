@@ -11,6 +11,10 @@ type MaintenanceModeUseCase struct {
 	maintenanceMode MaintenanceMode
 }
 
+func NewMaintenanceModeUseCase(maintenanceMode MaintenanceMode) *MaintenanceModeUseCase {
+	return &MaintenanceModeUseCase{maintenanceMode: maintenanceMode}
+}
+
 func (m *MaintenanceModeUseCase) Activate(content MaintenancePageModel) error {
 	lock, err := m.maintenanceMode.GetLock()
 	if err != nil {
