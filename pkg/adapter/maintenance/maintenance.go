@@ -11,7 +11,7 @@ const registryKeyMaintenance = "maintenance"
 const blueprintOperatorHolder = "k8s-blueprint-operator"
 
 type Switch struct {
-	globalConfig registry.ConfigurationContext
+	globalConfig globalConfig
 }
 
 func NewSwitch(globalConfig registry.ConfigurationContext) *Switch {
