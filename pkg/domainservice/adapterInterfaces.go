@@ -53,14 +53,23 @@ type DoguToLoad struct {
 	Version           string
 }
 
+// MaintenanceMode provides ways to activate and deactivate the maintenance mode.
+// It also can be used to determine if the maintenance mode is active or if it is currently used by another party.
 type MaintenanceMode interface {
+	// GetLock returns a MaintenanceLock that can be used to determine if the maintenance mode is active
+	// or if it is used by another party.
 	GetLock() (MaintenanceLock, error)
+	// Activate enables the maintenance mode.
 	Activate(content MaintenancePageModel) error
+	// Deactivate disables the maintenance mode.
 	Deactivate() error
 }
 
 type MaintenanceLock interface {
+	// IsActive is true if the maintenance mode is enabled.
 	IsActive() bool
+	// IsOurs is true if this operator activated the maintenance mode.
+	// If false, it is used by another party.
 	IsOurs() bool
 }
 

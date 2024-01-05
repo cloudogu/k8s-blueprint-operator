@@ -18,6 +18,8 @@ func NewSwitch(globalConfig registry.ConfigurationContext) *Switch {
 	return &Switch{globalConfig: globalConfig}
 }
 
+// GetLock returns a MaintenanceLock that can be used to determine if the maintenance mode is active
+// or if it is used by another party.
 func (m *Switch) GetLock() (domainservice.MaintenanceLock, error) {
 	active, err := m.isActive()
 	if err != nil {
@@ -38,6 +40,7 @@ func (m *Switch) GetLock() (domainservice.MaintenanceLock, error) {
 	}, nil
 }
 
+// Activate enables the maintenance mode.
 func (m *Switch) Activate(content domainservice.MaintenancePageModel) error {
 	value := maintenanceRegistryObject{
 		Title:  content.Title,
@@ -64,6 +67,7 @@ func (m *Switch) Activate(content domainservice.MaintenancePageModel) error {
 	return nil
 }
 
+// Deactivate disables the maintenance mode.
 func (m *Switch) Deactivate() error {
 	err := m.globalConfig.Delete(registryKeyMaintenance)
 	if err != nil {
@@ -114,10 +118,13 @@ type lock struct {
 	isOurs   bool
 }
 
+// IsActive is true if the maintenance mode is enabled.
 func (l lock) IsActive() bool {
 	return l.isActive
 }
 
+// IsOurs is true if this operator activated the maintenance mode.
+// If false, it is used by another party.
 func (l lock) IsOurs() bool {
 	return l.isOurs
 }

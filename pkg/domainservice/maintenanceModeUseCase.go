@@ -2,11 +2,14 @@ package domainservice
 
 import "fmt"
 
+// MaintenancePageModel contains data that gets displayed when the maintenance mode is active.
 type MaintenancePageModel struct {
 	Title string
 	Text  string
 }
 
+// MaintenanceModeUseCase contains methods to Activate and Deactivate the MaintenanceMode.
+// When it is active, a page is displayed to the user, telling them that there is maintenance going on.
 type MaintenanceModeUseCase struct {
 	maintenanceMode MaintenanceMode
 }
@@ -15,6 +18,7 @@ func NewMaintenanceModeUseCase(maintenanceMode MaintenanceMode) *MaintenanceMode
 	return &MaintenanceModeUseCase{maintenanceMode: maintenanceMode}
 }
 
+// Activate enables the maintenance mode, setting the given MaintenancePageModel
 func (m *MaintenanceModeUseCase) Activate(content MaintenancePageModel) error {
 	lock, err := m.maintenanceMode.GetLock()
 	if err != nil {
@@ -38,6 +42,7 @@ func (m *MaintenanceModeUseCase) Activate(content MaintenancePageModel) error {
 	return nil
 }
 
+// Deactivate disables the maintenance mode.
 func (m *MaintenanceModeUseCase) Deactivate() error {
 	lock, err := m.maintenanceMode.GetLock()
 	if err != nil {
