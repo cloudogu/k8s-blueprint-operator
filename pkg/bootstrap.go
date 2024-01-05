@@ -36,7 +36,7 @@ type ApplicationContext struct {
 	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
 	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
 	StateDiffUseCase               *application.StateDiffUseCase
-	MaintenanceModeUseCase         *domainservice.MaintenanceModeUseCase
+	MaintenanceModeUseCase         *domainservice.MaintenanceUseCase
 	BlueprintSerializer            serializer.BlueprintSerializer
 	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
 	Reconciler                     *reconciler.BlueprintReconciler
@@ -68,8 +68,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	maintenanceMode := maintenance.NewSwitch(configRegistry.GlobalConfig())
-	maintenanceUseCase := domainservice.NewMaintenanceModeUseCase(maintenanceMode)
+	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
+	maintenanceUseCase := domainservice.NewMaintenanceUseCase(maintenanceMode)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {

@@ -100,59 +100,6 @@ func (_c *MockMaintenanceMode_Deactivate_Call) RunAndReturn(run func() error) *M
 	return _c
 }
 
-// GetLock provides a mock function with given fields:
-func (_m *MockMaintenanceMode) GetLock() (MaintenanceLock, error) {
-	ret := _m.Called()
-
-	var r0 MaintenanceLock
-	var r1 error
-	if rf, ok := ret.Get(0).(func() (MaintenanceLock, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() MaintenanceLock); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(MaintenanceLock)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MockMaintenanceMode_GetLock_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetLock'
-type MockMaintenanceMode_GetLock_Call struct {
-	*mock.Call
-}
-
-// GetLock is a helper method to define mock.On call
-func (_e *MockMaintenanceMode_Expecter) GetLock() *MockMaintenanceMode_GetLock_Call {
-	return &MockMaintenanceMode_GetLock_Call{Call: _e.mock.On("GetLock")}
-}
-
-func (_c *MockMaintenanceMode_GetLock_Call) Run(run func()) *MockMaintenanceMode_GetLock_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *MockMaintenanceMode_GetLock_Call) Return(_a0 MaintenanceLock, _a1 error) *MockMaintenanceMode_GetLock_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *MockMaintenanceMode_GetLock_Call) RunAndReturn(run func() (MaintenanceLock, error)) *MockMaintenanceMode_GetLock_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 type mockConstructorTestingTNewMockMaintenanceMode interface {
 	mock.TestingT
 	Cleanup(func())
