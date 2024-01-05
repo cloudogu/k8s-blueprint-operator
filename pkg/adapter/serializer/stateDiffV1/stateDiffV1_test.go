@@ -1,10 +1,12 @@
 package stateDiffV1
 
 import (
+	"cmp"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"reflect"
+	"slices"
 	"testing"
 )
 
@@ -368,6 +370,18 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{DoguDiffs: []domain.DoguDiff{
 				{
+					DoguName: "ldap",
+					Actual: domain.DoguDiffState{
+						Namespace:         "official",
+						Version:           mustParseVersion("1.2.3-4"),
+						InstallationState: domain.TargetStatePresent,
+					},
+					Expected: domain.DoguDiffState{
+						Namespace:         "official",
+						InstallationState: domain.TargetStateAbsent,
+					}, NeededAction: domain.ActionUninstall,
+				},
+				{
 					DoguName: "postfix",
 					Actual: domain.DoguDiffState{Namespace: "official",
 						Version:           mustParseVersion("1.2.3-4"),
@@ -380,18 +394,6 @@ func TestConvertToDomainModel(t *testing.T) {
 					},
 					NeededAction: domain.ActionUpgrade,
 				},
-				{
-					DoguName: "ldap",
-					Actual: domain.DoguDiffState{
-						Namespace:         "official",
-						Version:           mustParseVersion("1.2.3-4"),
-						InstallationState: domain.TargetStatePresent,
-					},
-					Expected: domain.DoguDiffState{
-						Namespace:         "official",
-						InstallationState: domain.TargetStateAbsent,
-					}, NeededAction: domain.ActionUninstall,
-				},
 			}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
@@ -402,6 +404,10 @@ func TestConvertToDomainModel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := ConvertToDomainModel(tt.dto)
 			tt.wantErr(t, err)
+			// sort to avoid flaky tests
+			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
+				return cmp.Compare(a.DoguName, b.DoguName)
+			})
 			assert.Equal(t, tt.want, got)
 		})
 	}
