@@ -25,12 +25,7 @@ func (m *MaintenanceModeUseCase) Activate(content MaintenancePageModel) error {
 		return fmt.Errorf("failed to check if maintenance mode is already active: %w", err)
 	}
 
-	if lock.IsActive() {
-		if lock.IsOurs() {
-			// do nothing
-			return nil
-		}
-
+	if lock.IsActive() && !lock.IsOurs() {
 		return fmt.Errorf("cannot activate maintenance mode as someone else already activated it")
 	}
 
@@ -49,17 +44,19 @@ func (m *MaintenanceModeUseCase) Deactivate() error {
 		return fmt.Errorf("failed to check if maintenance mode is already active: %w", err)
 	}
 
-	if lock.IsActive() {
-		if lock.IsOurs() {
-			err := m.maintenanceMode.Deactivate()
-			if err != nil {
-				return fmt.Errorf("failed to deactivate maintenance mode: %w", err)
-			}
-		}
+	if !lock.IsActive() {
+		// do nothing
+		return nil
+	}
 
+	if !lock.IsOurs() {
 		return fmt.Errorf("cannot deactivate maintenance mode as it was activated by another application")
 	}
 
-	// do nothing
+	err = m.maintenanceMode.Deactivate()
+	if err != nil {
+		return fmt.Errorf("failed to deactivate maintenance mode: %w", err)
+	}
+
 	return nil
 }
