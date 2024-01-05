@@ -63,12 +63,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		eventRecorder,
 	)
 
-	configRegistry, err := registry.New(core.Registry{
-		Type:      "etcd",
-		Endpoints: []string{fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)},
-	})
+	configRegistry, err := createConfigRegistry(namespace)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create CES configuration registry: %w", err)
+		return nil, err
 	}
 
 	maintenanceMode := maintenance.NewSwitch(configRegistry.GlobalConfig())
@@ -108,6 +105,18 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		BlueprintMaskSerializer:        blueprintMaskSerializer,
 		Reconciler:                     blueprintReconciler,
 	}, nil
+}
+
+func createConfigRegistry(namespace string) (registry.Registry, error) {
+	configRegistry, err := registry.New(core.Registry{
+		Type:      "etcd",
+		Endpoints: []string{fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CES configuration registry: %w", err)
+	}
+
+	return configRegistry, nil
 }
 
 func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
