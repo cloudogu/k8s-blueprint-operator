@@ -20,7 +20,7 @@ type BlueprintSpec struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
-	Events             []interface{}
+	Events             []Event
 }
 
 type StatusPhase string
@@ -36,6 +36,12 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
+	// StatusPhaseDogusHealthy marks that all currently installed dogus are healthy.
+	StatusPhaseDogusHealthy StatusPhase = "dogusHealthy"
+	// StatusPhaseIgnoreDoguHealth marks that dogu health checks have been skipped.
+	StatusPhaseIgnoreDoguHealth StatusPhase = "ignoreDoguHealth"
+	// StatusPhaseDogusUnhealthy marks that some currently installed dogus are unhealthy.
+	StatusPhaseDogusUnhealthy StatusPhase = "dogusUnhealthy"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -65,21 +71,6 @@ type BlueprintUpgradePlan struct {
 	RegistryConfigToAdd    []string
 	RegistryConfigToUpdate []string
 	RegistryConfigToRemove []string
-}
-
-type BlueprintSpecInvalidEvent struct {
-	ValidationError error
-}
-
-type BlueprintSpecStaticallyValidatedEvent struct{}
-type BlueprintSpecValidatedEvent struct{}
-
-type EffectiveBlueprintCalculatedEvent struct {
-	EffectiveBlueprint EffectiveBlueprint
-}
-
-type StateDiffDeterminedEvent struct {
-	StateDiff StateDiff
 }
 
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
@@ -180,7 +171,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		RegistryConfigEncrypted: spec.Blueprint.RegistryConfigEncrypted,
 	}
 	spec.Status = StatusPhaseEffectiveBlueprintGenerated
-	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{EffectiveBlueprint: spec.EffectiveBlueprint})
+	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{})
 	return nil
 }
 
@@ -254,4 +245,27 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	spec.Status = StatusPhaseStateDiffDetermined
 	spec.Events = append(spec.Events, StateDiffDeterminedEvent{StateDiff: spec.StateDiff})
 	return nil
+}
+
+func (spec *BlueprintSpec) CheckDoguHealth(installedDogus map[string]*ecosystem.DoguInstallation) {
+	if spec.Config.IgnoreDoguHealth {
+		spec.Status = StatusPhaseIgnoreDoguHealth
+		spec.Events = append(spec.Events, IgnoreDoguHealthEvent{})
+		return
+	}
+
+	var unhealthyDogus []ecosystem.UnhealthyDogu
+	for _, dogu := range installedDogus {
+		if unhealthy, unhealthyDogu := dogu.IsUnhealthy(); unhealthy {
+			unhealthyDogus = append(unhealthyDogus, unhealthyDogu)
+		}
+	}
+
+	if len(unhealthyDogus) > 0 {
+		spec.Status = StatusPhaseDogusUnhealthy
+		spec.Events = append(spec.Events, DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{UnhealthyDogus: unhealthyDogus}})
+	} else {
+		spec.Status = StatusPhaseDogusHealthy
+		spec.Events = append(spec.Events, DogusHealthyEvent{})
+	}
 }

@@ -7,9 +7,29 @@ import (
 )
 
 // StateDiff represents the diff between the defined state in the effective blueprint and the actual state in the ecosystem.
-// If there is state in the ecosystem which is not represented in the effective blueprint, then the expected state is the actual state.
+// If there is a state in the ecosystem, which is not represented in the effective blueprint, then the expected state is the actual state.
 type StateDiff struct {
-	DoguDiffs []DoguDiff
+	DoguDiffs DoguDiffs
+}
+
+// DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
+type DoguDiffs []DoguDiff
+
+// Statistics aggregates various figures about the required actions of the DoguDiffs.
+func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+	for _, doguDiff := range dd {
+		switch doguDiff.NeededAction {
+		case ActionInstall:
+			toInstall += 1
+		case ActionUpgrade:
+			toUpgrade += 1
+		case ActionUninstall:
+			toUninstall += 1
+		default:
+			other += 1
+		}
+	}
+	return
 }
 
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
