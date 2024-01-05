@@ -81,7 +81,9 @@ func (d DogusUnhealthyEvent) Message() string {
 		strings.Join(unhealthyDogus, ", "))
 }
 
-type EffectiveBlueprintCalculatedEvent struct{}
+type EffectiveBlueprintCalculatedEvent struct {
+	Result EffectiveBlueprint
+}
 
 func (e EffectiveBlueprintCalculatedEvent) Name() string {
 	return "EffectiveBlueprintCalculated"
