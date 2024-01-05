@@ -18,6 +18,10 @@ type stateDiffUseCase interface {
 	DetermineStateDiff(ctx context.Context, blueprintId string) error
 }
 
+type doguInstallationUseCase interface {
+	CheckDoguHealth(ctx context.Context, blueprintId string) error
+}
+
 // interface duplication for mocks
 
 //nolint:unused

@@ -27,7 +27,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 		Id:     "testBlueprint1",
 		Status: domain.StatusPhaseStaticallyValidated,
-		Events: []interface{}{domain.BlueprintSpecStaticallyValidatedEvent{}},
+		Events: []domain.Event{domain.BlueprintSpecStaticallyValidatedEvent{}},
 	}).Return(nil)
 
 	//when
@@ -93,7 +93,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
 		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
 		invalidError := domain.InvalidBlueprintError{Message: "test-error"}
-		var events []interface{}
+		var events []domain.Event
 		events = append(events, domain.BlueprintSpecInvalidEvent{ValidationError: &invalidError})
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{Id: "testBlueprint1"}, &invalidError)
 		repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseInvalid, Events: events}).Return(nil)
@@ -174,7 +174,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 		StateDiff:            domain.StateDiff{},
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
 		Status:               domain.StatusPhaseValidated,
-		Events:               []interface{}{domain.BlueprintSpecValidatedEvent{}},
+		Events:               []domain.Event{domain.BlueprintSpecValidatedEvent{}},
 	}).Return(nil)
 
 	// when

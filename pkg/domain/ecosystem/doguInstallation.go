@@ -1,6 +1,8 @@
 package ecosystem
 
-import "github.com/cloudogu/cesapp-lib/core"
+import (
+	"github.com/cloudogu/cesapp-lib/core"
+)
 
 // DoguInstallation represents an installed or to be installed dogu in the ecosystem.
 type DoguInstallation struct {
@@ -21,6 +23,16 @@ type DoguInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
+}
+
+func (dogu DoguInstallation) IsUnhealthy() (bool, UnhealthyDogu) {
+	return dogu.Health != AvailableHealthStatus,
+		UnhealthyDogu{
+			Namespace: dogu.Namespace,
+			Name:      dogu.Name,
+			Version:   dogu.Version,
+			Health:    dogu.Health,
+		}
 }
 
 const (
