@@ -2,16 +2,20 @@ package pkg
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
-	"github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
+	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/cesapp-lib/remote"
+	"github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
@@ -32,6 +36,7 @@ type ApplicationContext struct {
 	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
 	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
 	StateDiffUseCase               *application.StateDiffUseCase
+	MaintenanceModeUseCase         *domainservice.MaintenanceUseCase
 	BlueprintSerializer            serializer.BlueprintSerializer
 	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
 	Reconciler                     *reconciler.BlueprintReconciler
@@ -57,6 +62,14 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		blueprintMaskSerializer,
 		eventRecorder,
 	)
+
+	configRegistry, err := createConfigRegistry(namespace)
+	if err != nil {
+		return nil, err
+	}
+
+	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
+	maintenanceUseCase := domainservice.NewMaintenanceUseCase(maintenanceMode)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {
@@ -86,11 +99,24 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
 		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
 		StateDiffUseCase:               stateDiffUseCase,
+		MaintenanceModeUseCase:         maintenanceUseCase,
 		DoguInstallationUseCase:        doguInstallationUseCase,
 		BlueprintSerializer:            blueprintSerializer,
 		BlueprintMaskSerializer:        blueprintMaskSerializer,
 		Reconciler:                     blueprintReconciler,
 	}, nil
+}
+
+func createConfigRegistry(namespace string) (registry.Registry, error) {
+	configRegistry, err := registry.New(core.Registry{
+		Type:      "etcd",
+		Endpoints: []string{fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create CES configuration registry: %w", err)
+	}
+
+	return configRegistry, nil
 }
 
 func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
