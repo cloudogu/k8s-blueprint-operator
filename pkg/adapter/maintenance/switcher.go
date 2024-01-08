@@ -22,12 +22,12 @@ func (m *defaultSwitcher) activate(content domainservice.MaintenancePageModel) e
 		Holder: blueprintOperatorHolder,
 	}
 
-	marshal, err := json.Marshal(value)
+	jsonBytes, err := json.Marshal(value)
 	if err != nil {
-		return fmt.Errorf("failed to marshal maintenance page model: %w", err)
+		return fmt.Errorf("failed to serialize maintenance mode object: %w", err)
 	}
 
-	err = m.globalConfig.Set(registryKeyMaintenance, string(marshal))
+	err = m.globalConfig.Set(registryKeyMaintenance, string(jsonBytes))
 	if err != nil {
 		return fmt.Errorf("failed to set maintenance mode registry key: %w", err)
 	}

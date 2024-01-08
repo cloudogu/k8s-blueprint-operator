@@ -54,8 +54,18 @@ type DoguToLoad struct {
 }
 
 type MaintenanceMode interface {
+	// Activate enables the maintenance mode with the given page model.
+	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
 	Activate(content MaintenancePageModel) error
+	// Deactivate disables the maintenance mode if it is active.
+	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
 	Deactivate() error
+}
+
+// MaintenancePageModel contains data that gets displayed when the maintenance mode is active.
+type MaintenancePageModel struct {
+	Title string
+	Text  string
 }
 
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.

@@ -37,7 +37,7 @@ func (l *defaultLock) isOurs() (bool, error) {
 	var value maintenanceRegistryObject
 	err = json.Unmarshal([]byte(rawValue), &value)
 	if err != nil {
-		return false, fmt.Errorf("failed to unmarshal json of maintenance mode object: %w", err)
+		return false, fmt.Errorf("failed to parse json of maintenance mode object: %w", err)
 	}
 
 	return value.Holder == blueprintOperatorHolder, nil

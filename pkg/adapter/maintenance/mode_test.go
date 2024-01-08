@@ -53,8 +53,8 @@ func TestMode_Activate(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
+		conflictError := &domainservice.ConflictError{}
+		assert.ErrorAs(t, err, &conflictError)
 		assert.ErrorContains(t, err, "cannot activate maintenance mode as it was already activated by another party")
 	})
 	t.Run("should fail to activate maintenance mode", func(t *testing.T) {
@@ -154,8 +154,8 @@ func TestMode_Deactivate(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
+		conflictError := &domainservice.ConflictError{}
+		assert.ErrorAs(t, err, &conflictError)
 		assert.ErrorContains(t, err, "cannot deactivate maintenance mode as it was activated by another party")
 	})
 	t.Run("should fail to deactivate maintenance mode", func(t *testing.T) {

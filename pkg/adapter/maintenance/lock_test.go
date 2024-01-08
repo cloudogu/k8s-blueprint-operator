@@ -67,7 +67,7 @@ func Test_defaultLock_isActiveAndOurs(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to unmarshal json of maintenance mode object")
+		assert.ErrorContains(t, err, "failed to parse json of maintenance mode object")
 	})
 	t.Run("should be active but not ours if holder is missing", func(t *testing.T) {
 		// given

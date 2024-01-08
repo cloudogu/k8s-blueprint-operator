@@ -31,7 +31,7 @@ func (m *Mode) Activate(content domainservice.MaintenancePageModel) error {
 	}
 
 	if isActive && !isOurs {
-		return &domainservice.InternalError{
+		return &domainservice.ConflictError{
 			WrappedError: nil,
 			Message:      "cannot activate maintenance mode as it was already activated by another party",
 		}
@@ -64,7 +64,7 @@ func (m *Mode) Deactivate() error {
 	}
 
 	if !isOurs {
-		return &domainservice.InternalError{
+		return &domainservice.ConflictError{
 			WrappedError: nil,
 			Message:      "cannot deactivate maintenance mode as it was activated by another party",
 		}
