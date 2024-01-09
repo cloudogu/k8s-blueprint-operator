@@ -24,6 +24,17 @@ type DoguInstallationRepository interface {
 	//Delete(ctx context.Context, dogu ecosystem.DoguInstallation) error
 }
 
+type ComponentInstallationRepository interface {
+	// GetByName returns the ecosystem.ComponentInstallation or
+	// a NotFoundError if the component is not installed or
+	// an InternalError if there is any other error.
+	GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error)
+	// GetAll returns the installation info of all installed components or
+	// a NotFoundError if any component is not installed or
+	// an InternalError if there is any other error.
+	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
+}
+
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or
