@@ -1,6 +1,7 @@
 package ecosystem
 
 import (
+	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 )
 
@@ -23,16 +24,6 @@ type DoguInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
-}
-
-func (dogu DoguInstallation) IsUnhealthy() (bool, UnhealthyDogu) {
-	return dogu.Health != AvailableHealthStatus,
-		UnhealthyDogu{
-			Namespace: dogu.Namespace,
-			Name:      dogu.Name,
-			Version:   dogu.Version,
-			Health:    dogu.Health,
-		}
 }
 
 const (
@@ -58,4 +49,37 @@ type UpgradeConfig struct {
 	// same dogu which did reside in a different namespace. The remote dogu's version must be equal to or greater than
 	// the version of the local dogu.
 	AllowNamespaceSwitch bool `json:"allowNamespaceSwitch,omitempty"`
+}
+
+// InstallDogu is a factory for new DoguInstallation's.
+func InstallDogu(namespace string, doguName string, version core.Version) *DoguInstallation {
+	return &DoguInstallation{
+		Namespace:     namespace,
+		Name:          doguName,
+		Version:       version,
+		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
+	}
+}
+func (dogu *DoguInstallation) IsUnhealthy() (bool, UnhealthyDogu) {
+	return dogu.Health != AvailableHealthStatus,
+		UnhealthyDogu{
+			Namespace: dogu.Namespace,
+			Name:      dogu.Name,
+			Version:   dogu.Version,
+			Health:    dogu.Health,
+		}
+}
+
+func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {
+	dogu.Version = newVersion
+	dogu.UpgradeConfig.AllowNamespaceSwitch = false
+}
+
+func (dogu *DoguInstallation) SwitchNamespace(newNamespace string, newVersion core.Version, isNamespaceSwitchAllowed bool) error {
+	if !isNamespaceSwitchAllowed {
+		return fmt.Errorf("not allowed to switch dogu namespace from %q to %q", dogu.Namespace, newNamespace)
+	}
+	dogu.Namespace = newNamespace
+	dogu.Version = newVersion
+	dogu.UpgradeConfig.AllowNamespaceSwitch = true
 }
