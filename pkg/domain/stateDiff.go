@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
@@ -58,6 +59,24 @@ const (
 	ActionDowngrade       = "downgrade"
 	ActionSwitchNamespace = "namespace switch"
 )
+
+func (diff *DoguDiff) String() string {
+	return fmt.Sprintf(
+		"{DoguName: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		diff.DoguName,
+		diff.Actual.String(),
+		diff.Expected.String(),
+		diff.NeededAction,
+	)
+}
+func (diff *DoguDiffState) String() string {
+	return fmt.Sprintf(
+		"{Version: %q, Namespace: %q, InstallationState: %q}",
+		diff.Version.Raw,
+		diff.Namespace,
+		diff.InstallationState,
+	)
+}
 
 // determineDoguDiffs creates DoguDiffs for all dogus in the blueprint and all installed dogus as well.
 // see determineDoguDiff for more information.

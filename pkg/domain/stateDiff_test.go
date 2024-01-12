@@ -404,3 +404,38 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 		})
 	}
 }
+
+func TestDoguDiff_String(t *testing.T) {
+	actual := DoguDiffState{
+		Namespace:         "official",
+		Version:           version3_2_1_1,
+		InstallationState: TargetStatePresent,
+	}
+	expected := DoguDiffState{
+		Namespace:         "premium",
+		Version:           version3_2_1_2,
+		InstallationState: TargetStatePresent,
+	}
+	diff := &DoguDiff{
+		DoguName:     "postgresql",
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: ActionInstall,
+	}
+
+	assert.Equal(t, "{"+
+		"DoguName: \"postgresql\", "+
+		"Actual: {Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}, "+
+		"Expected: {Version: \"3.2.1-2\", Namespace: \"premium\", InstallationState: \"present\"}, "+
+		"NeededAction: \"install\""+
+		"}", diff.String())
+}
+func TestDoguDiffState_String(t *testing.T) {
+	diff := &DoguDiffState{
+		Namespace:         "official",
+		Version:           version3_2_1_1,
+		InstallationState: TargetStatePresent,
+	}
+
+	assert.Equal(t, "{Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}", diff.String())
+}
