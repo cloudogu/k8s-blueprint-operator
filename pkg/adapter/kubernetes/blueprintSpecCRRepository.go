@@ -60,10 +60,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	persistenceContext := make(map[string]interface{}, 1)
-	persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{
-		resourceVersion: blueprintCR.GetResourceVersion(),
-	}
 	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
 		return nil, err
@@ -83,8 +79,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 		},
-		Status:             blueprintCR.Status.Phase,
-		PersistenceContext: persistenceContext,
+		Status: blueprintCR.Status.Phase,
 	}
 
 	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
@@ -94,6 +89,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
+	setPersistenceContext(blueprintCR, blueprintSpec)
 	blueprintSpec.Blueprint = blueprint
 	blueprintSpec.BlueprintMask = blueprintMask
 	return blueprintSpec, nil
@@ -137,9 +133,22 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		}
 		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
 	}
+
+	setPersistenceContext(CRAfterUpdate, spec)
 	repo.publishEvents(CRAfterUpdate, spec.Events)
 
 	return nil
+}
+
+func setPersistenceContext(blueprintCR *v1.Blueprint, spec *domain.BlueprintSpec) {
+	persistenceContext := spec.PersistenceContext
+	if persistenceContext == nil {
+		persistenceContext = make(map[string]interface{}, 1)
+	}
+	persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{
+		resourceVersion: blueprintCR.GetResourceVersion(),
+	}
+	spec.PersistenceContext = persistenceContext
 }
 
 // getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.
