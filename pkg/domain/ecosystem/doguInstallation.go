@@ -51,6 +51,11 @@ type UpgradeConfig struct {
 	AllowNamespaceSwitch bool `json:"allowNamespaceSwitch,omitempty"`
 }
 
+// GetQualifiedName returns the dogu name with namespace, e.g. official/postgresql
+func (dogu *DoguInstallation) GetQualifiedName() string {
+	return fmt.Sprintf("%s/%s", dogu.Namespace, dogu.Name)
+}
+
 // InstallDogu is a factory for new DoguInstallation's.
 func InstallDogu(namespace string, doguName string, version core.Version) *DoguInstallation {
 	return &DoguInstallation{
@@ -60,6 +65,7 @@ func InstallDogu(namespace string, doguName string, version core.Version) *DoguI
 		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
 	}
 }
+
 func (dogu *DoguInstallation) IsUnhealthy() (bool, UnhealthyDogu) {
 	return dogu.Health != AvailableHealthStatus,
 		UnhealthyDogu{
@@ -82,4 +88,5 @@ func (dogu *DoguInstallation) SwitchNamespace(newNamespace string, newVersion co
 	dogu.Namespace = newNamespace
 	dogu.Version = newVersion
 	dogu.UpgradeConfig.AllowNamespaceSwitch = true
+	return nil
 }
