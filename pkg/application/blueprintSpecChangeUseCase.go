@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -16,6 +17,7 @@ type BlueprintSpecChangeUseCase struct {
 	effectiveBlueprint effectiveBlueprintUseCase
 	stateDiff          stateDiffUseCase
 	doguInstallUseCase doguInstallationUseCase
+	applyUseCase       applyBlueprintSpecUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -24,6 +26,7 @@ func NewBlueprintSpecChangeUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	doguInstallUseCase doguInstallationUseCase,
+	applyUseCase applyBlueprintSpecUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:               repo,
@@ -31,6 +34,7 @@ func NewBlueprintSpecChangeUseCase(
 		effectiveBlueprint: effectiveBlueprint,
 		stateDiff:          stateDiff,
 		doguInstallUseCase: doguInstallUseCase,
+		applyUseCase:       applyUseCase,
 	}
 }
 
@@ -72,11 +76,12 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseIgnoreDoguHealth:
 		fallthrough
 	case domain.StatusPhaseDogusHealthy:
-		return nil
+		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseDogusUnhealthy:
 		return nil
 	case domain.StatusPhaseInProgress:
-		return nil
+		//should only happen if the system was interrupted, normally this state will be updated to completed or failed
+		return useCase.handleInProgress(ctx, blueprintSpec)
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
@@ -130,3 +135,27 @@ func (useCase *BlueprintSpecChangeUseCase) checkDoguHealth(ctx context.Context, 
 
 	return useCase.HandleChange(ctx, blueprintId)
 }
+
+func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Context, blueprintId string) error {
+	err := useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) handleInProgress(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+	logger := log.FromContext(ctx).
+		WithName("BlueprintSpecChangeUseCase.HandleChange").
+		WithValues("blueprintId", blueprintSpec.Id)
+
+	err := errors.New(handleInProgressMsg)
+	logger.Error(err, "mark the blueprint as failed as the inProgress status should never be handled here")
+	// do not return the inProgressError as this would lead to a reconcile, but this is not necessary if the status is failed afterward
+	return useCase.applyUseCase.MarkFailed(ctx, blueprintSpec, err)
+}
+
+const handleInProgressMsg = "cannot handle blueprint in state " + string(domain.StatusPhaseInProgress) +
+	" as this state shows that the appliance of the blueprint was interrupted before it could update the state " +
+	"to either " + string(domain.StatusPhaseFailed) + " or " + string(domain.StatusPhaseCompleted)
