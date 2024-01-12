@@ -97,7 +97,7 @@ type doguResourcesPatch struct {
 	DataVolumeSize string `json:"dataVolumeSize"`
 }
 
-func toDoguCRPatch(dogu *ecosystem.DoguInstallation) (*doguCRPatch, error) {
+func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
 			Name:    dogu.GetQualifiedName(),
@@ -105,24 +105,19 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) (*doguCRPatch, error) {
 			//Resources: doguResourcesPatch{
 			//	DataVolumeSize: "",
 			//},
+			// always set this to false as a dogu cannot start in support mode
 			SupportMode: false,
 			UpgradeConfig: upgradeConfigPatch{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
-				ForceUpgrade:         false,
+				// this is a useful default as long as blueprints itself have no forceUpgrade flag implemented
+				ForceUpgrade: false,
 			},
 		},
-	}, nil
+	}
 }
 
 func toDoguCRPatchBytes(dogu *ecosystem.DoguInstallation) ([]byte, error) {
-	crPatch, err := toDoguCRPatch(dogu)
-	if err != nil {
-		return []byte{}, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      fmt.Sprintf("cannot patch dogu CR for dogu %q", dogu.Name),
-		}
-	}
-
+	crPatch := toDoguCRPatch(dogu)
 	patch, err := json.Marshal(crPatch)
 	if err != nil {
 		return []byte{}, &domainservice.InternalError{
