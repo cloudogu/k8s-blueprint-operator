@@ -20,6 +20,7 @@ type stateDiffUseCase interface {
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context, blueprintId string) error
+	ApplyDoguStates(ctx context.Context, blueprintId string) error
 }
 
 // interface duplication for mocks
