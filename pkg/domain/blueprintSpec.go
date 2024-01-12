@@ -46,6 +46,8 @@ const (
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
+	// StatusPhaseWaitForHealthyEcosystem indicates that the blueprint was applied but the ecosystem is not healthy yet.
+	StatusPhaseWaitForHealthyEcosystem StatusPhase = "waitForHealthyEcosystem"
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
@@ -268,4 +270,24 @@ func (spec *BlueprintSpec) CheckDoguHealth(installedDogus map[string]*ecosystem.
 		spec.Status = StatusPhaseDogusHealthy
 		spec.Events = append(spec.Events, DogusHealthyEvent{})
 	}
+}
+
+func (spec *BlueprintSpec) MarkInProgress() {
+	spec.Status = StatusPhaseInProgress
+	spec.Events = append(spec.Events, InProgressEvent{})
+}
+
+func (spec *BlueprintSpec) MarkFailed(err error) {
+	spec.Status = StatusPhaseFailed
+	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkWaitingForHealthyEcosystem() {
+	spec.Status = StatusPhaseWaitForHealthyEcosystem
+	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
+}
+
+func (spec *BlueprintSpec) MarkCompleted() {
+	spec.Status = StatusPhaseCompleted
+	spec.Events = append(spec.Events, CompletedEvent{})
 }
