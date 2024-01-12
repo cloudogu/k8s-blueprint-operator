@@ -335,7 +335,13 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		restClientMock.EXPECT().UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).Return(nil, nil)
+		restClientMock.EXPECT().
+			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
+			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+				//assert.Equal(t, &expected, blueprint)
+				blueprint.ResourceVersion = "newVersion"
+				return blueprint, nil
+			})
 
 		var events []domain.Event
 		events = append(events,
@@ -360,9 +366,13 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		//when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+		spec := &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext}
+		err := repo.Update(ctx, spec)
 
 		//then
 		require.NoError(t, err)
+		newPersistenceContext, _ := getPersistenceContext(ctx, spec)
+		assert.Equal(t, "newVersion", newPersistenceContext.resourceVersion)
+
 	})
 }
