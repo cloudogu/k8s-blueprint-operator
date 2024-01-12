@@ -54,6 +54,7 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context, blu
 func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.ApplyDoguChanges").
 		WithValues("blueprintId", blueprintId)
+	log.IntoContext(ctx, logger)
 
 	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
 	if err != nil {
@@ -67,11 +68,9 @@ func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blu
 	}
 
 	for _, doguDiff := range blueprintSpec.StateDiff.DoguDiffs {
-		logger.Info("apply dogu state", "dogu", doguDiff.DoguName, "diff", doguDiff)
 		err = useCase.applyDoguState(ctx, doguDiff, dogus[doguDiff.DoguName], blueprintSpec.Config)
 		if err != nil {
-			logger.Error(err, "an error occurred while applying dogu state to the ecosystem")
-			return err
+			return fmt.Errorf("an error occurred while applying dogu state to the ecosystem: %w", err)
 		}
 	}
 	return nil
@@ -83,20 +82,30 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	doguInstallation *ecosystem.DoguInstallation,
 	blueprintConfig domain.BlueprintConfiguration,
 ) error {
+	logger := log.FromContext(ctx).
+		WithName("DoguInstallationUseCase.applyDoguState").
+		WithValues("dogu", doguDiff.DoguName, "diff", doguDiff.String())
+
 	switch doguDiff.NeededAction {
 	case domain.ActionNone:
+		logger.Info("apply nothing for dogu")
 		return nil
 	case domain.ActionInstall:
+		logger.Info("install dogu")
 		newDogu := ecosystem.InstallDogu(doguDiff.Expected.Namespace, doguDiff.DoguName, doguDiff.Expected.Version)
 		return useCase.doguRepo.Create(ctx, newDogu)
 	case domain.ActionUninstall:
+		logger.Info("uninstall dogu")
 		return useCase.doguRepo.Delete(ctx, doguInstallation.Name)
 	case domain.ActionUpgrade:
+		logger.Info("upgrade dogu")
 		doguInstallation.Upgrade(doguDiff.Expected.Version)
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	case domain.ActionDowngrade:
+		logger.Info("downgrade dogu")
 		return fmt.Errorf(noDowngradesExplanationText)
 	case domain.ActionSwitchNamespace:
+		logger.Info("do namespace switch for dogu")
 		err := doguInstallation.SwitchNamespace(
 			doguDiff.Expected.Namespace,
 			doguDiff.Expected.Version,
