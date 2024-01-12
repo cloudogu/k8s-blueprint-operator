@@ -4,16 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
-	"github.com/cloudogu/cesapp-lib/core"
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 const doguInstallationRepoContextKey = "doguInstallationRepoContext"
@@ -48,39 +45,6 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string
 	return parseDoguCR(cr)
 }
 
-func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
-	if cr == nil {
-		return nil, &domainservice.InternalError{
-			WrappedError: nil,
-			Message:      "Cannot parse dogu CR as it is nil",
-		}
-	}
-	// parse dogu fields
-	version, versionErr := core.ParseVersion(cr.Spec.Version)
-	namespace, _, nameErr := serializer.SplitDoguName(cr.Spec.Name)
-	err := errors.Join(versionErr, nameErr)
-	if err != nil {
-		return nil, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "Cannot load dogu CR as it cannot be parsed correctly",
-		}
-	}
-	// parse persistence context
-	persistenceContext := make(map[string]interface{}, 1)
-	persistenceContext[doguInstallationRepoContextKey] = doguInstallationRepoContext{
-		resourceVersion: cr.GetResourceVersion(),
-	}
-	return &ecosystem.DoguInstallation{
-		Namespace:          namespace,
-		Name:               cr.Name,
-		Version:            version,
-		Status:             cr.Status.Status,
-		Health:             ecosystem.HealthStatus(cr.Status.Health),
-		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
-		PersistenceContext: persistenceContext,
-	}, nil
-}
-
 func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error) {
 	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
@@ -110,4 +74,54 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosy
 	}
 
 	return doguInstallations, nil
+}
+
+func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
+	cr, err := toDoguCR(dogu)
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("cannot convert domain model to dogu CR while creating a new dogu CR for dogu %q", dogu.Name),
+		}
+	}
+
+	_, err = repo.doguClient.Create(ctx, cr, metav1.CreateOptions{})
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("cannot create dogu CR for dogu %q", dogu.Name),
+		}
+	}
+	return nil
+}
+
+func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
+	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
+	patch, err := toDoguCRPatchBytes(dogu)
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("cannot create patch for dogu CR for dogu %q", dogu.Name),
+		}
+	}
+	logger.Info("patch dogu CR", "doguName", dogu.Name, "doguPatch", string(patch))
+	_, err = repo.doguClient.Patch(ctx, dogu.Name, types.MergePatchType, patch, metav1.PatchOptions{})
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("cannot patch dogu CR for dogu %q", dogu.Name),
+		}
+	}
+	return nil
+}
+
+func (repo *doguInstallationRepo) Delete(ctx context.Context, doguName string) error {
+	err := repo.doguClient.Delete(ctx, doguName, metav1.DeleteOptions{})
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("cannot delete dogu CR for dogu %q", doguName),
+		}
+	}
+	return nil
 }
