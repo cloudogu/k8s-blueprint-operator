@@ -33,33 +33,30 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "",
 		},
 		{
-			name:            "dogus healthy",
-			event:           DogusHealthyEvent{},
-			expectedName:    "DogusHealthy",
+			name:            "ecosystem healthy",
+			event:           EcosystemHealthyEvent{},
+			expectedName:    "EcosystemHealthy",
 			expectedMessage: "",
 		},
 		{
-			name: "dogus unhealthy",
-			event: DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{UnhealthyDogus: []ecosystem.UnhealthyDogu{
-				{
-					Namespace: "official",
-					Name:      "ldap",
-					Version:   mustParseVersion("1.2.3-1"),
-					Health:    "unavailable",
+			name: "ecosystem unhealthy upfront",
+			event: EcosystemUnhealthyUpfrontEvent{
+				HealthResult: ecosystem.HealthResult{
+					DoguHealth: ecosystem.DoguHealthResult{
+						DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+							ecosystem.AvailableHealthStatus:   {"postgresql"},
+							ecosystem.UnavailableHealthStatus: {"ldap"},
+							ecosystem.PendingHealthStatus:     {"admin"},
+						},
+					},
 				},
-				{
-					Namespace: "premium",
-					Name:      "admin",
-					Version:   mustParseVersion("3.4.5-3"),
-					Health:    "broken",
-				},
-			}}},
-			expectedName:    "DogusUnhealthy",
-			expectedMessage: "2 dogus are unhealthy: official/ldap:1.2.3-1 is unavailable, premium/admin:3.4.5-3 is broken",
+			},
+			expectedName:    "EcosystemUnhealthyUpfront",
+			expectedMessage: "ecosystem is unhealthy: 2 dogus are unhealthy: admin, ldap",
 		},
 		{
 			name:            "ignore dogu health",
-			event:           IgnoreDoguHealthEvent{},
+			event:           IgnoreEcosystemHealthEvent{},
 			expectedName:    "IgnoreDoguHealth",
 			expectedMessage: "ignore dogu health flag is set; ignoring dogu health",
 		},

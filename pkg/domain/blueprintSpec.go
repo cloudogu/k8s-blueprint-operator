@@ -36,12 +36,12 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
-	// StatusPhaseDogusHealthy marks that all currently installed dogus are healthy.
-	StatusPhaseDogusHealthy StatusPhase = "dogusHealthy"
+	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
+	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseIgnoreDoguHealth marks that dogu health checks have been skipped.
 	StatusPhaseIgnoreDoguHealth StatusPhase = "ignoreDoguHealth"
-	// StatusPhaseDogusUnhealthy marks that some currently installed dogus are unhealthy.
-	StatusPhaseDogusUnhealthy StatusPhase = "dogusUnhealthy"
+	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
+	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -249,26 +249,19 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
-func (spec *BlueprintSpec) CheckDoguHealth(installedDogus map[string]*ecosystem.DoguInstallation) {
+func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
 	if spec.Config.IgnoreDoguHealth {
 		spec.Status = StatusPhaseIgnoreDoguHealth
-		spec.Events = append(spec.Events, IgnoreDoguHealthEvent{})
+		spec.Events = append(spec.Events, IgnoreEcosystemHealthEvent{})
 		return
 	}
 
-	var unhealthyDogus []ecosystem.UnhealthyDogu
-	for _, dogu := range installedDogus {
-		if unhealthy, unhealthyDogu := dogu.IsUnhealthy(); unhealthy {
-			unhealthyDogus = append(unhealthyDogus, unhealthyDogu)
-		}
-	}
-
-	if len(unhealthyDogus) > 0 {
-		spec.Status = StatusPhaseDogusUnhealthy
-		spec.Events = append(spec.Events, DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{UnhealthyDogus: unhealthyDogus}})
+	if healthResult.AllHealthy() {
+		spec.Status = StatusPhaseEcosystemHealthyUpfront
+		spec.Events = append(spec.Events, EcosystemHealthyEvent{})
 	} else {
-		spec.Status = StatusPhaseDogusHealthy
-		spec.Events = append(spec.Events, DogusHealthyEvent{})
+		spec.Status = StatusPhaseEcosystemUnhealthyUpfront
+		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
 	}
 }
 

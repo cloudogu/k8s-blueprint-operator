@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -8,88 +9,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
+	"time"
 )
 
 const blueprintId = "blueprint1"
 
 var version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
 var version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
-
-func TestDoguInstallationUseCase_CheckDoguHealth(t *testing.T) {
-	t.Run("should fail to get blueprint spec", func(t *testing.T) {
-		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-
-		doguRepoMock := newMockDoguInstallationRepository(t)
-
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
-
-		// when
-		err := sut.CheckDoguHealth(testCtx, blueprintId)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to check dogu health")
-	})
-	t.Run("should fail to get dogus", func(t *testing.T) {
-		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{}, nil)
-
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
-
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
-
-		// when
-		err := sut.CheckDoguHealth(testCtx, blueprintId)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot evaluate dogu health states for blueprint spec \"blueprint1\"")
-	})
-	t.Run("should fail to update blueprint spec", func(t *testing.T) {
-		// given
-		blueprintSpec := &domain.BlueprintSpec{}
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(blueprintSpec, nil)
-		blueprintSpecRepoMock.EXPECT().Update(testCtx, blueprintSpec).Return(assert.AnError)
-
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
-
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
-
-		// when
-		err := sut.CheckDoguHealth(testCtx, blueprintId)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot save blueprint spec \"blueprint1\" after checking the dogu health")
-	})
-	t.Run("should succeed", func(t *testing.T) {
-		// given
-		blueprintSpec := &domain.BlueprintSpec{}
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(blueprintSpec, nil)
-		blueprintSpecRepoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
-
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
-
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
-
-		// when
-		err := sut.CheckDoguHealth(testCtx, blueprintId)
-
-		// then
-		require.NoError(t, err)
-	})
-}
 
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
@@ -426,4 +352,78 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		require.ErrorContains(t, err, noDowngradesExplanationText)
 		require.ErrorContains(t, err, "an error occurred while applying dogu state to the ecosystem")
 	})
+}
+
+func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		t.Parallel()
+		// given
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		timedCtx, cancel := context.WithTimeout(testCtx, 10*time.Millisecond)
+		defer cancel()
+		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+
+		sut := DoguInstallationUseCase{
+			blueprintSpecRepo:   nil,
+			doguRepo:            doguRepoMock,
+			healthCheckInterval: 1 * time.Millisecond,
+		}
+
+		// when
+		result, err := sut.WaitForHealthyDogus(timedCtx)
+
+		// then
+		require.NoError(t, err)
+		assert.True(t, result.AllHealthy())
+	})
+
+	t.Run("timeout", func(t *testing.T) {
+		t.Parallel()
+		// given
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		timedCtx, cancel := context.WithTimeout(testCtx, 0*time.Millisecond)
+		defer cancel()
+		// return unhealthy result
+		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[string]*ecosystem.DoguInstallation{
+			"postgresql": {Health: ecosystem.DoguStatusInstalling},
+		}, nil).Maybe()
+
+		sut := DoguInstallationUseCase{
+			blueprintSpecRepo:   nil,
+			doguRepo:            doguRepoMock,
+			healthCheckInterval: 5 * time.Millisecond,
+		}
+
+		// when
+		result, err := sut.WaitForHealthyDogus(timedCtx)
+
+		// then
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, context.DeadlineExceeded)
+		assert.Equal(t, ecosystem.DoguHealthResult{}, result)
+	})
+
+	t.Run("cannot load dogus", func(t *testing.T) {
+		t.Parallel()
+		// given
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		timedCtx, cancel := context.WithTimeout(testCtx, 10*time.Millisecond)
+		defer cancel()
+		doguRepoMock.EXPECT().GetAll(timedCtx).Return(nil, assert.AnError).Maybe()
+
+		sut := DoguInstallationUseCase{
+			blueprintSpecRepo:   nil,
+			doguRepo:            doguRepoMock,
+			healthCheckInterval: 1 * time.Millisecond,
+		}
+
+		// when
+		result, err := sut.WaitForHealthyDogus(timedCtx)
+
+		// then
+		assert.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.Equal(t, ecosystem.DoguHealthResult{}, result)
+	})
+
 }

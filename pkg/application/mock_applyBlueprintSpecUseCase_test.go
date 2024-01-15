@@ -65,6 +65,49 @@ func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) RunAndReturn(ru
 	return _c
 }
 
+// CheckEcosystemHealthUpfront provides a mock function with given fields: ctx, blueprintId
+func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
+	ret := _m.Called(ctx, blueprintId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, blueprintId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckEcosystemHealthUpfront'
+type mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call struct {
+	*mock.Call
+}
+
+// CheckEcosystemHealthUpfront is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blueprintId string
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthUpfront(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call{Call: _e.mock.On("CheckEcosystemHealthUpfront", ctx, blueprintId)}
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // MarkFailed provides a mock function with given fields: ctx, blueprintSpec, err
 func (_m *mockApplyBlueprintSpecUseCase) MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	ret := _m.Called(ctx, blueprintSpec, err)

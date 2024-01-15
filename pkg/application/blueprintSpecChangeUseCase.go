@@ -72,12 +72,12 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseValidated:
 		return useCase.determineStateDiff(ctx, blueprintId)
 	case domain.StatusPhaseStateDiffDetermined:
-		return useCase.checkDoguHealth(ctx, blueprintId)
+		return useCase.checkEcosystemHealthUpfront(ctx, blueprintId)
 	case domain.StatusPhaseIgnoreDoguHealth:
 		fallthrough
-	case domain.StatusPhaseDogusHealthy:
+	case domain.StatusPhaseEcosystemHealthyUpfront:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
-	case domain.StatusPhaseDogusUnhealthy:
+	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseInProgress:
 		//should only happen if the system was interrupted, normally this state will be updated to completed or failed
@@ -129,8 +129,8 @@ func (useCase *BlueprintSpecChangeUseCase) determineStateDiff(ctx context.Contex
 	return useCase.HandleChange(ctx, blueprintId)
 }
 
-func (useCase *BlueprintSpecChangeUseCase) checkDoguHealth(ctx context.Context, blueprintId string) error {
-	err := useCase.doguInstallUseCase.CheckDoguHealth(ctx, blueprintId)
+func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
+	err := useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprintId)
 	if err != nil {
 		return err
 	}

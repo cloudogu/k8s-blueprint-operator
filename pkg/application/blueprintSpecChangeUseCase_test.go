@@ -47,9 +47,9 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseStateDiffDetermined
 			})
-		doguInstallMock.EXPECT().CheckDoguHealth(testCtx, "testBlueprint1").Return(nil).
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseDogusHealthy
+				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
 			})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
@@ -247,7 +247,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				updatedSpec.Status = domain.StatusPhaseStateDiffDetermined
 			})
-		doguInstallMock.EXPECT().CheckDoguHealth(testCtx, "testBlueprint1").Return(assert.AnError)
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
@@ -313,7 +313,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseDogusUnhealthy,
+			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
 		}, nil)
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")

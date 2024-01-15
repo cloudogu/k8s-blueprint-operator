@@ -12,16 +12,47 @@ import (
 type ApplyBlueprintSpecUseCase struct {
 	repo               domainservice.BlueprintSpecRepository
 	doguInstallUseCase doguInstallationUseCase
+	healthUseCase      ecosystemHealthUseCase
 }
 
 func NewApplyBlueprintSpecUseCase(
 	repo domainservice.BlueprintSpecRepository,
 	doguInstallUseCase doguInstallationUseCase,
+	healthUseCase ecosystemHealthUseCase,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
 		repo:               repo,
 		doguInstallUseCase: doguInstallUseCase,
+		healthUseCase:      healthUseCase,
 	}
+}
+
+func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.CheckEcosystemHealthUpfront").
+		WithValues("blueprintId", blueprintId)
+
+	logger.Info("getting blueprint spec for checking ecosystem health")
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q to check ecosystem health: %w", blueprintId, err)
+	}
+
+	if blueprintSpec.Config.IgnoreDoguHealth {
+		//TODO: no dogu checks if flag is set
+	}
+
+	healthResult, err := useCase.healthUseCase.CheckEcosystemHealth(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot check ecosystem health upfront of applying the blueprint %q: %w", blueprintId, err)
+	}
+	blueprintSpec.CheckEcosystemHealthUpfront(healthResult)
+
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot save blueprint spec %q after checking the ecosystem health: %w", blueprintId, err)
+	}
+
+	return nil
 }
 
 func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprintId string) error {
@@ -47,15 +78,15 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	}
 
 	//TODO: set state to wait for health
-	//healthError := useCase.markWaitingForHealthyEcosystem(ctx, blueprintSpec)
-	//if healthError != nil {
-	//	return healthError
-	//}
+	healthError := useCase.markWaitingForHealthyEcosystem(ctx, blueprintSpec)
+	if healthError != nil {
+		return healthError
+	}
 
 	//TODO: deactivate maintenance mode
 
 	//TODO: need to check ecosystem health here
-	//err = useCase.doguInstallUseCase.CheckDoguHealth(ctx, blueprintId)
+	//err = useCase.doguInstallUseCase.CheckEcosystemHealthUpfront(ctx, blueprintId)
 	//if err != nil {
 	//	return err
 	//}

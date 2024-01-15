@@ -2,11 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"slices"
-	"strings"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type Event interface {
@@ -46,39 +42,36 @@ func (b BlueprintSpecValidatedEvent) Message() string {
 	return ""
 }
 
-type DogusHealthyEvent struct{}
+type EcosystemHealthyEvent struct{}
 
-func (d DogusHealthyEvent) Name() string {
-	return "DogusHealthy"
+func (d EcosystemHealthyEvent) Name() string {
+	return "EcosystemHealthy"
 }
 
-func (d DogusHealthyEvent) Message() string {
+func (d EcosystemHealthyEvent) Message() string {
 	return ""
 }
 
-type IgnoreDoguHealthEvent struct{}
+type IgnoreEcosystemHealthEvent struct{}
 
-func (i IgnoreDoguHealthEvent) Name() string {
+func (i IgnoreEcosystemHealthEvent) Name() string {
 	return "IgnoreDoguHealth"
 }
 
-func (i IgnoreDoguHealthEvent) Message() string {
+func (i IgnoreEcosystemHealthEvent) Message() string {
 	return "ignore dogu health flag is set; ignoring dogu health"
 }
 
-type DogusUnhealthyEvent struct {
-	HealthResult ecosystem.DoguHealthResult
+type EcosystemUnhealthyUpfrontEvent struct {
+	HealthResult ecosystem.HealthResult
 }
 
-func (d DogusUnhealthyEvent) Name() string {
-	return "DogusUnhealthy"
+func (d EcosystemUnhealthyUpfrontEvent) Name() string {
+	return "EcosystemUnhealthyUpfront"
 }
 
-func (d DogusUnhealthyEvent) Message() string {
-	unhealthyDogus := util.Map(d.HealthResult.UnhealthyDogus, ecosystem.UnhealthyDogu.String)
-	slices.Sort(unhealthyDogus)
-	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus),
-		strings.Join(unhealthyDogus, ", "))
+func (d EcosystemUnhealthyUpfrontEvent) Message() string {
+	return fmt.Sprintf("%s", d.HealthResult)
 }
 
 type EffectiveBlueprintCalculatedEvent struct {
