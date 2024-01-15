@@ -373,6 +373,6 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		require.NoError(t, err)
 		newPersistenceContext, _ := getPersistenceContext(ctx, spec)
 		assert.Equal(t, "newVersion", newPersistenceContext.resourceVersion)
-
+		assert.Empty(t, spec.Events, "events in aggregate should be deleted after publishing them")
 	})
 }

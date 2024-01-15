@@ -136,6 +136,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 
 	setPersistenceContext(CRAfterUpdate, spec)
 	repo.publishEvents(CRAfterUpdate, spec.Events)
+	spec.Events = []domain.Event{}
 
 	return nil
 }
