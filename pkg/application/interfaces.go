@@ -33,7 +33,7 @@ type applyBlueprintSpecUseCase interface {
 }
 
 type ecosystemHealthUseCase interface {
-	CheckEcosystemHealth(ctx context.Context) (ecosystem.HealthResult, error)
+	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error)
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 

@@ -284,7 +284,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{}, nil)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().CheckEcosystemHealth(testCtx).Return(ecosystem.HealthResult{}, assert.AnError)
+		healthMock.EXPECT().CheckEcosystemHealth(testCtx, false).Return(ecosystem.HealthResult{}, assert.AnError)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
@@ -304,7 +304,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(assert.AnError)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().WaitForHealthyEcosystem(mock.Anything).Return(ecosystem.HealthResult{}, nil)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
@@ -314,7 +314,27 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot save blueprint spec \"blueprint1\" after checking the dogu health")
+		assert.ErrorContains(t, err, "cannot save blueprint spec \"blueprint1\" after checking the ecosystem health")
+	})
+	t.Run("should succeed, ignoring dogu health", func(t *testing.T) {
+		// given
+		blueprintSpec := &domain.BlueprintSpec{Config: domain.BlueprintConfiguration{
+			IgnoreDoguHealth: true,
+		}}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(blueprintSpec, nil)
+		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
+
+		healthMock := newMockEcosystemHealthUseCase(t)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, true).Return(ecosystem.HealthResult{}, nil)
+
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
+
+		// when
+		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
+
+		// then
+		require.NoError(t, err)
 	})
 	t.Run("should succeed", func(t *testing.T) {
 		// given
@@ -324,7 +344,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().WaitForHealthyEcosystem(mock.Anything).Return(ecosystem.HealthResult{}, nil)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 

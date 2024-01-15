@@ -21,10 +21,14 @@ func NewEcosystemHealthUseCase(
 	}
 }
 
-func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context) (ecosystem.HealthResult, error) {
-	doguHealth, err := useCase.doguUseCase.CheckDoguHealthStates(ctx)
-	if err != nil {
-		return ecosystem.HealthResult{}, err
+func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error) {
+	doguHealth := ecosystem.DoguHealthResult{}
+	if !ignoreDoguHealth {
+		var err error
+		doguHealth, err = useCase.doguUseCase.CheckDoguHealthStates(ctx)
+		if err != nil {
+			return ecosystem.HealthResult{}, err
+		}
 	}
 
 	return ecosystem.HealthResult{
