@@ -11,6 +11,16 @@ type EcosystemHealthUseCase struct {
 	healthCheckTimeOut time.Duration
 }
 
+func NewEcosystemHealthUseCase(
+	doguUseCase doguInstallationUseCase,
+	healthCheckTimeOut time.Duration,
+) *EcosystemHealthUseCase {
+	return &EcosystemHealthUseCase{
+		doguUseCase:        doguUseCase,
+		healthCheckTimeOut: healthCheckTimeOut,
+	}
+}
+
 func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context) (ecosystem.HealthResult, error) {
 	doguHealth, err := useCase.doguUseCase.CheckDoguHealthStates(ctx)
 	if err != nil {

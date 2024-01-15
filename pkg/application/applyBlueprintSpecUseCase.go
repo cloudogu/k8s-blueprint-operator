@@ -77,7 +77,6 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return applyError
 	}
 
-	//TODO: set state to wait for health
 	healthError := useCase.markWaitingForHealthyEcosystem(ctx, blueprintSpec)
 	if healthError != nil {
 		return healthError
@@ -86,7 +85,7 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	//TODO: deactivate maintenance mode
 
 	//TODO: need to check ecosystem health here
-	//err = useCase.doguInstallUseCase.CheckEcosystemHealthUpfront(ctx, blueprintId)
+	//err = useCase.CheckEcosystemHealthUpfront(ctx, blueprintId)
 	//if err != nil {
 	//	return err
 	//}
