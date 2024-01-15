@@ -156,9 +156,11 @@ func TestApplyBlueprintSpecUseCase_markCompleted(t *testing.T) {
 
 func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	statusTransitions := map[int]domain.StatusPhase{
+		// will change with health checks
 		1: domain.StatusPhaseInProgress,
-		2: domain.StatusPhaseWaitForHealthyEcosystem,
-		3: domain.StatusPhaseCompleted,
+		//2: domain.StatusPhaseWaitForHealthyEcosystem,
+		2: domain.StatusPhaseCompleted,
+		//3: domain.StatusPhaseCompleted,
 	}
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
@@ -171,7 +173,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 			counter++
 			assert.Equal(t, spec.Status, statusTransitions[counter])
 			return nil
-		}).Times(3)
+		}).Times(2)
 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)

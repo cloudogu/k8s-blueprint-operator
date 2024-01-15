@@ -35,6 +35,8 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return err
 	}
 
+	//TODO: activate maintenance mode
+
 	applyError := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
 	if applyError != nil {
 		err := useCase.MarkFailed(ctx, blueprintSpec, err)
@@ -44,10 +46,13 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return applyError
 	}
 
-	healthError := useCase.markWaitingForHealthyEcosystem(ctx, blueprintSpec)
-	if healthError != nil {
-		return healthError
-	}
+	//TODO: set state to wait for health
+	//healthError := useCase.markWaitingForHealthyEcosystem(ctx, blueprintSpec)
+	//if healthError != nil {
+	//	return healthError
+	//}
+
+	//TODO: deactivate maintenance mode
 
 	//TODO: need to check ecosystem health here
 	//err = useCase.doguInstallUseCase.CheckDoguHealth(ctx, blueprintId)

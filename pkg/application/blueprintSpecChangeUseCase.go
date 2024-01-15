@@ -82,6 +82,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseInProgress:
 		//should only happen if the system was interrupted, normally this state will be updated to completed or failed
 		return useCase.handleInProgress(ctx, blueprintSpec)
+	case domain.StatusPhaseWaitForHealthyEcosystem:
+		return nil
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
