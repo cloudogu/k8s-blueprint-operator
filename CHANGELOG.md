@@ -15,4 +15,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#4] introduce flag `allowDoguNamespaceSwitch` for dogu namespace switch
 - [#7] Create diff between effective blueprint and cluster state
 - [#9] Check dogu health
+- [#11] apply new dogu states based on blueprint
 - [#12] implement maintenance mode
