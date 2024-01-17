@@ -101,10 +101,9 @@ func Test_parseDoguCR(t *testing.T) {
 
 func Test_toDoguCR(t *testing.T) {
 	tests := []struct {
-		name    string
-		dogu    *ecosystem.DoguInstallation
-		want    *v1.Dogu
-		wantErr assert.ErrorAssertionFunc
+		name string
+		dogu *ecosystem.DoguInstallation
+		want *v1.Dogu
 	}{
 		{
 			name: "ok",
@@ -141,16 +140,12 @@ func Test_toDoguCR(t *testing.T) {
 				},
 				Status: v1.DoguStatus{},
 			},
-			wantErr: assert.NoError,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := toDoguCR(tt.dogu)
-			if !tt.wantErr(t, err, fmt.Sprintf("toDoguCR(%v)", tt.dogu)) {
-				return
-			}
+			got := toDoguCR(tt.dogu)
 			assert.Equalf(t, tt.want, got, "toDoguCR(%v)", tt.dogu)
 		})
 	}
