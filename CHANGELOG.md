@@ -17,3 +17,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#9] Check dogu health
 - [#11] apply new dogu states based on blueprint
 - [#12] implement maintenance mode
+- [#17] add health checks before and after applying the blueprint
