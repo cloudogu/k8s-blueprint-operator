@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
@@ -20,6 +21,12 @@ type stateDiffUseCase interface {
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context, blueprintId string) error
+	ApplyDoguStates(ctx context.Context, blueprintId string) error
+}
+
+type applyBlueprintSpecUseCase interface {
+	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
+	MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error
 }
 
 // interface duplication for mocks

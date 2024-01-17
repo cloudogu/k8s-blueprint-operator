@@ -19,9 +19,20 @@ type DoguInstallationRepository interface {
 	// a NotFoundError if any dogu is not installed or
 	// an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error)
-	//Create(ctx context.Context, dogu ecosystem.DoguInstallation) error
-	//Update(ctx context.Context, dogu ecosystem.DoguInstallation) error
-	//Delete(ctx context.Context, dogu ecosystem.DoguInstallation) error
+	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
+	// a ConflictError if there is already a DoguInstallation with this name or
+	// an InternalError if there is any error while saving the DoguInstallation
+	Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error
+	// Update updates an ecosystem.DoguInstallation in the ecosystem.
+	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	// TODO: also return NotFoundErrors? Does k8s supply this error to us?
+	// returns an InternalError if there is any other error
+	Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error
+	// Delete removes the given ecosystem.DoguInstallation completely from the ecosystem.
+	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
+	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	// returns an InternalError if there is any other error
+	Delete(ctx context.Context, doguName string) error
 }
 
 type ComponentInstallationRepository interface {

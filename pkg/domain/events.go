@@ -106,3 +106,45 @@ func (s StateDiffDeterminedEvent) Message() string {
 	return fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others)",
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
 }
+
+type ExecutionFailedEvent struct {
+	err error
+}
+
+func (e ExecutionFailedEvent) Name() string {
+	return "ExecutionFailed"
+}
+
+func (e ExecutionFailedEvent) Message() string {
+	return e.err.Error()
+}
+
+type InProgressEvent struct{}
+
+func (e InProgressEvent) Name() string {
+	return "InProgress"
+}
+
+func (e InProgressEvent) Message() string {
+	return ""
+}
+
+type BlueprintAppliedEvent struct{}
+
+func (e BlueprintAppliedEvent) Name() string {
+	return "BlueprintApplied"
+}
+
+func (e BlueprintAppliedEvent) Message() string {
+	return "waiting for ecosystem health"
+}
+
+type CompletedEvent struct{}
+
+func (e CompletedEvent) Name() string {
+	return "completed"
+}
+
+func (e CompletedEvent) Message() string {
+	return ""
+}
