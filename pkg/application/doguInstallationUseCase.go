@@ -25,11 +25,13 @@ func NewDoguInstallationUseCase(
 	return &DoguInstallationUseCase{
 		blueprintSpecRepo:   blueprintSpecRepo,
 		doguRepo:            doguRepo,
-		healthCheckInterval: 1 * time.Second,
+		healthCheckInterval: 10 * time.Second,
 	}
 }
 
-func (useCase *DoguInstallationUseCase) CheckDoguHealthStates(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth")
+	logger.Info("check dogu health...")
 	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return ecosystem.DoguHealthResult{}, fmt.Errorf("cannot evaluate dogu health states: %w", err)
@@ -39,6 +41,8 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealthStates(ctx context.Contex
 }
 
 func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.WaitForHealthyDogus")
+	logger.Info("start waiting for dogu health")
 	healthResult, err := util.RetryUntilSuccessOrCancellation(
 		ctx,
 		useCase.healthCheckInterval,
@@ -50,12 +54,18 @@ func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context)
 	} else {
 		result = *healthResult
 	}
+
+	if err != nil {
+		err = fmt.Errorf("stop waiting for dogu health: %w", err)
+		logger.Error(err, "stop waiting for dogu health because of an error or time out")
+	}
+
 	return result, err
 }
 
 func (useCase *DoguInstallationUseCase) checkDoguHealthStatesRetryable(ctx context.Context) (result *ecosystem.DoguHealthResult, err error, shouldRetry bool) {
 	// use named return values to make their meaning clear
-	health, err := useCase.CheckDoguHealthStates(ctx)
+	health, err := useCase.CheckDoguHealth(ctx)
 	if err != nil {
 		// no retry if error while loading dogus
 		return &ecosystem.DoguHealthResult{}, err, false

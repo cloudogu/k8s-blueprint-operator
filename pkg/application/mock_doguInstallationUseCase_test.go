@@ -66,7 +66,7 @@ func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) RunAndReturn(run fun
 }
 
 // CheckDoguHealthStates provides a mock function with given fields: ctx
-func (_m *mockDoguInstallationUseCase) CheckDoguHealthStates(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+func (_m *mockDoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error) {
 	ret := _m.Called(ctx)
 
 	var r0 ecosystem.DoguHealthResult
@@ -89,7 +89,7 @@ func (_m *mockDoguInstallationUseCase) CheckDoguHealthStates(ctx context.Context
 	return r0, r1
 }
 
-// mockDoguInstallationUseCase_CheckDoguHealthStates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckDoguHealthStates'
+// mockDoguInstallationUseCase_CheckDoguHealthStates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckDoguHealth'
 type mockDoguInstallationUseCase_CheckDoguHealthStates_Call struct {
 	*mock.Call
 }
@@ -97,7 +97,7 @@ type mockDoguInstallationUseCase_CheckDoguHealthStates_Call struct {
 // CheckDoguHealthStates is a helper method to define mock.On call
 //   - ctx context.Context
 func (_e *mockDoguInstallationUseCase_Expecter) CheckDoguHealthStates(ctx interface{}) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {
-	return &mockDoguInstallationUseCase_CheckDoguHealthStates_Call{Call: _e.mock.On("CheckDoguHealthStates", ctx)}
+	return &mockDoguInstallationUseCase_CheckDoguHealthStates_Call{Call: _e.mock.On("CheckDoguHealth", ctx)}
 }
 
 func (_c *mockDoguInstallationUseCase_CheckDoguHealthStates_Call) Run(run func(ctx context.Context)) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {

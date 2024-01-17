@@ -25,7 +25,7 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context,
 	doguHealth := ecosystem.DoguHealthResult{}
 	if !ignoreDoguHealth {
 		var err error
-		doguHealth, err = useCase.doguUseCase.CheckDoguHealthStates(ctx)
+		doguHealth, err = useCase.doguUseCase.CheckDoguHealth(ctx)
 		if err != nil {
 			return ecosystem.HealthResult{}, err
 		}

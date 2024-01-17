@@ -21,7 +21,7 @@ type stateDiffUseCase interface {
 }
 
 type doguInstallationUseCase interface {
-	CheckDoguHealthStates(ctx context.Context) (ecosystem.DoguHealthResult, error)
+	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
 	WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error)
 	ApplyDoguStates(ctx context.Context, blueprintId string) error
 }
