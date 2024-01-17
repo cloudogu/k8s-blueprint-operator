@@ -101,10 +101,10 @@ func TestApplyBlueprintSpecUseCase_markWaitingForHealthyEcosystem(t *testing.T) 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markWaitingForHealthyEcosystem(testCtx, spec)
+		err := useCase.markBlueprintApplied(testCtx, spec)
 
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseWaitForHealthyEcosystem, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -117,10 +117,10 @@ func TestApplyBlueprintSpecUseCase_markWaitingForHealthyEcosystem(t *testing.T) 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markWaitingForHealthyEcosystem(testCtx, spec)
+		err := useCase.markBlueprintApplied(testCtx, spec)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseWaitForHealthyEcosystem, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 }
 
@@ -161,8 +161,7 @@ func TestApplyBlueprintSpecUseCase_markCompleted(t *testing.T) {
 func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	statusTransitions := map[int]domain.StatusPhase{
 		1: domain.StatusPhaseInProgress,
-		2: domain.StatusPhaseWaitForHealthyEcosystem,
-		3: domain.StatusPhaseCompleted,
+		2: domain.StatusPhaseBlueprintApplied,
 	}
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
@@ -175,7 +174,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 			counter++
 			assert.Equal(t, spec.Status, statusTransitions[counter])
 			return nil
-		}).Times(3)
+		}).Times(2)
 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
@@ -184,7 +183,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseCompleted, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 
 	t.Run("cannot load spec", func(t *testing.T) {
@@ -353,5 +352,83 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+}
+
+func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) {
+	t.Run("should fail to get blueprint spec", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
+
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, nil)
+
+		// when
+		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to check ecosystem health")
+	})
+
+	t.Run("should fail to get health result", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{}, nil)
+
+		healthMock := newMockEcosystemHealthUseCase(t)
+		healthMock.EXPECT().CheckEcosystemHealth(testCtx, false).Return(ecosystem.HealthResult{}, assert.AnError)
+
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
+
+		// when
+		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot check ecosystem health after applying the blueprint \"blueprint1\"")
+	})
+
+	t.Run("should fail to update blueprint spec", func(t *testing.T) {
+		// given
+		blueprintSpec := &domain.BlueprintSpec{}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(blueprintSpec, nil)
+		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(assert.AnError)
+
+		healthMock := newMockEcosystemHealthUseCase(t)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
+
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
+
+		// when
+		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot save blueprint spec \"blueprint1\" after checking the ecosystem health")
+	})
+
+	t.Run("should succeed", func(t *testing.T) {
+		// given
+		blueprintSpec := &domain.BlueprintSpec{}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(blueprintSpec, nil)
+		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
+
+		healthMock := newMockEcosystemHealthUseCase(t)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
+
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
+
+		// when
+		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseEcosystemHealthyAfterwards, blueprintSpec.Status)
 	})
 }

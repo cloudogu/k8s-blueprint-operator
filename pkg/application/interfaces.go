@@ -28,6 +28,7 @@ type doguInstallationUseCase interface {
 
 type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
+	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
 	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
 	MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error
 }

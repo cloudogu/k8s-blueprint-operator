@@ -34,9 +34,9 @@ func TestEvents(t *testing.T) {
 		},
 		{
 			name:            "ecosystem healthy",
-			event:           EcosystemHealthyEvent{},
-			expectedName:    "EcosystemHealthy",
-			expectedMessage: "",
+			event:           EcosystemHealthyUpfrontEvent{doguHealthIgnored: false},
+			expectedName:    "EcosystemHealthyUpfront",
+			expectedMessage: "dogu health ignored: false",
 		},
 		{
 			name: "ecosystem unhealthy upfront",
@@ -53,12 +53,6 @@ func TestEvents(t *testing.T) {
 			},
 			expectedName:    "EcosystemUnhealthyUpfront",
 			expectedMessage: "ecosystem is unhealthy: 2 dogus are unhealthy: admin, ldap",
-		},
-		{
-			name:            "ignore dogu health",
-			event:           IgnoreEcosystemHealthEvent{},
-			expectedName:    "IgnoreDoguHealth",
-			expectedMessage: "ignore dogu health flag is set; ignoring dogu health",
 		},
 		{
 			name:            "effective blueprint calculated",

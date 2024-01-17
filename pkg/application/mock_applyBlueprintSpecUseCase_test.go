@@ -65,6 +65,49 @@ func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) RunAndReturn(ru
 	return _c
 }
 
+// CheckEcosystemHealthAfterwards provides a mock function with given fields: ctx, blueprintId
+func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
+	ret := _m.Called(ctx, blueprintId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, blueprintId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckEcosystemHealthAfterwards'
+type mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call struct {
+	*mock.Call
+}
+
+// CheckEcosystemHealthAfterwards is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blueprintId string
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthAfterwards(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call{Call: _e.mock.On("CheckEcosystemHealthAfterwards", ctx, blueprintId)}
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CheckEcosystemHealthUpfront provides a mock function with given fields: ctx, blueprintId
 func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
 	ret := _m.Called(ctx, blueprintId)

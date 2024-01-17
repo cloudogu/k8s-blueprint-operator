@@ -42,38 +42,6 @@ func (b BlueprintSpecValidatedEvent) Message() string {
 	return ""
 }
 
-type EcosystemHealthyEvent struct{}
-
-func (d EcosystemHealthyEvent) Name() string {
-	return "EcosystemHealthy"
-}
-
-func (d EcosystemHealthyEvent) Message() string {
-	return ""
-}
-
-type IgnoreEcosystemHealthEvent struct{}
-
-func (i IgnoreEcosystemHealthEvent) Name() string {
-	return "IgnoreDoguHealth"
-}
-
-func (i IgnoreEcosystemHealthEvent) Message() string {
-	return "ignore dogu health flag is set; ignoring dogu health"
-}
-
-type EcosystemUnhealthyUpfrontEvent struct {
-	HealthResult ecosystem.HealthResult
-}
-
-func (d EcosystemUnhealthyUpfrontEvent) Name() string {
-	return "EcosystemUnhealthyUpfront"
-}
-
-func (d EcosystemUnhealthyUpfrontEvent) Message() string {
-	return fmt.Sprintf("%s", d.HealthResult)
-}
-
 type EffectiveBlueprintCalculatedEvent struct {
 	Result EffectiveBlueprint
 }
@@ -100,16 +68,28 @@ func (s StateDiffDeterminedEvent) Message() string {
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
 }
 
-type ExecutionFailedEvent struct {
-	err error
+type EcosystemHealthyUpfrontEvent struct {
+	doguHealthIgnored bool
 }
 
-func (e ExecutionFailedEvent) Name() string {
-	return "ExecutionFailed"
+func (d EcosystemHealthyUpfrontEvent) Name() string {
+	return "EcosystemHealthyUpfront"
 }
 
-func (e ExecutionFailedEvent) Message() string {
-	return e.err.Error()
+func (d EcosystemHealthyUpfrontEvent) Message() string {
+	return fmt.Sprintf("dogu health ignored: %t", d.doguHealthIgnored)
+}
+
+type EcosystemUnhealthyUpfrontEvent struct {
+	HealthResult ecosystem.HealthResult
+}
+
+func (d EcosystemUnhealthyUpfrontEvent) Name() string {
+	return "EcosystemUnhealthyUpfront"
+}
+
+func (d EcosystemUnhealthyUpfrontEvent) Message() string {
+	return d.HealthResult.String()
 }
 
 type InProgressEvent struct{}
@@ -122,6 +102,18 @@ func (e InProgressEvent) Message() string {
 	return ""
 }
 
+type ExecutionFailedEvent struct {
+	err error
+}
+
+func (e ExecutionFailedEvent) Name() string {
+	return "ExecutionFailed"
+}
+
+func (e ExecutionFailedEvent) Message() string {
+	return e.err.Error()
+}
+
 type BlueprintAppliedEvent struct{}
 
 func (e BlueprintAppliedEvent) Name() string {
@@ -130,6 +122,28 @@ func (e BlueprintAppliedEvent) Name() string {
 
 func (e BlueprintAppliedEvent) Message() string {
 	return "waiting for ecosystem health"
+}
+
+type EcosystemHealthyAfterwardsEvent struct{}
+
+func (e EcosystemHealthyAfterwardsEvent) Name() string {
+	return "EcosystemHealthyAfterwards"
+}
+
+func (e EcosystemHealthyAfterwardsEvent) Message() string {
+	return ""
+}
+
+type EcosystemUnhealthyAfterwardsEvent struct {
+	HealthResult ecosystem.HealthResult
+}
+
+func (e EcosystemUnhealthyAfterwardsEvent) Name() string {
+	return "EcosystemUnhealthyAfterwards"
+}
+
+func (e EcosystemUnhealthyAfterwardsEvent) Message() string {
+	return e.HealthResult.String()
 }
 
 type CompletedEvent struct{}

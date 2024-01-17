@@ -73,16 +73,22 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return useCase.determineStateDiff(ctx, blueprintId)
 	case domain.StatusPhaseStateDiffDetermined:
 		return useCase.checkEcosystemHealthUpfront(ctx, blueprintId)
-	case domain.StatusPhaseIgnoreDoguHealth:
-		fallthrough
 	case domain.StatusPhaseEcosystemHealthyUpfront:
+		// activate maintenance mode
+		// applyBlueprintSpec should happen in a new statusPhase then
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseInProgress:
 		//should only happen if the system was interrupted, normally this state will be updated to completed or failed
 		return useCase.handleInProgress(ctx, blueprintSpec)
-	case domain.StatusPhaseWaitForHealthyEcosystem:
+	case domain.StatusPhaseBlueprintApplied:
+		return useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
+	case domain.StatusPhaseEcosystemHealthyAfterwards:
+		//deactivate maintenance mode
+		return nil
+	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
+		//deactivate maintenance mode and set status to failed
 		return nil
 	case domain.StatusPhaseCompleted:
 		return nil

@@ -364,7 +364,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 	tests := []struct {
 		name               string
 		inputSpec          *BlueprintSpec
-		installedDogus     ecosystem.HealthResult
+		healthResult       ecosystem.HealthResult
 		expectedStatus     StatusPhase
 		expectedEventNames []string
 		expectedEventMsgs  []string
@@ -372,15 +372,15 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 		{
 			name:               "should return early if ignore dogu health is configured",
 			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreDoguHealth: true}},
-			installedDogus:     ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseIgnoreDoguHealth,
-			expectedEventNames: []string{"IgnoreDoguHealth"},
-			expectedEventMsgs:  []string{"ignore dogu health flag is set; ignoring dogu health"},
+			healthResult:       ecosystem.HealthResult{},
+			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: true"},
 		},
 		{
 			name:      "should write unhealthy dogus in event",
 			inputSpec: &BlueprintSpec{},
-			installedDogus: ecosystem.HealthResult{
+			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
 					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
 						ecosystem.AvailableHealthStatus:   {"postfix"},
@@ -396,7 +396,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 		{
 			name:      "all dogus healthy",
 			inputSpec: &BlueprintSpec{},
-			installedDogus: ecosystem.HealthResult{
+			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
 					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
 						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
@@ -404,13 +404,64 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 				},
 			},
 			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthy"},
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: false"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.inputSpec.CheckEcosystemHealthUpfront(tt.healthResult)
+			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
+			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
+			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
+			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
+		})
+	}
+}
+
+func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
+	tests := []struct {
+		name               string
+		inputSpec          *BlueprintSpec
+		healthResult       ecosystem.HealthResult
+		expectedStatus     StatusPhase
+		expectedEventNames []string
+		expectedEventMsgs  []string
+	}{
+		{
+			name:      "should write unhealthy dogus in event",
+			inputSpec: &BlueprintSpec{},
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus:   {"postfix"},
+						ecosystem.UnavailableHealthStatus: {"ldap"},
+						ecosystem.PendingHealthStatus:     {"postgresql"},
+					},
+				},
+			},
+			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
+			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
+			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+		},
+		{
+			name:      "ecosystem healthy",
+			inputSpec: &BlueprintSpec{},
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
+					},
+				},
+			},
+			expectedStatus:     StatusPhaseEcosystemHealthyAfterwards,
+			expectedEventNames: []string{"EcosystemHealthyAfterwards"},
 			expectedEventMsgs:  []string{""},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckEcosystemHealthUpfront(tt.installedDogus)
+			tt.inputSpec.CheckEcosystemHealthAfterwards(tt.healthResult)
 			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
 			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
 			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
@@ -453,14 +504,14 @@ func TestBlueprintSpec_MarkFailed(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkWaitingForHealthyEcosystem(t *testing.T) {
+func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 	//given
 	spec := &BlueprintSpec{}
 	//when
-	spec.MarkWaitingForHealthyEcosystem()
+	spec.MarkBlueprintApplied()
 	//then
 	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseWaitForHealthyEcosystem,
+		Status: StatusPhaseBlueprintApplied,
 		Events: []Event{BlueprintAppliedEvent{}},
 	})
 }
