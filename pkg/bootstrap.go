@@ -32,6 +32,7 @@ type ApplicationContext struct {
 	BlueprintSpecRepository        domainservice.BlueprintSpecRepository
 	BlueprintSpecDomainUseCase     *domainservice.ValidateDependenciesDomainUseCase
 	DoguInstallationUseCase        *application.DoguInstallationUseCase
+	ApplyBlueprintSpecUseCase      *application.ApplyBlueprintSpecUseCase
 	BlueprintSpecChangeUseCase     *application.BlueprintSpecChangeUseCase
 	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
 	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
@@ -83,10 +84,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		doguInstallationUseCase,
+		applyBlueprintSpecUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -82,6 +83,30 @@ func TestEvents(t *testing.T) {
 			}}},
 			expectedName:    "StateDiffDetermined",
 			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
+		},
+		{
+			name:            "In progress",
+			event:           InProgressEvent{},
+			expectedName:    "InProgress",
+			expectedMessage: "",
+		},
+		{
+			name:            "blueprint applied",
+			event:           BlueprintAppliedEvent{},
+			expectedName:    "BlueprintApplied",
+			expectedMessage: "waiting for ecosystem health",
+		},
+		{
+			name:            "completed",
+			event:           CompletedEvent{},
+			expectedName:    "completed",
+			expectedMessage: "",
+		},
+		{
+			name:            "execution failed",
+			event:           ExecutionFailedEvent{err: fmt.Errorf("test-error")},
+			expectedName:    "ExecutionFailed",
+			expectedMessage: "test-error",
 		},
 	}
 

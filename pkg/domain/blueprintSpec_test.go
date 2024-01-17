@@ -463,3 +463,52 @@ func mustParseVersion(raw string) core.Version {
 
 	return version
 }
+
+func TestBlueprintSpec_MarkInProgress(t *testing.T) {
+	//given
+	spec := &BlueprintSpec{}
+	//when
+	spec.MarkInProgress()
+	//then
+	assert.Equal(t, spec, &BlueprintSpec{
+		Status: StatusPhaseInProgress,
+		Events: []Event{InProgressEvent{}},
+	})
+}
+
+func TestBlueprintSpec_MarkFailed(t *testing.T) {
+	//given
+	spec := &BlueprintSpec{}
+	err := fmt.Errorf("test-error")
+	//when
+	spec.MarkFailed(err)
+	//then
+	assert.Equal(t, spec, &BlueprintSpec{
+		Status: StatusPhaseFailed,
+		Events: []Event{ExecutionFailedEvent{err: err}},
+	})
+}
+
+func TestBlueprintSpec_MarkWaitingForHealthyEcosystem(t *testing.T) {
+	//given
+	spec := &BlueprintSpec{}
+	//when
+	spec.MarkWaitingForHealthyEcosystem()
+	//then
+	assert.Equal(t, spec, &BlueprintSpec{
+		Status: StatusPhaseWaitForHealthyEcosystem,
+		Events: []Event{BlueprintAppliedEvent{}},
+	})
+}
+
+func TestBlueprintSpec_MarkCompleted(t *testing.T) {
+	//given
+	spec := &BlueprintSpec{}
+	//when
+	spec.MarkCompleted()
+	//then
+	assert.Equal(t, spec, &BlueprintSpec{
+		Status: StatusPhaseCompleted,
+		Events: []Event{CompletedEvent{}},
+	})
+}
