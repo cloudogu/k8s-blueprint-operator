@@ -77,15 +77,8 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosy
 }
 
 func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
-	cr, err := toDoguCR(dogu)
-	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      fmt.Sprintf("cannot convert domain model to dogu CR while creating a new dogu CR for dogu %q", dogu.Name),
-		}
-	}
-
-	_, err = repo.doguClient.Create(ctx, cr, metav1.CreateOptions{})
+	cr := toDoguCR(dogu)
+	_, err := repo.doguClient.Create(ctx, cr, metav1.CreateOptions{})
 	if err != nil {
 		return &domainservice.InternalError{
 			WrappedError: err,

@@ -45,7 +45,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	}, nil
 }
 
-func toDoguCR(dogu *ecosystem.DoguInstallation) (*v1.Dogu, error) {
+func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 	return &v1.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -69,7 +69,7 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) (*v1.Dogu, error) {
 			AdditionalIngressAnnotations: nil,
 		},
 		Status: v1.DoguStatus{},
-	}, nil
+	}
 }
 
 type doguCRPatch struct {
