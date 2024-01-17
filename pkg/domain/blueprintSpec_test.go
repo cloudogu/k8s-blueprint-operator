@@ -470,15 +470,6 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	}
 }
 
-func mustParseVersion(raw string) core.Version {
-	version, err := core.ParseVersion(raw)
-	if err != nil {
-		panic(err)
-	}
-
-	return version
-}
-
 func TestBlueprintSpec_MarkInProgress(t *testing.T) {
 	//given
 	spec := &BlueprintSpec{}
