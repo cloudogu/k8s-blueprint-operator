@@ -46,6 +46,10 @@ type ComponentInstallationRepository interface {
 	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
 }
 
+type HealthConfigRepository interface {
+	Get(ctx context.Context) (domain.HealthConfig, error)
+}
+
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or

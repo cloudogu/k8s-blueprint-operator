@@ -23,3 +23,10 @@ kubeRbacProxy:
   resourceRequests:
     cpu: 5m
     memory: 64Mi
+healthConfig:
+  components:
+    required:
+      - k8s-etcd
+      - k8s-dogu-operator
+      - k8s-service-discovery
+      - k8s-component-operator
