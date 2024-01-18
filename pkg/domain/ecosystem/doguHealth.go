@@ -9,6 +9,7 @@ import (
 
 type DoguName string
 
+// DoguHealthResult is a snapshot of the health states of all dogus.
 type DoguHealthResult struct {
 	DogusByStatus map[HealthStatus][]DoguName
 }
@@ -29,6 +30,7 @@ func (result DoguHealthResult) String() string {
 	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
 }
 
+// CalculateDoguHealthResult collects the health states from DoguInstallation and creates a DoguHealthResult.
 func CalculateDoguHealthResult(dogus []*DoguInstallation) DoguHealthResult {
 	result := DoguHealthResult{
 		DogusByStatus: map[HealthStatus][]DoguName{},
