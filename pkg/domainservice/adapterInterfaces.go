@@ -35,6 +35,17 @@ type DoguInstallationRepository interface {
 	Delete(ctx context.Context, doguName string) error
 }
 
+type ComponentInstallationRepository interface {
+	// GetByName returns the ecosystem.ComponentInstallation or
+	// a NotFoundError if the component is not installed or
+	// an InternalError if there is any other error.
+	GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error)
+	// GetAll returns the installation info of all installed components or
+	// a NotFoundError if any component is not installed or
+	// an InternalError if there is any other error.
+	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
+}
+
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or
@@ -96,6 +107,12 @@ func (e *NotFoundError) Error() string {
 // Unwrap is used to make it work with errors.Is, errors.As.
 func (e *NotFoundError) Unwrap() error {
 	return e.WrappedError
+}
+
+// NewInternalError creates an InternalError with a given message. The wrapped error may be nil. The error message must
+// omit the fmt.Errorf verb %w because this is done by InternalError.Error().
+func NewInternalError(wrappedError error, message string, msgArgs ...interface{}) *InternalError {
+	return &InternalError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
 // InternalError is a common error indicating that there was an error at the called side independent of the specific call.
