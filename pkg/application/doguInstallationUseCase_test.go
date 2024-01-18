@@ -17,10 +17,12 @@ const blueprintId = "blueprint1"
 var version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
 var version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
 
+const healthCheckInterval = 10 * time.Second
+
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(testCtx, domain.DoguDiff{
@@ -52,7 +54,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Create(testCtx, ecosystem.InstallDogu("official", "postgresql", version3_2_1_1)).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -85,7 +87,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Delete(testCtx, "postgresql").
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -117,7 +119,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Update(testCtx, dogu).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -146,7 +148,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version:   version3_2_1_2,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -174,7 +176,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version:   version3_2_1_2,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -205,7 +207,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, dogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -230,7 +232,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 	t.Run("unknown action", func(t *testing.T) {
 		//given
-		sut := NewDoguInstallationUseCase(nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
 
 		// when
 		err := sut.applyDoguState(
@@ -260,9 +262,8 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, expectedError)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
-		//doguRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -281,7 +282,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, expectedError)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -309,7 +310,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -343,7 +344,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			},
 		}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)

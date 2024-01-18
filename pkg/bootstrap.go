@@ -26,6 +26,9 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
+const defaultHealthCheckInterval = 10 * time.Second
+const defaultHealthCheckTimeout = 10 * time.Minute
+
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
 	RemoteDoguRegistry             domainservice.RemoteDoguRegistry
@@ -85,8 +88,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo)
-	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, 10*time.Minute)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,

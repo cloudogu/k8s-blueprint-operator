@@ -21,11 +21,12 @@ type DoguInstallationUseCase struct {
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
+	healthCheckInterval time.Duration,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
 		blueprintSpecRepo:   blueprintSpecRepo,
 		doguRepo:            doguRepo,
-		healthCheckInterval: 10 * time.Second,
+		healthCheckInterval: healthCheckInterval,
 	}
 }
 
