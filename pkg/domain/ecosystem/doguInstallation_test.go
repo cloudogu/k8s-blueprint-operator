@@ -30,45 +30,27 @@ func TestInstallDogu(t *testing.T) {
 	}, InstallDogu("official", "postgresql", version1_2_3_1))
 }
 
-func TestDoguInstallation_IsUnhealthy(t *testing.T) {
+func TestDoguInstallation_IsHealthy(t *testing.T) {
 	t.Run("is healthy", func(t *testing.T) {
 		dogu := &DoguInstallation{
-			Namespace:     "official",
-			Name:          "postgresql",
-			Version:       version1_2_3_1,
-			UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
-			Health:        AvailableHealthStatus,
+			Name:   "postgresql",
+			Health: AvailableHealthStatus,
 		}
 
-		isUnhealthy, result := dogu.IsUnhealthy()
+		isHealthy := dogu.IsHealthy()
 
-		assert.False(t, isUnhealthy)
-		assert.Equal(t, UnhealthyDogu{
-			Namespace: "official",
-			Name:      "postgresql",
-			Version:   version1_2_3_1,
-			Health:    AvailableHealthStatus,
-		}, result)
+		assert.True(t, isHealthy)
 	})
 
 	t.Run("is unhealthy", func(t *testing.T) {
 		dogu := &DoguInstallation{
-			Namespace:     "official",
-			Name:          "postgresql",
-			Version:       version1_2_3_1,
-			UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
-			Health:        UnavailableHealthStatus,
+			Name:   "postgresql",
+			Health: UnavailableHealthStatus,
 		}
 
-		isUnhealthy, result := dogu.IsUnhealthy()
+		isHealthy := dogu.IsHealthy()
 
-		assert.True(t, isUnhealthy)
-		assert.Equal(t, UnhealthyDogu{
-			Namespace: "official",
-			Name:      "postgresql",
-			Version:   version1_2_3_1,
-			Health:    UnavailableHealthStatus,
-		}, result)
+		assert.False(t, isHealthy)
 	})
 }
 

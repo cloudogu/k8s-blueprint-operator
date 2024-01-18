@@ -16,7 +16,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	if cr == nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: nil,
-			Message:      "Cannot parse dogu CR as it is nil",
+			Message:      "cannot parse dogu CR as it is nil",
 		}
 	}
 	// parse dogu fields
@@ -26,7 +26,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
-			Message:      "Cannot load dogu CR as it cannot be parsed correctly",
+			Message:      "cannot load dogu CR as it cannot be parsed correctly",
 		}
 	}
 	// parse persistence context

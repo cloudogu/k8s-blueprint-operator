@@ -349,18 +349,16 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			domain.BlueprintSpecValidatedEvent{},
 			domain.EffectiveBlueprintCalculatedEvent{},
 			domain.StateDiffDeterminedEvent{StateDiff: domain.StateDiff{}},
-			domain.DogusHealthyEvent{},
-			domain.IgnoreDoguHealthEvent{},
-			domain.DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{}},
+			domain.EcosystemHealthyUpfrontEvent{},
+			domain.EcosystemUnhealthyUpfrontEvent{HealthResult: ecosystem.HealthResult{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDetermined", "state diff determined: 0 dogu diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusHealthy", "")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "IgnoreDoguHealth", "ignore dogu health flag is set; ignoring dogu health")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusUnhealthy", "0 dogus are unhealthy: ")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemHealthyUpfront", "dogu health ignored: false")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemUnhealthyUpfront", "ecosystem is unhealthy: 0 dogus are unhealthy: ")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")
 
 		//when

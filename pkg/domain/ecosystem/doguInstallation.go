@@ -66,14 +66,8 @@ func InstallDogu(namespace string, doguName string, version core.Version) *DoguI
 	}
 }
 
-func (dogu *DoguInstallation) IsUnhealthy() (bool, UnhealthyDogu) {
-	return dogu.Health != AvailableHealthStatus,
-		UnhealthyDogu{
-			Namespace: dogu.Namespace,
-			Name:      dogu.Name,
-			Version:   dogu.Version,
-			Health:    dogu.Health,
-		}
+func (dogu *DoguInstallation) IsHealthy() bool {
+	return dogu.Health == AvailableHealthStatus
 }
 
 func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {

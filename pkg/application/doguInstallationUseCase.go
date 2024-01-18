@@ -6,12 +6,16 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"golang.org/x/exp/maps"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"time"
 )
 
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo domainservice.BlueprintSpecRepository
-	doguRepo          domainservice.DoguInstallationRepository
+	blueprintSpecRepo   domainservice.BlueprintSpecRepository
+	doguRepo            domainservice.DoguInstallationRepository
+	healthCheckInterval time.Duration
 }
 
 func NewDoguInstallationUseCase(
@@ -19,34 +23,56 @@ func NewDoguInstallationUseCase(
 	doguRepo domainservice.DoguInstallationRepository,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
-		blueprintSpecRepo: blueprintSpecRepo,
-		doguRepo:          doguRepo,
+		blueprintSpecRepo:   blueprintSpecRepo,
+		doguRepo:            doguRepo,
+		healthCheckInterval: 10 * time.Second,
 	}
 }
 
-func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth").
-		WithValues("blueprintId", blueprintId)
-
-	logger.Info("getting blueprint spec for checking dogu health")
-	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to check dogu health: %w", blueprintId, err)
-	}
-
+func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth")
+	logger.Info("check dogu health...")
 	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot evaluate dogu health states for blueprint spec %q: %w", blueprintId, err)
+		return ecosystem.DoguHealthResult{}, fmt.Errorf("cannot evaluate dogu health states: %w", err)
+	}
+	//accept experimental maps.Values as we can implement it ourselves in a minute
+	return ecosystem.CalculateDoguHealthResult(maps.Values(installedDogus)), nil
+}
+
+func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error) {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.WaitForHealthyDogus")
+	logger.Info("start waiting for dogu health")
+	healthResult, err := util.RetryUntilSuccessOrCancellation(
+		ctx,
+		useCase.healthCheckInterval,
+		useCase.checkDoguHealthStatesRetryable,
+	)
+	var result ecosystem.DoguHealthResult
+	if healthResult == nil {
+		result = ecosystem.DoguHealthResult{}
+	} else {
+		result = *healthResult
 	}
 
-	blueprintSpec.CheckDoguHealth(installedDogus)
-
-	err = useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot save blueprint spec %q after checking the dogu health: %w", blueprintId, err)
+		err = fmt.Errorf("stop waiting for dogu health: %w", err)
+		logger.Error(err, "stop waiting for dogu health because of an error or time out")
 	}
 
-	return nil
+	return result, err
+}
+
+func (useCase *DoguInstallationUseCase) checkDoguHealthStatesRetryable(ctx context.Context) (result *ecosystem.DoguHealthResult, err error, shouldRetry bool) {
+	// use named return values to make their meaning clear
+	health, err := useCase.CheckDoguHealth(ctx)
+	if err != nil {
+		// no retry if error while loading dogus
+		return &ecosystem.DoguHealthResult{}, err, false
+	}
+	result = &health
+	shouldRetry = !health.AllHealthy()
+	return
 }
 
 // ApplyDoguStates applies the expected dogu state from the Blueprint to the ecosystem.
@@ -120,7 +146,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	}
 }
 
-var noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
+const noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
 	"doing rollbacks to older models is not supported. " +
 	"You can downgrade dogus by restoring a backup. " +
 	"If you want an 'allow-downgrades' flag, issue a feature request"
