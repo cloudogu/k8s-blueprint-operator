@@ -9,6 +9,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+// ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
+// the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
 	repo               domainservice.BlueprintSpecRepository
 	doguInstallUseCase doguInstallationUseCase
@@ -27,6 +29,10 @@ func NewApplyBlueprintSpecUseCase(
 	}
 }
 
+// CheckEcosystemHealthUpfront checks the ecosystem health before applying the blueprint and sets the related status in the blueprint.
+// Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
+// returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state or
+// There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.CheckEcosystemHealthUpfront").
 		WithValues("blueprintId", blueprintId)
@@ -51,6 +57,10 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx contex
 	return nil
 }
 
+// CheckEcosystemHealthAfterwards waits for a healthy ecosystem health after applying the blueprint and sets the related status in the blueprint.
+// Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
+// returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
+// There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.CheckEcosystemHealthAfterwards").
 		WithValues("blueprintId", blueprintId)
@@ -76,6 +86,11 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 }
 
 // TODO: activate maintenance mode
+
+// ApplyBlueprintSpec applies the expected state to the ecosystem. It will stop if any unexpected error happens and sets blueprint status.
+// Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or other resources or
+// returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
+// There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprintId string) error {
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
@@ -110,6 +125,7 @@ func (useCase *ApplyBlueprintSpecUseCase) markInProgress(ctx context.Context, bl
 	return nil
 }
 
+// MarkFailed marks the blueprint as failed. The error which leads to the failed blueprint needs to be provided.
 func (useCase *ApplyBlueprintSpecUseCase) MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
 		WithName("ApplyBlueprintSpecUseCase.MarkFailed").
