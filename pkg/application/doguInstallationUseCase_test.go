@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -258,8 +257,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 	t.Run("cannot load blueprintSpec", func(t *testing.T) {
 		// given
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		expectedError := errors.New("test-error")
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, expectedError)
+		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
 
@@ -269,18 +267,16 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
 
 		// then
-		require.ErrorIs(t, err, expectedError)
+		require.ErrorIs(t, err, assert.AnError)
 	})
 
 	t.Run("cannot load doguInstallations", func(t *testing.T) {
 		// given
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		expectedError := errors.New("test-error")
 		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, nil)
-		//blueprintSpecRepoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, expectedError)
+		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
 		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
 
@@ -288,7 +284,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
 
 		// then
-		require.ErrorIs(t, err, expectedError)
+		require.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot load dogu installations")
 	})
 
