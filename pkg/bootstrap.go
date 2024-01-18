@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -25,6 +26,9 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
+const defaultHealthCheckInterval = 10 * time.Second
+const defaultHealthCheckTimeout = 10 * time.Minute
+
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
 	RemoteDoguRegistry             domainservice.RemoteDoguRegistry
@@ -32,6 +36,7 @@ type ApplicationContext struct {
 	BlueprintSpecRepository        domainservice.BlueprintSpecRepository
 	BlueprintSpecDomainUseCase     *domainservice.ValidateDependenciesDomainUseCase
 	DoguInstallationUseCase        *application.DoguInstallationUseCase
+	EcosystemHealthUseCase         *application.EcosystemHealthUseCase
 	ApplyBlueprintSpecUseCase      *application.ApplyBlueprintSpecUseCase
 	BlueprintSpecChangeUseCase     *application.BlueprintSpecChangeUseCase
 	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
@@ -83,8 +88,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
@@ -98,6 +104,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		DoguInstallationRepository:     doguInstallationRepo,
 		BlueprintSpecRepository:        blueprintSpecRepository,
 		BlueprintSpecDomainUseCase:     blueprintSpecDomainUseCase,
+		EcosystemHealthUseCase:         ecosystemHealthUseCase,
+		ApplyBlueprintSpecUseCase:      applyBlueprintSpecUseCase,
 		BlueprintSpecChangeUseCase:     blueprintChangeUseCase,
 		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
 		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,

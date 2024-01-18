@@ -142,14 +142,12 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 }
 
 func setPersistenceContext(blueprintCR *v1.Blueprint, spec *domain.BlueprintSpec) {
-	persistenceContext := spec.PersistenceContext
-	if persistenceContext == nil {
-		persistenceContext = make(map[string]interface{}, 1)
+	if spec.PersistenceContext == nil {
+		spec.PersistenceContext = make(map[string]interface{}, 1)
 	}
-	persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{
+	spec.PersistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{
 		resourceVersion: blueprintCR.GetResourceVersion(),
 	}
-	spec.PersistenceContext = persistenceContext
 }
 
 // getPersistenceContext reads the repo-specific resourceVersion from the domain.BlueprintSpec or returns an error.

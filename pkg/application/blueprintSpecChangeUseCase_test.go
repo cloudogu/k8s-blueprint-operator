@@ -47,9 +47,9 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseStateDiffDetermined
 			})
-		doguInstallMock.EXPECT().CheckDoguHealth(testCtx, "testBlueprint1").Return(nil).
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseDogusHealthy
+				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
 			})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
@@ -247,7 +247,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				updatedSpec.Status = domain.StatusPhaseStateDiffDetermined
 			})
-		doguInstallMock.EXPECT().CheckDoguHealth(testCtx, "testBlueprint1").Return(assert.AnError)
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
@@ -277,7 +277,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("handle ignore dogu health", func(t *testing.T) {
+	t.Run("handle healthy ecosystem upfront", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
 		validationMock := newMockBlueprintSpecValidationUseCase(t)
@@ -289,7 +289,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseIgnoreDoguHealth,
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
 		}
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
@@ -301,7 +301,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("handle unhealthy dogus", func(t *testing.T) {
+	t.Run("handle unhealthy ecosystem upfront", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
 		validationMock := newMockBlueprintSpecValidationUseCase(t)
@@ -313,7 +313,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseDogusUnhealthy,
+			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
 		}, nil)
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
@@ -344,6 +344,67 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, actualErr)
+	})
+
+	t.Run("handle blueprint applied", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseBlueprintApplied,
+		}, nil)
+		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(nil)
+		// when
+		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle ecosystem healthy afterwards", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseEcosystemHealthyAfterwards,
+		}, nil)
+		// when
+		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("handle ecosystem unhealthy afterwards", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseEcosystemUnhealthyAfterwards,
+		}, nil)
+		// when
+		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		// then
+		require.NoError(t, err)
 	})
 
 	t.Run("handle completed blueprint", func(t *testing.T) {

@@ -360,11 +360,11 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_CheckDoguHealth(t *testing.T) {
+func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 	tests := []struct {
 		name               string
 		inputSpec          *BlueprintSpec
-		installedDogus     map[string]*ecosystem.DoguInstallation
+		healthResult       ecosystem.HealthResult
 		expectedStatus     StatusPhase
 		expectedEventNames []string
 		expectedEventMsgs  []string
@@ -372,81 +372,45 @@ func TestBlueprintSpec_CheckDoguHealth(t *testing.T) {
 		{
 			name:               "should return early if ignore dogu health is configured",
 			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreDoguHealth: true}},
-			installedDogus:     nil,
-			expectedStatus:     StatusPhaseIgnoreDoguHealth,
-			expectedEventNames: []string{"IgnoreDoguHealth"},
-			expectedEventMsgs:  []string{"ignore dogu health flag is set; ignoring dogu health"},
+			healthResult:       ecosystem.HealthResult{},
+			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: true"},
 		},
 		{
 			name:      "should write unhealthy dogus in event",
 			inputSpec: &BlueprintSpec{},
-			installedDogus: map[string]*ecosystem.DoguInstallation{
-				"ldap": {
-					Namespace: "official",
-					Name:      "ldap",
-					Version:   mustParseVersion("1.2.3-1"),
-					Health:    "unavailable",
-				},
-				"postfix": {
-					Namespace: "official",
-					Name:      "postfix",
-					Version:   mustParseVersion("5.6.7-5"),
-					Health:    "available",
-				},
-				"nginx-ingress": {
-					Namespace: "k8s",
-					Name:      "nginx-ingress",
-					Version:   mustParseVersion("2.3.4-2"),
-					Health:    "unknownError",
-				},
-				"nginx-static": {
-					Namespace: "k8s",
-					Name:      "nginx-static",
-					Version:   mustParseVersion("2.3.4-2"),
-					Health:    "available",
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus:   {"postfix"},
+						ecosystem.UnavailableHealthStatus: {"ldap"},
+						ecosystem.PendingHealthStatus:     {"postgresql"},
+					},
 				},
 			},
-			expectedStatus:     StatusPhaseDogusUnhealthy,
-			expectedEventNames: []string{"DogusUnhealthy"},
-			expectedEventMsgs:  []string{"2 dogus are unhealthy: k8s/nginx-ingress:2.3.4-2 is unknownError, official/ldap:1.2.3-1 is unavailable"},
+			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
+			expectedEventNames: []string{"EcosystemUnhealthyUpfront"},
+			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
 		},
 		{
 			name:      "all dogus healthy",
 			inputSpec: &BlueprintSpec{},
-			installedDogus: map[string]*ecosystem.DoguInstallation{
-				"ldap": {
-					Namespace: "official",
-					Name:      "ldap",
-					Version:   mustParseVersion("1.2.3-1"),
-					Health:    "available",
-				},
-				"postfix": {
-					Namespace: "official",
-					Name:      "postfix",
-					Version:   mustParseVersion("5.6.7-5"),
-					Health:    "available",
-				},
-				"nginx-ingress": {
-					Namespace: "k8s",
-					Name:      "nginx-ingress",
-					Version:   mustParseVersion("2.3.4-2"),
-					Health:    "available",
-				},
-				"nginx-static": {
-					Namespace: "k8s",
-					Name:      "nginx-static",
-					Version:   mustParseVersion("2.3.4-2"),
-					Health:    "available",
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
+					},
 				},
 			},
-			expectedStatus:     StatusPhaseDogusHealthy,
-			expectedEventNames: []string{"DogusHealthy"},
-			expectedEventMsgs:  []string{""},
+			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: false"},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckDoguHealth(tt.installedDogus)
+			tt.inputSpec.CheckEcosystemHealthUpfront(tt.healthResult)
 			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
 			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
 			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
@@ -455,13 +419,55 @@ func TestBlueprintSpec_CheckDoguHealth(t *testing.T) {
 	}
 }
 
-func mustParseVersion(raw string) core.Version {
-	version, err := core.ParseVersion(raw)
-	if err != nil {
-		panic(err)
+func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
+	tests := []struct {
+		name               string
+		inputSpec          *BlueprintSpec
+		healthResult       ecosystem.HealthResult
+		expectedStatus     StatusPhase
+		expectedEventNames []string
+		expectedEventMsgs  []string
+	}{
+		{
+			name:      "should write unhealthy dogus in event",
+			inputSpec: &BlueprintSpec{},
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus:   {"postfix"},
+						ecosystem.UnavailableHealthStatus: {"ldap"},
+						ecosystem.PendingHealthStatus:     {"postgresql"},
+					},
+				},
+			},
+			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
+			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
+			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+		},
+		{
+			name:      "ecosystem healthy",
+			inputSpec: &BlueprintSpec{},
+			healthResult: ecosystem.HealthResult{
+				DoguHealth: ecosystem.DoguHealthResult{
+					DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
+					},
+				},
+			},
+			expectedStatus:     StatusPhaseEcosystemHealthyAfterwards,
+			expectedEventNames: []string{"EcosystemHealthyAfterwards"},
+			expectedEventMsgs:  []string{""},
+		},
 	}
-
-	return version
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.inputSpec.CheckEcosystemHealthAfterwards(tt.healthResult)
+			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
+			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
+			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
+			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
+		})
+	}
 }
 
 func TestBlueprintSpec_MarkInProgress(t *testing.T) {
@@ -489,14 +495,14 @@ func TestBlueprintSpec_MarkFailed(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkWaitingForHealthyEcosystem(t *testing.T) {
+func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 	//given
 	spec := &BlueprintSpec{}
 	//when
-	spec.MarkWaitingForHealthyEcosystem()
+	spec.MarkBlueprintApplied()
 	//then
 	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseWaitForHealthyEcosystem,
+		Status: StatusPhaseBlueprintApplied,
 		Events: []Event{BlueprintAppliedEvent{}},
 	})
 }
