@@ -146,7 +146,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	}
 }
 
-var noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
+const noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
 	"doing rollbacks to older models is not supported. " +
 	"You can downgrade dogus by restoring a backup. " +
 	"If you want an 'allow-downgrades' flag, issue a feature request"
