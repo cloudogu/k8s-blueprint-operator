@@ -5,8 +5,8 @@ go 1.21
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/cloudogu/cesapp-lib v0.12.2
-	github.com/cloudogu/k8s-component-operator v0.0.0-20240118152744-dac6f44644d5
-	github.com/cloudogu/k8s-dogu-operator v0.0.0-20240118154400-78909a4d2cf6
+	github.com/cloudogu/k8s-component-operator v0.0.0-20240119132801-6dafd5cc91e8
+	github.com/cloudogu/k8s-dogu-operator v0.0.0-20240119075006-e0c15ba7b376
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.14.0
 	github.com/onsi/gomega v1.31.0
