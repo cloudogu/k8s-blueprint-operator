@@ -123,6 +123,56 @@ func Test_determineComponentDiff(t *testing.T) {
 	}
 }
 
+func TestComponentDiffs_Statistics(t *testing.T) {
+	tests := []struct {
+		name            string
+		dd              ComponentDiffs
+		wantToInstall   int
+		wantToUpgrade   int
+		wantToUninstall int
+		wantOther       int
+	}{
+		{
+			name:            "0 overall",
+			dd:              ComponentDiffs{},
+			wantToInstall:   0,
+			wantToUpgrade:   0,
+			wantToUninstall: 0,
+			wantOther:       0,
+		},
+		{
+			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
+			dd: ComponentDiffs{
+				{NeededAction: ActionNone},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUninstall},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUpgrade},
+				{NeededAction: ActionSwitchDoguNamespace},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionDowngrade},
+				{NeededAction: ActionUninstall},
+				{NeededAction: ActionInstall},
+				{NeededAction: ActionUpgrade},
+				{NeededAction: ActionUpgrade},
+			},
+			wantToInstall:   4,
+			wantToUpgrade:   3,
+			wantToUninstall: 2,
+			wantOther:       3,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotToInstall, gotToUpgrade, gotToUninstall, gotOther := tt.dd.Statistics()
+			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
+			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
+			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
+			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
+		})
+	}
+}
+
 func mockTargetComponent(version core.Version, state TargetState) *Component {
 	return &Component{
 		Name:        testComponentName,
