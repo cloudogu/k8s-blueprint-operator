@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-sample
+  name: nginx-dependency-blueprint-sample
 spec:
   blueprint: |
     {"blueprintApi":"v2","dogus":[{"name":"official/plantuml","version":"2023.10-1","targetState":"present"}, {"name":"k8s/nginx-static","version":"1.23.1-5","targetState":"present"}, {"name":"k8s/nginx-ingress","version":"1.6.4-4","targetState":"present"}]}
