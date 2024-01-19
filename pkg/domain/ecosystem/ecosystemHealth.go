@@ -4,6 +4,7 @@ import (
 	"fmt"
 )
 
+// HealthResult is a snapshot of the health states of all relevant parts of the running ecosystem.
 type HealthResult struct {
 	DoguHealth DoguHealthResult
 }

@@ -21,6 +21,9 @@ func NewEcosystemHealthUseCase(
 	}
 }
 
+// CheckEcosystemHealth checks the ecosystem health once.
+// Returns a HealthResult even if parts are unhealthy or
+// returns an error if the health state could not be fetched.
 func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error) {
 	doguHealth := ecosystem.DoguHealthResult{}
 	if !ignoreDoguHealth {
@@ -36,6 +39,7 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context,
 	}, nil
 }
 
+// WaitForHealthyEcosystem waits for a healthy ecosystem and returns an HealthResult.
 func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error) {
 	timedCtx, cancel := context.WithTimeout(ctx, useCase.healthCheckTimeOut)
 	defer cancel()
