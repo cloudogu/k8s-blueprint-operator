@@ -64,6 +64,10 @@ func (s StateDiffDeterminedEvent) Name() string {
 
 func (s StateDiffDeterminedEvent) Message() string {
 	toInstall, toUpgrade, toUninstall, others := s.StateDiff.DoguDiffs.Statistics()
+	// TODO how should the component state diff be incorporated into this event output? An own event for each of them, or one for all ⚔️?
+	/*compToInstall, compoToUpgrade, compToUninstall, compOthers := */
+	s.StateDiff.ComponentDiffs.Statistics()
+
 	return fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others)",
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
 }
