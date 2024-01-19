@@ -48,6 +48,27 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 				},
 			},
 		},
+		"official/plantuml": {
+			"1.0.0-1": &core.Dogu{
+				Name:    "official/plantuml",
+				Version: "1.0.0-1",
+				Dependencies: []core.Dependency{
+					{Type: core.DependencyTypeDogu, Name: "nginx", Version: "1.0.0-1"},
+				},
+			},
+		},
+		"k8s/nginx-static": {
+			"1.0.0-1": &core.Dogu{
+				Name:    "k8s/nginx-static",
+				Version: "1.0.0-1",
+			},
+		},
+		"k8s/nginx-ingress": {
+			"1.0.0-1": &core.Dogu{
+				Name:    "k8s/nginx-ingress",
+				Version: "1.0.0-1",
+			},
+		},
 	},
 }
 
