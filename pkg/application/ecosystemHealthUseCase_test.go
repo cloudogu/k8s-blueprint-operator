@@ -27,7 +27,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 			},
 		}
 		doguUseCase := newMockDoguInstallationUseCase(t)
-		doguUseCase.EXPECT().CheckDoguHealthStates(mock.Anything).Return(doguHealth, nil)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
 		useCase := NewEcosystemHealthUseCase(doguUseCase, time.Minute)
 
 		health, err := useCase.CheckEcosystemHealth(testCtx, false)
@@ -47,7 +47,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 	t.Run("error checking dogu health", func(t *testing.T) {
 		doguUseCase := newMockDoguInstallationUseCase(t)
-		doguUseCase.EXPECT().CheckDoguHealthStates(mock.Anything).Return(ecosystem.DoguHealthResult{}, assert.AnError)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(ecosystem.DoguHealthResult{}, assert.AnError)
 		useCase := NewEcosystemHealthUseCase(doguUseCase, time.Minute)
 
 		_, err := useCase.CheckEcosystemHealth(testCtx, false)
