@@ -10,7 +10,8 @@ import (
 // StateDiff represents the diff between the defined state in the effective blueprint and the actual state in the ecosystem.
 // If there is a state in the ecosystem, which is not represented in the effective blueprint, then the expected state is the actual state.
 type StateDiff struct {
-	DoguDiffs DoguDiffs
+	DoguDiffs      DoguDiffs
+	ComponentDiffs ComponentDiffs
 }
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -41,7 +42,7 @@ type DoguDiff struct {
 	NeededAction Action
 }
 
-// DoguDiffState contains all fields to make a diff for dogus in repect to another DoguDiffState.
+// DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
 	Namespace         string
 	Version           core.Version
@@ -52,12 +53,12 @@ type DoguDiffState struct {
 type Action string
 
 const (
-	ActionNone            = "none"
-	ActionInstall         = "install"
-	ActionUninstall       = "uninstall"
-	ActionUpgrade         = "upgrade"
-	ActionDowngrade       = "downgrade"
-	ActionSwitchNamespace = "namespace switch"
+	ActionNone                = "none"
+	ActionInstall             = "install"
+	ActionUninstall           = "uninstall"
+	ActionUpgrade             = "upgrade"
+	ActionDowngrade           = "downgrade"
+	ActionSwitchDoguNamespace = "dogu namespace switch"
 )
 
 func (diff *DoguDiff) String() string {
@@ -135,17 +136,17 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 		DoguName:     doguName,
 		Expected:     expectedState,
 		Actual:       actualState,
-		NeededAction: getNeededAction(expectedState, actualState),
+		NeededAction: getNeededDoguAction(expectedState, actualState),
 	}
 }
 
-func getNeededAction(expected DoguDiffState, actual DoguDiffState) Action {
+func getNeededDoguAction(expected DoguDiffState, actual DoguDiffState) Action {
 	if expected.InstallationState == actual.InstallationState {
 		switch expected.InstallationState {
 		case TargetStatePresent:
 			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
 			if expected.Namespace != actual.Namespace {
-				return ActionSwitchNamespace
+				return ActionSwitchDoguNamespace
 			}
 			if expected.Version.IsNewerThan(actual.Version) {
 				return ActionUpgrade

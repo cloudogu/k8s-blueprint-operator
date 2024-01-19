@@ -1,10 +1,12 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type BlueprintSpec struct {
@@ -230,7 +232,9 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosystem.DoguInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(ctx context.Context, installedDogus map[string]*ecosystem.DoguInstallation, installedComponents map[string]*ecosystem.ComponentInstallation) error {
+	logger := log.FromContext(ctx).WithName("BlueprintSpec.DetermineStateDiff")
+
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough
@@ -243,7 +247,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}
 	spec.StateDiff = StateDiff{
-		DoguDiffs: determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus),
+		DoguDiffs:      determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus),
+		ComponentDiffs: determineComponentDiffs(logger, spec.EffectiveBlueprint.Components, installedComponents),
 		// there will be more diffs, e.g. for components and registry keys
 	}
 	spec.Status = StatusPhaseStateDiffDetermined

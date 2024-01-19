@@ -185,7 +185,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchNamespace,
+				NeededAction: domain.ActionSwitchDoguNamespace,
 			},
 			dogu,
 			domain.BlueprintConfiguration{
@@ -216,7 +216,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchNamespace,
+				NeededAction: domain.ActionSwitchDoguNamespace,
 			},
 			dogu,
 			domain.BlueprintConfiguration{

@@ -11,10 +11,12 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/cesapp-lib/remote"
-	"github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
@@ -57,9 +59,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	dogusInterface, err := ecoSystem.NewForConfig(restConfig)
+	dogusInterface, err := doguEcoClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
+	}
+	componentsInterface, err := componentEcoClient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
 
 	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(
@@ -83,14 +89,14 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
+	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
-	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, defaultHealthCheckTimeout)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,

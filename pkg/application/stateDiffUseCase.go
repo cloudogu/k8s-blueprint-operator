@@ -10,12 +10,21 @@ import (
 )
 
 type StateDiffUseCase struct {
-	blueprintSpecRepo    domainservice.BlueprintSpecRepository
-	doguInstallationRepo domainservice.DoguInstallationRepository
+	blueprintSpecRepo         domainservice.BlueprintSpecRepository
+	doguInstallationRepo      domainservice.DoguInstallationRepository
+	componentInstallationRepo domainservice.ComponentInstallationRepository
 }
 
-func NewStateDiffUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository, doguInstallationRepo domainservice.DoguInstallationRepository) *StateDiffUseCase {
-	return &StateDiffUseCase{blueprintSpecRepo: blueprintSpecRepo, doguInstallationRepo: doguInstallationRepo}
+func NewStateDiffUseCase(
+	blueprintSpecRepo domainservice.BlueprintSpecRepository,
+	doguInstallationRepo domainservice.DoguInstallationRepository,
+	componentInstallationRepo domainservice.ComponentInstallationRepository,
+) *StateDiffUseCase {
+	return &StateDiffUseCase{
+		blueprintSpecRepo:         blueprintSpecRepo,
+		doguInstallationRepo:      doguInstallationRepo,
+		componentInstallationRepo: componentInstallationRepo,
+	}
 }
 
 // DetermineStateDiff loads the state of the ecosystem and compares it to the blueprint. It creates a declarative diff.
@@ -39,8 +48,13 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot get installed dogus to determine state diff: %w", err)
 	}
 
+	installedComponents, err := useCase.componentInstallationRepo.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot get installed dogus to determine state diff: %w", err)
+	}
+
 	// for now, state diff only takes dogus, but there will be components and registry keys as well
-	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus)
+	stateDiffError := blueprintSpec.DetermineStateDiff(ctx, installedDogus, installedComponents)
 	if stateDiffError != nil {
 		return fmt.Errorf("failed to determine state diff for blueprint %q: %w", blueprintId, stateDiffError)
 	}

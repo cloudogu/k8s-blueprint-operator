@@ -131,7 +131,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	case domain.ActionDowngrade:
 		logger.Info("downgrade dogu")
 		return fmt.Errorf(noDowngradesExplanationText)
-	case domain.ActionSwitchNamespace:
+	case domain.ActionSwitchDoguNamespace:
 		logger.Info("do namespace switch for dogu")
 		err := doguInstallation.SwitchNamespace(
 			doguDiff.Expected.Namespace,

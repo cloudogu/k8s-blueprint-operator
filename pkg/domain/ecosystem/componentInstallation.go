@@ -6,10 +6,8 @@ import (
 
 // ComponentInstallation represents an installed or to be installed component in the ecosystem.
 type ComponentInstallation struct {
-	// Namespace is the namespace of the component, e.g. 'official' like in 'official/postgresql'
-	Namespace string
-	// Name is the simple name of the component, e.g. 'postgresql' like in 'official/postgresql'.
-	// the name is also the id of the component in the ecosystem as only one component with this name can be installed.
+	// Name is the name of the component, e.g. 'k8s-dogu-operator'.
+	// The name is also the ID of the component in the ecosystem as only one component with this name can be installed.
 	Name string
 	// Version is the version of the component
 	Version core.Version

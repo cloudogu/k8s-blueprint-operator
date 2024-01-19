@@ -22,17 +22,17 @@ type componentInstallationRepoContext struct {
 }
 
 type componentInstallationRepo struct {
-	namespace       string
-	componentClient compCli.ComponentV1Alpha1Interface
+	componentClient compCli.ComponentInterface
 }
 
 // NewComponentInstallationRepo creates a new component repo adapter.
-func NewComponentInstallationRepo(namespace string, componentClient compCli.ComponentV1Alpha1Interface) domainservice.ComponentInstallationRepository {
-	return &componentInstallationRepo{namespace: namespace, componentClient: componentClient}
+func NewComponentInstallationRepo(componentClient compCli.ComponentInterface) domainservice.ComponentInstallationRepository {
+	return &componentInstallationRepo{componentClient: componentClient}
 }
 
+// GetByName fetches a named component resource and returns it as ecosystem.ComponentInstallation.
 func (repo *componentInstallationRepo) GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error) {
-	cr, err := repo.componentClient.Components(repo.namespace).Get(ctx, componentName, metav1.GetOptions{})
+	cr, err := repo.componentClient.Get(ctx, componentName, metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return nil, &domainservice.NotFoundError{
@@ -46,7 +46,22 @@ func (repo *componentInstallationRepo) GetByName(ctx context.Context, componentN
 	return parseComponentCR(cr)
 }
 
+// GetAll fetches all installed component resources and returns them as list of ecosystem.ComponentInstallation.
 func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error) {
+	list, err := repo.componentClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, err
+	}
+
+	componentInstallations := make(map[string]*ecosystem.ComponentInstallation, len(list.Items))
+	for _, componentCr := range list.Items {
+		cr, err := parseComponentCR(&componentCr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse component CR %#v: %w", componentCr, err)
+		}
+		componentInstallations[componentCr.Name] = cr
+	}
+
 	return nil, nil
 }
 
@@ -68,10 +83,9 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		resourceVersion: cr.GetResourceVersion(),
 	}
 	return &ecosystem.ComponentInstallation{
-		Namespace: cr.Namespace,
-		Name:      cr.Name,
-		Version:   version,
-		Status:    cr.Status.Status,
+		Name:    cr.Name,
+		Version: version,
+		Status:  cr.Status.Status,
 		//Health:             ecosystem.HealthStatus(cr.Status.Health), # coming soon
 		PersistenceContext: persistenceContext,
 	}, nil

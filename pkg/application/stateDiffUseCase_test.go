@@ -16,8 +16,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(nil, assert.AnError)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -36,8 +37,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -56,8 +58,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -76,8 +80,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -132,8 +138,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			"nginx-static":  {Name: "nginx-static", Namespace: "k8s", Version: mustParseVersion(t, "1.8.6")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
