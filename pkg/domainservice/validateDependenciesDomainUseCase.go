@@ -91,7 +91,7 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		// We only have to check if nginx-static and nginx-ingress are present.
 		if dependencyOfWantedDogu.Name == nginxDependencyName {
 			if !checkNginxIngressAndStatic(wantedDogus) {
-				problems = append(problems, fmt.Errorf("dogu has %q dependency but %q or %q is missing in the effective blueprint", nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName))
+				problems = append(problems, fmt.Errorf("dogu has %q dependency but %q and %q are missing in the effective blueprint", nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName))
 			}
 			logger.Info(fmt.Sprintf("dogu has dependency %q. %q and %q are available.", nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName))
 			continue
