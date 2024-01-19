@@ -65,7 +65,7 @@ func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) RunAndReturn(run fun
 	return _c
 }
 
-// CheckDoguHealthStates provides a mock function with given fields: ctx
+// CheckDoguHealth provides a mock function with given fields: ctx
 func (_m *mockDoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error) {
 	ret := _m.Called(ctx)
 
@@ -89,30 +89,30 @@ func (_m *mockDoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (eco
 	return r0, r1
 }
 
-// mockDoguInstallationUseCase_CheckDoguHealthStates_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckDoguHealth'
-type mockDoguInstallationUseCase_CheckDoguHealthStates_Call struct {
+// mockDoguInstallationUseCase_CheckDoguHealth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckDoguHealth'
+type mockDoguInstallationUseCase_CheckDoguHealth_Call struct {
 	*mock.Call
 }
 
-// CheckDoguHealthStates is a helper method to define mock.On call
+// CheckDoguHealth is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *mockDoguInstallationUseCase_Expecter) CheckDoguHealthStates(ctx interface{}) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {
-	return &mockDoguInstallationUseCase_CheckDoguHealthStates_Call{Call: _e.mock.On("CheckDoguHealth", ctx)}
+func (_e *mockDoguInstallationUseCase_Expecter) CheckDoguHealth(ctx interface{}) *mockDoguInstallationUseCase_CheckDoguHealth_Call {
+	return &mockDoguInstallationUseCase_CheckDoguHealth_Call{Call: _e.mock.On("CheckDoguHealth", ctx)}
 }
 
-func (_c *mockDoguInstallationUseCase_CheckDoguHealthStates_Call) Run(run func(ctx context.Context)) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {
+func (_c *mockDoguInstallationUseCase_CheckDoguHealth_Call) Run(run func(ctx context.Context)) *mockDoguInstallationUseCase_CheckDoguHealth_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context))
 	})
 	return _c
 }
 
-func (_c *mockDoguInstallationUseCase_CheckDoguHealthStates_Call) Return(_a0 ecosystem.DoguHealthResult, _a1 error) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {
+func (_c *mockDoguInstallationUseCase_CheckDoguHealth_Call) Return(_a0 ecosystem.DoguHealthResult, _a1 error) *mockDoguInstallationUseCase_CheckDoguHealth_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockDoguInstallationUseCase_CheckDoguHealthStates_Call) RunAndReturn(run func(context.Context) (ecosystem.DoguHealthResult, error)) *mockDoguInstallationUseCase_CheckDoguHealthStates_Call {
+func (_c *mockDoguInstallationUseCase_CheckDoguHealth_Call) RunAndReturn(run func(context.Context) (ecosystem.DoguHealthResult, error)) *mockDoguInstallationUseCase_CheckDoguHealth_Call {
 	_c.Call.Return(run)
 	return _c
 }
