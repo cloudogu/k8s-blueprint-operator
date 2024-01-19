@@ -18,3 +18,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#11] apply new dogu states based on blueprint
 - [#12] implement maintenance mode
 - [#17] add health checks before and after applying the blueprint
+- [#20] Add exception for `nginx` dependency validation. Map this dependency to `nginx-ingress` and `nginx-static`.

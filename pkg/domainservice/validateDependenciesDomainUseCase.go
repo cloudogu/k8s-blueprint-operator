@@ -10,6 +10,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const (
+	nginxDependencyName        = "nginx"
+	nginxStaticDependencyName  = "nginx-static"
+	nginxIngressDependencyName = "nginx-ingress"
+)
+
 type ValidateDependenciesDomainUseCase struct {
 	remoteDoguRegistry RemoteDoguRegistry
 }
@@ -40,7 +46,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 		var notFoundError *NotFoundError
 		if errors.As(err, &notFoundError) {
 			return &domain.InvalidBlueprintError{WrappedError: err, Message: "remote dogu registry has no dogu specification for at least one wanted dogu"}
-		} else { //should be InternalError
+		} else { // should be InternalError
 			return &InternalError{WrappedError: err, Message: "cannot load dogu specifications from remote registry for dogu dependency validation"}
 		}
 	}
@@ -80,12 +86,40 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 			logger.Info(fmt.Sprintf("dogu has a dependency %q of type %q. At the moment only dogu dependencies are validated.", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Type))
 			continue
 		}
+
+		// Exception for the old nginx dependency from the single node Cloudogu EcoSystem.
+		// We only have to check if nginx-static and nginx-ingress are present.
+		if dependencyOfWantedDogu.Name == nginxDependencyName {
+			if !checkNginxIngressAndStatic(wantedDogus) {
+				problems = append(problems, fmt.Errorf("dogu has %q dependency but %q or %q is missing in the effective blueprint", nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName))
+			}
+			logger.Info(fmt.Sprintf("dogu has dependency %q. %q and %q are available.", nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName))
+			continue
+		}
+
 		// check if dogu exists in blueprint and version is ok
 		err := checkDoguDependency(dependencyOfWantedDogu, wantedDogus, knownDoguSpecs)
 		problems = append(problems, err)
 	}
 	err := errors.Join(problems...)
 	return err
+}
+
+func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
+	foundNginxIngress := isDoguInSlice(wantedDogus, nginxIngressDependencyName)
+	foundNginxStatic := isDoguInSlice(wantedDogus, nginxStaticDependencyName)
+
+	return foundNginxIngress && foundNginxStatic
+}
+
+func isDoguInSlice(dogus []domain.Dogu, name string) bool {
+	for _, dogu := range dogus {
+		if dogu.Name == name {
+			return true
+		}
+	}
+
+	return false
 }
 
 func checkDoguDependency(
@@ -98,7 +132,7 @@ func checkDoguDependency(
 	if err != nil {
 		return fmt.Errorf("dependency '%s' in version '%s' is not a present dogu in the effective blueprint", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version)
 	}
-	//dependencyDoguSpec := useCase.remoteDoguRegistry.GetDogu(dependencyInBlueprint.GetQualifiedName(), dependencyInBlueprint.Version)
+	// dependencyDoguSpec := useCase.remoteDoguRegistry.GetDogu(dependencyInBlueprint.GetQualifiedName(), dependencyInBlueprint.Version)
 	dependencyDoguSpec := knownDoguSpecs[dependencyInBlueprint.GetQualifiedName()]
 	return checkDependencyVersion(dependencyInBlueprint, dependencyDoguSpec.Version)
 }
