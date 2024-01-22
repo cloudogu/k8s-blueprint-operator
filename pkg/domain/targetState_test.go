@@ -11,12 +11,12 @@ func TestTargetState_String(t *testing.T) {
 		want  string
 	}{
 		{
-			"String() map enum to string",
+			"map present enum value to string",
 			TargetStatePresent,
 			"present",
 		},
 		{
-			"String() map enum to string",
+			"map absent enum value to string",
 			TargetStateAbsent,
 			"absent",
 		},
