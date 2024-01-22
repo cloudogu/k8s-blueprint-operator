@@ -32,7 +32,10 @@ func (h *HealthConfigRepository) Get(ctx context.Context) (domain.HealthConfig, 
 			Message:      fmt.Sprintf("could not find health config map %q", healthConfigMapName),
 		}
 	} else if err != nil {
-		return domain.HealthConfig{}, err
+		return domain.HealthConfig{}, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      fmt.Sprintf("failed to get config map %q", healthConfigMapName),
+		}
 	}
 
 	componentHealthConfigStr, exists := configMap.Data[componentHealthConfigKey]
