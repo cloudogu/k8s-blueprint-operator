@@ -73,7 +73,7 @@ func TestEvents(t *testing.T) {
 				{NeededAction: ActionDowngrade},
 			}}},
 			expectedName:    "StateDiffDetermined",
-			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
+			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others); 0 component diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)",
 		},
 		{
 			name:            "In progress",

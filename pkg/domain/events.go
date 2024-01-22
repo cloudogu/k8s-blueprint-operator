@@ -63,13 +63,14 @@ func (s StateDiffDeterminedEvent) Name() string {
 }
 
 func (s StateDiffDeterminedEvent) Message() string {
-	toInstall, toUpgrade, toUninstall, others := s.StateDiff.DoguDiffs.Statistics()
+	doguInstall, doguUpgrade, doguUninstall, others := s.StateDiff.DoguDiffs.Statistics()
 	// TODO how should the component state diff be incorporated into this event output? An own event for each of them, or one for all ⚔️?
-	/*compToInstall, compoToUpgrade, compToUninstall, compOthers := */
-	s.StateDiff.ComponentDiffs.Statistics()
+	compInstall, compoUpgrade, compUninstall, compOthers := s.StateDiff.ComponentDiffs.Statistics()
 
-	return fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others)",
-		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
+	return fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others); %d component diffs (%d to install, %d to upgrade, %d to delete, %d others)",
+		len(s.StateDiff.DoguDiffs), doguInstall, doguUpgrade, doguUninstall, others,
+		len(s.StateDiff.ComponentDiffs), compInstall, compoUpgrade, compUninstall, compOthers,
+	)
 }
 
 type EcosystemHealthyUpfrontEvent struct {
