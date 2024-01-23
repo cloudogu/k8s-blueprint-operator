@@ -13,6 +13,8 @@ import (
 type StateDiffV1 struct {
 	// DoguDiffs maps simple dogu names to the determined diff.
 	DoguDiffs map[string]DoguDiffV1 `json:"doguDiffs,omitempty"`
+	// DoguDiffs maps simple dogu names to the determined diff.
+	ComponentDiffs map[string]DoguDiffV1 `json:"componentDiffs,omitempty"`
 }
 
 // DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state.

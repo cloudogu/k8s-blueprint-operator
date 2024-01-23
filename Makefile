@@ -7,8 +7,15 @@ MAKEFILES_VERSION=9.0.1
 LINT_VERSION=v1.55.2
 STAGE?=production
 
-
-ADDITIONAL_CLEAN=dist-clean
+K8S_COMPONENT_SOURCE_VALUES = ${HELM_SOURCE_DIR}/values.yaml
+K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
+PRE_COMPILE=generate-deepcopy
+HELM_PRE_APPLY_TARGETS=template-stage template-log-level template-image-pull-policy
+HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
+HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
+CRD_POST_MANIFEST_TARGETS = crd-add-labels
+CHECK_VAR_TARGETS=check-all-vars
+IMAGE_IMPORT_TARGET=image-import
 
 include build/make/variables.mk
 include build/make/self-update.mk
@@ -20,17 +27,6 @@ include build/make/static-analysis.mk
 include build/make/clean.mk
 include build/make/digital-signature.mk
 include build/make/mocks.mk
-
-K8S_COMPONENT_SOURCE_VALUES = ${HELM_SOURCE_DIR}/values.yaml
-K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
-PRE_COMPILE=generate-deepcopy
-HELM_PRE_APPLY_TARGETS=template-stage template-log-level template-image-pull-policy
-HELM_PRE_GENERATE_TARGETS = helm-values-update-image-version
-HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
-CRD_POST_MANIFEST_TARGETS = crd-add-labels
-CHECK_VAR_TARGETS=check-all-vars
-IMAGE_IMPORT_TARGET=image-import
-
 include build/make/k8s-controller.mk
 
 .PHONY: build-boot

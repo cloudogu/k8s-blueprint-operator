@@ -57,7 +57,7 @@ func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*
 	for _, componentCr := range list.Items {
 		cr, err := parseComponentCR(&componentCr)
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse component CR %#v: %w", componentCr, err)
+			return nil, domainservice.NewInternalError(err, "failed to parse component CR %#v", componentCr)
 		}
 		componentInstallations[componentCr.Name] = cr
 	}
@@ -67,10 +67,7 @@ func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
 	if cr == nil {
-		return nil, &domainservice.InternalError{
-			WrappedError: nil,
-			Message:      "cannot parse component CR as it is nil",
-		}
+		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
 	}
 
 	version, err := core.ParseVersion(cr.Spec.Version)
