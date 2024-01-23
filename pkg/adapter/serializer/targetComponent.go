@@ -18,6 +18,7 @@ type TargetComponent struct {
 	TargetState string `json:"targetState"`
 }
 
+// ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
 func ConvertComponents(components []TargetComponent) ([]domain.Component, error) {
 	var convertedComponents []domain.Component
 	var errorList []error
@@ -52,6 +53,7 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 	return convertedComponents, err
 }
 
+// ConvertToComponentDTOs takes a slice of Component DTOs and returns a new slice with their domain equivalent.
 func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
 	var errorList []error
 	converted := util.MapWithFunction(components, func(component domain.Component) TargetComponent {
