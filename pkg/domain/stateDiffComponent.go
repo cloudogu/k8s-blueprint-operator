@@ -43,6 +43,26 @@ type ComponentDiffState struct {
 	InstallationState TargetState
 }
 
+// String returns a string representation of the DoguDiff.
+func (diff *ComponentDiff) String() string {
+	return fmt.Sprintf(
+		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		diff.Name,
+		diff.Actual.String(),
+		diff.Expected.String(),
+		diff.NeededAction,
+	)
+}
+
+// String returns a string representation of the DoguDiffState.
+func (diff *ComponentDiffState) String() string {
+	return fmt.Sprintf(
+		"{Version: %q, InstallationState: %q}",
+		diff.Version.Raw,
+		diff.InstallationState,
+	)
+}
+
 // determineComponentDiffs creates ComponentDiffs for all components in the blueprint and all installed components as well.
 func determineComponentDiffs(logger logr.Logger, blueprintComponents []Component, installedComponents map[string]*ecosystem.ComponentInstallation) []ComponentDiff {
 	var componentDiffs = map[string]ComponentDiff{}

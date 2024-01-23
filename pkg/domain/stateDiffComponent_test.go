@@ -90,7 +90,7 @@ func Test_determineComponentDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "ignore present dogu, no action",
+			name: "ignore present component, no action",
 			args: args{
 				blueprintComponent: nil,
 				installedComponent: mockComponentInstallation(version3_2_1_1),
@@ -148,7 +148,6 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 				{NeededAction: ActionUninstall},
 				{NeededAction: ActionInstall},
 				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionSwitchDoguNamespace},
 				{NeededAction: ActionInstall},
 				{NeededAction: ActionDowngrade},
 				{NeededAction: ActionUninstall},
@@ -159,7 +158,7 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 			wantToInstall:   4,
 			wantToUpgrade:   3,
 			wantToUninstall: 2,
-			wantOther:       3,
+			wantOther:       2,
 		},
 	}
 	for _, tt := range tests {
@@ -171,6 +170,39 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
+}
+
+func TestComponentDiff_String(t *testing.T) {
+	actual := ComponentDiffState{
+		Version:           version3_2_1_1,
+		InstallationState: TargetStatePresent,
+	}
+	expected := ComponentDiffState{
+		Version:           version3_2_1_2,
+		InstallationState: TargetStatePresent,
+	}
+	diff := &ComponentDiff{
+		Name:         testComponentName,
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: ActionInstall,
+	}
+
+	assert.Equal(t, "{"+
+		"Name: \"my-component\", "+
+		"Actual: {Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
+		"Expected: {Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
+		"NeededAction: \"install\""+
+		"}", diff.String())
+}
+
+func TestComponentDiffState_String(t *testing.T) {
+	diff := &ComponentDiffState{
+		Version:           version3_2_1_1,
+		InstallationState: TargetStatePresent,
+	}
+
+	assert.Equal(t, "{Version: \"3.2.1-1\", InstallationState: \"present\"}", diff.String())
 }
 
 func mockTargetComponent(version core.Version, state TargetState) *Component {
