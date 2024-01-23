@@ -18,7 +18,8 @@ func GetDuplicates(list []string) []string {
 	return duplicates
 }
 
-func Map[T, V any](ts []T, fn func(T) V) []V {
+// MapWithFunction takes a slice of a type T and a converter function in order to return a slice of type V.
+func MapWithFunction[T, V any](ts []T, fn func(T) V) []V {
 	result := make([]V, len(ts))
 	for i, t := range ts {
 		result[i] = fn(t)

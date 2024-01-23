@@ -39,7 +39,7 @@ type MaskTargetDogu struct {
 
 func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error) {
 	var errorList []error
-	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskDogu) MaskTargetDogu {
+	convertedDogus := util.MapWithFunction(spec.Dogus, func(dogu domain.MaskDogu) MaskTargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return MaskTargetDogu{

@@ -54,7 +54,7 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 
 func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
 	var errorList []error
-	converted := util.Map(components, func(component domain.Component) TargetComponent {
+	converted := util.MapWithFunction(components, func(component domain.Component) TargetComponent {
 		newState, err := ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
 		return TargetComponent{

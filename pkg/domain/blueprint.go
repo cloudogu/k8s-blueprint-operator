@@ -47,13 +47,13 @@ func (blueprint *Blueprint) Validate() error {
 }
 
 func (blueprint *Blueprint) validateDogus() error {
-	errorList := util.Map(blueprint.Dogus, func(dogu Dogu) error { return dogu.validate() })
+	errorList := util.MapWithFunction(blueprint.Dogus, func(dogu Dogu) error { return dogu.validate() })
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) string { return dogu.Name })
+	doguNames := util.MapWithFunction(blueprint.Dogus, func(dogu Dogu) string { return dogu.Name })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -62,13 +62,13 @@ func (blueprint *Blueprint) validateDoguUniqueness() error {
 }
 
 func (blueprint *Blueprint) validateComponents() error {
-	errorList := util.Map(blueprint.Components, func(component Component) error { return component.Validate() })
+	errorList := util.MapWithFunction(blueprint.Components, func(component Component) error { return component.Validate() })
 	return errors.Join(errorList...)
 }
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := util.Map(blueprint.Components, func(component Component) string { return component.Name })
+	componentNames := util.MapWithFunction(blueprint.Components, func(component Component) string { return component.Name })
 	duplicates := util.GetDuplicates(componentNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
