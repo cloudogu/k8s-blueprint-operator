@@ -5,9 +5,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
+
+type RequiredComponent struct {
+	Name string `yaml:"name" json:"name"`
+}
 
 type ComponentName string
 
@@ -34,7 +37,7 @@ func (result ComponentHealthResult) String() string {
 
 // CalculateComponentHealthResult checks if all required components are installed,
 // collects the health states from ComponentInstallation and creates a ComponentHealthResult.
-func CalculateComponentHealthResult(installedComponents map[string]*ComponentInstallation, requiredComponents []domain.RequiredComponent) ComponentHealthResult {
+func CalculateComponentHealthResult(installedComponents map[string]*ComponentInstallation, requiredComponents []RequiredComponent) ComponentHealthResult {
 	result := ComponentHealthResult{
 		ComponentsByStatus: map[HealthStatus][]ComponentName{},
 	}

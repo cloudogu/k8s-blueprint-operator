@@ -1,13 +1,11 @@
 package domain
 
-type RequiredComponent struct {
-	Name string `yaml:"name" json:"name"`
-}
+import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 
 type HealthConfig struct {
 	ComponentHealthConfig `yaml:"components" json:"components"`
 }
 
 type ComponentHealthConfig struct {
-	RequiredComponents []RequiredComponent `yaml:"required" json:"required"`
+	RequiredComponents []ecosystem.RequiredComponent `yaml:"required" json:"required"`
 }
