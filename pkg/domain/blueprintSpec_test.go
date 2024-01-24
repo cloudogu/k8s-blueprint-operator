@@ -10,9 +10,9 @@ import (
 	"testing"
 )
 
-var version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
-var version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
-var version3_2_1_3, _ = core.ParseVersion("3.2.1-3")
+var version3211, _ = core.ParseVersion("3.2.1-1")
+var version3212, _ = core.ParseVersion("3.2.1-2")
+var version3213, _ = core.ParseVersion("3.2.1-3")
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
@@ -124,9 +124,9 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint_namespaceSwitchNotAllowed(t
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_noMask(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
-		{Namespace: "official", Name: "dogu2", Version: version3_2_1_2, TargetState: TargetStatePresent},
-		{Namespace: "absent", Name: "dogu3", Version: version3_2_1_3, TargetState: TargetStateAbsent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu2", Version: version3212, TargetState: TargetStatePresent},
+		{Namespace: "absent", Name: "dogu3", Version: version3213, TargetState: TargetStateAbsent},
 	}
 
 	spec := BlueprintSpec{
@@ -153,6 +153,18 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusNew(t *testing.T) {
 	assert.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
 }
 
+func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusEffectiveBlueprintGenerated(t *testing.T) {
+	spec := BlueprintSpec{
+		Blueprint:     Blueprint{Dogus: []Dogu{}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
+		Status:        StatusPhaseEffectiveBlueprintGenerated,
+	}
+
+	err := spec.CalculateEffectiveBlueprint()
+
+	require.Nil(t, err)
+}
+
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) {
 	spec := BlueprintSpec{
 		Blueprint:     Blueprint{Dogus: []Dogu{}},
@@ -168,13 +180,13 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) 
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
-		{Namespace: "official", Name: "dogu2", Version: version3_2_1_2, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu2", Version: version3212, TargetState: TargetStatePresent},
 	}
 
 	maskedDogus := []MaskDogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_2, TargetState: TargetStatePresent},
-		{Namespace: "official", Name: "dogu2", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3212, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu2", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	spec := BlueprintSpec{
@@ -186,18 +198,18 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeVersion(t *testing.T) 
 
 	require.Nil(t, err)
 	require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3_2_1_2, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
-	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: version3_2_1_1, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3212, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
-		{Namespace: "official", Name: "dogu2", Version: version3_2_1_2, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu2", Version: version3212, TargetState: TargetStatePresent},
 	}
 
 	maskedDogus := []MaskDogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStateAbsent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStateAbsent},
 		{Namespace: "official", Name: "dogu2", TargetState: TargetStateAbsent},
 	}
 
@@ -210,8 +222,8 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeDoguAbsent(t *testing.T)
 
 	require.Nil(t, err)
 	require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
-	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: version3_2_1_2, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu2", Version: version3212, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *testing.T) {
@@ -220,7 +232,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *tes
 	}
 
 	maskedDogus := []MaskDogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	spec := BlueprintSpec{
@@ -232,17 +244,17 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_makeAbsentDoguPresent(t *tes
 
 	require.Nil(t, err)
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	//TODO: Is that the correct behavior? (absent dogus can be made present?)
-	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	// TODO: Is that the correct behavior? (absent dogus can be made present?)
+	assert.Equal(t, Dogu{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	maskedDogus := []MaskDogu{
-		{Namespace: "premium", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "premium", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	spec := BlueprintSpec{
@@ -259,11 +271,11 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "official", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "official", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	maskedDogus := []MaskDogu{
-		{Namespace: "premium", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent},
+		{Namespace: "premium", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent},
 	}
 
 	spec := BlueprintSpec{
@@ -276,7 +288,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 
 	require.Nil(t, err, "with the feature flag namespace changes should be allowed")
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-	assert.Equal(t, Dogu{Namespace: "premium", Name: "dogu1", Version: version3_2_1_1, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+	assert.Equal(t, Dogu{Namespace: "premium", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
 
 func TestBlueprintSpec_MarkInvalid(t *testing.T) {
@@ -299,7 +311,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	// not every single case is tested here as this is a rather coarse-grained function
 	// have a look at the tests for the more specialized functions used in the command, to see all possible combinations of diffs.
 	t.Run("all ok with empty blueprint", func(t *testing.T) {
-		//given
+		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus:                   []Dogu{},
@@ -313,10 +325,10 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
 
-		//when
+		// when
 		err := spec.DetermineStateDiff(installedDogus)
 
-		//then
+		// then
 		stateDiff := StateDiff{DoguDiffs: []DoguDiff{}}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
@@ -328,15 +340,15 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
 	for _, initialStatus := range notAllowedStatus {
 		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
-			//given
+			// given
 			spec := BlueprintSpec{
 				Status: initialStatus,
 			}
 			installedDogus := map[string]*ecosystem.DoguInstallation{}
-			//when
+			// when
 			err := spec.DetermineStateDiff(installedDogus)
 
-			//then
+			// then
 			assert.Error(t, err)
 			assert.Equal(t, spec.Status, initialStatus)
 			require.Equal(t, 0, len(spec.Events))
@@ -345,15 +357,15 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	}
 	t.Run("do not re-determine state diff", func(t *testing.T) {
 		initialStatus := StatusPhaseCompleted
-		//given
+		// given
 		spec := BlueprintSpec{
 			Status: initialStatus,
 		}
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
-		//when
+		// when
 		err := spec.DetermineStateDiff(installedDogus)
 
-		//then
+		// then
 		assert.NoError(t, err)
 		assert.Equal(t, spec.Status, initialStatus)
 		require.Equal(t, 0, len(spec.Events))
@@ -471,11 +483,11 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 }
 
 func TestBlueprintSpec_MarkInProgress(t *testing.T) {
-	//given
+	// given
 	spec := &BlueprintSpec{}
-	//when
+	// when
 	spec.MarkInProgress()
-	//then
+	// then
 	assert.Equal(t, spec, &BlueprintSpec{
 		Status: StatusPhaseInProgress,
 		Events: []Event{InProgressEvent{}},
@@ -483,12 +495,12 @@ func TestBlueprintSpec_MarkInProgress(t *testing.T) {
 }
 
 func TestBlueprintSpec_MarkFailed(t *testing.T) {
-	//given
+	// given
 	spec := &BlueprintSpec{}
 	err := fmt.Errorf("test-error")
-	//when
+	// when
 	spec.MarkFailed(err)
-	//then
+	// then
 	assert.Equal(t, spec, &BlueprintSpec{
 		Status: StatusPhaseFailed,
 		Events: []Event{ExecutionFailedEvent{err: err}},
@@ -496,11 +508,11 @@ func TestBlueprintSpec_MarkFailed(t *testing.T) {
 }
 
 func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
-	//given
+	// given
 	spec := &BlueprintSpec{}
-	//when
+	// when
 	spec.MarkBlueprintApplied()
-	//then
+	// then
 	assert.Equal(t, spec, &BlueprintSpec{
 		Status: StatusPhaseBlueprintApplied,
 		Events: []Event{BlueprintAppliedEvent{}},
@@ -508,13 +520,61 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 }
 
 func TestBlueprintSpec_MarkCompleted(t *testing.T) {
-	//given
+	// given
 	spec := &BlueprintSpec{}
-	//when
+	// when
 	spec.MarkCompleted()
-	//then
+	// then
 	assert.Equal(t, spec, &BlueprintSpec{
 		Status: StatusPhaseCompleted,
 		Events: []Event{CompletedEvent{}},
 	})
+}
+
+func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
+	type fields struct {
+		Id                   string
+		Blueprint            Blueprint
+		BlueprintMask        BlueprintMask
+		EffectiveBlueprint   EffectiveBlueprint
+		StateDiff            StateDiff
+		BlueprintUpgradePlan BlueprintUpgradePlan
+		Config               BlueprintConfiguration
+		Status               StatusPhase
+		PersistenceContext   map[string]interface{}
+		Events               []Event
+	}
+	type args struct {
+		possibleInvalidDependenciesError error
+	}
+	tests := []struct {
+		name           string
+		fields         fields
+		args           args
+		expectedPhase  StatusPhase
+		expectedEvents []Event
+	}{
+		{name: "statusphase invalid on error", fields: fields{}, args: args{possibleInvalidDependenciesError: assert.AnError}, expectedPhase: "invalid", expectedEvents: []Event{BlueprintSpecInvalidEvent{ValidationError: &InvalidBlueprintError{WrappedError: assert.AnError, Message: "blueprint spec is invalid"}}}},
+		{name: "statusphase valid on nil", fields: fields{}, args: args{possibleInvalidDependenciesError: nil}, expectedPhase: "validated", expectedEvents: []Event{BlueprintSpecValidatedEvent{}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := &BlueprintSpec{
+				Id:                   tt.fields.Id,
+				Blueprint:            tt.fields.Blueprint,
+				BlueprintMask:        tt.fields.BlueprintMask,
+				EffectiveBlueprint:   tt.fields.EffectiveBlueprint,
+				StateDiff:            tt.fields.StateDiff,
+				BlueprintUpgradePlan: tt.fields.BlueprintUpgradePlan,
+				Config:               tt.fields.Config,
+				Status:               tt.fields.Status,
+				PersistenceContext:   tt.fields.PersistenceContext,
+				Events:               tt.fields.Events,
+			}
+			spec.ValidateDynamically(tt.args.possibleInvalidDependenciesError)
+
+			assert.Equal(t, tt.expectedPhase, spec.Status)
+			assert.Equal(t, tt.expectedEvents, spec.Events)
+		})
+	}
 }
