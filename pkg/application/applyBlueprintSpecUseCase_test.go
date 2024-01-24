@@ -186,6 +186,22 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 
+	t.Run("should do nothing and return nil on dry run", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Config: domain.BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
+
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.NoError(t, err)
+	})
+
 	t.Run("cannot load spec", func(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(nil, assert.AnError)
@@ -206,8 +222,8 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
 
-		//installUseCaseMock := newMockDoguInstallationUseCase(t)
-		//installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
+		// installUseCaseMock := newMockDoguInstallationUseCase(t)
+		// installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
 
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")

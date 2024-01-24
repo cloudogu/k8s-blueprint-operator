@@ -92,9 +92,17 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 // There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.ApplyBlueprintSpec").
+		WithValues("blueprintId", blueprintId)
+
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint to apply blueprint spec: %w", err)
+	}
+
+	if blueprintSpec.Config.DryRun {
+		logger.Info("skip applying states to the cluster because the blueprint is in dry run mode")
+		return nil
 	}
 
 	err = useCase.markInProgress(ctx, blueprintSpec)
@@ -114,7 +122,7 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	return useCase.markBlueprintApplied(ctx, blueprintSpec)
 }
 
-//TODO: deactivate maintenance mode
+// TODO: deactivate maintenance mode
 
 func (useCase *ApplyBlueprintSpecUseCase) markInProgress(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.MarkInProgress()

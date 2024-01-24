@@ -15,6 +15,12 @@ func TestEvents(t *testing.T) {
 		expectedMessage string
 	}{
 		{
+			name:            "blueprint dry run",
+			event:           BlueprintDryRunEvent{},
+			expectedName:    "BlueprintDryRun",
+			expectedMessage: "Executing blueprint in dry run mode",
+		},
+		{
 			name:            "blueprint spec invalid",
 			event:           BlueprintSpecInvalidEvent{ValidationError: assert.AnError},
 			expectedName:    "BlueprintSpecInvalid",

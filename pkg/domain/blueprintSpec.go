@@ -59,8 +59,10 @@ const (
 type BlueprintConfiguration struct {
 	// Force blueprint upgrade even when a dogu is unhealthy
 	IgnoreDoguHealth bool
-	// allowNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
+	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
+	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+	DryRun bool
 }
 
 type BlueprintUpgradePlan struct {
@@ -83,10 +85,10 @@ type BlueprintUpgradePlan struct {
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateStatically() error {
 	switch spec.Status {
-	case StatusPhaseNew: //continue
-	case StatusPhaseInvalid: //do not validate again
+	case StatusPhaseNew: // continue
+	case StatusPhaseInvalid: // do not validate again
 		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before: do not revalidate"}
-	default: //do not validate again. for all other status it must be either status validated or a status beyond that
+	default: // do not validate again. for all other status it must be either status validated or a status beyond that
 		return nil
 	}
 	var errorList []error
@@ -154,12 +156,12 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	switch spec.Status {
 	case StatusPhaseEffectiveBlueprintGenerated:
-		return nil //do not regenerate effective blueprint
+		return nil // do not regenerate effective blueprint
 	case StatusPhaseNew: // stop
 		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
 	case StatusPhaseInvalid: // stop
 		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
-	default: //continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
+	default: // continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
 	}
 
 	effectiveDogus, err := spec.calculateEffectiveDogus()
