@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -24,6 +25,11 @@ type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
 	WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error)
 	ApplyDoguStates(ctx context.Context, blueprintId string) error
+}
+
+type componentInstallationUseCase interface {
+	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
+	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 }
 
 type applyBlueprintSpecUseCase interface {
