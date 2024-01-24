@@ -21,6 +21,8 @@ type BlueprintSpec struct {
 	// AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
 	// in comparison to the blueprint.
 	AllowDoguNamespaceSwitch bool `json:"allowDoguNamespaceSwitch,omitempty"`
+	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+	DryRun bool `json:"dryRun,omitempty"`
 }
 
 // BlueprintStatus defines the observed state of Blueprint
@@ -34,8 +36,8 @@ type BlueprintStatus struct {
 	StateDiff stateDiffV1.StateDiffV1 `json:"stateDiff,omitempty"`
 }
 
-//+kubebuilder:object:root=true
-//+kubebuilder:subresource:status
+// +kubebuilder:object:root=true
+// +kubebuilder:subresource:status
 
 // Blueprint is the Schema for the blueprints API
 type Blueprint struct {
@@ -48,7 +50,7 @@ type Blueprint struct {
 	Status BlueprintStatus `json:"status,omitempty"`
 }
 
-//+kubebuilder:object:root=true
+// +kubebuilder:object:root=true
 
 // BlueprintList contains a list of Blueprint
 type BlueprintList struct {
