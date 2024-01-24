@@ -39,7 +39,7 @@ const (
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
-	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
+	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "ecosystemUnhealthyUpfront"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
@@ -59,6 +59,8 @@ const (
 type BlueprintConfiguration struct {
 	// Force blueprint upgrade even when a dogu is unhealthy
 	IgnoreDoguHealth bool
+	// Force blueprint upgrade event when a component is unhealthy
+	IgnoreComponentHealth bool
 	// allowNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
 }

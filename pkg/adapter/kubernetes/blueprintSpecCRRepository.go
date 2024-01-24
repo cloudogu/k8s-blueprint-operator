@@ -77,6 +77,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
+			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 		},
 		Status: blueprintCR.Status.Phase,

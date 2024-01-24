@@ -18,6 +18,18 @@ type ComponentInstallationUseCase struct {
 	healthCheckInterval time.Duration
 }
 
+func NewComponentInstallationUseCase(
+	componentRepo domainservice.ComponentInstallationRepository,
+	healthConfigRepo domainservice.HealthConfigRepository,
+	healthCheckInterval time.Duration,
+) *ComponentInstallationUseCase {
+	return &ComponentInstallationUseCase{
+		componentRepo:       componentRepo,
+		healthConfigRepo:    healthConfigRepo,
+		healthCheckInterval: healthCheckInterval,
+	}
+}
+
 func (useCase *ComponentInstallationUseCase) CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.CheckComponentHealth")
 	logger.Info("check component health...")

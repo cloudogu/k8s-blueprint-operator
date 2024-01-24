@@ -24,5 +24,6 @@ func (result HealthResult) String() string {
 }
 
 func (result HealthResult) AllHealthy() bool {
-	return result.DoguHealth.AllHealthy()
+	return result.DoguHealth.AllHealthy() &&
+		result.ComponentHealth.AllHealthy()
 }

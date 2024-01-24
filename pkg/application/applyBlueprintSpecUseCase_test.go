@@ -283,7 +283,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{}, nil)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().CheckEcosystemHealth(testCtx, false).Return(ecosystem.HealthResult{}, assert.AnError)
+		healthMock.EXPECT().CheckEcosystemHealth(testCtx, false, false).Return(ecosystem.HealthResult{}, assert.AnError)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
@@ -303,7 +303,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(assert.AnError)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false, false).Return(ecosystem.HealthResult{}, nil)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
@@ -325,7 +325,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, true).Return(ecosystem.HealthResult{}, nil)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, true, false).Return(ecosystem.HealthResult{}, nil)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
@@ -343,7 +343,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock.EXPECT().Update(testCtx, blueprintSpec).Return(nil)
 
 		healthMock := newMockEcosystemHealthUseCase(t)
-		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
+		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false, false).Return(ecosystem.HealthResult{}, nil)
 
 		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock)
 
