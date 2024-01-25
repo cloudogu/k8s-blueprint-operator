@@ -58,6 +58,7 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 		doguHealth, err := useCase.doguUseCase.WaitForHealthyDogus(ctx)
 		if err != nil {
 			doguErrChan <- err
+			return
 		}
 		doguHealthChan <- doguHealth
 	}(timedCtx)
@@ -68,6 +69,7 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 		componentHealth, err := useCase.componentUseCase.WaitForHealthyComponents(ctx)
 		if err != nil {
 			componentErrChan <- err
+			return
 		}
 		componentHealthChan <- componentHealth
 	}(timedCtx)
