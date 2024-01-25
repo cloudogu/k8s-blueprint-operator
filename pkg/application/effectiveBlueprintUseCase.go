@@ -9,7 +9,7 @@ import (
 )
 
 type EffectiveBlueprintUseCase struct {
-	blueprintSpecRepo domainservice.BlueprintSpecRepository
+	blueprintSpecRepo blueprintSpecRepository
 }
 
 func NewEffectiveBlueprintUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository) *EffectiveBlueprintUseCase {

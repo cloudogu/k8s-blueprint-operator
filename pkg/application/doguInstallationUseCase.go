@@ -13,8 +13,8 @@ import (
 )
 
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo   domainservice.BlueprintSpecRepository
-	doguRepo            domainservice.DoguInstallationRepository
+	blueprintSpecRepo   blueprintSpecRepository
+	doguRepo            doguInstallationRepository
 	healthCheckInterval time.Duration
 }
 

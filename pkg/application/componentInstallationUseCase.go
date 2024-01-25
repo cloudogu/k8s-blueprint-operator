@@ -13,8 +13,8 @@ import (
 )
 
 type ComponentInstallationUseCase struct {
-	componentRepo       domainservice.ComponentInstallationRepository
-	healthConfigRepo    domainservice.HealthConfigRepository
+	componentRepo       componentInstallationRepository
+	healthConfigRepo    healthConfigRepository
 	healthCheckInterval time.Duration
 }
 

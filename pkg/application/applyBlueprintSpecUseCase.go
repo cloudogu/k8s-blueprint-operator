@@ -12,7 +12,7 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo               domainservice.BlueprintSpecRepository
+	repo               blueprintSpecRepository
 	doguInstallUseCase doguInstallationUseCase
 	healthUseCase      ecosystemHealthUseCase
 }

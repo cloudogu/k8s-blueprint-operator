@@ -10,8 +10,8 @@ import (
 )
 
 type StateDiffUseCase struct {
-	blueprintSpecRepo    domainservice.BlueprintSpecRepository
-	doguInstallationRepo domainservice.DoguInstallationRepository
+	blueprintSpecRepo    blueprintSpecRepository
+	doguInstallationRepo doguInstallationRepository
 }
 
 func NewStateDiffUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository, doguInstallationRepo domainservice.DoguInstallationRepository) *StateDiffUseCase {

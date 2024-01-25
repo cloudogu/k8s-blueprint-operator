@@ -44,19 +44,23 @@ type ecosystemHealthUseCase interface {
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 
-// interface duplication for mocks
-
-//nolint:unused
-//goland:noinspection GoUnusedType
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
 
-//nolint:unused
-//goland:noinspection GoUnusedType
+type componentInstallationRepository interface {
+	domainservice.ComponentInstallationRepository
+}
+
+type healthConfigRepository interface {
+	domainservice.HealthConfigRepository
+}
+
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
+
+// interface duplication for mocks
 
 //nolint:unused
 //goland:noinspection GoUnusedType
