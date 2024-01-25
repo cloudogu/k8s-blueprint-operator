@@ -137,7 +137,6 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 				installedComponents: map[string]*ComponentInstallation{
 					"k8s-blueprint-operator": {Name: "k8s-blueprint-operator", Health: AvailableHealthStatus},
 					"k8s-dogu-operator":      {Name: "k8s-dogu-operator", Health: UnavailableHealthStatus},
-					"k8s-component-operator": {Name: "k8s-component-operator", Health: UnavailableHealthStatus},
 					"k8s-longhorn":           {Name: "k8s-longhorn", Health: PendingHealthStatus},
 					"k8s-velero":             {Name: "k8s-velero", Health: "other"},
 				},
@@ -145,7 +144,7 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 			},
 			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{
 				AvailableHealthStatus:   {"k8s-blueprint-operator"},
-				UnavailableHealthStatus: {"k8s-dogu-operator", "k8s-component-operator"},
+				UnavailableHealthStatus: {"k8s-dogu-operator"},
 				PendingHealthStatus:     {"k8s-longhorn"},
 				"other":                 {"k8s-velero"},
 			}},
@@ -156,7 +155,6 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 				installedComponents: map[string]*ComponentInstallation{
 					"k8s-blueprint-operator": {Name: "k8s-blueprint-operator", Health: AvailableHealthStatus},
 					"k8s-dogu-operator":      {Name: "k8s-dogu-operator", Health: UnavailableHealthStatus},
-					"k8s-component-operator": {Name: "k8s-component-operator", Health: UnavailableHealthStatus},
 					"k8s-longhorn":           {Name: "k8s-longhorn", Health: PendingHealthStatus},
 					"k8s-velero":             {Name: "k8s-velero", Health: "other"},
 				},
@@ -164,7 +162,7 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 			},
 			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{
 				AvailableHealthStatus:    {"k8s-blueprint-operator"},
-				UnavailableHealthStatus:  {"k8s-dogu-operator", "k8s-component-operator"},
+				UnavailableHealthStatus:  {"k8s-dogu-operator"},
 				PendingHealthStatus:      {"k8s-longhorn"},
 				"other":                  {"k8s-velero"},
 				NotInstalledHealthStatus: {"k8s-etcd", "k8s-service-discovery"},
