@@ -5,7 +5,7 @@ go 1.21
 require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/cloudogu/cesapp-lib v0.12.2
-	github.com/cloudogu/k8s-component-operator v0.0.0-20240119132801-6dafd5cc91e8
+	github.com/cloudogu/k8s-component-operator v0.0.0-20240126105502-1b828b78303c
 	github.com/cloudogu/k8s-dogu-operator v0.0.0-20240119075006-e0c15ba7b376
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.14.0
@@ -30,8 +30,10 @@ require (
 	github.com/Microsoft/hcsshim v0.11.4 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/bombsimon/logrusr/v2 v2.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
+	github.com/cloudogu/k8s-apply-lib v0.4.2 // indirect
 	github.com/containerd/containerd v1.7.11 // indirect
 	github.com/containerd/log v0.1.0 // indirect
 	github.com/coreos/go-semver v0.3.1 // indirect

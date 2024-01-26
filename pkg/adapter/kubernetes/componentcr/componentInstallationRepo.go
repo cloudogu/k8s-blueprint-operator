@@ -80,10 +80,10 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		resourceVersion: cr.GetResourceVersion(),
 	}
 	return &ecosystem.ComponentInstallation{
-		Name:    cr.Name,
-		Version: version,
-		Status:  cr.Status.Status,
-		//Health:             ecosystem.HealthStatus(cr.Status.Health), # coming soon
+		Name:               cr.Name,
+		Version:            version,
+		Status:             cr.Status.Status,
+		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		PersistenceContext: persistenceContext,
 	}, nil
 }
