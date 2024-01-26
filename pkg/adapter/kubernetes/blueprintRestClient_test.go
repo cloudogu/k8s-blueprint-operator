@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
+	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 )
 
 var testCtx = context.Background()

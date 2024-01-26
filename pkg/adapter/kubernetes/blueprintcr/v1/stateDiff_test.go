@@ -1,4 +1,4 @@
-package stateDiffV1
+package v1
 
 import (
 	"cmp"
@@ -14,7 +14,7 @@ func TestConvertToDTO(t *testing.T) {
 	tests := []struct {
 		name        string
 		domainModel domain.StateDiff
-		want        StateDiffV1
+		want        StateDiff
 	}{
 		{
 			name: "should convert single dogu diff",
@@ -32,21 +32,21 @@ func TestConvertToDTO(t *testing.T) {
 				},
 				NeededAction: domain.ActionUpgrade,
 			}}},
-			want: StateDiffV1{DoguDiffs: map[string]DoguDiffV1{
+			want: StateDiff{DoguDiffs: map[string]DoguDiff{
 				"ldap": {
-					Actual: DoguDiffV1State{
+					Actual: DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.1.1-1",
 						InstallationState: "present",
 					},
-					Expected: DoguDiffV1State{
+					Expected: DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.2.3-1",
 						InstallationState: "present",
 					},
 					NeededAction: "upgrade",
 				},
-			}},
+			}, ComponentDiffs: map[string]ComponentDiff{}},
 		},
 		{
 			name: "should convert multiple dogu diffs",
@@ -78,13 +78,13 @@ func TestConvertToDTO(t *testing.T) {
 					NeededAction: domain.ActionUninstall,
 				},
 			}},
-			want: StateDiffV1{DoguDiffs: map[string]DoguDiffV1{
+			want: StateDiff{DoguDiffs: map[string]DoguDiff{
 				"ldap": {
-					Actual: DoguDiffV1State{
+					Actual: DoguDiffState{
 						Namespace:         "official",
 						InstallationState: "absent",
 					},
-					Expected: DoguDiffV1State{
+					Expected: DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.2.3-1",
 						InstallationState: "present",
@@ -92,24 +92,24 @@ func TestConvertToDTO(t *testing.T) {
 					NeededAction: "install",
 				},
 				"nginx-ingress": {
-					Actual: DoguDiffV1State{
+					Actual: DoguDiffState{
 						Namespace:         "k8s",
 						Version:           "8.2.3-2",
 						InstallationState: "present",
 					},
-					Expected: DoguDiffV1State{
+					Expected: DoguDiffState{
 						Namespace:         "k8s",
 						InstallationState: "absent",
 					},
 					NeededAction: "uninstall",
 				},
-			}},
+			}, ComponentDiffs: map[string]ComponentDiff{}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ConvertToDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ConvertToDTO() = %v, want %v", got, tt.want)
+			if got := ConvertToStateDiffDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ConvertToStateDiffDTO() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -127,21 +127,21 @@ func mustParseVersion(raw string) core.Version {
 func TestConvertToDomainModel(t *testing.T) {
 	tests := []struct {
 		name    string
-		dto     StateDiffV1
+		dto     StateDiff
 		want    domain.StateDiff
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "fail to parse actual version of single dogu diff",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
@@ -158,15 +158,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail to parse expected version of single dogu diff",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
@@ -183,15 +183,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail to parse actual installation state of single dogu diff",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "invalid",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
@@ -208,15 +208,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail to parse expected installation state of single dogu diff",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
@@ -233,15 +233,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail with multiple errors in single dogu diff",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "invalid",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "invalid",
@@ -261,15 +261,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail for one of multiple dogu diffs",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"postfix": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
@@ -277,12 +277,12 @@ func TestConvertToDomainModel(t *testing.T) {
 						NeededAction: "upgrade",
 					},
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
@@ -299,15 +299,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "fail for multiple dogu diffs",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"postfix": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
@@ -315,12 +315,12 @@ func TestConvertToDomainModel(t *testing.T) {
 						NeededAction: "none",
 					},
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
@@ -339,15 +339,15 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "succeed for multiple dogu diffs",
-			dto: StateDiffV1{
-				DoguDiffs: map[string]DoguDiffV1{
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
 					"postfix": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
@@ -355,12 +355,12 @@ func TestConvertToDomainModel(t *testing.T) {
 						NeededAction: "upgrade",
 					},
 					"ldap": {
-						Actual: DoguDiffV1State{
+						Actual: DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffV1State{
+						Expected: DoguDiffState{
 							Namespace:         "official",
 							InstallationState: "absent",
 						},
@@ -394,7 +394,7 @@ func TestConvertToDomainModel(t *testing.T) {
 					},
 					NeededAction: domain.ActionUpgrade,
 				},
-			}},
+			}, ComponentDiffs: []domain.ComponentDiff{}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
@@ -402,7 +402,7 @@ func TestConvertToDomainModel(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConvertToDomainModel(tt.dto)
+			got, err := ConvertToStateDiffDomain(tt.dto)
 			tt.wantErr(t, err)
 			// sort to avoid flaky tests
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {

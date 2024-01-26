@@ -2,13 +2,14 @@ package kubernetes
 
 import (
 	"fmt"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 )
 
 // Interface extends the kubernetes.Interface to add functionality for handling the custom resources of this operator.

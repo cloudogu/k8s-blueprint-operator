@@ -1,8 +1,6 @@
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,10 +26,10 @@ type BlueprintStatus struct {
 	// Phase represents the processing state of the blueprint
 	Phase domain.StatusPhase `json:"phase,omitempty"`
 	// EffectiveBlueprint is the blueprint after applying the blueprint mask.
-	EffectiveBlueprint effectiveBlueprintV1.EffectiveBlueprintV1 `json:"effectiveBlueprint,omitempty"`
+	EffectiveBlueprint EffectiveBlueprint `json:"effectiveBlueprint,omitempty"`
 	// StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
 	// It describes what operations need to be done to achieve the desired state of the blueprint.
-	StateDiff stateDiffV1.StateDiffV1 `json:"stateDiff,omitempty"`
+	StateDiff StateDiff `json:"stateDiff,omitempty"`
 }
 
 //+kubebuilder:object:root=true
