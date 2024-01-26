@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -12,10 +11,11 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/cesapp-lib/remote"
-	"github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
+	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
@@ -25,6 +25,8 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
+	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 )
 
 const defaultHealthCheckInterval = 10 * time.Second
@@ -58,9 +60,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	dogusInterface, err := ecoSystem.NewForConfig(restConfig)
+	dogusInterface, err := doguEcoClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
+	}
+	componentsInterface, err := componentEcoClient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
 
 	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(
@@ -84,7 +90,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
-	var componentInstallationRepo domainservice.ComponentInstallationRepository // TODO: use correct implementation
+	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := config2.NewHealthConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
