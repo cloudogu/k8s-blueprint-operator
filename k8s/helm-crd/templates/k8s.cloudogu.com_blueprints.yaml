@@ -147,7 +147,7 @@ spec:
                           - expected
                           - neededAction
                         type: object
-                      description: DoguDiffs maps simple dogu names to the determined diff.
+                      description: componentDiffs maps simple component names to the determined diff.
                       type: object
                     doguDiffs:
                       additionalProperties:
