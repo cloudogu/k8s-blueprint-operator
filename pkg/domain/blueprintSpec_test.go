@@ -554,8 +554,22 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 		expectedPhase  StatusPhase
 		expectedEvents []Event
 	}{
-		{name: "statusphase invalid on error", fields: fields{}, args: args{possibleInvalidDependenciesError: assert.AnError}, expectedPhase: "invalid", expectedEvents: []Event{BlueprintSpecInvalidEvent{ValidationError: &InvalidBlueprintError{WrappedError: assert.AnError, Message: "blueprint spec is invalid"}}}},
-		{name: "statusphase valid on nil", fields: fields{}, args: args{possibleInvalidDependenciesError: nil}, expectedPhase: "validated", expectedEvents: []Event{BlueprintSpecValidatedEvent{}}},
+		{
+			name:          "statusphase invalid on error",
+			fields:        fields{},
+			args:          args{possibleInvalidDependenciesError: assert.AnError},
+			expectedPhase: "invalid",
+			expectedEvents: []Event{BlueprintSpecInvalidEvent{
+				ValidationError: &InvalidBlueprintError{WrappedError: assert.AnError, Message: "blueprint spec is invalid"}},
+			},
+		},
+		{
+			name:           "statusphase valid on nil",
+			fields:         fields{},
+			args:           args{possibleInvalidDependenciesError: nil},
+			expectedPhase:  "validated",
+			expectedEvents: []Event{BlueprintSpecValidatedEvent{}},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
