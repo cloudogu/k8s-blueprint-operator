@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
@@ -23,9 +24,9 @@ func NewBlueprintReconciler(
 	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
 }
 
-//+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/finalizers,verbs=update
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -47,7 +48,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		logger := logger.WithValues("error", err)
 		if errors.As(err, &internalError) {
 			logger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-			return ctrl.Result{}, err //automatic requeue
+			return ctrl.Result{}, err // automatic requeue
 		} else if errors.As(err, &conflictError) {
 			logger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
@@ -59,7 +60,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{Requeue: false}, nil
 		}
 		logger.Error(err, "an unknown error type occurred. Retry with default backoff")
-		return ctrl.Result{}, err //automatic requeue
+		return ctrl.Result{}, err // automatic requeue
 	}
 	return ctrl.Result{}, nil
 }
@@ -68,5 +69,6 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&k8sv1.Blueprint{}).
+		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		Complete(r)
 }
