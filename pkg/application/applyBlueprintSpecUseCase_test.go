@@ -194,12 +194,37 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(1).Run(func(args mock.Arguments) {
+			spec := args.Get(1).(*domain.BlueprintSpec)
+			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
+		})
 
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
 
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.NoError(t, err)
+	})
+
+	t.Run("should return error on error updating blueprint spec with dry run event", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Config: domain.BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
+		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError).Times(1).Run(func(args mock.Arguments) {
+			spec := args.Get(1).(*domain.BlueprintSpec)
+			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
+		})
+
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, assert.AnError, err)
 	})
 
 	t.Run("cannot load spec", func(t *testing.T) {

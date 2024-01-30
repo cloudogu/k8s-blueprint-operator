@@ -102,6 +102,11 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 
 	if blueprintSpec.Config.DryRun {
 		logger.Info("skip applying states to the cluster because the blueprint is in dry run mode")
+		blueprintSpec.Events = append(blueprintSpec.Events, domain.BlueprintDryRunEvent{})
+		updateErr := useCase.repo.Update(ctx, blueprintSpec)
+		if updateErr != nil {
+			return updateErr
+		}
 		return nil
 	}
 

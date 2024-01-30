@@ -62,7 +62,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	switch blueprintSpec.Status {
 	case domain.StatusPhaseNew:
-		return useCase.handleNew(ctx, blueprintId, blueprintSpec)
+		return useCase.validateStatically(ctx, blueprintId)
 	case domain.StatusPhaseInvalid:
 		return nil
 	case domain.StatusPhaseStaticallyValidated:
@@ -97,24 +97,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}
-}
-
-func (useCase *BlueprintSpecChangeUseCase) handleNew(ctx context.Context, blueprintId string, blueprintSpec *domain.BlueprintSpec) error {
-	err := useCase.addPotentialDryRunEvent(ctx, blueprintSpec)
-	if err != nil {
-		return fmt.Errorf("failed adding dry run event: %w", err)
-	}
-
-	return useCase.validateStatically(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) addPotentialDryRunEvent(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	if !blueprintSpec.Config.DryRun {
-		return nil
-	}
-	blueprintSpec.Events = append(blueprintSpec.Events, domain.BlueprintDryRunEvent{})
-
-	return useCase.repo.Update(ctx, blueprintSpec)
 }
 
 func (useCase *BlueprintSpecChangeUseCase) validateStatically(ctx context.Context, blueprintId string) error {

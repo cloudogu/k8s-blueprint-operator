@@ -63,7 +63,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseCompleted, blueprintSpec.Status)
 	})
 
-	t.Run("should event on dry run", func(t *testing.T) {
+	t.Run("should return nil and not handle blueprint spec on dry run", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
 		validationMock := newMockBlueprintSpecValidationUseCase(t)
@@ -78,15 +78,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseNew,
 			Config: domain.BlueprintConfiguration{DryRun: true},
 		}
-		expectedBlueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseNew,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-			Events: []domain.Event{domain.BlueprintDryRunEvent{}},
-		}
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		repoMock.EXPECT().Update(testCtx, expectedBlueprintSpec).Return(nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseStaticallyValidated
@@ -115,33 +108,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseEcosystemHealthyUpfront, blueprintSpec.Status)
-	})
-
-	t.Run("should return error on update dry run event error", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, nil, nil, nil, nil, nil)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseNew,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-		}
-		expectedBlueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseNew,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-			Events: []domain.Event{domain.BlueprintDryRunEvent{}},
-		}
-
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		repoMock.EXPECT().Update(testCtx, expectedBlueprintSpec).Return(assert.AnError)
-
-		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
-
-		// then
-		require.Error(t, err)
 	})
 
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {

@@ -17,7 +17,7 @@ func (b BlueprintDryRunEvent) Name() string {
 }
 
 func (b BlueprintDryRunEvent) Message() string {
-	return "Executing blueprint in dry run mode"
+	return "Executed blueprint in dry run mode"
 }
 
 type BlueprintSpecInvalidEvent struct {
