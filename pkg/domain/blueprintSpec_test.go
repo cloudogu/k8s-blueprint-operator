@@ -159,10 +159,12 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusEffectiveBlueprintGene
 		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		Status:        StatusPhaseEffectiveBlueprintGenerated,
 	}
+	expectedSpec := spec
 
 	err := spec.CalculateEffectiveBlueprint()
 
 	require.Nil(t, err)
+	assert.Equal(t, expectedSpec, spec)
 }
 
 func Test_BlueprintSpec_CalculateEffectiveBlueprint_statusInvalid(t *testing.T) {
