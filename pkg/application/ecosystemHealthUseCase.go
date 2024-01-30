@@ -54,26 +54,16 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 
 	doguHealthChan := make(chan ecosystem.DoguHealthResult)
 	doguErrChan := make(chan error)
-	go func(ctx context.Context) {
-		doguHealth, err := useCase.doguUseCase.WaitForHealthyDogus(ctx)
-		if err != nil {
-			doguErrChan <- err
-			return
-		}
-		doguHealthChan <- doguHealth
-	}(timedCtx)
+	go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
 
 	componentHealthChan := make(chan ecosystem.ComponentHealthResult)
 	componentErrChan := make(chan error)
-	go func(ctx context.Context) {
-		componentHealth, err := useCase.componentUseCase.WaitForHealthyComponents(ctx)
-		if err != nil {
-			componentErrChan <- err
-			return
-		}
-		componentHealthChan <- componentHealth
-	}(timedCtx)
+	go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
 
+	return waitForHealthResult(doguHealthChan, doguErrChan, componentHealthChan, componentErrChan)
+}
+
+func waitForHealthResult(doguHealthChan chan ecosystem.DoguHealthResult, doguErrChan chan error, componentHealthChan chan ecosystem.ComponentHealthResult, componentErrChan chan error) (ecosystem.HealthResult, error) {
 	var doguHealth ecosystem.DoguHealthResult
 	var doguErr error
 	var componentHealth ecosystem.ComponentHealthResult
@@ -91,4 +81,22 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 		DoguHealth:      doguHealth,
 		ComponentHealth: componentHealth,
 	}, errors.Join(doguErr, componentErr)
+}
+
+func (useCase *EcosystemHealthUseCase) asyncWaitForHealthyComponents(ctx context.Context, componentErrChan chan error, componentHealthChan chan ecosystem.ComponentHealthResult) {
+	componentHealth, err := useCase.componentUseCase.WaitForHealthyComponents(ctx)
+	if err != nil {
+		componentErrChan <- err
+		return
+	}
+	componentHealthChan <- componentHealth
+}
+
+func (useCase *EcosystemHealthUseCase) asyncWaitForHealthyDogus(ctx context.Context, doguErrChan chan error, doguHealthChan chan ecosystem.DoguHealthResult) {
+	doguHealth, err := useCase.doguUseCase.WaitForHealthyDogus(ctx)
+	if err != nil {
+		doguErrChan <- err
+		return
+	}
+	doguHealthChan <- doguHealth
 }
