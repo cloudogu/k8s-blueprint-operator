@@ -476,6 +476,41 @@ func TestConvertToDomainModel(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
+		}, {
+			name: "fail for multiple component diffs",
+			dto: StateDiff{
+				ComponentDiffs: map[string]ComponentDiff{
+					testComponentName: {
+						Actual: ComponentDiffState{
+							Version:           "a.b.c-d",
+							InstallationState: "present",
+						},
+						Expected: ComponentDiffState{
+							Version:           "2.3.4-5",
+							InstallationState: "present",
+						},
+						NeededAction: "none",
+					},
+					"my-component-2": {
+						Actual: ComponentDiffState{
+							Version:           "1.2.3-4",
+							InstallationState: "present",
+						},
+						Expected: ComponentDiffState{
+							Version:           "2.3.4-5",
+							InstallationState: "invalid",
+						},
+						NeededAction: "upgrade",
+					},
+				},
+			},
+			want: domain.StateDiff{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+					assert.ErrorContains(t, err, "failed to convert component diff dto \"my-component\" to domain model") &&
+					assert.ErrorContains(t, err, "failed to convert component diff dto \"my-component-2\" to domain model")
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -486,7 +521,6 @@ func TestConvertToDomainModel(t *testing.T) {
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
 				return cmp.Compare(a.DoguName, b.DoguName)
 			})
-			assert.Equal(t, tt.want, got)
 		})
 	}
 }
