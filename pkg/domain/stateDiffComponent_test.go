@@ -226,3 +226,114 @@ func mockComponentDiffState(version core.Version, state TargetState) ComponentDi
 		InstallationState: state,
 	}
 }
+
+func Test_determineComponentDiffs(t *testing.T) {
+	type args struct {
+		logger              logr.Logger
+		blueprintComponents []Component
+		installedComponents map[string]*ecosystem.ComponentInstallation
+	}
+	tests := []struct {
+		name string
+		args args
+		want []ComponentDiff
+	}{
+		{
+			name: "no components",
+			args: args{
+				blueprintComponents: nil,
+				installedComponents: nil,
+			},
+			want: []ComponentDiff{},
+		},
+		{
+			name: "a not installed component in the blueprint",
+			args: args{
+				blueprintComponents: []Component{
+					{
+						Name:        testComponentName,
+						Version:     version3_2_1_1,
+						TargetState: TargetStatePresent,
+					},
+				},
+				installedComponents: nil,
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						InstallationState: TargetStateAbsent,
+					},
+					Expected: ComponentDiffState{
+						Version:           version3_2_1_1,
+						InstallationState: TargetStatePresent,
+					},
+					NeededAction: ActionInstall,
+				},
+			},
+		},
+		{
+			name: "an installed component which is not in the blueprint",
+			args: args{
+				blueprintComponents: nil,
+				installedComponents: map[string]*ecosystem.ComponentInstallation{
+					testComponentName: {
+						Name:    testComponentName,
+						Version: version3_2_1_1,
+					},
+				},
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						Version:           version3_2_1_1,
+						InstallationState: TargetStatePresent,
+					},
+					Expected: ComponentDiffState{
+						Version:           version3_2_1_1,
+						InstallationState: TargetStatePresent,
+					},
+					NeededAction: ActionNone,
+				},
+			},
+		},
+		{
+			name: "an installed component which is also in the blueprint",
+			args: args{
+				blueprintComponents: []Component{
+					{
+						Name:        testComponentName,
+						Version:     version3_2_1_2,
+						TargetState: TargetStatePresent,
+					},
+				},
+				installedComponents: map[string]*ecosystem.ComponentInstallation{
+					testComponentName: {
+						Name:    testComponentName,
+						Version: version3_2_1_1,
+					},
+				},
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						Version:           version3_2_1_1,
+						InstallationState: TargetStatePresent,
+					},
+					Expected: ComponentDiffState{
+						Version:           version3_2_1_2,
+						InstallationState: TargetStatePresent,
+					},
+					NeededAction: ActionUpgrade,
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, determineComponentDiffs(tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents), "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
+		})
+	}
+}
