@@ -415,8 +415,8 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.inputSpec.CheckEcosystemHealthUpfront(tt.healthResult)
-			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
-			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
+			eventNames := util.MapWithFunction(tt.inputSpec.Events, Event.Name)
+			eventMsgs := util.MapWithFunction(tt.inputSpec.Events, Event.Message)
 			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
 			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
 		})

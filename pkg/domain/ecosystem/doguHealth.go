@@ -25,7 +25,7 @@ func (result DoguHealthResult) GetUnhealthyDogus() []DoguName {
 }
 
 func (result DoguHealthResult) String() string {
-	unhealthyDogus := util.Map(result.GetUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
+	unhealthyDogus := util.MapWithFunction(result.GetUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
 	slices.Sort(unhealthyDogus)
 	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
 }

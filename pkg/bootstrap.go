@@ -16,6 +16,7 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	blueprintcr "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
@@ -68,7 +69,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
 
-	blueprintSpecRepository := kubernetes2.NewBlueprintSpecRepository(
+	blueprintSpecRepository := blueprintcr.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
 		blueprintSerializer,
 		blueprintMaskSerializer,
@@ -96,7 +97,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, defaultHealthCheckTimeout)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
