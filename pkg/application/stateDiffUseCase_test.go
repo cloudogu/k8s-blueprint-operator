@@ -49,6 +49,28 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot get installed dogus to determine state diff")
 	})
+	t.Run("should fail to get installed components", func(t *testing.T) {
+		// given
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
+
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+
+		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
+
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
+
+		// when
+		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot get installed components to determine state diff")
+	})
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}

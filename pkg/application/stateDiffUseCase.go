@@ -50,7 +50,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 
 	installedComponents, err := useCase.componentInstallationRepo.GetAll(ctx)
 	if err != nil {
-		return fmt.Errorf("cannot get installed dogus to determine state diff: %w", err)
+		return fmt.Errorf("cannot get installed components to determine state diff: %w", err)
 	}
 
 	// for now, state diff only takes dogus, but there will be components and registry keys as well
