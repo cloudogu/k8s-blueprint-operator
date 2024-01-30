@@ -3,11 +3,20 @@ package v1
 import (
 	"cmp"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
 	"testing"
+)
+
+const testComponentName = "my-component"
+
+var (
+	testVersionLowRaw  = "1.2.3"
+	testVersionLow     = mustParseVersion(testVersionLowRaw)
+	testVersionHighRaw = "2.3.4"
+	testVersionHigh    = mustParseVersion(testVersionHighRaw)
 )
 
 func TestConvertToDTO(t *testing.T) {
@@ -104,12 +113,45 @@ func TestConvertToDTO(t *testing.T) {
 					NeededAction: "uninstall",
 				},
 			}, ComponentDiffs: map[string]ComponentDiff{}},
+		}, {
+			name: "should convert multiple component diffs",
+			domainModel: domain.StateDiff{
+				DoguDiffs: domain.DoguDiffs{},
+				ComponentDiffs: []domain.ComponentDiff{
+					{
+						Name:         testComponentName,
+						Actual:       domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
+						Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+						NeededAction: domain.ActionUpgrade,
+					},
+					{
+						Name:         "my-component-2",
+						Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+						Expected:     domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+						NeededAction: domain.ActionUninstall,
+					},
+				}},
+			want: StateDiff{
+				DoguDiffs: map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{
+					testComponentName: {
+						Actual:       ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:     ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededAction: "upgrade",
+					},
+					"my-component-2": {
+						Actual:       ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:     ComponentDiffState{InstallationState: "absent"},
+						NeededAction: "uninstall",
+					},
+				}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ConvertToStateDiffDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ConvertToStateDiffDTO() = %v, want %v", got, tt.want)
+				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
@@ -394,7 +436,43 @@ func TestConvertToDomainModel(t *testing.T) {
 					},
 					NeededAction: domain.ActionUpgrade,
 				},
-			}, ComponentDiffs: []domain.ComponentDiff{}},
+			},
+				ComponentDiffs: []domain.ComponentDiff{},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		}, {
+			name: "succeed for multiple component diffs",
+			dto: StateDiff{
+				ComponentDiffs: map[string]ComponentDiff{
+					testComponentName: {
+						Actual:       ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:     ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededAction: "upgrade",
+					},
+					"my-component-2": {
+						Actual:       ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:     ComponentDiffState{InstallationState: "absent"},
+						NeededAction: "uninstall",
+					},
+				},
+			},
+			want: domain.StateDiff{ComponentDiffs: []domain.ComponentDiff{
+				{
+					Name:         testComponentName,
+					Actual:       domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
+					Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+					NeededAction: domain.ActionUpgrade,
+				},
+				{
+					Name:         "my-component-2",
+					Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+					Expected:     domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+					NeededAction: domain.ActionUninstall,
+				},
+			},
+				DoguDiffs: []domain.DoguDiff{}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
