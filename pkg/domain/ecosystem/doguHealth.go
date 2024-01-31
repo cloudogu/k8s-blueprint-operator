@@ -27,7 +27,7 @@ func (result DoguHealthResult) getUnhealthyDogus() []DoguName {
 func (result DoguHealthResult) String() string {
 	unhealthyDogus := util.Map(result.getUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
 	slices.Sort(unhealthyDogus)
-	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
+	return fmt.Sprintf("%d dogu(s) are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
 }
 
 // CalculateDoguHealthResult collects the health states from DoguInstallation and creates a DoguHealthResult.

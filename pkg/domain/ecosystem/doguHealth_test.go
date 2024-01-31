@@ -53,14 +53,14 @@ func TestDoguHealthResult_String(t *testing.T) {
 		{
 			name:         "no dogus should result in 0 components unhealthy",
 			healthStates: map[HealthStatus][]DoguName{},
-			contains:     []string{"0 dogus are unhealthy: "},
+			contains:     []string{"0 dogu(s) are unhealthy: "},
 		},
 		{
 			name: "only available dogus should result in 0 components unhealthy",
 			healthStates: map[HealthStatus][]DoguName{
 				AvailableHealthStatus: {"nginx-ingress"},
 			},
-			contains:    []string{"0 dogus are unhealthy: "},
+			contains:    []string{"0 dogu(s) are unhealthy: "},
 			notContains: []string{"nginx-ingress"},
 		},
 		{
@@ -71,7 +71,7 @@ func TestDoguHealthResult_String(t *testing.T) {
 				"other":                 {"scm"},
 			},
 			contains: []string{
-				"3 dogus are unhealthy: ",
+				"3 dogu(s) are unhealthy: ",
 				"postgresql",
 				"redmine",
 				"scm",

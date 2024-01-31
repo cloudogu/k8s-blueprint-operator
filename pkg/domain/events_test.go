@@ -52,7 +52,7 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "EcosystemUnhealthyUpfront",
-			expectedMessage: "ecosystem health:\n  2 dogus are unhealthy: admin, ldap\n  0 components are unhealthy: ",
+			expectedMessage: "ecosystem health:\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
 		},
 		{
 			name:            "effective blueprint calculated",

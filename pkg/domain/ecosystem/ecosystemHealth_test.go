@@ -21,7 +21,7 @@ func TestHealthResult_String(t *testing.T) {
 				DoguHealth:      DoguHealthResult{},
 				ComponentHealth: ComponentHealthResult{},
 			},
-			want: "ecosystem health:\n  0 dogus are unhealthy: \n  0 components are unhealthy: ",
+			want: "ecosystem health:\n  0 dogu(s) are unhealthy: \n  0 component(s) are unhealthy: ",
 		},
 		{
 			name: "should print dogu and component health results with unhealthy",
@@ -29,7 +29,7 @@ func TestHealthResult_String(t *testing.T) {
 				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
 				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
 			},
-			want: "ecosystem health:\n  1 dogus are unhealthy: nginx-ingress\n  1 components are unhealthy: k8s-etcd",
+			want: "ecosystem health:\n  1 dogu(s) are unhealthy: nginx-ingress\n  1 component(s) are unhealthy: k8s-etcd",
 		},
 	}
 	for _, tt := range tests {

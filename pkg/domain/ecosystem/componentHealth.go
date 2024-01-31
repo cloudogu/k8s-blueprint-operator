@@ -32,7 +32,7 @@ func (result ComponentHealthResult) getUnhealthyComponents() []ComponentName {
 func (result ComponentHealthResult) String() string {
 	unhealthyComponents := util.Map(result.getUnhealthyComponents(), func(dogu ComponentName) string { return string(dogu) })
 	slices.Sort(unhealthyComponents)
-	return fmt.Sprintf("%d components are unhealthy: %s", len(unhealthyComponents), strings.Join(unhealthyComponents, ", "))
+	return fmt.Sprintf("%d component(s) are unhealthy: %s", len(unhealthyComponents), strings.Join(unhealthyComponents, ", "))
 }
 
 // CalculateComponentHealthResult checks if all required components are installed,

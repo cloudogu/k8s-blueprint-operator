@@ -358,7 +358,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDetermined", "state diff determined: 0 dogu diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemHealthyUpfront", "dogu health ignored: false")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemUnhealthyUpfront", "ecosystem health:\n  0 dogus are unhealthy: \n  0 components are unhealthy: ")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemUnhealthyUpfront", "ecosystem health:\n  0 dogu(s) are unhealthy: \n  0 component(s) are unhealthy: ")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")
 
 		//when

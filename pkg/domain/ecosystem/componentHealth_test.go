@@ -15,14 +15,14 @@ func TestComponentHealthResult_String(t *testing.T) {
 		{
 			name:         "no components should result in 0 components unhealthy",
 			healthStates: map[HealthStatus][]ComponentName{},
-			contains:     []string{"0 components are unhealthy: "},
+			contains:     []string{"0 component(s) are unhealthy: "},
 		},
 		{
 			name: "only available components should result in 0 components unhealthy",
 			healthStates: map[HealthStatus][]ComponentName{
 				AvailableHealthStatus: {"k8s-dogu-operator"},
 			},
-			contains:    []string{"0 components are unhealthy: "},
+			contains:    []string{"0 component(s) are unhealthy: "},
 			notContains: []string{"k8s-dogu-operator"},
 		},
 		{
@@ -34,7 +34,7 @@ func TestComponentHealthResult_String(t *testing.T) {
 				"other":                  {"k8s-component-operator"},
 			},
 			contains: []string{
-				"4 components are unhealthy: ",
+				"4 component(s) are unhealthy: ",
 				"k8s-etcd",
 				"k8s-dogu-operator",
 				"k8s-service-discovery",
