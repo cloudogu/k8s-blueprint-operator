@@ -22,6 +22,92 @@ func (_m *MockDoguInstallationRepository) EXPECT() *MockDoguInstallationReposito
 	return &MockDoguInstallationRepository_Expecter{mock: &_m.Mock}
 }
 
+// Create provides a mock function with given fields: ctx, dogu
+func (_m *MockDoguInstallationRepository) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
+	ret := _m.Called(ctx, dogu)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *ecosystem.DoguInstallation) error); ok {
+		r0 = rf(ctx, dogu)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockDoguInstallationRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockDoguInstallationRepository_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dogu *ecosystem.DoguInstallation
+func (_e *MockDoguInstallationRepository_Expecter) Create(ctx interface{}, dogu interface{}) *MockDoguInstallationRepository_Create_Call {
+	return &MockDoguInstallationRepository_Create_Call{Call: _e.mock.On("Create", ctx, dogu)}
+}
+
+func (_c *MockDoguInstallationRepository_Create_Call) Run(run func(ctx context.Context, dogu *ecosystem.DoguInstallation)) *MockDoguInstallationRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*ecosystem.DoguInstallation))
+	})
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Create_Call) Return(_a0 error) *MockDoguInstallationRepository_Create_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Create_Call) RunAndReturn(run func(context.Context, *ecosystem.DoguInstallation) error) *MockDoguInstallationRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Delete provides a mock function with given fields: ctx, doguName
+func (_m *MockDoguInstallationRepository) Delete(ctx context.Context, doguName string) error {
+	ret := _m.Called(ctx, doguName)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, doguName)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockDoguInstallationRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockDoguInstallationRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - doguName string
+func (_e *MockDoguInstallationRepository_Expecter) Delete(ctx interface{}, doguName interface{}) *MockDoguInstallationRepository_Delete_Call {
+	return &MockDoguInstallationRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, doguName)}
+}
+
+func (_c *MockDoguInstallationRepository_Delete_Call) Run(run func(ctx context.Context, doguName string)) *MockDoguInstallationRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Delete_Call) Return(_a0 error) *MockDoguInstallationRepository_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, string) error) *MockDoguInstallationRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAll provides a mock function with given fields: ctx
 func (_m *MockDoguInstallationRepository) GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error) {
 	ret := _m.Called(ctx)
@@ -127,6 +213,49 @@ func (_c *MockDoguInstallationRepository_GetByName_Call) Return(_a0 *ecosystem.D
 }
 
 func (_c *MockDoguInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, string) (*ecosystem.DoguInstallation, error)) *MockDoguInstallationRepository_GetByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function with given fields: ctx, dogu
+func (_m *MockDoguInstallationRepository) Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
+	ret := _m.Called(ctx, dogu)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *ecosystem.DoguInstallation) error); ok {
+		r0 = rf(ctx, dogu)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockDoguInstallationRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockDoguInstallationRepository_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dogu *ecosystem.DoguInstallation
+func (_e *MockDoguInstallationRepository_Expecter) Update(ctx interface{}, dogu interface{}) *MockDoguInstallationRepository_Update_Call {
+	return &MockDoguInstallationRepository_Update_Call{Call: _e.mock.On("Update", ctx, dogu)}
+}
+
+func (_c *MockDoguInstallationRepository_Update_Call) Run(run func(ctx context.Context, dogu *ecosystem.DoguInstallation)) *MockDoguInstallationRepository_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*ecosystem.DoguInstallation))
+	})
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Update_Call) Return(_a0 error) *MockDoguInstallationRepository_Update_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockDoguInstallationRepository_Update_Call) RunAndReturn(run func(context.Context, *ecosystem.DoguInstallation) error) *MockDoguInstallationRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

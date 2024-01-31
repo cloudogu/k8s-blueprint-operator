@@ -29,7 +29,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	blueprintId := "MyBlueprint"
 
 	t.Run("all ok", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -42,15 +42,16 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				BlueprintMask:            `{"blueprintMaskAPI": "v1"}`,
 				AllowDoguNamespaceSwitch: true,
 				IgnoreDoguHealth:         true,
+				DryRun:                   true,
 			},
 			Status: v1.BlueprintStatus{},
 		}
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
-		//when
+		// when
 		spec, err := repo.GetById(ctx, blueprintId)
 
-		//then
+		// then
 		require.NoError(t, err)
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
@@ -59,6 +60,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:         true,
 				AllowDoguNamespaceSwitch: true,
+				DryRun:                   true,
 			},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				RegistryConfig:          domain.RegistryConfig{},
@@ -70,7 +72,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	})
 
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -86,10 +88,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		}
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
-		//when
+		// when
 		_, err := repo.GetById(ctx, blueprintId)
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedErrorType *domain.InvalidBlueprintError
 		assert.ErrorAs(t, err, &expectedErrorType)
@@ -99,17 +101,17 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	})
 
 	t.Run("internal error while loading", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(nil, k8sErrors.NewInternalError(errors.New("test-error")))
 
-		//when
+		// when
 		_, err := repo.GetById(ctx, blueprintId)
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedErrorType *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedErrorType)
@@ -118,7 +120,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	})
 
 	t.Run("not found error while loading", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -127,10 +129,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Get(ctx, blueprintId, metav1.GetOptions{}).
 			Return(nil, k8sErrors.NewNotFound(schema.GroupResource{}, blueprintId))
 
-		//when
+		// when
 		_, err := repo.GetById(ctx, blueprintId)
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedErrorType *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &expectedErrorType)
@@ -142,7 +144,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	blueprintId := "MyBlueprint"
 
 	t.Run("all ok", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -172,7 +174,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 				return blueprint, nil
 			})
 
-		//when
+		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
@@ -182,35 +184,35 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			PersistenceContext: persistenceContext,
 		})
 
-		//then
+		// then
 		require.NoError(t, err)
 	})
 
 	t.Run("no version counter", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
-		//when
+		// when
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:     blueprintId,
 			Status: domain.StatusPhaseValidated,
 			Events: nil,
 		})
 
-		//then
+		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "no blueprintSpecRepoContext was provided over the persistenceContext in the given blueprintSpec")
 	})
 
 	t.Run("version counter of different type", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
-		//when
+		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = 1
 		err := repo.Update(ctx, &domain.BlueprintSpec{
@@ -220,13 +222,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			PersistenceContext: persistenceContext,
 		})
 
-		//then
+		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "ersistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but 'int'")
 	})
 
 	t.Run("conflict error", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -261,7 +263,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 				return nil, expectedError
 			})
 
-		//when
+		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
@@ -271,7 +273,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			PersistenceContext: persistenceContext,
 		})
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedErrorType *domainservice.ConflictError
 		assert.ErrorAs(t, err, &expectedErrorType)
@@ -279,7 +281,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 	})
 
 	t.Run("internal error", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
@@ -310,7 +312,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 				return nil, expectedError
 			})
 
-		//when
+		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
@@ -320,7 +322,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			PersistenceContext: persistenceContext,
 		})
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedErrorType *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedErrorType)
@@ -331,11 +333,17 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 	blueprintId := "MyBlueprint"
 	t.Run("publish events", func(t *testing.T) {
-		//given
+		// given
 		restClientMock := NewMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		restClientMock.EXPECT().UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).Return(nil, nil)
+		restClientMock.EXPECT().
+			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
+			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+				// assert.Equal(t, &expected, blueprint)
+				blueprint.ResourceVersion = "newVersion"
+				return blueprint, nil
+			})
 
 		var events []domain.Event
 		events = append(events,
@@ -343,26 +351,28 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			domain.BlueprintSpecValidatedEvent{},
 			domain.EffectiveBlueprintCalculatedEvent{},
 			domain.StateDiffDeterminedEvent{StateDiff: domain.StateDiff{}},
-			domain.DogusHealthyEvent{},
-			domain.IgnoreDoguHealthEvent{},
-			domain.DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{}},
+			domain.EcosystemHealthyUpfrontEvent{},
+			domain.EcosystemUnhealthyUpfrontEvent{HealthResult: ecosystem.HealthResult{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDetermined", "state diff determined: 0 dogu diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusHealthy", "")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "IgnoreDoguHealth", "ignore dogu health flag is set; ignoring dogu health")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "DogusUnhealthy", "0 dogus are unhealthy: ")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemHealthyUpfront", "dogu health ignored: false")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemUnhealthyUpfront", "ecosystem is unhealthy: 0 dogus are unhealthy: ")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")
 
-		//when
+		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		err := repo.Update(ctx, &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext})
+		spec := &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext}
+		err := repo.Update(ctx, spec)
 
-		//then
+		// then
 		require.NoError(t, err)
+		newPersistenceContext, _ := getPersistenceContext(ctx, spec)
+		assert.Equal(t, "newVersion", newPersistenceContext.resourceVersion)
+		assert.Empty(t, spec.Events, "events in aggregate should be deleted after publishing them")
 	})
 }

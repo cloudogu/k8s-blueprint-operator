@@ -115,6 +115,26 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			},
 			wantErr: false,
 		},
+		{
+			name: "missing nginx-static and nginx ingress on nginx dependency",
+			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
+				Dogus: []domain.Dogu{
+					{Namespace: "official", Name: "scm", Version: version1_0_0_1},
+				},
+			}},
+			wantErr: true,
+		},
+		{
+			name: "ok with nginx dependency",
+			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
+				Dogus: []domain.Dogu{
+					{Namespace: "official", Name: "plantuml", Version: version1_0_0_1},
+					{Namespace: "k8s", Name: "nginx-static", Version: version1_0_0_1},
+					{Namespace: "k8s", Name: "nginx-ingress", Version: version1_0_0_1},
+				},
+			}},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -131,48 +151,48 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 }
 
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFoundError(t *testing.T) {
-	//given
+	// given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
 	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
 
 	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &NotFoundError{Message: "my error"})
-	//when
+	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
 			{Namespace: "official", Name: "unknownDogu", Version: version1_0_0_1},
 		},
 	})
-	//then
+	// then
 	require.Error(t, err)
 	var errorType *NotFoundError
 	assert.ErrorAs(t, err, &errorType)
 }
 
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
-	//given
+	// given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
 	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
 
 	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &InternalError{Message: "my error"})
-	//when
+	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{})
-	//then
+	// then
 	require.Error(t, err)
 	var internalError *InternalError
 	assert.ErrorAs(t, err, &internalError)
 }
 
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_collectDependencyErrors(t *testing.T) {
-	//given
+	// given
 	useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
-	//when
+	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
 			{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
 			{Namespace: "helloworld", Name: "bluespice", Version: version1_0_0_1},
 		},
 	})
-	//then
+	// then
 	require.Error(t, err)
 	var expectedErrorType *domain.InvalidBlueprintError
 	require.ErrorAs(t, err, &expectedErrorType)

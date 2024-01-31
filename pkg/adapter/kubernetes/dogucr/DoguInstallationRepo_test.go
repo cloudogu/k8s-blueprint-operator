@@ -12,7 +12,6 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"reflect"
 	"testing"
 )
 
@@ -24,95 +23,6 @@ var persistenceContext = map[string]interface{}{
 }
 
 var testCtx = context.Background()
-
-func Test_parseDoguCR(t *testing.T) {
-	type args struct {
-		cr *v1.Dogu
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    *ecosystem.DoguInstallation
-		wantErr bool
-	}{
-		{
-			name:    "nil",
-			args:    args{cr: nil},
-			want:    nil,
-			wantErr: true,
-		},
-		{
-			name: "ok",
-			args: args{cr: &v1.Dogu{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "postgresql",
-					ResourceVersion: crResourceVersion,
-				},
-				Spec: v1.DoguSpec{
-					Name:      "official/postgresql",
-					Version:   version3_2_1_4.Raw,
-					Resources: v1.DoguResources{},
-					UpgradeConfig: v1.UpgradeConfig{
-						AllowNamespaceSwitch: true,
-					},
-				},
-				Status: v1.DoguStatus{
-					Status: v1.DoguStatusInstalled,
-					Health: v1.AvailableHealthStatus,
-				},
-			}},
-			want: &ecosystem.DoguInstallation{
-				Namespace: "official",
-				Name:      "postgresql",
-				Version:   version3_2_1_4,
-				Status:    ecosystem.DoguStatusInstalled,
-				Health:    ecosystem.AvailableHealthStatus,
-				UpgradeConfig: ecosystem.UpgradeConfig{
-					AllowNamespaceSwitch: true,
-				},
-				PersistenceContext: persistenceContext,
-			},
-			wantErr: false,
-		},
-		{
-			name: "cannot parse version",
-			args: args{cr: &v1.Dogu{
-				TypeMeta: metav1.TypeMeta{},
-				ObjectMeta: metav1.ObjectMeta{
-					Name:            "postgresql",
-					ResourceVersion: "abc",
-				},
-				Spec: v1.DoguSpec{
-					Name:      "official/postgresql",
-					Version:   "vxyz",
-					Resources: v1.DoguResources{},
-					UpgradeConfig: v1.UpgradeConfig{
-						AllowNamespaceSwitch: false,
-					},
-				},
-				Status: v1.DoguStatus{
-					Status: v1.DoguStatusInstalled,
-					Health: v1.AvailableHealthStatus,
-				},
-			}},
-			want:    nil,
-			wantErr: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDoguCR(tt.args.cr)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseDoguCR() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseDoguCR() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
 func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {

@@ -36,16 +36,20 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
-	// StatusPhaseDogusHealthy marks that all currently installed dogus are healthy.
-	StatusPhaseDogusHealthy StatusPhase = "dogusHealthy"
-	// StatusPhaseIgnoreDoguHealth marks that dogu health checks have been skipped.
-	StatusPhaseIgnoreDoguHealth StatusPhase = "ignoreDoguHealth"
-	// StatusPhaseDogusUnhealthy marks that some currently installed dogus are unhealthy.
-	StatusPhaseDogusUnhealthy StatusPhase = "dogusUnhealthy"
+	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
+	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
+	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
+	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
+	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
+	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
+	// StatusPhaseEcosystemHealthyAfterwards shows that the ecosystem got healthy again after applying the blueprint.
+	StatusPhaseEcosystemHealthyAfterwards StatusPhase = "ecosystemHealthyAfterwards"
+	// StatusPhaseEcosystemUnhealthyAfterwards shows that the ecosystem got not healthy again after applying the blueprint.
+	StatusPhaseEcosystemUnhealthyAfterwards StatusPhase = "ecosystemUnhealthyAfterwards"
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
@@ -55,8 +59,10 @@ const (
 type BlueprintConfiguration struct {
 	// Force blueprint upgrade even when a dogu is unhealthy
 	IgnoreDoguHealth bool
-	// allowNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
+	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
+	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+	DryRun bool
 }
 
 type BlueprintUpgradePlan struct {
@@ -79,10 +85,10 @@ type BlueprintUpgradePlan struct {
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateStatically() error {
 	switch spec.Status {
-	case StatusPhaseNew: //continue
-	case StatusPhaseInvalid: //do not validate again
+	case StatusPhaseNew: // continue
+	case StatusPhaseInvalid: // do not validate again
 		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before: do not revalidate"}
-	default: //do not validate again. for all other status it must be either status validated or a status beyond that
+	default: // do not validate again. for all other status it must be either status validated or a status beyond that
 		return nil
 	}
 	var errorList []error
@@ -150,12 +156,12 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	switch spec.Status {
 	case StatusPhaseEffectiveBlueprintGenerated:
-		return nil //do not regenerate effective blueprint
+		return nil // do not regenerate effective blueprint
 	case StatusPhaseNew: // stop
 		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
 	case StatusPhaseInvalid: // stop
 		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
-	default: //continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
+	default: // continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
 	}
 
 	effectiveDogus, err := spec.calculateEffectiveDogus()
@@ -247,25 +253,50 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
-func (spec *BlueprintSpec) CheckDoguHealth(installedDogus map[string]*ecosystem.DoguInstallation) {
-	if spec.Config.IgnoreDoguHealth {
-		spec.Status = StatusPhaseIgnoreDoguHealth
-		spec.Events = append(spec.Events, IgnoreDoguHealthEvent{})
-		return
-	}
-
-	var unhealthyDogus []ecosystem.UnhealthyDogu
-	for _, dogu := range installedDogus {
-		if unhealthy, unhealthyDogu := dogu.IsUnhealthy(); unhealthy {
-			unhealthyDogus = append(unhealthyDogus, unhealthyDogu)
-		}
-	}
-
-	if len(unhealthyDogus) > 0 {
-		spec.Status = StatusPhaseDogusUnhealthy
-		spec.Events = append(spec.Events, DogusUnhealthyEvent{HealthResult: ecosystem.DoguHealthResult{UnhealthyDogus: unhealthyDogus}})
+func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
+	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
+	// Therefore we don't need to exclude dogus while checking with AllHealthy()
+	if healthResult.AllHealthy() {
+		spec.Status = StatusPhaseEcosystemHealthyUpfront
+		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth})
 	} else {
-		spec.Status = StatusPhaseDogusHealthy
-		spec.Events = append(spec.Events, DogusHealthyEvent{})
+		spec.Status = StatusPhaseEcosystemUnhealthyUpfront
+		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
 	}
+}
+
+func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) {
+	if healthResult.AllHealthy() {
+		spec.Status = StatusPhaseEcosystemHealthyAfterwards
+		spec.Events = append(spec.Events, EcosystemHealthyAfterwardsEvent{})
+	} else {
+		spec.Status = StatusPhaseEcosystemUnhealthyAfterwards
+		spec.Events = append(spec.Events, EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult})
+	}
+}
+
+func (spec *BlueprintSpec) StartApplying() (shouldApply bool) {
+	if spec.Config.DryRun {
+		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
+	} else {
+		spec.Status = StatusPhaseInProgress
+		spec.Events = append(spec.Events, InProgressEvent{})
+		shouldApply = true
+	}
+	return
+}
+
+func (spec *BlueprintSpec) MarkFailed(err error) {
+	spec.Status = StatusPhaseFailed
+	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkBlueprintApplied() {
+	spec.Status = StatusPhaseBlueprintApplied
+	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
+}
+
+func (spec *BlueprintSpec) MarkCompleted() {
+	spec.Status = StatusPhaseCompleted
+	spec.Events = append(spec.Events, CompletedEvent{})
 }

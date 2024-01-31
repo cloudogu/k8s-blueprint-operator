@@ -2,16 +2,22 @@ package domain
 
 import (
 	"fmt"
-	"slices"
-	"strings"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type Event interface {
 	Name() string
 	Message() string
+}
+
+type BlueprintDryRunEvent struct{}
+
+func (b BlueprintDryRunEvent) Name() string {
+	return "BlueprintDryRun"
+}
+
+func (b BlueprintDryRunEvent) Message() string {
+	return "Executed blueprint in dry run mode"
 }
 
 type BlueprintSpecInvalidEvent struct {
@@ -46,41 +52,6 @@ func (b BlueprintSpecValidatedEvent) Message() string {
 	return ""
 }
 
-type DogusHealthyEvent struct{}
-
-func (d DogusHealthyEvent) Name() string {
-	return "DogusHealthy"
-}
-
-func (d DogusHealthyEvent) Message() string {
-	return ""
-}
-
-type IgnoreDoguHealthEvent struct{}
-
-func (i IgnoreDoguHealthEvent) Name() string {
-	return "IgnoreDoguHealth"
-}
-
-func (i IgnoreDoguHealthEvent) Message() string {
-	return "ignore dogu health flag is set; ignoring dogu health"
-}
-
-type DogusUnhealthyEvent struct {
-	HealthResult ecosystem.DoguHealthResult
-}
-
-func (d DogusUnhealthyEvent) Name() string {
-	return "DogusUnhealthy"
-}
-
-func (d DogusUnhealthyEvent) Message() string {
-	unhealthyDogus := util.Map(d.HealthResult.UnhealthyDogus, ecosystem.UnhealthyDogu.String)
-	slices.Sort(unhealthyDogus)
-	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus),
-		strings.Join(unhealthyDogus, ", "))
-}
-
 type EffectiveBlueprintCalculatedEvent struct {
 	Result EffectiveBlueprint
 }
@@ -105,4 +76,92 @@ func (s StateDiffDeterminedEvent) Message() string {
 	toInstall, toUpgrade, toUninstall, others := s.StateDiff.DoguDiffs.Statistics()
 	return fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others)",
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
+}
+
+type EcosystemHealthyUpfrontEvent struct {
+	doguHealthIgnored bool
+}
+
+func (d EcosystemHealthyUpfrontEvent) Name() string {
+	return "EcosystemHealthyUpfront"
+}
+
+func (d EcosystemHealthyUpfrontEvent) Message() string {
+	return fmt.Sprintf("dogu health ignored: %t", d.doguHealthIgnored)
+}
+
+type EcosystemUnhealthyUpfrontEvent struct {
+	HealthResult ecosystem.HealthResult
+}
+
+func (d EcosystemUnhealthyUpfrontEvent) Name() string {
+	return "EcosystemUnhealthyUpfront"
+}
+
+func (d EcosystemUnhealthyUpfrontEvent) Message() string {
+	return d.HealthResult.String()
+}
+
+type InProgressEvent struct{}
+
+func (e InProgressEvent) Name() string {
+	return "InProgress"
+}
+
+func (e InProgressEvent) Message() string {
+	return ""
+}
+
+type ExecutionFailedEvent struct {
+	err error
+}
+
+func (e ExecutionFailedEvent) Name() string {
+	return "ExecutionFailed"
+}
+
+func (e ExecutionFailedEvent) Message() string {
+	return e.err.Error()
+}
+
+type BlueprintAppliedEvent struct{}
+
+func (e BlueprintAppliedEvent) Name() string {
+	return "BlueprintApplied"
+}
+
+func (e BlueprintAppliedEvent) Message() string {
+	return "waiting for ecosystem health"
+}
+
+type EcosystemHealthyAfterwardsEvent struct{}
+
+func (e EcosystemHealthyAfterwardsEvent) Name() string {
+	return "EcosystemHealthyAfterwards"
+}
+
+func (e EcosystemHealthyAfterwardsEvent) Message() string {
+	return ""
+}
+
+type EcosystemUnhealthyAfterwardsEvent struct {
+	HealthResult ecosystem.HealthResult
+}
+
+func (e EcosystemUnhealthyAfterwardsEvent) Name() string {
+	return "EcosystemUnhealthyAfterwards"
+}
+
+func (e EcosystemUnhealthyAfterwardsEvent) Message() string {
+	return e.HealthResult.String()
+}
+
+type CompletedEvent struct{}
+
+func (e CompletedEvent) Name() string {
+	return "completed"
+}
+
+func (e CompletedEvent) Message() string {
+	return ""
 }

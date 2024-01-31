@@ -22,25 +22,25 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Namespace:   "official",
 					Name:        "postgresql",
-					Version:     version3_2_1_1,
+					Version:     version3211,
 					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_1,
+					Version:   version3211,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionNone,
@@ -52,7 +52,7 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Namespace:   "official",
 					Name:        "postgresql",
-					Version:     version3_2_1_1,
+					Version:     version3211,
 					TargetState: TargetStatePresent,
 				},
 				installedDogu: nil,
@@ -64,7 +64,7 @@ func Test_determineDoguDiff(t *testing.T) {
 				},
 				Expected: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionInstall,
@@ -80,14 +80,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_1,
+					Version:   version3211,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
@@ -102,25 +102,25 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Namespace:   "premium",
 					Name:        "postgresql",
-					Version:     version3_2_1_1,
+					Version:     version3211,
 					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_1,
+					Version:   version3211,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "premium",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionSwitchNamespace,
@@ -132,25 +132,25 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Namespace:   "official",
 					Name:        "postgresql",
-					Version:     version3_2_1_2,
+					Version:     version3212,
 					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_1,
+					Version:   version3211,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_2,
+					Version:           version3212,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionUpgrade,
@@ -162,25 +162,25 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Namespace:   "official",
 					Name:        "postgresql",
-					Version:     version3_2_1_1,
+					Version:     version3211,
 					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_2,
+					Version:   version3212,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_2,
+					Version:           version3212,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionDowngrade,
@@ -193,19 +193,19 @@ func Test_determineDoguDiff(t *testing.T) {
 				installedDogu: &ecosystem.DoguInstallation{
 					Namespace: "official",
 					Name:      "postgresql",
-					Version:   version3_2_1_1,
+					Version:   version3211,
 				},
 			},
 			want: DoguDiff{
 				DoguName: "postgresql",
 				Actual: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
 				NeededAction: ActionNone,
@@ -261,7 +261,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					{
 						Namespace:   "official",
 						Name:        "postgresql",
-						Version:     version3_2_1_1,
+						Version:     version3211,
 						TargetState: TargetStatePresent,
 					},
 				},
@@ -275,7 +275,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					},
 					Expected: DoguDiffState{
 						Namespace:         "official",
-						Version:           version3_2_1_1,
+						Version:           version3211,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionInstall,
@@ -290,7 +290,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					"postgresql": {
 						Namespace: "official",
 						Name:      "postgresql",
-						Version:   version3_2_1_1,
+						Version:   version3211,
 					},
 				},
 			},
@@ -299,12 +299,12 @@ func Test_determineDoguDiffs(t *testing.T) {
 					DoguName: "postgresql",
 					Actual: DoguDiffState{
 						Namespace:         "official",
-						Version:           version3_2_1_1,
+						Version:           version3211,
 						InstallationState: TargetStatePresent,
 					},
 					Expected: DoguDiffState{
 						Namespace:         "official",
-						Version:           version3_2_1_1,
+						Version:           version3211,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionNone,
@@ -318,7 +318,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					{
 						Namespace:   "official",
 						Name:        "postgresql",
-						Version:     version3_2_1_2,
+						Version:     version3212,
 						TargetState: TargetStatePresent,
 					},
 				},
@@ -326,7 +326,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					"postgresql": {
 						Namespace: "official",
 						Name:      "postgresql",
-						Version:   version3_2_1_1,
+						Version:   version3211,
 					},
 				},
 			},
@@ -335,12 +335,12 @@ func Test_determineDoguDiffs(t *testing.T) {
 					DoguName: "postgresql",
 					Actual: DoguDiffState{
 						Namespace:         "official",
-						Version:           version3_2_1_1,
+						Version:           version3211,
 						InstallationState: TargetStatePresent,
 					},
 					Expected: DoguDiffState{
 						Namespace:         "official",
-						Version:           version3_2_1_2,
+						Version:           version3212,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionUpgrade,
@@ -403,4 +403,39 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
+}
+
+func TestDoguDiff_String(t *testing.T) {
+	actual := DoguDiffState{
+		Namespace:         "official",
+		Version:           version3211,
+		InstallationState: TargetStatePresent,
+	}
+	expected := DoguDiffState{
+		Namespace:         "premium",
+		Version:           version3212,
+		InstallationState: TargetStatePresent,
+	}
+	diff := &DoguDiff{
+		DoguName:     "postgresql",
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: ActionInstall,
+	}
+
+	assert.Equal(t, "{"+
+		"DoguName: \"postgresql\", "+
+		"Actual: {Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}, "+
+		"Expected: {Version: \"3.2.1-2\", Namespace: \"premium\", InstallationState: \"present\"}, "+
+		"NeededAction: \"install\""+
+		"}", diff.String())
+}
+func TestDoguDiffState_String(t *testing.T) {
+	diff := &DoguDiffState{
+		Namespace:         "official",
+		Version:           version3211,
+		InstallationState: TargetStatePresent,
+	}
+
+	assert.Equal(t, "{Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}", diff.String())
 }

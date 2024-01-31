@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
@@ -19,7 +21,21 @@ type stateDiffUseCase interface {
 }
 
 type doguInstallationUseCase interface {
-	CheckDoguHealth(ctx context.Context, blueprintId string) error
+	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
+	WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error)
+	ApplyDoguStates(ctx context.Context, blueprintId string) error
+}
+
+type applyBlueprintSpecUseCase interface {
+	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
+	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
+	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
+	MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error
+}
+
+type ecosystemHealthUseCase interface {
+	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error)
+	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 
 // interface duplication for mocks
