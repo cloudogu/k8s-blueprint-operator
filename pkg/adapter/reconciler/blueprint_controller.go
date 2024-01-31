@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"github.com/go-logr/logr"
 	"time"
 
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -40,27 +41,32 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	err := r.blueprintChangeHandler.HandleChange(ctx, req.Name)
 
 	if err != nil {
-		logger := logger.WithValues("error", err)
-		switch err.(type) {
-		case *domainservice.InternalError:
-			logger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-			return ctrl.Result{}, err //automatic requeue
-		case *domainservice.ConflictError:
-			logger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
-			return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
-		case *domainservice.NotFoundError:
-			logger.Info("blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-			return ctrl.Result{Requeue: false}, nil
-		case *domain.InvalidBlueprintError:
-			logger.Info("blueprint is invalid, therefore there will be no further evaluation.")
-			return ctrl.Result{Requeue: false}, nil
-		default:
-			logger.Error(err, "an unknown error type occurred. Retry with default backoff")
-			return ctrl.Result{}, err //automatic requeue
-		}
+		return decideRequeueForError(logger, err)
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
+	errLogger := logger.WithValues("error", err)
+
+	switch err.(type) {
+	case *domainservice.InternalError:
+		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
+		return ctrl.Result{}, err //automatic requeue
+	case *domainservice.ConflictError:
+		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
+		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
+	case *domainservice.NotFoundError:
+		errLogger.Info("blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+		return ctrl.Result{Requeue: false}, nil
+	case *domain.InvalidBlueprintError:
+		errLogger.Info("blueprint is invalid, therefore there will be no further evaluation.")
+		return ctrl.Result{Requeue: false}, nil
+	default:
+		errLogger.Error(err, "an unknown error type occurred. Retry with default backoff")
+		return ctrl.Result{}, err //automatic requeue
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
