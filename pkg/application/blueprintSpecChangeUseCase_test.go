@@ -63,6 +63,53 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseCompleted, blueprintSpec.Status)
 	})
 
+	t.Run("should return nil and not handle blueprint spec on dry run", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		blueprintSpec := &domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseNew,
+			Config: domain.BlueprintConfiguration{DryRun: true},
+		}
+
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseStaticallyValidated
+			})
+		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
+			})
+		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseValidated
+			})
+		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseStateDiffDetermined
+			})
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
+			})
+		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil)
+
+		// when
+		err := useCase.HandleChange(testCtx, "testBlueprint1")
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseEcosystemHealthyUpfront, blueprintSpec.Status)
+	})
+
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)

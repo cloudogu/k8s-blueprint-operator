@@ -48,7 +48,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		WithName("BlueprintSpecChangeUseCase.HandleChange").
 		WithValues("blueprintId", blueprintId)
 
-	logger.Info("getting changed blueprint") //log with id
+	logger.Info("getting changed blueprint") // log with id
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		errMsg := "cannot load blueprint spec"
@@ -57,7 +57,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	}
 
 	logger = logger.WithValues("blueprintStatus", blueprintSpec.Status)
-	logger.Info("handle blueprint") //log with id and status values.
+	logger.Info("handle blueprint") // log with id and status values.
 
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	switch blueprintSpec.Status {
@@ -80,15 +80,15 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseInProgress:
-		//should only happen if the system was interrupted, normally this state will be updated to completed or failed
+		// should only happen if the system was interrupted, normally this state will be updated to completed or failed
 		return useCase.handleInProgress(ctx, blueprintSpec)
 	case domain.StatusPhaseBlueprintApplied:
 		return useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemHealthyAfterwards:
-		//deactivate maintenance mode
+		// deactivate maintenance mode
 		return nil
 	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
-		//deactivate maintenance mode and set status to failed
+		// deactivate maintenance mode and set status to failed
 		return nil
 	case domain.StatusPhaseCompleted:
 		return nil
@@ -148,6 +148,15 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Contex
 	err := useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprintId)
 	if err != nil {
 		return err
+	}
+
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	if blueprintSpec.Config.DryRun {
+		return nil
 	}
 
 	return useCase.HandleChange(ctx, blueprintId)
