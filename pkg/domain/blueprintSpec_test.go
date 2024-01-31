@@ -484,16 +484,43 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	}
 }
 
-func TestBlueprintSpec_MarkInProgress(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	// when
-	spec.MarkInProgress()
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseInProgress,
-		Events: []Event{InProgressEvent{}},
+func TestBlueprintSpec_StartApplying(t *testing.T) {
+	t.Run("success without dry run", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+
+		// when
+		spec.StartApplying()
+
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseInProgress,
+			Events: []Event{InProgressEvent{}},
+		})
 	})
+
+	t.Run("should not change status and add dry run event", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Config: BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+
+		// when
+		spec.StartApplying()
+
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: true,
+			},
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Events: []Event{BlueprintDryRunEvent{}},
+		})
+	})
+
 }
 
 func TestBlueprintSpec_MarkFailed(t *testing.T) {

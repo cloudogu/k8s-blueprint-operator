@@ -33,10 +33,11 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markInProgress(testCtx, spec)
+		shouldApply, err := useCase.startApplying(testCtx, spec)
 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
+		assert.True(t, shouldApply)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -49,10 +50,11 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markInProgress(testCtx, spec)
+		shouldApply, err := useCase.startApplying(testCtx, spec)
 
 		require.ErrorIs(t, err, assert.AnError)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
+		assert.False(t, shouldApply)
 	})
 }
 
@@ -224,7 +226,8 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.Error(t, err)
-		assert.ErrorIs(t, assert.AnError, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot mark blueprint as in progress")
 	})
 
 	t.Run("cannot load spec", func(t *testing.T) {

@@ -275,9 +275,15 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 	}
 }
 
-func (spec *BlueprintSpec) MarkInProgress() {
-	spec.Status = StatusPhaseInProgress
-	spec.Events = append(spec.Events, InProgressEvent{})
+func (spec *BlueprintSpec) StartApplying() (shouldApply bool) {
+	if spec.Config.DryRun {
+		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
+	} else {
+		spec.Status = StatusPhaseInProgress
+		spec.Events = append(spec.Events, InProgressEvent{})
+		shouldApply = true
+	}
+	return
 }
 
 func (spec *BlueprintSpec) MarkFailed(err error) {
