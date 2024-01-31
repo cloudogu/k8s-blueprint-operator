@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"github.com/go-logr/logr"
 	"time"
 
@@ -50,22 +51,26 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	errLogger := logger.WithValues("error", err)
 
-	switch err.(type) {
-	case *domainservice.InternalError:
+	var internalError *domainservice.InternalError
+	var conflictError *domainservice.ConflictError
+	var notFoundError *domainservice.NotFoundError
+	var invalidBlueprintError *domain.InvalidBlueprintError
+	switch {
+	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-		return ctrl.Result{}, err //automatic requeue
-	case *domainservice.ConflictError:
+		return ctrl.Result{}, err //automatic requeue because of non-nil err
+	case errors.As(err, &conflictError):
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
-	case *domainservice.NotFoundError:
-		errLogger.Info("blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+	case errors.As(err, &notFoundError):
+		errLogger.Info("Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
 		return ctrl.Result{Requeue: false}, nil
-	case *domain.InvalidBlueprintError:
-		errLogger.Info("blueprint is invalid, therefore there will be no further evaluation.")
+	case errors.As(err, &invalidBlueprintError):
+		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{Requeue: false}, nil
 	default:
-		errLogger.Error(err, "an unknown error type occurred. Retry with default backoff")
-		return ctrl.Result{}, err //automatic requeue
+		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
+		return ctrl.Result{}, err //automatic requeue because of non-nil err
 	}
 }
 
