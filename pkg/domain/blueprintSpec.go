@@ -36,12 +36,14 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
+	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
+	StatusPhaseInvalid StatusPhase = "invalid"
+	// StatusPhaseMaintenanceModeActivated shows that the maintenance mode was activated successfully.
+	StatusPhaseMaintenanceModeActivated StatusPhase = "maintenanceModeActivated"
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
 	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
-	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
-	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
 	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
@@ -253,6 +255,15 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
+func (spec *BlueprintSpec) ShouldBeApplied() bool {
+	return !spec.Config.DryRun
+}
+
+func (spec *BlueprintSpec) MarkMaintenanceModeActivated() {
+	spec.Status = StatusPhaseMaintenanceModeActivated
+	spec.Events = append(spec.Events, MaintenanceModeActivatedEvent{})
+}
+
 func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
 	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
@@ -276,7 +287,7 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 }
 
 func (spec *BlueprintSpec) StartApplying() (shouldApply bool) {
-	if spec.Config.DryRun {
+	if !spec.ShouldBeApplied() {
 		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
 	} else {
 		spec.Status = StatusPhaseInProgress
@@ -298,5 +309,5 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 
 func (spec *BlueprintSpec) MarkCompleted() {
 	spec.Status = StatusPhaseCompleted
-	spec.Events = append(spec.Events, CompletedEvent{})
+	spec.Events = append(spec.Events, MaintenanceModeDeactivatedEvent{}, CompletedEvent{})
 }

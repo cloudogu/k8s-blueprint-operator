@@ -78,6 +78,26 @@ func (s StateDiffDeterminedEvent) Message() string {
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
 }
 
+type MaintenanceModeActivatedEvent struct{}
+
+func (e MaintenanceModeActivatedEvent) Name() string {
+	return "MaintenanceModeActivated"
+}
+
+func (e MaintenanceModeActivatedEvent) Message() string {
+	return ""
+}
+
+type MaintenanceModeDeactivatedEvent struct{}
+
+func (e MaintenanceModeDeactivatedEvent) Name() string {
+	return "MaintenanceModeDeactivated"
+}
+
+func (e MaintenanceModeDeactivatedEvent) Message() string {
+	return ""
+}
+
 type EcosystemHealthyUpfrontEvent struct {
 	doguHealthIgnored bool
 }

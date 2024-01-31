@@ -12,20 +12,23 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo               domainservice.BlueprintSpecRepository
-	doguInstallUseCase doguInstallationUseCase
-	healthUseCase      ecosystemHealthUseCase
+	repo                   domainservice.BlueprintSpecRepository
+	doguInstallUseCase     doguInstallationUseCase
+	healthUseCase          ecosystemHealthUseCase
+	maintenanceModeAdapter domainservice.MaintenanceMode
 }
 
 func NewApplyBlueprintSpecUseCase(
 	repo domainservice.BlueprintSpecRepository,
 	doguInstallUseCase doguInstallationUseCase,
 	healthUseCase ecosystemHealthUseCase,
+	maintenanceModeAdapter domainservice.MaintenanceMode,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
-		repo:               repo,
-		doguInstallUseCase: doguInstallUseCase,
-		healthUseCase:      healthUseCase,
+		repo:                   repo,
+		doguInstallUseCase:     doguInstallUseCase,
+		healthUseCase:          healthUseCase,
+		maintenanceModeAdapter: maintenanceModeAdapter,
 	}
 }
 
@@ -85,7 +88,38 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return nil
 }
 
-// TODO: activate maintenance mode
+func (useCase *ApplyBlueprintSpecUseCase) ActivateMaintenanceMode(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.ActivateMaintenanceMode").
+		WithValues("blueprintId", blueprintId)
+
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q to activate maintenance mode: %w", blueprintId, err)
+	}
+
+	if !blueprintSpec.ShouldBeApplied() {
+		logger.Info("stop before activating maintenance mode as blueprint should not be applied")
+		return nil
+	}
+
+	logger.Info("activate maintenance mode")
+	err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
+		Title: "Blueprint getting applied",
+		Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied",
+	})
+	if err != nil {
+		return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
+	}
+
+	blueprintSpec.MarkMaintenanceModeActivated()
+
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot save blueprint spec %q after activating the maintenance mode: %w", blueprintId, err)
+	}
+
+	return nil
+}
 
 // ApplyBlueprintSpec applies the expected state to the ecosystem. It will stop if any unexpected error happens and sets blueprint status.
 // Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or other resources or

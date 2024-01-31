@@ -556,7 +556,10 @@ func TestBlueprintSpec_MarkCompleted(t *testing.T) {
 	// then
 	assert.Equal(t, spec, &BlueprintSpec{
 		Status: StatusPhaseCompleted,
-		Events: []Event{CompletedEvent{}},
+		Events: []Event{
+			MaintenanceModeDeactivatedEvent{},
+			CompletedEvent{},
+		},
 	})
 }
 
@@ -620,4 +623,34 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 			assert.Equal(t, tt.expectedEvents, spec.Events)
 		})
 	}
+}
+
+func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
+	t.Run("should be applied", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: false,
+			},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should not be applied due to dry run", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+
+}
+
+func TestBlueprintSpec_MarkMaintenanceModeActivated(t *testing.T) {
+	spec := &BlueprintSpec{}
+
+	spec.MarkMaintenanceModeActivated()
+
+	assert.Equal(t, StatusPhaseMaintenanceModeActivated, spec.Status)
+	require.Equal(t, 1, len(spec.Events))
+	assert.Equal(t, MaintenanceModeActivatedEvent{}, spec.Events[0])
 }

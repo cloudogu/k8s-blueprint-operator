@@ -82,6 +82,12 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{
+			name:            "Maintenance mode activated",
+			event:           MaintenanceModeActivatedEvent{},
+			expectedName:    "MaintenanceModeActivated",
+			expectedMessage: "",
+		},
+		{
 			name:            "In progress",
 			event:           InProgressEvent{},
 			expectedName:    "InProgress",
@@ -92,6 +98,12 @@ func TestEvents(t *testing.T) {
 			event:           BlueprintAppliedEvent{},
 			expectedName:    "BlueprintApplied",
 			expectedMessage: "waiting for ecosystem health",
+		},
+		{
+			name:            "Maintenance mode deactivated",
+			event:           MaintenanceModeDeactivatedEvent{},
+			expectedName:    "MaintenanceModeDeactivated",
+			expectedMessage: "",
 		},
 		{
 			name:            "completed",
