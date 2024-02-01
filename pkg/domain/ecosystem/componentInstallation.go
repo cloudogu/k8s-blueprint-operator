@@ -57,3 +57,18 @@ const (
 	// In this state the component can be healthy.
 	ComponentStatusTryToDelete = "tryToDelete"
 )
+
+// InstallComponent is a factory for new ComponentInstallation's.
+func InstallComponent(namespace, componentName string, version core.Version) *ComponentInstallation {
+	return &ComponentInstallation{
+		Namespace: namespace,
+		Name:      componentName,
+		Version:   version,
+		// DeployNamespace:     deployNamespace,
+		// ValuesYamlOverwrite: valuesYamlOverwrite,
+	}
+}
+
+func (ci *ComponentInstallation) Upgrade(version core.Version) {
+	ci.Version = version
+}

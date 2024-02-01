@@ -31,10 +31,10 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
-	Name         string
-	Actual       ComponentDiffState
-	Expected     ComponentDiffState
-	NeededAction Action
+	ComponentName string
+	Actual        ComponentDiffState
+	Expected      ComponentDiffState
+	NeededAction  Action
 }
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
@@ -46,8 +46,8 @@ type ComponentDiffState struct {
 // String returns a string representation of the DoguDiff.
 func (diff *ComponentDiff) String() string {
 	return fmt.Sprintf(
-		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
-		diff.Name,
+		"{ComponentName: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		diff.ComponentName,
 		diff.Actual.String(),
 		diff.Expected.String(),
 		diff.NeededAction,
@@ -115,10 +115,10 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	}
 
 	return ComponentDiff{
-		Name:         componentName,
-		Expected:     expectedState,
-		Actual:       actualState,
-		NeededAction: getNextComponentAction(logger, expectedState, actualState),
+		ComponentName: componentName,
+		Expected:      expectedState,
+		Actual:        actualState,
+		NeededAction:  getNextComponentAction(logger, expectedState, actualState),
 	}
 }
 

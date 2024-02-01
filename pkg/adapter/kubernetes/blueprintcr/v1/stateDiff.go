@@ -23,7 +23,7 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 
 	componentDiffsV1 := make(map[string]ComponentDiff, len(domainModel.ComponentDiffs))
 	for _, componentDiff := range domainModel.ComponentDiffs {
-		componentDiffsV1[componentDiff.Name] = convertToComponentDiffDTO(componentDiff)
+		componentDiffsV1[componentDiff.ComponentName] = convertToComponentDiffDTO(componentDiff)
 	}
 
 	return StateDiff{

@@ -37,7 +37,7 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 	if err != nil {
 		return ecosystem.DoguHealthResult{}, fmt.Errorf("cannot evaluate dogu health states: %w", err)
 	}
-	//accept experimental maps.Values as we can implement it ourselves in a minute
+	// accept experimental maps.Values as we can implement it ourselves in a minute
 	return ecosystem.CalculateDoguHealthResult(maps.Values(installedDogus)), nil
 }
 
@@ -88,7 +88,7 @@ func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blu
 		return fmt.Errorf("cannot load blueprint spec %q to install dogus: %w", blueprintId, err)
 	}
 
-	//DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
+	// DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
 	dogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot load dogu installations to apply dogu state: %w", err)

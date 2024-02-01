@@ -48,6 +48,12 @@ type doguInstallationRepository interface {
 
 //nolint:unused
 //goland:noinspection GoUnusedType
+type componentInstallationRepository interface {
+	domainservice.ComponentInstallationRepository
+}
+
+//nolint:unused
+//goland:noinspection GoUnusedType
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
