@@ -20,7 +20,8 @@ spec:
     ],
     "components": [
       {
-        "name":"k8s/k8s-dogu-operator",
+        "distributionNamespace": "k8s",
+        "name":"k8s-dogu-operator",
         "version":"0.41.0",
         "targetState":"present"
       }

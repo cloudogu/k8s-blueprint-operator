@@ -10,21 +10,21 @@ import (
 var version1_2_3, _ = core.ParseVersion("1.2.3")
 
 func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
-	component := Component{Name: "present-component", TargetState: TargetStatePresent}
+	component := Component{Name: "present-component", DistributionNamespace: "k8s", TargetState: TargetStatePresent}
 
 	err := component.Validate()
 
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "component version must not be empty")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `version of component "present-component" must not be empty`)
 }
 
 func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
-	component := Component{Name: "present/component", Version: core.Version{}, TargetState: TargetStatePresent}
+	component := Component{Name: "present-component", Version: core.Version{}, TargetState: TargetStatePresent}
 
 	err := component.Validate()
 
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "component version must not be empty")
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "version of component \"present-component\" must not be empty")
 }
 
 func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
@@ -32,7 +32,7 @@ func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
 
 	err := component.Validate()
 
-	require.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
@@ -41,16 +41,16 @@ func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
 
 	err := component.Validate()
 
-	require.NotNil(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "component name must not be empty")
 }
 
 func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) {
-	component := Component{Name: "present-component", Version: version1_2_3}
+	component := Component{Name: "present-component", Version: version1_2_3, DistributionNamespace: "k8s"}
 
 	err := component.Validate()
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 }
 
 func Test_validateComponents_missingComponentVersionOkayForAbsent(t *testing.T) {
@@ -58,5 +58,5 @@ func Test_validateComponents_missingComponentVersionOkayForAbsent(t *testing.T) 
 
 	err := component.Validate()
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 }

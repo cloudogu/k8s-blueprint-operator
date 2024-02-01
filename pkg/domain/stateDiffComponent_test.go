@@ -190,19 +190,20 @@ func TestComponentDiff_String(t *testing.T) {
 
 	assert.Equal(t, "{"+
 		"Name: \"my-component\", "+
-		"Actual: {Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
-		"Expected: {Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
+		"Actual: {DistributionNamespace: \"\", Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
+		"Expected: {DistributionNamespace: \"\", Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
 		"NeededAction: \"install\""+
 		"}", diff.String())
 }
 
 func TestComponentDiffState_String(t *testing.T) {
 	diff := &ComponentDiffState{
-		Version:           version3211,
-		InstallationState: TargetStatePresent,
+		DistributionNamespace: "k8s",
+		Version:               version3211,
+		InstallationState:     TargetStatePresent,
 	}
 
-	assert.Equal(t, "{Version: \"3.2.1-1\", InstallationState: \"present\"}", diff.String())
+	assert.Equal(t, `{DistributionNamespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
 }
 
 func mockTargetComponent(version core.Version, state TargetState) *Component {

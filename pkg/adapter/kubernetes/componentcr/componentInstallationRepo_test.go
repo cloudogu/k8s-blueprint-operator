@@ -20,7 +20,10 @@ import (
 
 var testCtx = context.Background()
 
-const testComponentName = "my-component"
+const (
+	testComponentName         = "my-component"
+	testDistributionNamespace = "k8s"
+)
 
 func Test_componentInstallationRepo_GetAll(t *testing.T) {
 	t.Run("should return error when k8s client fails generically", func(t *testing.T) {
@@ -42,8 +45,9 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		listWithErroneousElement := &compV1.ComponentList{Items: []compV1.Component{{
 			Spec: compV1.ComponentSpec{
-				Name:    testComponentName,
-				Version: "a-b.c:d@1.2@parse-fail-here",
+				Name:      testComponentName,
+				Namespace: testDistributionNamespace,
+				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
 		}}}
 		mockRepo.EXPECT().List(testCtx, mock.Anything).Return(listWithErroneousElement, nil)
@@ -68,8 +72,9 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 					ResourceVersion: "42",
 				},
 				Spec: compV1.ComponentSpec{
-					Name:    testComponentName,
-					Version: "1.2.3-4",
+					Name:      testComponentName,
+					Namespace: testDistributionNamespace,
+					Version:   "1.2.3-4",
 				},
 				Status: compV1.ComponentStatus{
 					Status: compV1.ComponentStatusInstalled,
@@ -88,13 +93,15 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		expected := map[string]*ecosystem.ComponentInstallation{}
 		version, _ := core.ParseVersion("1.2.3-4")
 		expected[testComponentName] = &ecosystem.ComponentInstallation{
-			Name:               testComponentName,
-			Version:            version,
-			Status:             "installed",
-			Health:             "",
-			PersistenceContext: nil,
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               version,
+			Status:                "installed",
+			Health:                "",
+			PersistenceContext:    nil,
 		}
 		assert.Equal(t, expected[testComponentName].Name, actual[testComponentName].Name)
+		assert.Equal(t, expected[testComponentName].DistributionNamespace, actual[testComponentName].DistributionNamespace)
 		assert.Equal(t, expected[testComponentName].Status, actual[testComponentName].Status)
 		assert.Equal(t, expected[testComponentName].Version, actual[testComponentName].Version)
 		assert.Equal(t, expected[testComponentName].Health, actual[testComponentName].Health)
@@ -125,8 +132,9 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		erroneousComponent := &compV1.Component{
 			Spec: compV1.ComponentSpec{
-				Name:    testComponentName,
-				Version: "a-b.c:d@1.2@parse-fail-here",
+				Name:      testComponentName,
+				Namespace: testDistributionNamespace,
+				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
 		}
 		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(erroneousComponent, nil)
@@ -180,8 +188,9 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 				ResourceVersion: "42",
 			},
 			Spec: compV1.ComponentSpec{
-				Name:    testComponentName,
-				Version: "1.2.3-4",
+				Name:      testComponentName,
+				Namespace: testDistributionNamespace,
+				Version:   "1.2.3-4",
 			},
 			Status: compV1.ComponentStatus{
 				Status: compV1.ComponentStatusInstalled,
@@ -198,13 +207,17 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 
 		version, _ := core.ParseVersion("1.2.3-4")
 		expected := ecosystem.ComponentInstallation{
-			Name:               testComponentName,
-			Version:            version,
-			Status:             "installed",
-			Health:             "",
-			PersistenceContext: nil,
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               version,
+			Status:                "installed",
+			Health:                "",
+			PersistenceContext:    nil,
 		}
 		assert.Equal(t, expected.Name, actual.Name)
+		assert.Equal(t, expected.Name, testComponentName)
+		assert.Equal(t, expected.DistributionNamespace, actual.DistributionNamespace)
+		assert.Equal(t, expected.DistributionNamespace, testDistributionNamespace)
 		assert.Equal(t, expected.Status, actual.Status)
 		assert.Equal(t, expected.Version, actual.Version)
 		assert.Equal(t, expected.Health, actual.Health)

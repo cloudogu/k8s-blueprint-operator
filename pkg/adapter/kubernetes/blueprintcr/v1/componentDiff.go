@@ -44,12 +44,12 @@ type ComponentAction string
 func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	return ComponentDiff{
 		Actual: ComponentDiffState{
-			DistributionNamespace: "", // TODO resolve after merge with develop
+			DistributionNamespace: domainModel.Actual.DistributionNamespace,
 			Version:               domainModel.Actual.Version.Raw,
 			InstallationState:     domainModel.Actual.InstallationState.String(),
 		},
 		Expected: ComponentDiffState{
-			DistributionNamespace: "", // TODO resolve after merge with develop
+			DistributionNamespace: domainModel.Expected.DistributionNamespace,
 			Version:               domainModel.Expected.Version.Raw,
 			InstallationState:     domainModel.Expected.InstallationState.String(),
 		},
@@ -86,6 +86,9 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}
 
+	actualDistributionNamespace := dto.Actual.DistributionNamespace
+	expectedDistributionNamespace := dto.Expected.DistributionNamespace
+
 	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr)
 	if err != nil {
 		return domain.ComponentDiff{}, fmt.Errorf("failed to convert component diff dto %q to domain model: %w", componentName, err)
@@ -94,12 +97,14 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	return domain.ComponentDiff{
 		Name: componentName,
 		Actual: domain.ComponentDiffState{
-			Version:           actualVersion,
-			InstallationState: actualState,
+			DistributionNamespace: actualDistributionNamespace,
+			Version:               actualVersion,
+			InstallationState:     actualState,
 		},
 		Expected: domain.ComponentDiffState{
-			Version:           expectedVersion,
-			InstallationState: expectedState,
+			DistributionNamespace: expectedDistributionNamespace,
+			Version:               expectedVersion,
+			InstallationState:     expectedState,
 		},
 		NeededAction: domain.Action(dto.NeededAction),
 	}, nil

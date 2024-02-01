@@ -110,8 +110,9 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	} else {
 		componentName = installedComponent.Name
 		actualState = ComponentDiffState{
-			Version:           installedComponent.Version,
-			InstallationState: TargetStatePresent,
+			DistributionNamespace: installedComponent.DistributionNamespace,
+			Version:               installedComponent.Version,
+			InstallationState:     TargetStatePresent,
 		}
 	}
 
@@ -120,9 +121,9 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	} else {
 		componentName = blueprintComponent.Name
 		expectedState = ComponentDiffState{
-			//DistributionNamespace: // TODO Fix after develop merge
-			Version:           blueprintComponent.Version,
-			InstallationState: blueprintComponent.TargetState,
+			DistributionNamespace: blueprintComponent.DistributionNamespace,
+			Version:               blueprintComponent.Version,
+			InstallationState:     blueprintComponent.TargetState,
 		}
 	}
 
