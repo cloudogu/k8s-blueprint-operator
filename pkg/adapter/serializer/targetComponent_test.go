@@ -31,8 +31,8 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "normal component",
-			args:    args{components: []TargetComponent{{Name: "k8s-dogu-operator", Version: version3_2_1_1.Raw, TargetState: "present"}}},
-			want:    []domain.Component{{Name: "k8s-dogu-operator", Version: version3_2_1_1, TargetState: 0}},
+			args:    args{components: []TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}}},
+			want:    []domain.Component{{Name: "k8s-dogu-operator", Version: version3211, TargetState: 0}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -43,7 +43,7 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "unknown target state",
-			args:    args{components: []TargetComponent{{Name: "k8s-dogu-operator", Version: version3_2_1_1.Raw, TargetState: "unknown"}}},
+			args:    args{components: []TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -83,8 +83,8 @@ func TestConvertToComponentDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", Version: version3_2_1_1, TargetState: domain.TargetStatePresent}}},
-			want:    []TargetComponent{{Name: "k8s-dogu-operator", Version: version3_2_1_1.Raw, TargetState: "present"}},
+			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", Version: version3211, TargetState: domain.TargetStatePresent}}},
+			want:    []TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},
 	}

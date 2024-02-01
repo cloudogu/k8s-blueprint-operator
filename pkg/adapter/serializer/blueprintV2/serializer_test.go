@@ -48,7 +48,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
 					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+					{Name: "dogu-operator", Version: version3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","components":[{"name":"blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`,
@@ -151,7 +151,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			domain.Blueprint{
 				Components: []domain.Component{
 					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+					{Name: "dogu-operator", Version: version3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,
