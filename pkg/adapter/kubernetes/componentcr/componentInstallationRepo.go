@@ -62,7 +62,7 @@ func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*
 		componentInstallations[componentCr.Name] = cr
 	}
 
-	return nil, nil
+	return componentInstallations, nil
 }
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
