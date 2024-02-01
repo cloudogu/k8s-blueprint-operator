@@ -8,14 +8,13 @@ import (
 )
 
 type BlueprintSpec struct {
-	Id                   string
-	Blueprint            Blueprint
-	BlueprintMask        BlueprintMask
-	EffectiveBlueprint   EffectiveBlueprint
-	StateDiff            StateDiff
-	BlueprintUpgradePlan BlueprintUpgradePlan
-	Config               BlueprintConfiguration
-	Status               StatusPhase
+	Id                 string
+	Blueprint          Blueprint
+	BlueprintMask      BlueprintMask
+	EffectiveBlueprint EffectiveBlueprint
+	StateDiff          StateDiff
+	Config             BlueprintConfiguration
+	Status             StatusPhase
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -38,14 +37,18 @@ const (
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
 	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
 	StatusPhaseInvalid StatusPhase = "invalid"
-	// StatusPhaseMaintenanceModeActivated shows that the maintenance mode was activated successfully.
-	StatusPhaseMaintenanceModeActivated StatusPhase = "maintenanceModeActivated"
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
 	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
+
+	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
+	// were successful.
+	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
+	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
+	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
 	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
 	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
 	// StatusPhaseEcosystemHealthyAfterwards shows that the ecosystem got healthy again after applying the blueprint.
@@ -259,9 +262,9 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 	return !spec.Config.DryRun
 }
 
-func (spec *BlueprintSpec) MarkMaintenanceModeActivated() {
-	spec.Status = StatusPhaseMaintenanceModeActivated
-	spec.Events = append(spec.Events, MaintenanceModeActivatedEvent{})
+func (spec *BlueprintSpec) MarkBlueprintApplicationPreProcessed() {
+	spec.Status = StatusPhaseBlueprintApplicationPreProcessed
+	spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
 }
 
 func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
@@ -276,6 +279,10 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	}
 }
 
+func (spec *BlueprintSpec) StopForDryRun() {
+	spec.Events = append(spec.Events, BlueprintDryRunEvent{})
+}
+
 func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) {
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyAfterwards
@@ -286,19 +293,33 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 	}
 }
 
-func (spec *BlueprintSpec) StartApplying() (shouldApply bool) {
-	if !spec.ShouldBeApplied() {
-		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
-	} else {
-		spec.Status = StatusPhaseInProgress
-		spec.Events = append(spec.Events, InProgressEvent{})
-		shouldApply = true
-	}
-	return
+func (spec *BlueprintSpec) StartApplying() {
+	spec.Status = StatusPhaseInProgress
+	spec.Events = append(spec.Events, InProgressEvent{})
 }
 
-func (spec *BlueprintSpec) MarkFailed(err error) {
-	spec.Status = StatusPhaseFailed
+// CompletePostProcessing is used to mark the blueprint as completed or failed after the post-processing of the
+// blueprint application.
+func (spec *BlueprintSpec) CompletePostProcessing() {
+	switch spec.Status {
+	case StatusPhaseEcosystemHealthyAfterwards:
+		spec.Status = StatusPhaseCompleted
+		spec.Events = append(spec.Events, CompletedEvent{})
+	case StatusPhaseInProgress:
+		spec.Status = StatusPhaseFailed
+		err := errors.New(handleInProgressMsg)
+		spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+	case StatusPhaseEcosystemUnhealthyAfterwards:
+		spec.Status = StatusPhaseFailed
+		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
+	case StatusPhaseBlueprintApplicationFailed:
+		spec.Status = StatusPhaseFailed
+		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
+	}
+}
+
+func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
+	spec.Status = StatusPhaseBlueprintApplicationFailed
 	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
 }
 
@@ -307,7 +328,6 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
 }
 
-func (spec *BlueprintSpec) MarkCompleted() {
-	spec.Status = StatusPhaseCompleted
-	spec.Events = append(spec.Events, MaintenanceModeDeactivatedEvent{}, CompletedEvent{})
-}
+const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
+	" as this state shows that the appliance of the blueprint was interrupted before it could update the state " +
+	"to either " + string(StatusPhaseFailed) + " or " + string(StatusPhaseCompleted)

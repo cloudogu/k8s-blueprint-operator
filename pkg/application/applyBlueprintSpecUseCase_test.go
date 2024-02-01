@@ -33,11 +33,10 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		shouldApply, err := useCase.startApplying(testCtx, spec)
+		err := useCase.startApplying(testCtx, spec)
 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
-		assert.True(t, shouldApply)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -50,15 +49,14 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		shouldApply, err := useCase.startApplying(testCtx, spec)
+		err := useCase.startApplying(testCtx, spec)
 
 		require.ErrorIs(t, err, assert.AnError)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
-		assert.False(t, shouldApply)
 	})
 }
 
-func TestApplyBlueprintSpecUseCase_MarkFailed(t *testing.T) {
+func TestApplyBlueprintSpecUseCase_markBlueprintApplicationFailed(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
 			Status: domain.StatusPhaseInProgress,
@@ -69,10 +67,10 @@ func TestApplyBlueprintSpecUseCase_MarkFailed(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.MarkFailed(testCtx, spec, assert.AnError)
+		err := useCase.markBlueprintApplicationFailed(testCtx, spec, assert.AnError)
 
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -85,10 +83,10 @@ func TestApplyBlueprintSpecUseCase_MarkFailed(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.MarkFailed(testCtx, spec, assert.AnError)
+		err := useCase.markBlueprintApplicationFailed(testCtx, spec, assert.AnError)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 }
 
@@ -126,40 +124,6 @@ func TestApplyBlueprintSpecUseCase_markWaitingForHealthyEcosystem(t *testing.T) 
 	})
 }
 
-func TestApplyBlueprintSpecUseCase_markCompleted(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		installUseCaseMock := newMockDoguInstallationUseCase(t)
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
-
-		err := useCase.markCompleted(testCtx, spec)
-
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseCompleted, spec.Status)
-	})
-
-	t.Run("repo error", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		installUseCaseMock := newMockDoguInstallationUseCase(t)
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
-
-		err := useCase.markCompleted(testCtx, spec)
-
-		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseCompleted, spec.Status)
-	})
-}
-
 func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	statusTransitions := map[int]domain.StatusPhase{
 		1: domain.StatusPhaseInProgress,
@@ -186,48 +150,6 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
-	})
-
-	t.Run("should do nothing and return nil on dry run", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Config: domain.BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(1).Run(func(args mock.Arguments) {
-			spec := args.Get(1).(*domain.BlueprintSpec)
-			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-		})
-
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
-
-		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
-
-		require.NoError(t, err)
-	})
-
-	t.Run("should return error on error updating blueprint spec with dry run event", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Config: domain.BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
-		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError).Times(1).Run(func(args mock.Arguments) {
-			spec := args.Get(1).(*domain.BlueprintSpec)
-			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-		})
-
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
-
-		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
-
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot mark blueprint as in progress")
 	})
 
 	t.Run("cannot load spec", func(t *testing.T) {
@@ -275,10 +197,10 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 
-	t.Run("fail to apply state and fail to mark failed", func(t *testing.T) {
+	t.Run("fail to apply state and fail to mark execution failed", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
 			Status: domain.StatusPhaseEcosystemHealthyUpfront,
 		}
@@ -301,7 +223,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 }
 

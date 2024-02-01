@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"github.com/stretchr/testify/mock"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -50,6 +49,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
+			})
+		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
 			})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
@@ -100,7 +103,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
 			})
-		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil)
+		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil)
 
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
@@ -324,30 +327,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("handle healthy ecosystem upfront", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		doguInstallMock := newMockDoguInstallationUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
-			blueprintSpec.MarkCompleted()
-		})
-		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
-		// then
-		require.NoError(t, err)
-	})
-
 	t.Run("handle unhealthy ecosystem upfront", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -383,14 +362,33 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseInProgress,
 		}
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().MarkFailed(testCtx, blueprintSpec, mock.Anything).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) {
-			assert.ErrorContains(t, err, handleInProgressMsg)
-			blueprintSpec.MarkFailed(err)
-		})
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(nil)
 		// when
 		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, actualErr)
+	})
+
+	t.Run("handle error when blueprint is in progress", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		blueprintSpec := &domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseInProgress,
+		}
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(assert.AnError)
+		// when
+		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
+		// then
+		require.ErrorIs(t, actualErr, assert.AnError)
 	})
 
 	t.Run("handle blueprint applied", func(t *testing.T) {

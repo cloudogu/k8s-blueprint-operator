@@ -650,7 +650,7 @@ func TestBlueprintSpec_MarkMaintenanceModeActivated(t *testing.T) {
 
 	spec.MarkMaintenanceModeActivated()
 
-	assert.Equal(t, StatusPhaseMaintenanceModeActivated, spec.Status)
+	assert.Equal(t, StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, MaintenanceModeActivatedEvent{}, spec.Events[0])
 }

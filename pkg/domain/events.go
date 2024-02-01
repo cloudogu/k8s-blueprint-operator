@@ -78,14 +78,14 @@ func (s StateDiffDeterminedEvent) Message() string {
 		len(s.StateDiff.DoguDiffs), toInstall, toUpgrade, toUninstall, others)
 }
 
-type MaintenanceModeActivatedEvent struct{}
+type BlueprintApplicationPreProcessedEvent struct{}
 
-func (e MaintenanceModeActivatedEvent) Name() string {
-	return "MaintenanceModeActivated"
+func (e BlueprintApplicationPreProcessedEvent) Name() string {
+	return "BlueprintApplicationPreProcessed"
 }
 
-func (e MaintenanceModeActivatedEvent) Message() string {
-	return ""
+func (e BlueprintApplicationPreProcessedEvent) Message() string {
+	return "maintenance mode activated"
 }
 
 type MaintenanceModeDeactivatedEvent struct{}
@@ -141,7 +141,7 @@ func (e ExecutionFailedEvent) Name() string {
 }
 
 func (e ExecutionFailedEvent) Message() string {
-	return e.err.Error()
+	return fmt.Sprintf("maintenance mode deactivated: %s", e.err.Error())
 }
 
 type BlueprintAppliedEvent struct{}
@@ -183,5 +183,5 @@ func (e CompletedEvent) Name() string {
 }
 
 func (e CompletedEvent) Message() string {
-	return ""
+	return "maintenance mode deactivated"
 }
