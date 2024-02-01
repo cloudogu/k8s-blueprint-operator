@@ -31,15 +31,25 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
-	Name         string
-	Actual       ComponentDiffState
-	Expected     ComponentDiffState
+	// Name contains the component's name.
+	Name string
+	// Actual contains that state of a component how it is currently found in the system.
+	Actual ComponentDiffState
+	// Expected contains that desired state of a component how it is supposed to be.
+	Expected ComponentDiffState
+	// NeededAction hints how the component should be handled by the application change automaton in order to reconcile
+	// differences between Actual and Expected in the current system.
 	NeededAction Action
 }
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
 type ComponentDiffState struct {
-	Version           core.Version
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// to be confused with the K8s cluster namespace.
+	DistributionNamespace string
+	// Version contains the component's version.
+	Version core.Version
+	// InstallationState contains the component's target state.
 	InstallationState TargetState
 }
 
@@ -57,7 +67,8 @@ func (diff *ComponentDiff) String() string {
 // String returns a string representation of the DoguDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
-		"{Version: %q, InstallationState: %q}",
+		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
+		diff.DistributionNamespace,
 		diff.Version.Raw,
 		diff.InstallationState,
 	)
@@ -109,6 +120,7 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	} else {
 		componentName = blueprintComponent.Name
 		expectedState = ComponentDiffState{
+			//DistributionNamespace: // TODO Fix after develop merge
 			Version:           blueprintComponent.Version,
 			InstallationState: blueprintComponent.TargetState,
 		}

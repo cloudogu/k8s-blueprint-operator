@@ -13,14 +13,27 @@ import (
 // ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
 // It contains the operation that needs to be done to achieve this desired state.
 type ComponentDiff struct {
-	Actual       ComponentDiffState `json:"actual"`
-	Expected     ComponentDiffState `json:"expected"`
-	NeededAction ComponentAction    `json:"neededAction"`
+	// Actual contains the component's state in the current system.
+	Actual ComponentDiffState `json:"actual"`
+	// Expected contains the desired component's target state.
+	Expected ComponentDiffState `json:"expected"`
+	// NeededAction contains the refined action as decided by the application's state determination automaton.
+	NeededAction ComponentAction `json:"neededAction"`
 }
 
-// ComponentDiffState is either the actual or desired state of a component in the cluster.
+// ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
+// determine the kind of changed if there is a drift between actual or desired state.
 type ComponentDiffState struct {
-	Version           string `json:"version,omitempty"`
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// to be confused with the K8s cluster namespace.
+	DistributionNamespace string `json:"distributionNamespace"`
+	// Version contains the component's version.
+	Version string `json:"version,omitempty"`
+	// InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
+	//
+	//  - domain.ActionInstall
+	//  - domain.ActionUninstall
+	//  - and so on
 	InstallationState string `json:"installationState"`
 }
 
@@ -31,12 +44,14 @@ type ComponentAction string
 func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	return ComponentDiff{
 		Actual: ComponentDiffState{
-			Version:           domainModel.Actual.Version.Raw,
-			InstallationState: domainModel.Actual.InstallationState.String(),
+			DistributionNamespace: "", // TODO resolve after merge with develop
+			Version:               domainModel.Actual.Version.Raw,
+			InstallationState:     domainModel.Actual.InstallationState.String(),
 		},
 		Expected: ComponentDiffState{
-			Version:           domainModel.Expected.Version.Raw,
-			InstallationState: domainModel.Expected.InstallationState.String(),
+			DistributionNamespace: "", // TODO resolve after merge with develop
+			Version:               domainModel.Expected.Version.Raw,
+			InstallationState:     domainModel.Expected.InstallationState.String(),
 		},
 		NeededAction: ComponentAction(domainModel.NeededAction),
 	}
