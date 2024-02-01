@@ -10,6 +10,16 @@ type Event interface {
 	Message() string
 }
 
+type BlueprintDryRunEvent struct{}
+
+func (b BlueprintDryRunEvent) Name() string {
+	return "BlueprintDryRun"
+}
+
+func (b BlueprintDryRunEvent) Message() string {
+	return "Executed blueprint in dry run mode"
+}
+
 type BlueprintSpecInvalidEvent struct {
 	ValidationError error
 }

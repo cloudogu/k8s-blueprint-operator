@@ -92,14 +92,22 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 // There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.ApplyBlueprintSpec").
+		WithValues("blueprintId", blueprintId)
+
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint to apply blueprint spec: %w", err)
 	}
 
-	err = useCase.markInProgress(ctx, blueprintSpec)
+	shouldApply, err := useCase.startApplying(ctx, blueprintSpec)
 	if err != nil {
 		return err
+	}
+
+	if !shouldApply {
+		logger.Info("skip applying states to the cluster")
+		return nil
 	}
 
 	applyError := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
@@ -114,15 +122,15 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	return useCase.markBlueprintApplied(ctx, blueprintSpec)
 }
 
-//TODO: deactivate maintenance mode
+// TODO: deactivate maintenance mode
 
-func (useCase *ApplyBlueprintSpecUseCase) markInProgress(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.MarkInProgress()
+func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) (bool, error) {
+	shouldApply := blueprintSpec.StartApplying()
 	err := useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot mark blueprint as in progress: %w", err)
+		return false, fmt.Errorf("cannot mark blueprint as in progress: %w", err)
 	}
-	return nil
+	return shouldApply, nil
 }
 
 // MarkFailed marks the blueprint as failed. The error which leads to the failed blueprint needs to be provided.
