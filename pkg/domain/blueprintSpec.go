@@ -258,15 +258,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
-func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	return !spec.Config.DryRun
-}
-
-func (spec *BlueprintSpec) MarkBlueprintApplicationPreProcessed() {
-	spec.Status = StatusPhaseBlueprintApplicationPreProcessed
-	spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
-}
-
 func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
 	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
@@ -279,8 +270,17 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	}
 }
 
-func (spec *BlueprintSpec) StopForDryRun() {
-	spec.Events = append(spec.Events, BlueprintDryRunEvent{})
+func (spec *BlueprintSpec) ShouldBeApplied() bool {
+	return !spec.Config.DryRun
+}
+
+func (spec *BlueprintSpec) CompletePreProcessing() {
+	if spec.Config.DryRun {
+		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
+	} else {
+		spec.Status = StatusPhaseBlueprintApplicationPreProcessed
+		spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
+	}
 }
 
 func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) {
@@ -298,8 +298,17 @@ func (spec *BlueprintSpec) StartApplying() {
 	spec.Events = append(spec.Events, InProgressEvent{})
 }
 
-// CompletePostProcessing is used to mark the blueprint as completed or failed after the post-processing of the
-// blueprint application.
+func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
+	spec.Status = StatusPhaseBlueprintApplicationFailed
+	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkBlueprintApplied() {
+	spec.Status = StatusPhaseBlueprintApplied
+	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
+}
+
+// CompletePostProcessing is used to mark the blueprint as completed or failed after the post-processing after trying to apply the blueprint.
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	switch spec.Status {
 	case StatusPhaseEcosystemHealthyAfterwards:
@@ -316,16 +325,6 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
 	}
-}
-
-func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
-	spec.Status = StatusPhaseBlueprintApplicationFailed
-	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-}
-
-func (spec *BlueprintSpec) MarkBlueprintApplied() {
-	spec.Status = StatusPhaseBlueprintApplied
-	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

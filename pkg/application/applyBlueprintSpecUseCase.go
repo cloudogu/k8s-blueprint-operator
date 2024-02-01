@@ -99,20 +99,18 @@ func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx con
 
 	if !blueprintSpec.ShouldBeApplied() {
 		logger.Info("stop before activating maintenance mode as blueprint should not be applied")
-		blueprintSpec.StopForDryRun()
-		return nil
+	} else {
+		logger.Info("activate maintenance mode")
+		err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
+			Title: "Blueprint getting applied",
+			Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied",
+		})
+		if err != nil {
+			return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
+		}
 	}
 
-	logger.Info("activate maintenance mode")
-	err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
-		Title: "Blueprint getting applied",
-		Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied",
-	})
-	if err != nil {
-		return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
-	}
-
-	blueprintSpec.MarkBlueprintApplicationPreProcessed()
+	blueprintSpec.CompletePreProcessing()
 
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
@@ -168,7 +166,7 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 
 	applyError := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
 	if applyError != nil {
-		err := useCase.markBlueprintApplicationFailed(ctx, blueprintSpec, err)
+		err := useCase.markBlueprintApplicationFailed(ctx, blueprintSpec, applyError)
 		if err != nil {
 			return err
 		}

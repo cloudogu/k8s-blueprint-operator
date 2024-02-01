@@ -74,21 +74,23 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return useCase.checkEcosystemHealthUpfront(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemHealthyUpfront:
 		return useCase.preProcessBlueprintApplication(ctx, blueprintSpec)
-	case domain.StatusPhaseBlueprintApplicationPreProcessed:
-		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
+	case domain.StatusPhaseBlueprintApplicationPreProcessed:
+		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
-		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or failed
+		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseBlueprintApplied:
-		return useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
+		return useCase.checkEcosystemHealthAfterwards(ctx, blueprintId)
+	case domain.StatusPhaseBlueprintApplicationFailed:
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemHealthyAfterwards:
-		// deactivate maintenance mode
-		return nil
+		// deactivate maintenance mode and set status to completed
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
 		// deactivate maintenance mode and set status to failed
-		return nil
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
@@ -148,10 +150,10 @@ func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx co
 	if err != nil {
 		return err
 	}
-	if blueprintSpec.ShouldBeApplied() {
-		return useCase.HandleChange(ctx, blueprintSpec.Id)
+	if !blueprintSpec.ShouldBeApplied() {
+		return nil
 	}
-	return nil
+	return useCase.HandleChange(ctx, blueprintSpec.Id)
 }
 
 func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Context, blueprintId string) error {
@@ -167,6 +169,15 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Contex
 
 	if blueprintSpec.Config.DryRun {
 		return nil
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
+	err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
+	if err != nil {
+		return err
 	}
 
 	return useCase.HandleChange(ctx, blueprintId)
