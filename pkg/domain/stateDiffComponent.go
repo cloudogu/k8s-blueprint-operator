@@ -53,7 +53,7 @@ type ComponentDiffState struct {
 	InstallationState TargetState
 }
 
-// String returns a string representation of the DoguDiff.
+// String returns a string representation of the ComponentDiff.
 func (diff *ComponentDiff) String() string {
 	return fmt.Sprintf(
 		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
@@ -64,7 +64,7 @@ func (diff *ComponentDiff) String() string {
 	)
 }
 
-// String returns a string representation of the DoguDiffState.
+// String returns a string representation of the ComponentDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
 		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
