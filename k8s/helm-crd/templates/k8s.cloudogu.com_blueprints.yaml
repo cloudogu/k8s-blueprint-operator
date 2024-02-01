@@ -42,6 +42,9 @@ spec:
                 blueprintMask:
                   description: BlueprintMask json can further restrict the desired state from the blueprint.
                   type: string
+                dryRun:
+                  description: DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+                  type: boolean
                 ignoreDoguHealth:
                   description: IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
                   type: boolean

@@ -8,7 +8,7 @@ import (
 
 func Test_TargetDogu_validate_errorOnMissingDoguName(t *testing.T) {
 	dogus := []Dogu{
-		{Version: version3_2_1_2, TargetState: TargetStatePresent},
+		{Version: version3212, TargetState: TargetStatePresent},
 	}
 	blueprint := Blueprint{Dogus: dogus}
 
@@ -19,7 +19,7 @@ func Test_TargetDogu_validate_errorOnMissingDoguName(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_errorOnEmptyDoguName(t *testing.T) {
-	dogu := Dogu{Name: "", Version: version3_2_1_2, TargetState: TargetStatePresent}
+	dogu := Dogu{Name: "", Version: version3212, TargetState: TargetStatePresent}
 
 	err := dogu.validate()
 

@@ -33,10 +33,11 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markInProgress(testCtx, spec)
+		shouldApply, err := useCase.startApplying(testCtx, spec)
 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
+		assert.True(t, shouldApply)
 	})
 
 	t.Run("repo error", func(t *testing.T) {
@@ -49,10 +50,11 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
 
-		err := useCase.markInProgress(testCtx, spec)
+		shouldApply, err := useCase.startApplying(testCtx, spec)
 
 		require.ErrorIs(t, err, assert.AnError)
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
+		assert.False(t, shouldApply)
 	})
 }
 
@@ -186,6 +188,48 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 
+	t.Run("should do nothing and return nil on dry run", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Config: domain.BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(1).Run(func(args mock.Arguments) {
+			spec := args.Get(1).(*domain.BlueprintSpec)
+			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
+		})
+
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on error updating blueprint spec with dry run event", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Config: domain.BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
+		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError).Times(1).Run(func(args mock.Arguments) {
+			spec := args.Get(1).(*domain.BlueprintSpec)
+			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
+		})
+
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot mark blueprint as in progress")
+	})
+
 	t.Run("cannot load spec", func(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(nil, assert.AnError)
@@ -206,8 +250,8 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
 
-		//installUseCaseMock := newMockDoguInstallationUseCase(t)
-		//installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
+		// installUseCaseMock := newMockDoguInstallationUseCase(t)
+		// installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
 		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
 
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
