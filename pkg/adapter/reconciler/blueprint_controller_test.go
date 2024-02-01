@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/go-logr/logr"
 	"testing"
@@ -141,6 +142,44 @@ func Test_decideRequeueForError(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, actual)
 		assert.Contains(t, logsinkMock.output, "0: A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
+	})
+	t.Run("should catch wrapped NotFoundError, issue a log line and do not requeue", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := &domainservice.NotFoundError{
+			WrappedError: assert.AnError,
+			Message:      "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+	})
+	t.Run("should catch wrapped InvalidBlueprintError, issue a log line and do not requeue", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := &domain.InvalidBlueprintError{
+			WrappedError: assert.AnError,
+			Message:      "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: Blueprint is invalid, therefore there will be no further evaluation.")
 	})
 	t.Run("should catch general errors, issue a log line and return requeue with error", func(t *testing.T) {
 		// given
