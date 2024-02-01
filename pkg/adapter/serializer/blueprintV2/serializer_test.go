@@ -10,9 +10,9 @@ import (
 )
 
 var (
-	version1_2_0_1, _ = core.ParseVersion("1.2.0-1")
-	version3_0_2_2, _ = core.ParseVersion("3.0.2-2")
-	version0_2_1_1, _ = core.ParseVersion("0.2.1-1")
+	version1201, _ = core.ParseVersion("1.2.0-1")
+	version3022, _ = core.ParseVersion("3.0.2-2")
+	version0211, _ = core.ParseVersion("0.2.1-1")
 )
 
 func TestSerializeBlueprint_ok(t *testing.T) {
@@ -36,8 +36,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
+					{Namespace: "official", Name: "nginx", Version: version1201, TargetState: domain.TargetStatePresent},
+					{Namespace: "premium", Name: "jira", Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
@@ -47,7 +47,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
+					{Name: "blueprint-operator", Version: version0211, TargetState: domain.TargetStatePresent},
 					{Name: "dogu-operator", Version: version3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
@@ -107,7 +107,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: -1},
+			{Namespace: "official", Name: "nginx", Version: version1201, TargetState: -1},
 		},
 	}
 
@@ -140,18 +140,18 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
+					{Namespace: "official", Name: "nginx", Version: version1201, TargetState: domain.TargetStatePresent},
+					{Namespace: "premium", Name: "jira", Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
 		{
-			"dogus in blueprint",
-			args{spec: `{"blueprintApi":"v2","components":[{"name":"blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
+			"components in blueprint",
+			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", Version: version0_2_1_1, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: version3211, TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", DistributionNamespace: "k8s", Version: version0211, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", DistributionNamespace: "k8s", Version: version3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,

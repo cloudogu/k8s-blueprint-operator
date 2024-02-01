@@ -61,7 +61,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, BlueprintV2{
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
@@ -89,9 +89,9 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	}
 
 	components := []serializer.TargetComponent{
-		{Name: "component1", Version: version3211.Raw, TargetState: "absent"},
+		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3212.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/component4", Version: version1_2_3_3.Raw},
 	}
 
@@ -113,7 +113,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	}
 	blueprint, err := convertToBlueprint(blueprintV2)
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	convertedDogus := []domain.Dogu{
 		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
@@ -123,10 +123,10 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	}
 
 	convertedComponents := []domain.Component{
-		{Name: "component1", Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: version1_2_3_3},
 	}
 
 	assert.Equal(t, domain.Blueprint{

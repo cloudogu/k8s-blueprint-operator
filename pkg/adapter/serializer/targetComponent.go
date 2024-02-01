@@ -38,10 +38,18 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 				continue
 			}
 		}
+
+		namespace, name, err := SplitComponentName(component.Name)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
+
 		convertedComponents = append(convertedComponents, domain.Component{
-			Name:        component.Name,
-			Version:     version,
-			TargetState: newState,
+			Name:                  name,
+			DistributionNamespace: namespace,
+			Version:               version,
+			TargetState:           newState,
 		})
 	}
 
