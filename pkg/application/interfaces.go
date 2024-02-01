@@ -26,6 +26,10 @@ type doguInstallationUseCase interface {
 	ApplyDoguStates(ctx context.Context, blueprintId string) error
 }
 
+type componentInstallationUseCase interface {
+	ApplyComponentStates(ctx context.Context, blueprintId string) error
+}
+
 type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
 	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error

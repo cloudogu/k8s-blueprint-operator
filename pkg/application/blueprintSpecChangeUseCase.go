@@ -16,7 +16,6 @@ type BlueprintSpecChangeUseCase struct {
 	validation         blueprintSpecValidationUseCase
 	effectiveBlueprint effectiveBlueprintUseCase
 	stateDiff          stateDiffUseCase
-	doguInstallUseCase doguInstallationUseCase
 	applyUseCase       applyBlueprintSpecUseCase
 }
 
@@ -25,7 +24,6 @@ func NewBlueprintSpecChangeUseCase(
 	validation blueprintSpecValidationUseCase,
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
-	doguInstallUseCase doguInstallationUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
@@ -33,7 +31,6 @@ func NewBlueprintSpecChangeUseCase(
 		validation:         validation,
 		effectiveBlueprint: effectiveBlueprint,
 		stateDiff:          stateDiff,
-		doguInstallUseCase: doguInstallUseCase,
 		applyUseCase:       applyUseCase,
 	}
 }

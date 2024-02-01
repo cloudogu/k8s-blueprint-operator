@@ -12,20 +12,23 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo               domainservice.BlueprintSpecRepository
-	doguInstallUseCase doguInstallationUseCase
-	healthUseCase      ecosystemHealthUseCase
+	repo                    domainservice.BlueprintSpecRepository
+	doguInstallUseCase      doguInstallationUseCase
+	healthUseCase           ecosystemHealthUseCase
+	componentInstallUseCase componentInstallationUseCase
 }
 
 func NewApplyBlueprintSpecUseCase(
 	repo domainservice.BlueprintSpecRepository,
 	doguInstallUseCase doguInstallationUseCase,
 	healthUseCase ecosystemHealthUseCase,
+	componentInstallUseCase componentInstallationUseCase,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
-		repo:               repo,
-		doguInstallUseCase: doguInstallUseCase,
-		healthUseCase:      healthUseCase,
+		repo:                    repo,
+		doguInstallUseCase:      doguInstallUseCase,
+		healthUseCase:           healthUseCase,
+		componentInstallUseCase: componentInstallUseCase,
 	}
 }
 
@@ -110,20 +113,30 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return nil
 	}
 
-	applyError := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
+	applyError := useCase.componentInstallUseCase.ApplyComponentStates(ctx, blueprintId)
 	if applyError != nil {
-		err := useCase.MarkFailed(ctx, blueprintSpec, err)
-		if err != nil {
-			return err
-		}
-		return applyError
+		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
+	}
+
+	applyError = useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
+	if applyError != nil {
+		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
 	}
 
 	return useCase.markBlueprintApplied(ctx, blueprintSpec)
 }
 
+func (useCase *ApplyBlueprintSpecUseCase) handleApplyFailedError(ctx context.Context, blueprintSpec *domain.BlueprintSpec, applyError error) error {
+	err := useCase.MarkFailed(ctx, blueprintSpec, applyError)
+	if err != nil {
+		return err
+	}
+	return applyError
+}
+
 // TODO: deactivate maintenance mode
 
+// TODO split in apply components/dogus
 func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) (bool, error) {
 	shouldApply := blueprintSpec.StartApplying()
 	err := useCase.repo.Update(ctx, blueprintSpec)

@@ -96,12 +96,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
+	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, defaultHealthCheckInterval)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
-		doguInstallationUseCase,
 		applyBlueprintSpecUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
