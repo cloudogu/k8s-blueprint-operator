@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -12,18 +11,16 @@ import (
 
 func TestNewComponentInstallationUseCase(t *testing.T) {
 	componentRepo := newMockComponentInstallationRepository(t)
-	healthConfigRepo := newMockHealthConfigRepository(t)
-	interval := 1 * time.Second
-	componentUseCase := NewComponentInstallationUseCase(componentRepo, healthConfigRepo, interval)
+	healthConfigRepo := newMockHealthConfigProvider(t)
+	componentUseCase := NewComponentInstallationUseCase(componentRepo, healthConfigRepo)
 	assert.Same(t, componentRepo, componentUseCase.componentRepo)
-	assert.Same(t, healthConfigRepo, componentUseCase.healthConfigRepo)
-	assert.Equal(t, interval, componentUseCase.healthCheckInterval)
+	assert.Same(t, healthConfigRepo, componentUseCase.healthConfigProvider)
 }
 
 func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 	type fields struct {
 		componentRepoFn    func(t *testing.T) componentInstallationRepository
-		healthConfigRepoFn func(t *testing.T) healthConfigRepository
+		healthConfigRepoFn func(t *testing.T) healthConfigProvider
 	}
 	tests := []struct {
 		name    string
@@ -39,8 +36,8 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 					componentMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 					return componentMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					return newMockHealthConfigRepository(t)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					return newMockHealthConfigProvider(t)
 				},
 			},
 			want: ecosystem.ComponentHealthResult{},
@@ -50,7 +47,7 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 			},
 		},
 		{
-			name: "should fail to get health config",
+			name: "should fail to get required components",
 			fields: fields{
 				componentRepoFn: func(t *testing.T) componentInstallationRepository {
 					componentMock := newMockComponentInstallationRepository(t)
@@ -58,17 +55,17 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 						Return(map[string]*ecosystem.ComponentInstallation{}, nil)
 					return componentMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					healthConfigMock := newMockHealthConfigRepository(t)
-					healthConfigMock.EXPECT().Get(testCtx).
-						Return(domain.HealthConfig{}, assert.AnError)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					healthConfigMock := newMockHealthConfigProvider(t)
+					healthConfigMock.EXPECT().GetRequiredComponents(testCtx).
+						Return(nil, assert.AnError)
 					return healthConfigMock
 				},
 			},
 			want: ecosystem.ComponentHealthResult{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorIs(t, err, assert.AnError, i) &&
-					assert.ErrorContains(t, err, "cannot retrieve health config", i)
+					assert.ErrorContains(t, err, "cannot retrieve required components", i)
 			},
 		},
 		{
@@ -83,14 +80,10 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 						}, nil)
 					return componentMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					healthConfigMock := newMockHealthConfigRepository(t)
-					healthConfigMock.EXPECT().Get(testCtx).
-						Return(domain.HealthConfig{ComponentHealthConfig: domain.ComponentHealthConfig{
-							RequiredComponents: []ecosystem.RequiredComponent{
-								{Name: "k8s-dogu-operator"},
-							},
-						}}, nil)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					healthConfigMock := newMockHealthConfigProvider(t)
+					healthConfigMock.EXPECT().GetRequiredComponents(testCtx).
+						Return([]ecosystem.RequiredComponent{{Name: "k8s-dogu-operator"}}, nil)
 					return healthConfigMock
 				},
 			},
@@ -105,8 +98,8 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			useCase := &ComponentInstallationUseCase{
-				componentRepo:    tt.fields.componentRepoFn(t),
-				healthConfigRepo: tt.fields.healthConfigRepoFn(t),
+				componentRepo:        tt.fields.componentRepoFn(t),
+				healthConfigProvider: tt.fields.healthConfigRepoFn(t),
 			}
 			got, err := useCase.CheckComponentHealth(testCtx)
 			tt.wantErr(t, err)
@@ -117,9 +110,8 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 
 func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 	type fields struct {
-		componentRepoFn     func(t *testing.T) componentInstallationRepository
-		healthConfigRepoFn  func(t *testing.T) healthConfigRepository
-		healthCheckInterval time.Duration
+		componentRepoFn    func(t *testing.T) componentInstallationRepository
+		healthConfigRepoFn func(t *testing.T) healthConfigProvider
 	}
 	tests := []struct {
 		name    string
@@ -129,6 +121,26 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
+			name: "should fail to get health check interval",
+			ctx:  testCtx,
+			fields: fields{
+				componentRepoFn: func(t *testing.T) componentInstallationRepository {
+					repoMock := newMockComponentInstallationRepository(t)
+					return repoMock
+				},
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					providerMock := newMockHealthConfigProvider(t)
+					providerMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{}, assert.AnError)
+					return providerMock
+				},
+			},
+			want: ecosystem.ComponentHealthResult{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, assert.AnError, i) &&
+					assert.ErrorContains(t, err, "failed to get health check interval", i)
+			},
+		},
+		{
 			name: "should fail to check component health",
 			ctx:  testCtx,
 			fields: fields{
@@ -137,10 +149,11 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 					repoMock.EXPECT().GetAll(mock.Anything).Return(nil, assert.AnError)
 					return repoMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					return newMockHealthConfigRepository(t)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					providerMock := newMockHealthConfigProvider(t)
+					providerMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Interval: time.Second}, nil)
+					return providerMock
 				},
-				healthCheckInterval: 1 * time.Second,
 			},
 			want: ecosystem.ComponentHealthResult{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -162,17 +175,13 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 						Return(map[string]*ecosystem.ComponentInstallation{}, nil)
 					return componentMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					healthConfigMock := newMockHealthConfigRepository(t)
-					healthConfigMock.EXPECT().Get(mock.Anything).
-						Return(domain.HealthConfig{ComponentHealthConfig: domain.ComponentHealthConfig{
-							RequiredComponents: []ecosystem.RequiredComponent{
-								{Name: "k8s-dogu-operator"},
-							},
-						}}, nil)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					healthConfigMock := newMockHealthConfigProvider(t)
+					healthConfigMock.EXPECT().GetWaitConfig(mock.Anything).Return(ecosystem.WaitConfig{Interval: 1}, nil)
+					healthConfigMock.EXPECT().GetRequiredComponents(mock.Anything).
+						Return([]ecosystem.RequiredComponent{{Name: "k8s-dogu-operator"}}, nil)
 					return healthConfigMock
 				},
-				healthCheckInterval: 1,
 			},
 			want: ecosystem.ComponentHealthResult{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -196,17 +205,13 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 						Once().NotBefore(unsuccessfulCall)
 					return componentMock
 				},
-				healthConfigRepoFn: func(t *testing.T) healthConfigRepository {
-					healthConfigMock := newMockHealthConfigRepository(t)
-					healthConfigMock.EXPECT().Get(mock.Anything).
-						Return(domain.HealthConfig{ComponentHealthConfig: domain.ComponentHealthConfig{
-							RequiredComponents: []ecosystem.RequiredComponent{
-								{Name: "k8s-dogu-operator"},
-							},
-						}}, nil)
+				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
+					healthConfigMock := newMockHealthConfigProvider(t)
+					healthConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Interval: time.Second}, nil)
+					healthConfigMock.EXPECT().GetRequiredComponents(mock.Anything).
+						Return([]ecosystem.RequiredComponent{{Name: "k8s-dogu-operator"}}, nil)
 					return healthConfigMock
 				},
-				healthCheckInterval: 1,
 			},
 			want: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]ecosystem.ComponentName{
 				ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
@@ -217,9 +222,8 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			useCase := &ComponentInstallationUseCase{
-				componentRepo:       tt.fields.componentRepoFn(t),
-				healthConfigRepo:    tt.fields.healthConfigRepoFn(t),
-				healthCheckInterval: tt.fields.healthCheckInterval,
+				componentRepo:        tt.fields.componentRepoFn(t),
+				healthConfigProvider: tt.fields.healthConfigRepoFn(t),
 			}
 			got, err := useCase.WaitForHealthyComponents(tt.ctx)
 			tt.wantErr(t, err)

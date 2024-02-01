@@ -46,8 +46,12 @@ type ComponentInstallationRepository interface {
 	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
 }
 
-type HealthConfigRepository interface {
-	Get(ctx context.Context) (domain.HealthConfig, error)
+type RequiredComponentsProvider interface {
+	GetRequiredComponents(ctx context.Context) ([]ecosystem.RequiredComponent, error)
+}
+
+type HealthWaitConfigProvider interface {
+	GetWaitConfig(ctx context.Context) (ecosystem.WaitConfig, error)
 }
 
 type BlueprintSpecRepository interface {

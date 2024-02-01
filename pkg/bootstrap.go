@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -28,9 +27,6 @@ import (
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
 )
-
-const defaultHealthCheckInterval = 10 * time.Second
-const defaultHealthCheckTimeout = 10 * time.Minute
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
@@ -91,15 +87,15 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
-	healthConfigRepo := config2.NewHealthConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	healthConfigRepo := config2.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
-	componentInstallationUseCase := application.NewComponentInstallationUseCase(componentInstallationRepo, healthConfigRepo, defaultHealthCheckInterval)
-	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, defaultHealthCheckTimeout)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
+	componentInstallationUseCase := application.NewComponentInstallationUseCase(componentInstallationRepo, healthConfigRepo)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,

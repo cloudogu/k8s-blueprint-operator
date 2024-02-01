@@ -3,25 +3,26 @@ package application
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"time"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
 type EcosystemHealthUseCase struct {
 	doguUseCase        doguInstallationUseCase
 	componentUseCase   componentInstallationUseCase
-	healthCheckTimeOut time.Duration
+	waitConfigProvider healthWaitConfigProvider
 }
 
 func NewEcosystemHealthUseCase(
 	doguUseCase doguInstallationUseCase,
 	componentUseCase componentInstallationUseCase,
-	healthCheckTimeOut time.Duration,
+	waitConfigProvider domainservice.HealthWaitConfigProvider,
 ) *EcosystemHealthUseCase {
 	return &EcosystemHealthUseCase{
 		doguUseCase:        doguUseCase,
 		componentUseCase:   componentUseCase,
-		healthCheckTimeOut: healthCheckTimeOut,
+		waitConfigProvider: waitConfigProvider,
 	}
 }
 
@@ -49,7 +50,12 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context,
 
 // WaitForHealthyEcosystem waits for a healthy ecosystem and returns an HealthResult.
 func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error) {
-	timedCtx, cancel := context.WithTimeout(ctx, useCase.healthCheckTimeOut)
+	waitConfig, err := useCase.waitConfigProvider.GetWaitConfig(ctx)
+	if err != nil {
+		return ecosystem.HealthResult{}, fmt.Errorf("failed to get health check timeout: %w", err)
+	}
+
+	timedCtx, cancel := context.WithTimeout(ctx, waitConfig.Timeout)
 	defer cancel()
 
 	doguHealthChan := make(chan ecosystem.DoguHealthResult)
@@ -86,7 +92,7 @@ func waitForHealthResult(doguHealthChan chan ecosystem.DoguHealthResult, doguErr
 func (useCase *EcosystemHealthUseCase) asyncWaitForHealthyComponents(ctx context.Context, componentErrChan chan error, componentHealthChan chan ecosystem.ComponentHealthResult) {
 	componentHealth, err := useCase.componentUseCase.WaitForHealthyComponents(ctx)
 	if err != nil {
-		componentErrChan <- err
+		componentErrChan <- fmt.Errorf("failed to wait for healthy components: %w", err)
 		return
 	}
 	componentHealthChan <- componentHealth
@@ -95,7 +101,7 @@ func (useCase *EcosystemHealthUseCase) asyncWaitForHealthyComponents(ctx context
 func (useCase *EcosystemHealthUseCase) asyncWaitForHealthyDogus(ctx context.Context, doguErrChan chan error, doguHealthChan chan ecosystem.DoguHealthResult) {
 	doguHealth, err := useCase.doguUseCase.WaitForHealthyDogus(ctx)
 	if err != nil {
-		doguErrChan <- err
+		doguErrChan <- fmt.Errorf("failed to wait for healthy dogus: %w", err)
 		return
 	}
 	doguHealthChan <- doguHealth

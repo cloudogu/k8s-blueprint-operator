@@ -52,8 +52,17 @@ type componentInstallationRepository interface {
 	domainservice.ComponentInstallationRepository
 }
 
-type healthConfigRepository interface {
-	domainservice.HealthConfigRepository
+type requiredComponentsProvider interface {
+	domainservice.RequiredComponentsProvider
+}
+
+type healthWaitConfigProvider interface {
+	domainservice.HealthWaitConfigProvider
+}
+
+type healthConfigProvider interface {
+	requiredComponentsProvider
+	healthWaitConfigProvider
 }
 
 type blueprintSpecRepository interface {

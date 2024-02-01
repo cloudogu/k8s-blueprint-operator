@@ -4,12 +4,18 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type RequiredComponent struct {
-	Name string `yaml:"name" json:"name"`
+	Name string
+}
+
+type WaitConfig struct {
+	Timeout  time.Duration
+	Interval time.Duration
 }
 
 type ComponentName string

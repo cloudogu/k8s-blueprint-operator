@@ -7,3 +7,5 @@ metadata:
 data:
   components: |
     {{- toYaml .Values.healthConfig.components | nindent 4 }}
+  wait: |
+    {{- toYaml .Values.healthConfig.wait | nindent 4 }}

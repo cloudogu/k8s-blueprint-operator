@@ -16,11 +16,12 @@ import (
 func TestNewEcosystemHealthUseCase(t *testing.T) {
 	doguUseCase := newMockDoguInstallationUseCase(t)
 	componentUseCase := newMockComponentInstallationUseCase(t)
-	useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, time.Minute)
+	waitConfigMock := newMockHealthWaitConfigProvider(t)
+	useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, waitConfigMock)
 
-	assert.Equal(t, doguUseCase, useCase.doguUseCase)
-	assert.Equal(t, componentUseCase, useCase.componentUseCase)
-	assert.Equal(t, time.Minute, useCase.healthCheckTimeOut)
+	assert.Same(t, doguUseCase, useCase.doguUseCase)
+	assert.Same(t, componentUseCase, useCase.componentUseCase)
+	assert.Same(t, waitConfigMock, useCase.waitConfigProvider)
 }
 
 func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
@@ -44,7 +45,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
 		componentUseCase := newMockComponentInstallationUseCase(t)
 		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, time.Minute)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
 
 		health, err := useCase.CheckEcosystemHealth(testCtx, false, false)
 
@@ -63,7 +64,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		}
 		componentUseCase := newMockComponentInstallationUseCase(t)
 		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
-		useCase := NewEcosystemHealthUseCase(nil, componentUseCase, time.Minute)
+		useCase := NewEcosystemHealthUseCase(nil, componentUseCase, nil)
 
 		health, err := useCase.CheckEcosystemHealth(testCtx, true, false)
 
@@ -81,7 +82,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		}
 		doguUseCase := newMockDoguInstallationUseCase(t)
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, nil, time.Minute)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, nil, nil)
 
 		health, err := useCase.CheckEcosystemHealth(testCtx, false, true)
 
@@ -102,7 +103,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
 		doguUseCase := newMockDoguInstallationUseCase(t)
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(ecosystem.DoguHealthResult{}, assert.AnError)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, time.Minute)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
 
 		_, err := useCase.CheckEcosystemHealth(testCtx, false, false)
 
@@ -121,7 +122,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
 		componentUseCase := newMockComponentInstallationUseCase(t)
 		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(ecosystem.ComponentHealthResult{}, assert.AnError)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, time.Minute)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
 
 		_, err := useCase.CheckEcosystemHealth(testCtx, false, false)
 
@@ -131,9 +132,9 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 	type fields struct {
-		doguUseCaseFn      func(t *testing.T) doguInstallationUseCase
-		componentUseCaseFn func(t *testing.T) componentInstallationUseCase
-		healthCheckTimeOut time.Duration
+		doguUseCaseFn        func(t *testing.T) doguInstallationUseCase
+		componentUseCaseFn   func(t *testing.T) componentInstallationUseCase
+		waitConfigProviderFn func(t *testing.T) healthWaitConfigProvider
 	}
 	tests := []struct {
 		name    string
@@ -142,7 +143,28 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			name: "both should fail with error",
+			name: "should fail to get health check timeout",
+			fields: fields{
+				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
+					return newMockDoguInstallationUseCase(t)
+				},
+				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
+					return newMockComponentInstallationUseCase(t)
+				},
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{}, assert.AnError)
+					return waitConfigMock
+				},
+			},
+			want: ecosystem.HealthResult{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, assert.AnError, i) &&
+					assert.ErrorContains(t, err, "failed to get health check timeout", i)
+			},
+		},
+		{
+			name: "dogu and component health check should fail with error",
 			fields: fields{
 				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
 					doguMock := newMockDoguInstallationUseCase(t)
@@ -160,15 +182,21 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 						})
 					return componentMock
 				},
-				healthCheckTimeOut: 1 * time.Second,
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
+					return waitConfigMock
+				},
 			},
 			want: ecosystem.HealthResult{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i)
+				return assert.ErrorIs(t, err, assert.AnError, i) &&
+					assert.ErrorContains(t, err, "failed to wait for healthy components", i) &&
+					assert.ErrorContains(t, err, "failed to wait for healthy dogus", i)
 			},
 		},
 		{
-			name: "context should time out for both",
+			name: "context should time out for dogu and component health check",
 			fields: fields{
 				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
 					doguMock := newMockDoguInstallationUseCase(t)
@@ -196,7 +224,11 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 						})
 					return componentMock
 				},
-				healthCheckTimeOut: 0,
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: 0}, nil)
+					return waitConfigMock
+				},
 			},
 			want: ecosystem.HealthResult{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -224,7 +256,11 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 						})
 					return componentMock
 				},
-				healthCheckTimeOut: 1 * time.Second,
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
+					return waitConfigMock
+				},
 			},
 			want: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{},
@@ -257,7 +293,11 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 						})
 					return componentMock
 				},
-				healthCheckTimeOut: 1 * time.Second,
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
+					return waitConfigMock
+				},
 			},
 			want: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
@@ -292,7 +332,11 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 						})
 					return componentMock
 				},
-				healthCheckTimeOut: 1 * time.Second,
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
+					return waitConfigMock
+				},
 			},
 			want: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
@@ -310,7 +354,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 			useCase := &EcosystemHealthUseCase{
 				doguUseCase:        tt.fields.doguUseCaseFn(t),
 				componentUseCase:   tt.fields.componentUseCaseFn(t),
-				healthCheckTimeOut: tt.fields.healthCheckTimeOut,
+				waitConfigProvider: tt.fields.waitConfigProviderFn(t),
 			}
 			got, err := useCase.WaitForHealthyEcosystem(testCtx)
 			tt.wantErr(t, err)

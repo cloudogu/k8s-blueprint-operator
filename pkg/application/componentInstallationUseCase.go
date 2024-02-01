@@ -3,8 +3,6 @@ package application
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -13,20 +11,17 @@ import (
 )
 
 type ComponentInstallationUseCase struct {
-	componentRepo       componentInstallationRepository
-	healthConfigRepo    healthConfigRepository
-	healthCheckInterval time.Duration
+	componentRepo        componentInstallationRepository
+	healthConfigProvider healthConfigProvider
 }
 
 func NewComponentInstallationUseCase(
 	componentRepo domainservice.ComponentInstallationRepository,
-	healthConfigRepo domainservice.HealthConfigRepository,
-	healthCheckInterval time.Duration,
+	healthConfigProvider healthConfigProvider,
 ) *ComponentInstallationUseCase {
 	return &ComponentInstallationUseCase{
-		componentRepo:       componentRepo,
-		healthConfigRepo:    healthConfigRepo,
-		healthCheckInterval: healthCheckInterval,
+		componentRepo:        componentRepo,
+		healthConfigProvider: healthConfigProvider,
 	}
 }
 
@@ -38,20 +33,26 @@ func (useCase *ComponentInstallationUseCase) CheckComponentHealth(ctx context.Co
 		return ecosystem.ComponentHealthResult{}, fmt.Errorf("cannot retrieve installed components: %w", err)
 	}
 
-	healthConfig, err := useCase.healthConfigRepo.Get(ctx)
+	requiredComponents, err := useCase.healthConfigProvider.GetRequiredComponents(ctx)
 	if err != nil {
-		return ecosystem.ComponentHealthResult{}, fmt.Errorf("cannot retrieve health config: %w", err)
+		return ecosystem.ComponentHealthResult{}, fmt.Errorf("cannot retrieve required components: %w", err)
 	}
 
-	return ecosystem.CalculateComponentHealthResult(installedComponents, healthConfig.RequiredComponents), nil
+	return ecosystem.CalculateComponentHealthResult(installedComponents, requiredComponents), nil
 }
 
 func (useCase *ComponentInstallationUseCase) WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.WaitForHealthyComponents")
+
+	waitConfig, err := useCase.healthConfigProvider.GetWaitConfig(ctx)
+	if err != nil {
+		return ecosystem.ComponentHealthResult{}, fmt.Errorf("failed to get health check interval: %w", err)
+	}
+
 	logger.Info("start waiting for component health")
 	healthResult, err := util.RetryUntilSuccessOrCancellation(
 		ctx,
-		useCase.healthCheckInterval,
+		waitConfig.Interval,
 		useCase.checkComponentHealthStatesRetryable,
 	)
 	var result ecosystem.ComponentHealthResult
