@@ -29,13 +29,13 @@ func (blueprintMask *BlueprintMask) Validate() error {
 }
 
 func (blueprintMask *BlueprintMask) validateDogus() error {
-	errorList := util.MapWithFunction(blueprintMask.Dogus, func(maskDogu MaskDogu) error { return maskDogu.validate() })
+	errorList := util.Map(blueprintMask.Dogus, func(maskDogu MaskDogu) error { return maskDogu.validate() })
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	doguNames := util.MapWithFunction(blueprintMask.Dogus, func(dogu MaskDogu) string { return dogu.Name })
+	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) string { return dogu.Name })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)

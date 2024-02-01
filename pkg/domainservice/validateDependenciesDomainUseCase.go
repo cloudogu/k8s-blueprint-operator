@@ -34,7 +34,7 @@ func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry)
 func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error {
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.ValidateDependenciesForAllDogus")
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
-	dogusToLoad := util.MapWithFunction(wantedDogus, func(dogu domain.Dogu) DoguToLoad {
+	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) DoguToLoad {
 		return DoguToLoad{
 			QualifiedDoguName: dogu.GetQualifiedName(),
 			Version:           dogu.Version.Raw,

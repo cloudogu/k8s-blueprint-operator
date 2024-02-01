@@ -18,8 +18,16 @@ func GetDuplicates(list []string) []string {
 	return duplicates
 }
 
-// MapWithFunction takes a slice of a type T and a converter function in order to return a slice of type V.
-func MapWithFunction[T, V any](ts []T, fn func(T) V) []V {
+// Map returns a slice where each element is the result of invoking fn on each corresponding element of the given slice.
+//
+// Example:
+//
+//	fruits := []string{"apple", "banana", "raspberry"}
+//	loudFruits := Map(fruits, strings.ToUpper)
+//	fmt.Println(loudFruits)
+//
+// This should print: [APPLE BANANA RASPBERRY]
+func Map[T, V any](ts []T, fn func(T) V) []V {
 	result := make([]V, len(ts))
 	for i, t := range ts {
 		result[i] = fn(t)

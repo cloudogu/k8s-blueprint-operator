@@ -61,7 +61,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 
 func ConvertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
 	var errorList []error
-	converted := util.MapWithFunction(dogus, func(dogu domain.Dogu) TargetDogu {
+	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
 		newState, err := ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return TargetDogu{
