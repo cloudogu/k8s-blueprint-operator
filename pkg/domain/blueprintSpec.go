@@ -270,12 +270,19 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	}
 }
 
+func (spec *BlueprintSpec) hasChanges() bool {
+	return !spec.StateDiff.hasChanges()
+}
+
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	return !spec.Config.DryRun
+	return !spec.Config.DryRun && !spec.hasChanges()
 }
 
 func (spec *BlueprintSpec) CompletePreProcessing() {
-	if spec.Config.DryRun {
+	if spec.hasChanges() {
+		spec.Status = StatusPhaseCompleted
+		spec.Events = append(spec.Events, CompletedEvent{earlyExited: true})
+	} else if spec.Config.DryRun {
 		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
 	} else {
 		spec.Status = StatusPhaseBlueprintApplicationPreProcessed

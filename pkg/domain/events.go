@@ -167,12 +167,17 @@ func (e ExecutionFailedEvent) Message() string {
 	return e.err.Error()
 }
 
-type CompletedEvent struct{}
+type CompletedEvent struct {
+	earlyExited bool
+}
 
 func (e CompletedEvent) Name() string {
 	return "completed"
 }
 
 func (e CompletedEvent) Message() string {
+	if e.earlyExited {
+		return "early exit due to no changes in state diff"
+	}
 	return "maintenance mode deactivated"
 }
