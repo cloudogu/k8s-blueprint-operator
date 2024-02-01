@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	blueprintcr "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"time"
 
 	"k8s.io/client-go/kubernetes"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
-	blueprintcr "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
@@ -68,7 +68,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
-
 	blueprintSpecRepository := blueprintcr.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
 		blueprintSerializer,

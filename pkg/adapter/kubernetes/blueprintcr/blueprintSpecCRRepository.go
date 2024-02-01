@@ -1,4 +1,4 @@
-package blueprintcr
+package kubernetes
 
 import (
 	"context"

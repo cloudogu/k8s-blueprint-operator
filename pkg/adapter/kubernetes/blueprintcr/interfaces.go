@@ -1,4 +1,4 @@
-package blueprintcr
+package kubernetes
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"

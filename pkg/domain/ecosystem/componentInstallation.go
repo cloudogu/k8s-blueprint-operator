@@ -33,6 +33,8 @@ type ComponentInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
+	// Health is the current health status of the component in the ecosystem
+	Health HealthStatus
 }
 
 const (
