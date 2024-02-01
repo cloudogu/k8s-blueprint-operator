@@ -2,9 +2,34 @@ package domainservice
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestNewInternalError(t *testing.T) {
+	t.Run("should return error", func(t *testing.T) {
+		err := NewInternalError(nil, "")
+		require.Error(t, err)
+	})
+	t.Run("should return error without wrapped error or interpreted msgargs", func(t *testing.T) {
+		err := NewInternalError(nil, "msg")
+		assert.Equal(t, "msg", err.Error())
+	})
+	t.Run("should return error with wrapped error but no interpreted msgargs", func(t *testing.T) {
+		err := NewInternalError(assert.AnError, "msg")
+		assert.Equal(t, "msg: assert.AnError general error for testing", err.Error())
+	})
+	t.Run("should return error with wrapped error and interpret msgargs", func(t *testing.T) {
+		err := NewInternalError(assert.AnError, "here is %s %s", "a", "string")
+		assert.Equal(t, "here is a string: assert.AnError general error for testing", err.Error())
+	})
+	t.Run("should return error without wrapped error and interpret msgargs", func(t *testing.T) {
+		err := NewInternalError(nil, "here is %s %s", "a", "string")
+		assert.Equal(t, "here is a string", err.Error())
+	})
+}
 
 func TestInternalError_Error(t *testing.T) {
 	t.Run("without wrapped error", func(t *testing.T) {

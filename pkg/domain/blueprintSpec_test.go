@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -13,6 +14,8 @@ import (
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 var version3213, _ = core.ParseVersion("3.2.1-3")
+
+var testContext = context.Background()
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
@@ -267,7 +270,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespace(t *testi
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
-	require.NotNil(t, err, "without the feature flag, namespace changes are not allowed")
+	require.Error(t, err, "without the feature flag, namespace changes are not allowed")
 	require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/dogu1\" -> \"premium/dogu1\"")
 }
 
@@ -288,7 +291,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint_changeDoguNamespaceWithFlag(
 	}
 	err := spec.CalculateEffectiveBlueprint()
 
-	require.Nil(t, err, "with the feature flag namespace changes should be allowed")
+	require.NoError(t, err, "with the feature flag namespace changes should be allowed")
 	require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 	assert.Equal(t, Dogu{Namespace: "premium", Name: "dogu1", Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 }
@@ -317,7 +320,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus:                   []Dogu{},
-				Components:              nil,
+				Components:              []Component{},
 				RegistryConfig:          nil,
 				RegistryConfigAbsent:    nil,
 				RegistryConfigEncrypted: nil,
@@ -326,12 +329,13 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
+		installedComponents := map[string]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus)
+		err := spec.DetermineStateDiff(testContext, installedDogus, installedComponents)
 
 		// then
-		stateDiff := StateDiff{DoguDiffs: []DoguDiff{}}
+		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
 		require.Equal(t, 1, len(spec.Events))
@@ -348,7 +352,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			}
 			installedDogus := map[string]*ecosystem.DoguInstallation{}
 			// when
-			err := spec.DetermineStateDiff(installedDogus)
+			err := spec.DetermineStateDiff(testContext, installedDogus, nil)
 
 			// then
 			assert.Error(t, err)
@@ -365,7 +369,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
 		// when
-		err := spec.DetermineStateDiff(installedDogus)
+		err := spec.DetermineStateDiff(testContext, installedDogus, nil)
 
 		// then
 		assert.NoError(t, err)

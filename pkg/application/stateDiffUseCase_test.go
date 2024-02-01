@@ -16,8 +16,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(nil, assert.AnError)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -36,8 +37,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -46,6 +48,28 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot get installed dogus to determine state diff")
+	})
+	t.Run("should fail to get installed components", func(t *testing.T) {
+		// given
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
+
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+
+		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
+
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
+
+		// when
+		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot get installed components to determine state diff")
 	})
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
@@ -56,8 +80,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -76,8 +102,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -132,8 +160,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			"nginx-static":  {Name: "nginx-static", Namespace: "k8s", Version: mustParseVersion(t, "1.8.6")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
+		componentInstallRepoMock := NewMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")

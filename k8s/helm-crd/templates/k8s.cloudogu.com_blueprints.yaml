@@ -118,12 +118,46 @@ spec:
                 stateDiff:
                   description: StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state. It describes what operations need to be done to achieve the desired state of the blueprint.
                   properties:
-                    doguDiffs:
+                    componentDiffs:
                       additionalProperties:
-                        description: DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                        description: ComponentDiff is the comparison of a Component's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
                         properties:
                           actual:
-                            description: DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
+                            description: ComponentDiffState is either the actual or desired state of a component in the cluster.
+                            properties:
+                              installationState:
+                                type: string
+                              version:
+                                type: string
+                            required:
+                              - installationState
+                            type: object
+                          expected:
+                            description: ComponentDiffState is either the actual or desired state of a component in the cluster.
+                            properties:
+                              installationState:
+                                type: string
+                              version:
+                                type: string
+                            required:
+                              - installationState
+                            type: object
+                          neededAction:
+                            description: ComponentAction is the action that needs to be done for a component to achieve the desired state in the cluster.
+                            type: string
+                        required:
+                          - actual
+                          - expected
+                          - neededAction
+                        type: object
+                      description: componentDiffs maps simple component names to the determined diff.
+                      type: object
+                    doguDiffs:
+                      additionalProperties:
+                        description: DoguDiff is the comparison of a Dogu's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                        properties:
+                          actual:
+                            description: DoguDiffState is either the actual or desired state of a dogu in the cluster.
                             properties:
                               installationState:
                                 type: string
@@ -135,7 +169,7 @@ spec:
                               - installationState
                             type: object
                           expected:
-                            description: DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
+                            description: DoguDiffState is either the actual or desired state of a dogu in the cluster.
                             properties:
                               installationState:
                                 type: string
@@ -147,7 +181,7 @@ spec:
                               - installationState
                             type: object
                           neededAction:
-                            description: DoguActionV1 is the action that needs to be done for a dogu to achieve the desired state in the cluster.
+                            description: DoguAction is the action that needs to be done for a dogu to achieve the desired state in the cluster.
                             type: string
                         required:
                           - actual

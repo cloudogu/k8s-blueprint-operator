@@ -3,17 +3,25 @@ package reconciler
 import (
 	"context"
 	"errors"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
+	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/go-logr/logr"
+	"testing"
+	"time"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"testing"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 )
 
 var testCtx = context.Background()
@@ -98,3 +106,118 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		assert.ErrorContains(t, err, "test")
 	})
 }
+
+func Test_decideRequeueForError(t *testing.T) {
+	t.Run("should catch wrapped InternalError, issue a log line and requeue with error", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := domainservice.NewInternalError(assert.AnError, "a generic oh-noez")
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: An internal error occurred and can maybe be fixed by retrying it later")
+	})
+	t.Run("should catch wrapped ConflictError, issue a log line and requeue timely", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := &domainservice.ConflictError{
+			WrappedError: assert.AnError,
+			Message:      "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, actual)
+		assert.Contains(t, logsinkMock.output, "0: A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
+	})
+	t.Run("should catch wrapped NotFoundError, issue a log line and do not requeue", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := &domainservice.NotFoundError{
+			WrappedError: assert.AnError,
+			Message:      "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+	})
+	t.Run("should catch wrapped InvalidBlueprintError, issue a log line and do not requeue", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		intermediateErr := &domain.InvalidBlueprintError{
+			WrappedError: assert.AnError,
+			Message:      "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: Blueprint is invalid, therefore there will be no further evaluation.")
+	})
+	t.Run("should catch general errors, issue a log line and return requeue with error", func(t *testing.T) {
+		// given
+		logsinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logsinkMock)
+
+		errorChain := fmt.Errorf("everything goes down the drain: %w", assert.AnError)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, ctrl.Result{Requeue: false}, actual)
+		assert.Contains(t, logsinkMock.output, "0: An unknown error type occurred. Retry with default backoff")
+	})
+}
+
+type testLogSink struct {
+	output []string
+	r      logr.RuntimeInfo
+}
+
+func newTrivialTestLogSink() *testLogSink {
+	var output []string
+	return &testLogSink{output: output, r: logr.RuntimeInfo{CallDepth: 1}}
+}
+
+func (t *testLogSink) doLog(level int, msg string, keysAndValues ...interface{}) {
+	t.output = append(t.output, fmt.Sprintf("%d: %s", level, msg))
+}
+func (t *testLogSink) Init(info logr.RuntimeInfo) { t.r = info }
+func (t *testLogSink) Enabled(level int) bool     { return true }
+func (t *testLogSink) Info(level int, msg string, keysAndValues ...interface{}) {
+	t.doLog(level, msg, keysAndValues...)
+}
+func (t *testLogSink) Error(err error, msg string, keysAndValues ...interface{}) {
+	t.doLog(0, msg, append(keysAndValues, err)...)
+}
+func (t *testLogSink) WithValues(keysAndValues ...interface{}) logr.LogSink { return t }
+func (t *testLogSink) WithName(name string) logr.LogSink                    { return t }

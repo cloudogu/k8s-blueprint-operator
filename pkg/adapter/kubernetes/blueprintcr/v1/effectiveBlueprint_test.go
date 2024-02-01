@@ -1,4 +1,4 @@
-package effectiveBlueprintV1
+package v1
 
 import (
 	"fmt"
@@ -48,7 +48,7 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	//when
-	blueprintV2, err := ConvertToEffectiveBlueprintV1(blueprint)
+	blueprintV2, err := ConvertToEffectiveBlueprintDTO(blueprint)
 
 	//then
 	convertedDogus := []serializer.TargetDogu{
@@ -66,7 +66,7 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	require.Nil(t, err)
-	assert.Equal(t, EffectiveBlueprintV1{
+	assert.Equal(t, EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		RegistryConfig: map[string]string{
@@ -95,7 +95,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	dto := EffectiveBlueprintV1{
+	dto := EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		RegistryConfig: map[string]string{
@@ -107,7 +107,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		},
 	}
 	//when
-	blueprint, err := ConvertToEffectiveBlueprint(dto)
+	blueprint, err := ConvertToEffectiveBlueprintDomain(dto)
 
 	//then
 	dogus := []domain.Dogu{

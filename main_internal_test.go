@@ -3,9 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
-	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/config"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -15,10 +12,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
+	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 )
 
 var testCtx = context.Background()
