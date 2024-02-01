@@ -251,10 +251,11 @@ func (spec *BlueprintSpec) DetermineStateDiff(ctx context.Context, installedDogu
 	spec.StateDiff = StateDiff{
 		DoguDiffs:      determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus),
 		ComponentDiffs: determineComponentDiffs(logger, spec.EffectiveBlueprint.Components, installedComponents),
-		// there will be more diffs, e.g. for components and registry keys
+		// there will be more diffs, e.g. registry keys
 	}
 	spec.Status = StatusPhaseStateDiffDetermined
-	spec.Events = append(spec.Events, StateDiffDeterminedEvent{StateDiff: spec.StateDiff})
+	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
+	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 	return nil
 }
 
