@@ -67,7 +67,7 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "",
 		},
 		{
-			name: "state diff determined",
+			name: "dogu state diff determined",
 			event: newStateDiffDoguEvent(
 				DoguDiffs{
 					{NeededAction: ActionInstall},
@@ -79,11 +79,11 @@ func TestEvents(t *testing.T) {
 					{NeededAction: ActionUpgrade},
 					{NeededAction: ActionDowngrade},
 				}),
-			expectedName:    "StateDiffDetermined",
+			expectedName:    "StateDiffDoguDetermined",
 			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{
-			name: "state diff determined",
+			name: "component state diff determined",
 			event: newStateDiffComponentEvent(
 				ComponentDiffs{
 					{NeededAction: ActionInstall},
@@ -95,7 +95,7 @@ func TestEvents(t *testing.T) {
 					{NeededAction: ActionUpgrade},
 					{NeededAction: ActionDowngrade},
 				}),
-			expectedName:    "StateDiffDetermined",
+			expectedName:    "StateDiffComponentDetermined",
 			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{

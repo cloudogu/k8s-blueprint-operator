@@ -64,30 +64,81 @@ func (e EffectiveBlueprintCalculatedEvent) Message() string {
 	return ""
 }
 
+// StateDiffDeterminedEvent is an abstract type that aggregates shared statistic functionality over different stateDiffDetermined events.
 type StateDiffDeterminedEvent struct {
-	Msg string
+	// DiffCount contains the total number of detected actions.
+	DiffCount int
+	// EventSubject contains the subject of the dected actions, f. i. "dogu diffs".
+	EventSubject string
+	// ToInstall contains the number of actions that introduce a new subject, f. i. the number of dogus to be installed.
+	ToInstall int
+	// ToUpgrade contains the number of actions that change an already existing subject, f. i. the number of dogus to be upgraded.
+	ToUpgrade int
+	// ToUninstall contains the number of actions that remove an already existing subject, f. i. the number of dogus to be deleted.
+	ToUninstall int
+	// OtherActions contains the number of actions that do not fall into the other three category, f. i. the number of dogus being ignored
+	OtherActions int
 }
 
-func newStateDiffComponentEvent(componentDiffs ComponentDiffs) StateDiffDeterminedEvent {
+func (s StateDiffDeterminedEvent) buildMessage() string {
+	return fmt.Sprintf("state diff determined: %d %s (%d to install, %d to upgrade, %d to delete, %d others)",
+		s.DiffCount, s.EventSubject, s.ToInstall, s.ToUpgrade, s.ToUninstall, s.OtherActions)
+}
+
+// StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
+type StateDiffComponentDeterminedEvent struct {
+	StateDiffDeterminedEvent
+}
+
+func newStateDiffComponentEvent(componentDiffs ComponentDiffs) StateDiffComponentDeterminedEvent {
 	install, upgrade, uninstall, other := componentDiffs.Statistics()
-	msg := fmt.Sprintf("state diff determined: %d component diffs (%d to install, %d to upgrade, %d to delete, %d others)",
-		len(componentDiffs), install, upgrade, uninstall, other)
-	return StateDiffDeterminedEvent{Msg: msg}
+
+	return StateDiffComponentDeterminedEvent{StateDiffDeterminedEvent: StateDiffDeterminedEvent{
+		DiffCount:    len(componentDiffs),
+		EventSubject: "component diffs",
+		ToInstall:    install,
+		ToUpgrade:    upgrade,
+		ToUninstall:  uninstall,
+		OtherActions: other,
+	}}
 }
 
-func newStateDiffDoguEvent(doguDiffs DoguDiffs) StateDiffDeterminedEvent {
+// Name contains the StateDiffComponentDeterminedEvent display name.
+func (s StateDiffComponentDeterminedEvent) Name() string {
+	return "StateDiffComponentDetermined"
+}
+
+// Message contains the StateDiffComponentDeterminedEvent's statistics message.
+func (s StateDiffComponentDeterminedEvent) Message() string {
+	return s.buildMessage()
+}
+
+// StateDiffDoguDeterminedEvent provides event information over detected changes regarding dogus.
+type StateDiffDoguDeterminedEvent struct {
+	StateDiffDeterminedEvent
+}
+
+func newStateDiffDoguEvent(doguDiffs DoguDiffs) StateDiffDoguDeterminedEvent {
 	install, upgrade, uninstall, other := doguDiffs.Statistics()
-	msg := fmt.Sprintf("state diff determined: %d dogu diffs (%d to install, %d to upgrade, %d to delete, %d others)",
-		len(doguDiffs), install, upgrade, uninstall, other)
-	return StateDiffDeterminedEvent{Msg: msg}
+
+	return StateDiffDoguDeterminedEvent{StateDiffDeterminedEvent: StateDiffDeterminedEvent{
+		DiffCount:    len(doguDiffs),
+		EventSubject: "dogu diffs",
+		ToInstall:    install,
+		ToUpgrade:    upgrade,
+		ToUninstall:  uninstall,
+		OtherActions: other,
+	}}
 }
 
-func (s StateDiffDeterminedEvent) Name() string {
-	return "StateDiffDetermined"
+// Name contains the StateDiffDoguDeterminedEvent display name.
+func (s StateDiffDoguDeterminedEvent) Name() string {
+	return "StateDiffDoguDetermined"
 }
 
-func (s StateDiffDeterminedEvent) Message() string {
-	return s.Msg
+// Message contains the StateDiffDoguDeterminedEvent's statistics message.
+func (s StateDiffDoguDeterminedEvent) Message() string {
+	return s.buildMessage()
 }
 
 type EcosystemHealthyUpfrontEvent struct {
