@@ -300,7 +300,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 			},
 		},
 		{
-			name: "an installed component which is also in the blueprint",
+			name: "determine upgrade for an installed component which is also in the blueprint",
 			args: args{
 				blueprintComponents: []Component{
 					{

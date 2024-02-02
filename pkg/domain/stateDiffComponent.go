@@ -83,15 +83,15 @@ func determineComponentDiffs(logger logr.Logger, blueprintComponents []Component
 	}
 
 	for _, installedComponent := range installedComponents {
-		blueprintComponent, notFound := findComponentByName(blueprintComponents, installedComponent.Name)
+		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name)
 
-		if notFound == nil {
-			componentDiffs[installedComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
+		if !found {
+			var notFoundInBlueprint *Component = nil
+			componentDiffs[installedComponent.Name] = determineComponentDiff(logger, notFoundInBlueprint, installedComponent)
 			continue
 		}
 
-		var notFoundInBlueprint *Component = nil
-		componentDiffs[installedComponent.Name] = determineComponentDiff(logger, notFoundInBlueprint, installedComponent)
+		componentDiffs[installedComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
 	}
 	return maps.Values(componentDiffs)
 }
@@ -135,13 +135,13 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	}
 }
 
-func findComponentByName(components []Component, name string) (Component, error) {
+func findComponentByName(components []Component, name string) (Component, bool) {
 	for _, component := range components {
 		if component.Name == name {
-			return component, nil
+			return component, true
 		}
 	}
-	return Component{}, fmt.Errorf("could not find component '%s'", name)
+	return Component{}, false
 }
 
 func getNextComponentAction(logger logr.Logger, expected ComponentDiffState, actual ComponentDiffState) Action {
