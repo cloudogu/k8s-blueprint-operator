@@ -24,7 +24,7 @@ type ComponentDiff struct {
 // ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
 // determine the kind of changed if there is a drift between actual or desired state.
 type ComponentDiffState struct {
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string `json:"distributionNamespace"`
 	// Version contains the component's version.

@@ -89,8 +89,8 @@ func TestConvertToComponentDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", Version: version3211, TargetState: domain.TargetStatePresent}}},
-			want:    []TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
+			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", DistributionNamespace: "k8s", Version: version3211, TargetState: domain.TargetStatePresent}}},
+			want:    []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},
 	}

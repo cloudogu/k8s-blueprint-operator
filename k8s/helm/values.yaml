@@ -2,7 +2,7 @@ manager:
   replicas: 1
   image:
     repository: cloudogu/k8s-blueprint-operator
-    tag: 0.1.0
+    tag: 0.1.0-1
   imagePullPolicy: IfNotPresent
   env:
     logLevel: info

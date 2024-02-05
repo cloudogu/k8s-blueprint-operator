@@ -44,14 +44,14 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			assert.NoError,
 		},
 		{
-			"dogus in blueprint",
+			"components in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", Version: version0211, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", Version: version3211, TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", DistributionNamespace: "present", Version: version0211, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`,
+			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"absent/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`,
 			assert.NoError,
 		},
 		{

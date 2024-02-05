@@ -12,7 +12,7 @@ import (
 type Component struct {
 	// Name defines the name of the component. Must not be empty.
 	Name string
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version defines the version of the package that is to be installed. Must not be empty if the targetState is

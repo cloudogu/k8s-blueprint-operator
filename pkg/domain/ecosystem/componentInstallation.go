@@ -9,7 +9,7 @@ type ComponentInstallation struct {
 	// Name is the name of the component, e.g. 'k8s-dogu-operator'.
 	// The name is also the ID of the component in the ecosystem as only one component with this name can be installed.
 	Name string
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version is the version of the component

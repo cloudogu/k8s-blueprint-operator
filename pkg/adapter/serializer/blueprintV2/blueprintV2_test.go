@@ -24,10 +24,10 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	}
 
 	components := []domain.Component{
-		{Name: "component1", Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: version1_2_3_3},
 	}
 	blueprint := domain.Blueprint{
 		Dogus:      dogus,
@@ -55,9 +55,9 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "component1", Version: version3211.Raw, TargetState: "absent"},
+		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3212.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 

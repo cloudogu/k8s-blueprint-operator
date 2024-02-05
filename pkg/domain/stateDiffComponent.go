@@ -44,7 +44,7 @@ type ComponentDiff struct {
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
 type ComponentDiffState struct {
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace does NOT
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version contains the component's version.
