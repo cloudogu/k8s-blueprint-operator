@@ -327,7 +327,7 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
 }
 
-// CompletePostProcessing is used to mark the blueprint as completed or failed while the post-processing after trying to apply the blueprint.
+// CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	switch spec.Status {
 	case StatusPhaseEcosystemHealthyAfterwards:

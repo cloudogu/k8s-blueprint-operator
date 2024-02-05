@@ -572,7 +572,7 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		})
 	})
 
-	t.Run("status change on failure EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+	t.Run("status change on failure InProgress -> Failed", func(t *testing.T) {
 		// given
 		spec := &BlueprintSpec{
 			Status: StatusPhaseInProgress,

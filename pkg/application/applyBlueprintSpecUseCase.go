@@ -106,7 +106,7 @@ func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx con
 		logger.Info("activate maintenance mode")
 		err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
 			Title: "Blueprint getting applied",
-			Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied",
+			Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied.",
 		})
 		if err != nil {
 			return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
