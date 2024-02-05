@@ -168,7 +168,7 @@ func TestApplyBlueprintSpecUseCase_markBlueprintApplicationFailed(t *testing.T) 
 	})
 }
 
-func TestApplyBlueprintSpecUseCase_markWaitingForHealthyEcosystem(t *testing.T) {
+func TestApplyBlueprintSpecUseCase_markBlueprintApplied(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
 			Status: domain.StatusPhaseInProgress,
