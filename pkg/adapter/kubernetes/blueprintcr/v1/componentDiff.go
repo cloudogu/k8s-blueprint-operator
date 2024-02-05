@@ -26,7 +26,7 @@ type ComponentDiff struct {
 type ComponentDiffState struct {
 	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
-	DistributionNamespace string `json:"distributionNamespace"`
+	DistributionNamespace string `json:"distributionNamespace,omitempty"`
 	// Version contains the component's version.
 	Version string `json:"version,omitempty"`
 	// InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
