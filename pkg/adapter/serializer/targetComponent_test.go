@@ -2,9 +2,14 @@ package serializer
 
 import (
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"testing"
+)
+
+var (
+	compVersion3211 = semver.MustParse("3.2.1-1")
 )
 
 func TestConvertComponents(t *testing.T) {
@@ -32,7 +37,7 @@ func TestConvertComponents(t *testing.T) {
 		{
 			name:    "normal component",
 			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}}},
-			want:    []domain.Component{{Name: "k8s-dogu-operator", DistributionNamespace: "k8s", Version: version3211, TargetState: 0}},
+			want:    []domain.Component{{Name: "k8s-dogu-operator", DistributionNamespace: "k8s", Version: compVersion3211, TargetState: 0}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -89,7 +94,7 @@ func TestConvertToComponentDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", DistributionNamespace: "k8s", Version: version3211, TargetState: domain.TargetStatePresent}}},
+			args:    args{components: []domain.Component{{Name: "k8s-dogu-operator", DistributionNamespace: "k8s", Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
 			want:    []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},

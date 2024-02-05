@@ -1,7 +1,7 @@
 package ecosystem
 
 import (
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 )
 
 // ComponentInstallation represents an installed or to be installed component in the ecosystem.
@@ -13,7 +13,7 @@ type ComponentInstallation struct {
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version is the version of the component
-	Version core.Version
+	Version *semver.Version
 	// Status is the installation status of the component in the ecosystem
 	Status string
 	// Health is the current health status of the component in the ecosystem

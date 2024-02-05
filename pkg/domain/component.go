@@ -3,8 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
-
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 )
 
 // Component represents a CES component (e.g. operators), its version, and the installation state in which it is supposed to be
@@ -17,7 +16,7 @@ type Component struct {
 	DistributionNamespace string
 	// Version defines the version of the package that is to be installed. Must not be empty if the targetState is
 	// "present"; otherwise it is optional and is not going to be interpreted.
-	Version core.Version
+	Version *semver.Version
 	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
 }
@@ -28,11 +27,10 @@ func (component *Component) Validate() error {
 		return fmt.Errorf("component name must not be empty: %+v", component)
 	}
 
-	emptyVersion := core.Version{}
 	if component.TargetState == TargetStatePresent {
 		var versionErr error
-		if component.Version == emptyVersion {
-			versionErr = fmt.Errorf("version of component %q must not be empty: %s", component.Name, component.Version.Raw)
+		if component.Version == nil {
+			versionErr = fmt.Errorf("version of component %q must not be empty", component.Name)
 		}
 		var namespaceErr error
 		if component.DistributionNamespace == "" {

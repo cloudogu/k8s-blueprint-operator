@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -11,7 +12,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -91,7 +91,7 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		require.NoError(t, err)
 
 		expected := map[string]*ecosystem.ComponentInstallation{}
-		version, _ := core.ParseVersion("1.2.3-4")
+		version, _ := semver.NewVersion("1.2.3-4")
 		expected[testComponentName] = &ecosystem.ComponentInstallation{
 			Name:                  testComponentName,
 			DistributionNamespace: testDistributionNamespace,
@@ -205,7 +205,7 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		version, _ := core.ParseVersion("1.2.3-4")
+		version, _ := semver.NewVersion("1.2.3-4")
 		expected := ecosystem.ComponentInstallation{
 			Name:                  testComponentName,
 			DistributionNamespace: testDistributionNamespace,

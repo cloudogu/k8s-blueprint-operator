@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -13,7 +13,7 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		// given
 		domainDiff := domain.ComponentDiff{
 			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Version: core.Version{}, InstallationState: domain.TargetStateAbsent},
+			Actual:       domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
 			Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
 			NeededAction: domain.ActionInstall}
 
@@ -33,7 +33,7 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		domainDiff := domain.ComponentDiff{
 			Name:         testComponentName,
 			Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:     domain.ComponentDiffState{Version: core.Version{}, InstallationState: domain.TargetStateAbsent},
+			Expected:     domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
 			NeededAction: domain.ActionUninstall}
 
 		// when
@@ -65,7 +65,7 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
 			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{DistributionNamespace: "", Version: core.Version{}, InstallationState: domain.TargetStateAbsent},
+			Actual:       domain.ComponentDiffState{DistributionNamespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
 			Expected:     domain.ComponentDiffState{DistributionNamespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
 			NeededAction: domain.ActionInstall,
 		}
@@ -87,7 +87,7 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		expected := domain.ComponentDiff{
 			Name:         testComponentName,
 			Actual:       domain.ComponentDiffState{DistributionNamespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:     domain.ComponentDiffState{DistributionNamespace: "", Version: core.Version{}, InstallationState: domain.TargetStateAbsent},
+			Expected:     domain.ComponentDiffState{DistributionNamespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
 			NeededAction: domain.ActionUninstall,
 		}
 		assert.Equal(t, expected, actual)
@@ -109,5 +109,27 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		assert.ErrorContains(t, err, "failed to parse expected version")
 		assert.ErrorContains(t, err, "failed to parse actual installation state")
 		assert.ErrorContains(t, err, "failed to parse expected installation state")
+	})
+	t.Run("should accept dev version", func(t *testing.T) {
+		compVersion080dev := semver.MustParse("0.8.0-dev")
+		// given
+		diff := ComponentDiff{
+			Actual:       ComponentDiffState{DistributionNamespace: "k8s", Version: compVersion080dev.String(), InstallationState: "present"},
+			Expected:     ComponentDiffState{DistributionNamespace: "", Version: "", InstallationState: "absent"},
+			NeededAction: domain.ActionUninstall,
+		}
+
+		// when
+		actual, err := convertToComponentDiffDomain(testComponentName, diff)
+
+		// then
+		require.NoError(t, err)
+		expected := domain.ComponentDiff{
+			Name:         testComponentName,
+			Actual:       domain.ComponentDiffState{DistributionNamespace: "k8s", Version: compVersion080dev, InstallationState: domain.TargetStatePresent},
+			Expected:     domain.ComponentDiffState{DistributionNamespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			NeededAction: domain.ActionUninstall,
+		}
+		assert.Equal(t, expected, actual)
 	})
 }

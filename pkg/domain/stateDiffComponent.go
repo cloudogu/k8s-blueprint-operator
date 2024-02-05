@@ -2,10 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
 	"golang.org/x/exp/maps"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
@@ -48,7 +48,7 @@ type ComponentDiffState struct {
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version contains the component's version.
-	Version core.Version
+	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
 }
@@ -69,7 +69,7 @@ func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
 		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
 		diff.DistributionNamespace,
-		diff.Version.Raw,
+		diff.Version.String(),
 		diff.InstallationState,
 	)
 }
@@ -155,10 +155,10 @@ func getNextComponentAction(logger logr.Logger, expected ComponentDiffState, act
 func decideOnEqualState(logger logr.Logger, expected ComponentDiffState, actual ComponentDiffState) Action {
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		if expected.Version.IsNewerThan(actual.Version) {
+		if expected.Version.GreaterThan(actual.Version) {
 			return ActionUpgrade
 		}
-		if expected.Version.IsEqualTo(actual.Version) {
+		if expected.Version.Equal(actual.Version) {
 			return ActionNone
 		}
 		return ActionDowngrade

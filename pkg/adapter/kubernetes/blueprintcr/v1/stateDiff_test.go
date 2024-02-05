@@ -2,6 +2,7 @@ package v1
 
 import (
 	"cmp"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
@@ -14,9 +15,9 @@ const testComponentName = "my-component"
 
 var (
 	testVersionLowRaw  = "1.2.3"
-	testVersionLow     = mustParseVersion(testVersionLowRaw)
+	testVersionLow     = semver.MustParse(testVersionLowRaw)
 	testVersionHighRaw = "2.3.4"
-	testVersionHigh    = mustParseVersion(testVersionHighRaw)
+	testVersionHigh    = semver.MustParse(testVersionHighRaw)
 )
 
 func TestConvertToDTO(t *testing.T) {

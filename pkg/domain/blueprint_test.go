@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -9,6 +10,12 @@ import (
 )
 
 var version3_2_1_4, _ = core.ParseVersion("3.2.1-4")
+
+var (
+	compVersion3210 = semver.MustParse("3.2.1-0")
+	compVersion3212 = semver.MustParse("3.2.1-2")
+	compVersion3213 = semver.MustParse("3.2.1-3")
+)
 
 func Test_validate_ok(t *testing.T) {
 	dogus := []Dogu{
@@ -19,10 +26,10 @@ func Test_validate_ok(t *testing.T) {
 	}
 
 	components := []Component{
-		{Name: "absent-component1", DistributionNamespace: "", Version: version3_2_1_0, TargetState: TargetStateAbsent},
+		{Name: "absent-component1", DistributionNamespace: "", Version: compVersion3210, TargetState: TargetStateAbsent},
 		{Name: "absent-component2", TargetState: TargetStateAbsent},
-		{Name: "present-component3", DistributionNamespace: "k8s", Version: version3212, TargetState: TargetStatePresent},
-		{Name: "present-component4", DistributionNamespace: "k8s", Version: version3213},
+		{Name: "present-component3", DistributionNamespace: "k8s", Version: compVersion3212, TargetState: TargetStatePresent},
+		{Name: "present-component4", DistributionNamespace: "k8s", Version: compVersion3213},
 	}
 	blueprint := Blueprint{Dogus: dogus, Components: components}
 
@@ -35,8 +42,8 @@ func Test_validate_multipleErrors(t *testing.T) {
 		{Version: version3212},
 	}
 	components := []Component{
-		{Version: version3212},
-		{Name: testComponentName, Version: version3212},
+		{Version: compVersion3212},
+		{Name: testComponentName, Version: compVersion3212},
 	}
 	blueprint := Blueprint{Dogus: dogus, Components: components}
 
@@ -80,7 +87,7 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 func Test_validateComponents_ok(t *testing.T) {
 	components := []Component{
 		{Name: "absent-component", TargetState: TargetStateAbsent},
-		{Name: "present-component", DistributionNamespace: "k8s", Version: version3212, TargetState: TargetStatePresent},
+		{Name: "present-component", DistributionNamespace: "k8s", Version: compVersion3212, TargetState: TargetStatePresent},
 	}
 	blueprint := Blueprint{Components: components}
 
@@ -92,7 +99,7 @@ func Test_validateComponents_ok(t *testing.T) {
 func Test_validateComponents_multipleErrors(t *testing.T) {
 	components := []Component{
 		{Name: testComponentName},
-		{Version: version3212},
+		{Version: compVersion3212},
 	}
 	blueprint := Blueprint{Components: components}
 	err := blueprint.validateComponents()
@@ -122,10 +129,10 @@ func Test_validateDoguUniqueness(t *testing.T) {
 
 func Test_validateComponentUniqueness(t *testing.T) {
 	components := []Component{
-		{Name: "present/component1", Version: version3_2_1_0, TargetState: TargetStatePresent},
-		{Name: "present/component1", Version: version3213},
-		{Name: "present/component2", Version: version3213},
-		{Name: "present/component2", Version: version3213},
+		{Name: "present/component1", Version: compVersion3210, TargetState: TargetStatePresent},
+		{Name: "present/component1", Version: compVersion3213},
+		{Name: "present/component2", Version: compVersion3213},
+		{Name: "present/component2", Version: compVersion3213},
 	}
 
 	blueprint := Blueprint{Components: components}

@@ -3,11 +3,11 @@ package componentcr
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	compCli "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 
@@ -70,7 +70,7 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
 	}
 
-	version, err := core.ParseVersion(cr.Spec.Version)
+	version, err := semver.NewVersion(cr.Spec.Version)
 	if err != nil {
 		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
 	}
