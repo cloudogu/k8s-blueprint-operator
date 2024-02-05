@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type BlueprintSpec struct {
@@ -234,9 +235,8 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.
 // if sth. is not in the lists of installed things, it is considered not installed.
 // installedDogus are a map in the form of simpleDoguName->*DoguInstallation. There should be no nil values.
-// The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
-// If there are not allowed actions should be considered at the start of the execution of the blueprint.
-// returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
+// returns an InvalidBlueprintError if the StateDiff contains forbidden actions or
+// returns a generic error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosystem.DoguInstallation) error {
 	switch spec.Status {
 	case StatusPhaseNew:
@@ -253,8 +253,43 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 		DoguDiffs: determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus),
 		// there will be more diffs, e.g. for components and registry keys
 	}
-	spec.Status = StatusPhaseStateDiffDetermined
+
 	spec.Events = append(spec.Events, StateDiffDeterminedEvent{StateDiff: spec.StateDiff})
+
+	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
+		return doguDiff.NeededAction
+	})
+	dogusToNamespaceSwitch := dogusByAction[ActionSwitchNamespace]
+	dogusToDowngrade := dogusByAction[ActionDowngrade]
+
+	var invalidBlueprintErrors []error
+
+	//TODO: extract this in an extra function
+	if !spec.Config.AllowDoguNamespaceSwitch && len(dogusToNamespaceSwitch) != 0 {
+		spec.Status = StatusPhaseInvalid
+		err := &InvalidBlueprintError{
+			Message: fmt.Sprintf("namespace switch for following dogus is not allowed without setting the feature flag: %v", dogusToNamespaceSwitch),
+		}
+		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+	}
+
+	//TODO: extract this in an extra function
+	if len(dogusToDowngrade) != 0 {
+		err := &InvalidBlueprintError{
+			Message: fmt.Sprintf("dogu downgrades are not allowed: %v", dogusToNamespaceSwitch),
+		}
+		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+	}
+
+	invalidBlueprintError := errors.Join(invalidBlueprintErrors...)
+
+	if invalidBlueprintError != nil {
+		spec.Status = StatusPhaseInvalid
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		return invalidBlueprintError
+	}
+
+	spec.Status = StatusPhaseStateDiffDetermined
 	return nil
 }
 

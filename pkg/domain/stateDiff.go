@@ -60,6 +60,10 @@ const (
 	ActionSwitchNamespace = "namespace switch"
 )
 
+func (diff *DoguDiff) needsNamespaceSwitch() bool {
+	return diff.NeededAction == diff.NeededAction
+}
+
 func (diff *DoguDiff) String() string {
 	return fmt.Sprintf(
 		"{DoguName: %q, Actual: %s, Expected: %s, NeededAction: %q}",
