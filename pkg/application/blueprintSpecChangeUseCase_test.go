@@ -56,6 +56,14 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseBlueprintApplied
+			})
+		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
+				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyAfterwards
+			})
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil).
+			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseCompleted
 			})
 
@@ -401,11 +409,14 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
 
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseBlueprintApplied,
-		}, nil)
-		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(nil)
+		}
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
+			blueprintSpec.Status = domain.StatusPhaseCompleted
+		})
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
@@ -422,10 +433,14 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
 
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseEcosystemHealthyAfterwards,
-		}, nil)
+		}
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
+			blueprintSpec.Status = domain.StatusPhaseCompleted
+		})
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
@@ -442,10 +457,14 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
 
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
+		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseEcosystemUnhealthyAfterwards,
-		}, nil)
+		}
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
+			blueprintSpec.Status = domain.StatusPhaseCompleted
+		})
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
