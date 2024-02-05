@@ -60,16 +60,16 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(namespace, componentName string, version core.Version) *ComponentInstallation {
+func InstallComponent(namespace, componentName string, version *semver.Version) *ComponentInstallation {
 	return &ComponentInstallation{
 		DistributionNamespace: namespace,
-		Name:      componentName,
-		Version:   version,
+		Name:                  componentName,
+		Version:               version,
 		// DeployNamespace:     deployNamespace,
 		// ValuesYamlOverwrite: valuesYamlOverwrite,
 	}
 }
 
-func (ci *ComponentInstallation) Upgrade(version semver.Version) {
+func (ci *ComponentInstallation) Upgrade(version *semver.Version) {
 	ci.Version = version
 }

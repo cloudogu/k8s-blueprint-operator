@@ -2,7 +2,7 @@ package componentcr
 
 import (
 	_ "embed"
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,7 +21,7 @@ const (
 var (
 	//go:embed testdata/testPatch
 	testPatchBytes  []byte
-	testVersion1, _ = core.ParseVersion("1.0.0-1")
+	testVersion1, _ = semver.NewVersion("1.0.0-1")
 )
 
 func Test_parseComponentCR(t *testing.T) {
@@ -46,7 +46,7 @@ func Test_parseComponentCR(t *testing.T) {
 					Spec: compV1.ComponentSpec{
 						Namespace: testHelmNamespace,
 						Name:      testComponentName,
-						Version:   testVersion1.Raw,
+						Version:   testVersion1.String(),
 					},
 					Status: compV1.ComponentStatus{
 						Status: testStatus,
@@ -127,13 +127,13 @@ func Test_toComponentCR(t *testing.T) {
 					Name: testComponentName,
 					Labels: map[string]string{
 						ComponentNameLabelKey:    testComponentName,
-						ComponentVersionLabelKey: testVersion1.Raw,
+						ComponentVersionLabelKey: testVersion1.String(),
 					},
 				},
 				Spec: compV1.ComponentSpec{
 					Namespace: testDistributionNamespace,
 					Name:      testComponentName,
-					Version:   testVersion1.Raw,
+					Version:   testVersion1.String(),
 				},
 			},
 		},
@@ -169,7 +169,7 @@ func Test_toComponentCRPatch(t *testing.T) {
 				Spec: componentSpecPatch{
 					Namespace: testNamespace,
 					Name:      testComponentName,
-					Version:   testVersion1.Raw,
+					Version:   testVersion1.String(),
 				},
 			},
 		},

@@ -1,6 +1,7 @@
 package application
 
 import (
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,10 @@ import (
 const (
 	componentName1 = "operator1"
 	testNamespace  = "k8s"
+)
+
+var (
+	semVer3212, _ = semver.NewVersion("3.2.1-2")
 )
 
 func TestNewComponentInstallationUseCase(t *testing.T) {
@@ -42,6 +47,12 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 					{
 						Name:         componentName1,
 						NeededAction: domain.ActionNone,
+						Actual: domain.ComponentDiffState{
+							Version: semVer3212,
+						},
+						Expected: domain.ComponentDiffState{
+							Version: semVer3212,
+						},
 					},
 				},
 			},
@@ -192,14 +203,14 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			NeededAction: domain.ActionInstall,
 			Expected: domain.ComponentDiffState{
 				DistributionNamespace: testNamespace,
-				Version:               version3212,
+				Version:               semVer3212,
 			},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:                  componentName1,
 			DistributionNamespace: testNamespace,
-			Version:               version3212,
+			Version:               semVer3212,
 		}
 
 		blueprintConfigurationMock := domain.BlueprintConfiguration{}
@@ -261,14 +272,14 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			Name: componentName1,
 			Expected: domain.ComponentDiffState{
 				DistributionNamespace: testNamespace,
-				Version:               version3212,
+				Version:               semVer3212,
 			},
 			NeededAction: domain.ActionUpgrade,
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:                  componentName1,
-			Version:               version3212,
+			Version:               semVer3212,
 			DistributionNamespace: testNamespace,
 		}
 
