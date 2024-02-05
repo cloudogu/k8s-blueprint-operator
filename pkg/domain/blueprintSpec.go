@@ -258,6 +258,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
+// CheckEcosystemHealthUpfront checks if the ecosystem is healthy with the given health result and sets the next status phase depending on that.
 func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
 	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
@@ -270,10 +271,13 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	}
 }
 
+// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
+	// TODO: also check if an early-exit is possible if no changes need to be applied, see PR #29
 	return !spec.Config.DryRun
 }
 
+// CompletePreProcessing decides if the blueprint is ready to be applied or not by setting the fitting next status phase.
 func (spec *BlueprintSpec) CompletePreProcessing() {
 	if spec.Config.DryRun {
 		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
@@ -283,6 +287,7 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 	}
 }
 
+// CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
 func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) {
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyAfterwards
@@ -293,22 +298,27 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 	}
 }
 
+// StartApplying marks the blueprint as in progress, which indicates, that the system started applying the blueprint.
+// This state is used to detect complete failures as this state will only stay persisted if the process failed before setting the state to blueprint applied.
 func (spec *BlueprintSpec) StartApplying() {
 	spec.Status = StatusPhaseInProgress
 	spec.Events = append(spec.Events, InProgressEvent{})
 }
 
+// MarkBlueprintApplicationFailed sets the blueprint state to application failed, which indicates that the blueprint could not be applied completely.
+// In reaction to this, further post-processing will happen.
 func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
 	spec.Status = StatusPhaseBlueprintApplicationFailed
 	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
 }
 
+// MarkBlueprintApplied sets the blueprint state to blueprint applied, which indicates that the blueprint was applied successful and further steps can happen then.
 func (spec *BlueprintSpec) MarkBlueprintApplied() {
 	spec.Status = StatusPhaseBlueprintApplied
 	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
 }
 
-// CompletePostProcessing is used to mark the blueprint as completed or failed after the post-processing after trying to apply the blueprint.
+// CompletePostProcessing is used to mark the blueprint as completed or failed while the post-processing after trying to apply the blueprint.
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	switch spec.Status {
 	case StatusPhaseEcosystemHealthyAfterwards:

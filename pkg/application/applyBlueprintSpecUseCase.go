@@ -12,17 +12,17 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo                   domainservice.BlueprintSpecRepository
+	repo                   blueprintSpecRepository
 	doguInstallUseCase     doguInstallationUseCase
 	healthUseCase          ecosystemHealthUseCase
-	maintenanceModeAdapter domainservice.MaintenanceMode
+	maintenanceModeAdapter maintenanceMode
 }
 
 func NewApplyBlueprintSpecUseCase(
-	repo domainservice.BlueprintSpecRepository,
+	repo blueprintSpecRepository,
 	doguInstallUseCase doguInstallationUseCase,
 	healthUseCase ecosystemHealthUseCase,
-	maintenanceModeAdapter domainservice.MaintenanceMode,
+	maintenanceModeAdapter maintenanceMode,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
 		repo:                   repo,
@@ -88,6 +88,9 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return nil
 }
 
+// PreProcessBlueprintApplication prepares the environment for applying the blueprint, e.g. activating the maintenance mode.
+// returns a domainservice.ConflictError if another party activated the maintenance mode or
+// returns a domainservice.InternalError on any other error.
 func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PreProcessBlueprintApplication").
 		WithValues("blueprintId", blueprintId)
@@ -120,6 +123,9 @@ func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx con
 	return nil
 }
 
+// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. deactivating the maintenance mode.
+// returns a domainservice.ConflictError if another party holds the lock to the maintenance mode or
+// returns a domainservice.InternalError on any other error.
 func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PostProcessBlueprintApplication").
 		WithValues("blueprintId", blueprintId)
@@ -186,7 +192,8 @@ func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blu
 	return nil
 }
 
-// MarkBlueprintApplicationFailed marks the blueprint application as failed. The error which leads to the failed blueprint needs to be provided.
+// markBlueprintApplicationFailed marks the blueprint application as failed.
+// Returns the error which leads to the failed blueprint needs to be provided.
 func (useCase *ApplyBlueprintSpecUseCase) markBlueprintApplicationFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
 		WithName("ApplyBlueprintSpecUseCase.markBlueprintApplicationFailed").

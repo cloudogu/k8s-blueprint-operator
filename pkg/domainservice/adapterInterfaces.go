@@ -69,7 +69,7 @@ type MaintenanceMode interface {
 	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
 	Activate(content MaintenancePageModel) error
 	// Deactivate disables the maintenance mode if it is active.
-	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
+	// May throw a generic InternalError or a ConflictError if another party holds the maintenance mode lock.
 	Deactivate() error
 }
 
