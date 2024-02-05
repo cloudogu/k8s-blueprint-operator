@@ -162,15 +162,6 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Contex
 		return err
 	}
 
-	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	if blueprintSpec.Config.DryRun {
-		return nil
-	}
-
 	return useCase.HandleChange(ctx, blueprintId)
 }
 

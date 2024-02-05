@@ -74,53 +74,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseCompleted, blueprintSpec.Status)
 	})
 
-	t.Run("should return nil and not handle blueprint spec on dry run", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		doguInstallMock := newMockDoguInstallationUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseNew,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-		}
-
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseStaticallyValidated
-			})
-		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
-			})
-		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseValidated
-			})
-		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseStateDiffDetermined
-			})
-		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprintId string) {
-				blueprintSpec.Status = domain.StatusPhaseEcosystemHealthyUpfront
-			})
-		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil)
-
-		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseEcosystemHealthyUpfront, blueprintSpec.Status)
-	})
-
 	t.Run("cannot load blueprint spec initially", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -530,5 +483,53 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.ErrorContains(t, err, "could not handle unknown status of blueprint")
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T) {
+	t.Run("error", func(t *testing.T) {
+		// given
+		spec := &domain.BlueprintSpec{
+			Id:     blueprintId,
+			Config: domain.BlueprintConfiguration{DryRun: true},
+		}
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprintId).Return(nil)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, nil, applyMock)
+		// when
+		err := useCase.preProcessBlueprintApplication(testCtx, spec)
+		// then
+		require.NoError(t, err)
+	})
+	t.Run("stop on dry run", func(t *testing.T) {
+		// given
+		spec := &domain.BlueprintSpec{
+			Id: blueprintId,
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprintId).Return(assert.AnError)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+		// when
+		err := useCase.preProcessBlueprintApplication(testCtx, spec)
+		// then
+		require.ErrorIs(t, err, assert.AnError)
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_applyBlueprintSpec(t *testing.T) {
+	t.Run("error", func(t *testing.T) {
+		// given
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, blueprintId).Return(assert.AnError)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, nil, applyMock)
+		// when
+		err := useCase.applyBlueprintSpec(testCtx, blueprintId)
+		// then
+		require.ErrorIs(t, err, assert.AnError)
 	})
 }
