@@ -508,7 +508,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 }
 
 func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T) {
-	t.Run("error", func(t *testing.T) {
+	t.Run("stop on dry run", func(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{
 			Id:     blueprintId,
@@ -522,7 +522,7 @@ func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T)
 		// then
 		require.NoError(t, err)
 	})
-	t.Run("stop on dry run", func(t *testing.T) {
+	t.Run("error", func(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{
 			Id: blueprintId,

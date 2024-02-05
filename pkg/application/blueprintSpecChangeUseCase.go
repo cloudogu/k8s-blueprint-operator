@@ -151,6 +151,8 @@ func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx co
 		return err
 	}
 	if !blueprintSpec.ShouldBeApplied() {
+		// event recording and so on happen in PreProcessBlueprintApplication
+		// just stop the loop here on dry run or early exit
 		return nil
 	}
 	return useCase.HandleChange(ctx, blueprintSpec.Id)
