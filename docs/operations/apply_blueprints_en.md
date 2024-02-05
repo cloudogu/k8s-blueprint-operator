@@ -27,3 +27,9 @@ spec:
       "dogus": [ ... ]
     }
 ```
+
+You may see [examples](../../samples/k8s_v1_blueprint.yaml) of Blueprint-CRs in the [Sample directory](../../samples/). With `k8s-blueprint-operator` properly being installed, you can apply it to the cluster like this:
+
+```bash
+kubectl -n ecosystem -f k8s_v1_blueprint.yaml
+```

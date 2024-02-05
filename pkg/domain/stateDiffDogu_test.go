@@ -123,7 +123,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
-				NeededAction: ActionSwitchNamespace,
+				NeededAction: ActionSwitchDoguNamespace,
 			},
 		},
 		{
@@ -380,7 +380,7 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 				{NeededAction: ActionUninstall},
 				{NeededAction: ActionInstall},
 				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionSwitchNamespace},
+				{NeededAction: ActionSwitchDoguNamespace},
 				{NeededAction: ActionInstall},
 				{NeededAction: ActionDowngrade},
 				{NeededAction: ActionUninstall},
