@@ -26,7 +26,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
+			Id: "testBlueprint1",
+			StateDiff: domain.StateDiff{DoguDiffs: domain.DoguDiffs{
+				{Expected: domain.DoguDiffState{Version: version3_2_1_1}},
+			}},
 			Status: domain.StatusPhaseNew,
 		}
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
