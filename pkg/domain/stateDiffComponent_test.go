@@ -14,7 +14,6 @@ import (
 const testComponentName = "my-component"
 
 var (
-	compVersion1233 = semver.MustParse("1.2.3-3")
 	compVersion3211 = semver.MustParse("3.2.1-1")
 )
 
@@ -123,7 +122,9 @@ func Test_determineComponentDiff(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, determineComponentDiff(tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent), "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
+			compDiff, err := determineComponentDiff(tt.args.blueprintComponent, tt.args.installedComponent)
+			assert.NoError(t, err)
+			assert.Equalf(t, tt.want, compDiff, "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
 		})
 	}
 }
@@ -339,7 +340,9 @@ func Test_determineComponentDiffs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, determineComponentDiffs(tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents), "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
+			compDiffs, err := determineComponentDiffs(tt.args.blueprintComponents, tt.args.installedComponents)
+			assert.NoError(t, err)
+			assert.Equalf(t, tt.want, compDiffs, "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
 		})
 	}
 }
