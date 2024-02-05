@@ -332,7 +332,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		installedComponents := map[string]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(testContext, installedDogus, installedComponents)
+		err := spec.DetermineStateDiff(installedDogus, installedComponents)
 
 		// then
 		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}}
@@ -353,7 +353,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			}
 			installedDogus := map[string]*ecosystem.DoguInstallation{}
 			// when
-			err := spec.DetermineStateDiff(testContext, installedDogus, nil)
+			err := spec.DetermineStateDiff(installedDogus, nil)
 
 			// then
 			assert.Error(t, err)
@@ -370,7 +370,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 		installedDogus := map[string]*ecosystem.DoguInstallation{}
 		// when
-		err := spec.DetermineStateDiff(testContext, installedDogus, nil)
+		err := spec.DetermineStateDiff(installedDogus, nil)
 
 		// then
 		assert.NoError(t, err)
