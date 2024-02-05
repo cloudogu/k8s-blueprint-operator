@@ -485,14 +485,43 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	}
 }
 
+func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+		}
+		// when
+		spec.CompletePreProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseBlueprintApplicationPreProcessed,
+			Events: []Event{BlueprintApplicationPreProcessedEvent{}},
+		})
+	})
+	t.Run("dry run", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Config: BlueprintConfiguration{DryRun: true},
+		}
+		// when
+		spec.CompletePreProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Config: BlueprintConfiguration{DryRun: true},
+			Events: []Event{BlueprintDryRunEvent{}},
+		})
+	})
+}
+
 func TestBlueprintSpec_StartApplying(t *testing.T) {
-	t.Run("success without dry run", func(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		// given
 		spec := &BlueprintSpec{}
-
 		// when
 		spec.StartApplying()
-
 		// then
 		assert.Equal(t, spec, &BlueprintSpec{
 			Status: StatusPhaseInProgress,
@@ -552,6 +581,34 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		assert.Equal(t, spec, &BlueprintSpec{
 			Status: StatusPhaseFailed,
 			Events: []Event{ExecutionFailedEvent{errors.New(handleInProgressMsg)}},
+		})
+	})
+
+	t.Run("status change on failure EcosystemUnhealthyAfterwards -> Failed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemUnhealthyAfterwards,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New("ecosystem is unhealthy")}},
+		})
+	})
+
+	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseBlueprintApplicationFailed,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New("could not apply blueprint")}},
 		})
 	})
 }
