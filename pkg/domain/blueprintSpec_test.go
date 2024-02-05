@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -523,15 +524,15 @@ func TestBlueprintSpec_StartApplying(t *testing.T) {
 
 }
 
-func TestBlueprintSpec_MarkFailed(t *testing.T) {
+func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
 	// given
 	spec := &BlueprintSpec{}
 	err := fmt.Errorf("test-error")
 	// when
-	spec.MarkFailed(err)
+	spec.MarkBlueprintApplicationFailed(err)
 	// then
 	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseFailed,
+		Status: StatusPhaseBlueprintApplicationFailed,
 		Events: []Event{ExecutionFailedEvent{err: err}},
 	})
 }
@@ -548,18 +549,33 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkCompleted(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	// when
-	spec.MarkCompleted()
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseCompleted,
-		Events: []Event{
-			MaintenanceModeDeactivatedEvent{},
-			CompletedEvent{},
-		},
+func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
+	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyAfterwards,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseCompleted,
+			Events: []Event{CompletedEvent{}},
+		})
+	})
+
+	t.Run("status change on failure EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseInProgress,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New(handleInProgressMsg)}},
+		})
 	})
 }
 
@@ -606,16 +622,15 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			spec := &BlueprintSpec{
-				Id:                   tt.fields.Id,
-				Blueprint:            tt.fields.Blueprint,
-				BlueprintMask:        tt.fields.BlueprintMask,
-				EffectiveBlueprint:   tt.fields.EffectiveBlueprint,
-				StateDiff:            tt.fields.StateDiff,
-				BlueprintUpgradePlan: tt.fields.BlueprintUpgradePlan,
-				Config:               tt.fields.Config,
-				Status:               tt.fields.Status,
-				PersistenceContext:   tt.fields.PersistenceContext,
-				Events:               tt.fields.Events,
+				Id:                 tt.fields.Id,
+				Blueprint:          tt.fields.Blueprint,
+				BlueprintMask:      tt.fields.BlueprintMask,
+				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
+				StateDiff:          tt.fields.StateDiff,
+				Config:             tt.fields.Config,
+				Status:             tt.fields.Status,
+				PersistenceContext: tt.fields.PersistenceContext,
+				Events:             tt.fields.Events,
 			}
 			spec.ValidateDynamically(tt.args.possibleInvalidDependenciesError)
 
@@ -643,14 +658,4 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
 
-}
-
-func TestBlueprintSpec_MarkMaintenanceModeActivated(t *testing.T) {
-	spec := &BlueprintSpec{}
-
-	spec.MarkMaintenanceModeActivated()
-
-	assert.Equal(t, StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
-	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, MaintenanceModeActivatedEvent{}, spec.Events[0])
 }

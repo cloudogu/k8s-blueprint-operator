@@ -22,6 +22,26 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 	assert.Equal(t, healthMock, sut.healthUseCase)
 }
 
+func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
+		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
+	})
+}
+
 func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
