@@ -9,7 +9,7 @@ import (
 )
 
 type TargetComponent struct {
-	// Name defines the name of the component including its namespace, f. i. "official/nginx". Must not be empty.
+	// Name defines the name of the component including its distribution namespace, f. i. "k8s/k8s-dogu-operator". Must not be empty.
 	Name string `json:"name"`
 	// Version defines the version of the component that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
@@ -38,10 +38,18 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 				continue
 			}
 		}
+
+		namespace, name, err := SplitComponentName(component.Name)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
+
 		convertedComponents = append(convertedComponents, domain.Component{
-			Name:        component.Name,
-			Version:     version,
-			TargetState: newState,
+			Name:                  name,
+			DistributionNamespace: namespace,
+			Version:               version,
+			TargetState:           newState,
 		})
 	}
 
@@ -59,8 +67,14 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 	converted := util.Map(components, func(component domain.Component) TargetComponent {
 		newState, err := ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
+
+		// convert the distribution namespace back into the name field so the EffectiveBlueprint has the same syntax
+		// as the original blueprint json from the Blueprint resource.
+		joinedComponentName, err := JoinComponentName(component.Name, component.DistributionNamespace)
+		errorList = append(errorList, err)
+
 		return TargetComponent{
-			Name:        component.Name,
+			Name:        joinedComponentName,
 			Version:     component.Version.Raw,
 			TargetState: newState,
 		}

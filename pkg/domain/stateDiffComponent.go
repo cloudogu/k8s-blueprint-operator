@@ -31,33 +31,44 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
-	ComponentName string
-	Actual        ComponentDiffState
-	Expected      ComponentDiffState
-	NeededAction  Action
+	// Name contains the component's name.
+	Name string
+	// Actual contains that state of a component how it is currently found in the system.
+	Actual ComponentDiffState
+	// Expected contains that desired state of a component how it is supposed to be.
+	Expected ComponentDiffState
+	// NeededAction hints how the component should be handled by the application change automaton in order to reconcile
+	// differences between Actual and Expected in the current system.
+	NeededAction Action
 }
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
 type ComponentDiffState struct {
-	Version           core.Version
+	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
+	// to be confused with the K8s cluster namespace.
+	DistributionNamespace string
+	// Version contains the component's version.
+	Version core.Version
+	// InstallationState contains the component's target state.
 	InstallationState TargetState
 }
 
-// String returns a string representation of the DoguDiff.
+// String returns a string representation of the ComponentDiff.
 func (diff *ComponentDiff) String() string {
 	return fmt.Sprintf(
-		"{ComponentName: %q, Actual: %s, Expected: %s, NeededAction: %q}",
-		diff.ComponentName,
+		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		diff.Name,
 		diff.Actual.String(),
 		diff.Expected.String(),
 		diff.NeededAction,
 	)
 }
 
-// String returns a string representation of the DoguDiffState.
+// String returns a string representation of the ComponentDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
-		"{Version: %q, InstallationState: %q}",
+		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
+		diff.DistributionNamespace,
 		diff.Version.Raw,
 		diff.InstallationState,
 	)
@@ -72,15 +83,15 @@ func determineComponentDiffs(logger logr.Logger, blueprintComponents []Component
 	}
 
 	for _, installedComponent := range installedComponents {
-		blueprintComponent, notFound := findComponentByName(blueprintComponents, installedComponent.Name)
+		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name)
 
-		if notFound == nil {
-			componentDiffs[installedComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
+		if !found {
+			var notFoundInBlueprint *Component = nil
+			componentDiffs[installedComponent.Name] = determineComponentDiff(logger, notFoundInBlueprint, installedComponent)
 			continue
 		}
 
-		var notFoundInBlueprint *Component = nil
-		componentDiffs[installedComponent.Name] = determineComponentDiff(logger, notFoundInBlueprint, installedComponent)
+		componentDiffs[installedComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
 	}
 	return maps.Values(componentDiffs)
 }
@@ -99,8 +110,9 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	} else {
 		componentName = installedComponent.Name
 		actualState = ComponentDiffState{
-			Version:           installedComponent.Version,
-			InstallationState: TargetStatePresent,
+			DistributionNamespace: installedComponent.DistributionNamespace,
+			Version:               installedComponent.Version,
+			InstallationState:     TargetStatePresent,
 		}
 	}
 
@@ -109,26 +121,27 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 	} else {
 		componentName = blueprintComponent.Name
 		expectedState = ComponentDiffState{
-			Version:           blueprintComponent.Version,
-			InstallationState: blueprintComponent.TargetState,
+			DistributionNamespace: blueprintComponent.DistributionNamespace,
+			Version:               blueprintComponent.Version,
+			InstallationState:     blueprintComponent.TargetState,
 		}
 	}
 
 	return ComponentDiff{
-		ComponentName: componentName,
-		Expected:      expectedState,
-		Actual:        actualState,
-		NeededAction:  getNextComponentAction(logger, expectedState, actualState),
+		Name:         componentName,
+		Expected:     expectedState,
+		Actual:       actualState,
+		NeededAction: getNextComponentAction(logger, expectedState, actualState),
 	}
 }
 
-func findComponentByName(components []Component, name string) (Component, error) {
+func findComponentByName(components []Component, name string) (Component, bool) {
 	for _, component := range components {
 		if component.Name == name {
-			return component, nil
+			return component, true
 		}
 	}
-	return Component{}, fmt.Errorf("could not find component '%s'", name)
+	return Component{}, false
 }
 
 func getNextComponentAction(logger logr.Logger, expected ComponentDiffState, actual ComponentDiffState) Action {

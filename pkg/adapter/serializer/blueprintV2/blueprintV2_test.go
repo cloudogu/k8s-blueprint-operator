@@ -10,24 +10,24 @@ import (
 )
 
 var (
-	version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
-	version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
+	version3211, _    = core.ParseVersion("3.2.1-1")
+	version3212, _    = core.ParseVersion("3.2.1-2")
 	version1_2_3_3, _ = core.ParseVersion("1.2.3-3")
 )
 
 func Test_ConvertToBlueprintV2(t *testing.T) {
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
 		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: version1_2_3_3},
 	}
 	blueprint := domain.Blueprint{
 		Dogus:      dogus,
@@ -48,20 +48,20 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	blueprintV2, err := ConvertToBlueprintV2(blueprint)
 
 	convertedDogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, BlueprintV2{
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
@@ -82,16 +82,16 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 func Test_ConvertToBlueprint(t *testing.T) {
 	dogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw},
 	}
 
 	components := []serializer.TargetComponent{
-		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/component4", Version: version1_2_3_3.Raw},
 	}
 
@@ -113,20 +113,20 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	}
 	blueprint, err := convertToBlueprint(blueprintV2)
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 
 	convertedDogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
 		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	convertedComponents := []domain.Component{
-		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: version1_2_3_3},
 	}
 
 	assert.Equal(t, domain.Blueprint{
@@ -150,13 +150,13 @@ func Test_ConvertToBlueprint_errors(t *testing.T) {
 	blueprintV2 := BlueprintV2{
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus: []serializer.TargetDogu{
-			{Name: "dogu1", Version: version3_2_1_1.Raw},
-			{Name: "official/dogu1", Version: version3_2_1_1.Raw, TargetState: "unknown"},
-			{Name: "name/space/dogu2", Version: version3_2_1_2.Raw},
+			{Name: "dogu1", Version: version3211.Raw},
+			{Name: "official/dogu1", Version: version3211.Raw, TargetState: "unknown"},
+			{Name: "name/space/dogu2", Version: version3212.Raw},
 			{Name: "official/dogu3", Version: "abc"},
 		},
 		Components: []serializer.TargetComponent{
-			{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "not known state"},
+			{Name: "component1", Version: version3211.Raw, TargetState: "not known state"},
 			{Name: "official/dogu3", Version: "abc"},
 		},
 	}

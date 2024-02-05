@@ -3,10 +3,10 @@ package reconciler
 import (
 	"context"
 	"errors"
-	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 
+	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 

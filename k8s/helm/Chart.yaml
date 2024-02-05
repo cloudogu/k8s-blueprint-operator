@@ -25,5 +25,5 @@ appVersion: "0.0.0-replaceme"
 
 annotations:
   "k8s.cloudogu.com/ces-dependency/k8s-blueprint-operator-crd": "0.x.x-0"
-  "k8s.cloudogu.com/ces-dependency/k8s-dogu-operator": ">=0.40.0"
-  "k8s.cloudogu.com/ces-dependency/k8s-component-operator": ">=0.7.0"
+  "k8s.cloudogu.com/ces-dependency/k8s-dogu-operator": ">=0.40.0-0"
+  "k8s.cloudogu.com/ces-dependency/k8s-component-operator": ">=0.8.0-0"

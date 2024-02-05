@@ -133,7 +133,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 				Message:      fmt.Sprintf("cannot update blueprint CR %q as it was modified in the meantime", spec.Id),
 			}
 		}
-		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
+		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("cannot update blueprint CR %q", spec.Id)}
 	}
 
 	setPersistenceContext(CRAfterUpdate, spec)
