@@ -329,6 +329,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, noDowngradesExplanationText)
+		assert.ErrorContains(t, err, getNoDowngradesExplanationTextForComponents())
 	})
 }

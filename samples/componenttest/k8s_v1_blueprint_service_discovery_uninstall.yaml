@@ -6,16 +6,15 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-dogu-operator-0-41-0
+  name: blueprint-service-discovery-uninstall
 spec:
   blueprint: |
     {
     "blueprintApi":"v2",
     "components": [
       {
-        "name":"k8s/k8s-dogu-operator",
-        "version":"0.41.0",
-        "targetState":"present"
+        "name":"k8s/k8s-service-discovery",
+        "targetState":"absent"
       }
     ]}
   blueprintMask: |

@@ -130,7 +130,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	case domain.ActionDowngrade:
 		logger.Info("downgrade dogu")
-		return fmt.Errorf(noDowngradesExplanationText)
+		return fmt.Errorf(getNoDowngradesExplanationTextForDogus())
 	case domain.ActionSwitchDoguNamespace:
 		logger.Info("do namespace switch for dogu")
 		err := doguInstallation.SwitchNamespace(
@@ -147,7 +147,6 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	}
 }
 
-const noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
-	"doing rollbacks to older models is not supported. " +
-	"You can downgrade dogus by restoring a backup. " +
-	"If you want an 'allow-downgrades' flag, issue a feature request"
+func getNoDowngradesExplanationTextForDogus() string {
+	return fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus")
+}

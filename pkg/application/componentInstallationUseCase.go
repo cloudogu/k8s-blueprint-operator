@@ -88,7 +88,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		return useCase.componentRepo.Update(ctx, componentInstallation)
 	case domain.ActionDowngrade:
 		logger.Info("downgrade component")
-		return fmt.Errorf(noDowngradesExplanationText)
+		return fmt.Errorf(getNoDowngradesExplanationTextForComponents())
 	case domain.ActionSwitchDoguNamespace:
 		logger.Info("do namespace switch for component")
 		// TODO
@@ -105,3 +105,12 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		return fmt.Errorf("cannot perform unknown action %q", componentDiff.NeededAction)
 	}
 }
+
+func getNoDowngradesExplanationTextForComponents() string {
+	return fmt.Sprintf(noDowngradesExplanationTextFmt, "components", "components")
+}
+
+const noDowngradesExplanationTextFmt = "downgrades are not allowed as the data model of the %s could have changed and " +
+	"doing rollbacks to older models is not supported. " +
+	"You can downgrade %s by restoring a backup. " +
+	"If you want an 'allow-downgrades' flag, issue a feature request"
