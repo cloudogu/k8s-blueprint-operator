@@ -499,29 +499,6 @@ func TestBlueprintSpec_StartApplying(t *testing.T) {
 			Events: []Event{InProgressEvent{}},
 		})
 	})
-
-	t.Run("should not change status and add dry run event", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Config: BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-
-		// when
-		spec.StartApplying()
-
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Config: BlueprintConfiguration{
-				DryRun: true,
-			},
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Events: []Event{BlueprintDryRunEvent{}},
-		})
-	})
-
 }
 
 func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {

@@ -40,6 +40,64 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
 	})
+	t.Run("repo error while loading", func(t *testing.T) {
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.ErrorIs(t, err, assert.AnError)
+	})
+	t.Run("repo error while saving", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
+		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.ErrorIs(t, err, assert.AnError)
+	})
+	t.Run("error activating maintenance mode", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.ErrorIs(t, err, assert.AnError)
+	})
+	t.Run("do nothing on dry run", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+			Config: domain.BlueprintConfiguration{DryRun: true},
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.NoError(t, err)
+		require.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
+	})
 }
 
 func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
