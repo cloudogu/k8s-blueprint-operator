@@ -6,14 +6,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	compCli "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 )
 
 const (
@@ -103,28 +101,4 @@ func (repo *componentInstallationRepo) Create(ctx context.Context, component *ec
 	}
 
 	return nil
-}
-
-func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
-	if cr == nil {
-		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
-	}
-
-	version, err := core.ParseVersion(cr.Spec.Version)
-	if err != nil {
-		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
-	}
-
-	persistenceContext := make(map[string]interface{}, 1)
-	persistenceContext[componentInstallationRepoContextKey] = componentInstallationRepoContext{
-		resourceVersion: cr.GetResourceVersion(),
-	}
-	return &ecosystem.ComponentInstallation{
-		Name:                  cr.Name,
-		DistributionNamespace: cr.Spec.Namespace,
-		Version:               version,
-		Status:                cr.Status.Status,
-		Health:                ecosystem.HealthStatus(cr.Status.Health),
-		PersistenceContext:    persistenceContext,
-	}, nil
 }

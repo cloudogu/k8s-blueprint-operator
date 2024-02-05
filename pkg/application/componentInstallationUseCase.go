@@ -52,7 +52,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	}
 
 	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
-		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.ComponentName], blueprintSpec.Config)
+		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name], blueprintSpec.Config)
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
 		}
@@ -68,7 +68,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 ) error {
 	logger := log.FromContext(ctx).
 		WithName("ComponentInstallationUseCase.applyComponentState").
-		WithValues("component", componentDiff.ComponentName, "diff", componentDiff.String())
+		WithValues("component", componentDiff.Name, "diff", componentDiff.String())
 
 	switch componentDiff.NeededAction {
 	case domain.ActionNone:
@@ -77,7 +77,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	case domain.ActionInstall:
 		logger.Info("install component")
 		// TODO wait for namespace, deployNamespace and valuesYamlOverwrite in diff
-		newComponent := ecosystem.InstallComponent("k8s", componentDiff.ComponentName, componentDiff.Expected.Version)
+		newComponent := ecosystem.InstallComponent("k8s", componentDiff.Name, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")

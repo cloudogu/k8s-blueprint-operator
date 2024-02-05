@@ -24,13 +24,15 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 	persistenceContext[componentInstallationRepoContextKey] = componentInstallationRepoContext{
 		resourceVersion: cr.GetResourceVersion(),
 	}
-	// TODO Namespace missing?
+	// TODO Namespace missing? Add test
 	return &ecosystem.ComponentInstallation{
-		Name:               cr.Name,
-		Version:            version,
-		Status:             cr.Status.Status,
-		Health:             ecosystem.HealthStatus(cr.Status.Health),
-		PersistenceContext: persistenceContext,
+		DistributionNamespace: cr.Spec.Namespace,
+		Name:                  cr.Name,
+		DeployNamespace:       cr.Spec.DeployNamespace,
+		Version:               version,
+		Status:                cr.Status.Status,
+		Health:                ecosystem.HealthStatus(cr.Status.Health),
+		PersistenceContext:    persistenceContext,
 	}, nil
 }
 
@@ -70,7 +72,7 @@ type componentSpecPatch struct {
 func toComponentCRPatch(component *ecosystem.ComponentInstallation) *componentCRPatch {
 	return &componentCRPatch{
 		Spec: componentSpecPatch{
-			Namespace: component.Namespace,
+			Namespace: component.DistributionNamespace,
 			Name:      component.Name,
 			Version:   component.Version.Raw,
 		},

@@ -10,16 +10,18 @@ import (
 	"testing"
 )
 
-var (
-	testComponentName   = "operator"
+const (
 	testNamespace       = "ecosystem"
 	testHelmNamespace   = "k8s"
-	testVersion1, _     = core.ParseVersion("1.0.0-1")
 	testStatus          = ecosystem.ComponentStatusNotInstalled
 	testHealthStatus    = compV1.AvailableHealthStatus
 	testResourceVersion = "1"
+)
+
+var (
 	//go:embed testdata/testPatch
-	testPatchBytes []byte
+	testPatchBytes  []byte
+	testVersion1, _ = core.ParseVersion("1.0.0-1")
 )
 
 func Test_parseComponentCR(t *testing.T) {
@@ -53,10 +55,11 @@ func Test_parseComponentCR(t *testing.T) {
 				},
 			},
 			want: &ecosystem.ComponentInstallation{
-				Name:    testComponentName,
-				Version: testVersion1,
-				Status:  testStatus,
-				Health:  ecosystem.HealthStatus(testHealthStatus),
+				DistributionNamespace: testHelmNamespace,
+				Name:                  testComponentName,
+				Version:               testVersion1,
+				Status:                testStatus,
+				Health:                ecosystem.HealthStatus(testHealthStatus),
 				PersistenceContext: map[string]interface{}{
 					componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 				},
@@ -156,9 +159,9 @@ func Test_toComponentCRPatch(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:      testComponentName,
-					Version:   testVersion1,
-					Namespace: testNamespace,
+					Name:                  testComponentName,
+					Version:               testVersion1,
+					DistributionNamespace: testNamespace,
 				},
 			},
 			want: &componentCRPatch{
@@ -193,9 +196,9 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:      testComponentName,
-					Version:   testVersion1,
-					Namespace: testNamespace,
+					Name:                  testComponentName,
+					Version:               testVersion1,
+					DistributionNamespace: testHelmNamespace,
 				},
 			},
 			want:    testPatchBytes,

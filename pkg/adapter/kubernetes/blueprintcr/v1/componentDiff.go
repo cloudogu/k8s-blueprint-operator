@@ -95,7 +95,7 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	}
 
 	return domain.ComponentDiff{
-		ComponentName: componentName,
+		Name: componentName,
 		Actual: domain.ComponentDiffState{
 			DistributionNamespace: actualDistributionNamespace,
 			Version:               actualVersion,
