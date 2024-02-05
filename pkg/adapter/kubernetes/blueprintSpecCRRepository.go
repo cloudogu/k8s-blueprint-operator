@@ -71,10 +71,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 
 	blueprintSpec := &domain.BlueprintSpec{
-		Id:                   blueprintId,
-		EffectiveBlueprint:   effectiveBlueprint,
-		StateDiff:            stateDiff,
-		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
+		Id:                 blueprintId,
+		EffectiveBlueprint: effectiveBlueprint,
+		StateDiff:          stateDiff,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,

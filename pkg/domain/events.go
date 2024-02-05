@@ -10,16 +10,6 @@ type Event interface {
 	Message() string
 }
 
-type BlueprintDryRunEvent struct{}
-
-func (b BlueprintDryRunEvent) Name() string {
-	return "BlueprintDryRun"
-}
-
-func (b BlueprintDryRunEvent) Message() string {
-	return "Executed blueprint in dry run mode"
-}
-
 type BlueprintSpecInvalidEvent struct {
 	ValidationError error
 }
@@ -102,6 +92,27 @@ func (d EcosystemUnhealthyUpfrontEvent) Message() string {
 	return d.HealthResult.String()
 }
 
+type BlueprintDryRunEvent struct{}
+
+func (b BlueprintDryRunEvent) Name() string {
+	return "BlueprintDryRun"
+}
+
+func (b BlueprintDryRunEvent) Message() string {
+	return "Executed blueprint in dry run mode. Remove flag to continue"
+}
+
+type BlueprintApplicationPreProcessedEvent struct {
+}
+
+func (e BlueprintApplicationPreProcessedEvent) Name() string {
+	return "BlueprintApplicationPreProcessed"
+}
+
+func (e BlueprintApplicationPreProcessedEvent) Message() string {
+	return "maintenance mode activated"
+}
+
 type InProgressEvent struct{}
 
 func (e InProgressEvent) Name() string {
@@ -110,18 +121,6 @@ func (e InProgressEvent) Name() string {
 
 func (e InProgressEvent) Message() string {
 	return ""
-}
-
-type ExecutionFailedEvent struct {
-	err error
-}
-
-func (e ExecutionFailedEvent) Name() string {
-	return "ExecutionFailed"
-}
-
-func (e ExecutionFailedEvent) Message() string {
-	return e.err.Error()
 }
 
 type BlueprintAppliedEvent struct{}
@@ -156,12 +155,29 @@ func (e EcosystemUnhealthyAfterwardsEvent) Message() string {
 	return e.HealthResult.String()
 }
 
-type CompletedEvent struct{}
+type ExecutionFailedEvent struct {
+	err error
+}
+
+func (e ExecutionFailedEvent) Name() string {
+	return "ExecutionFailed"
+}
+
+func (e ExecutionFailedEvent) Message() string {
+	return e.err.Error()
+}
+
+type CompletedEvent struct {
+	earlyExited bool
+}
 
 func (e CompletedEvent) Name() string {
 	return "completed"
 }
 
 func (e CompletedEvent) Message() string {
-	return ""
+	if e.earlyExited {
+		return "early exit due to no changes in state diff"
+	}
+	return "maintenance mode deactivated"
 }

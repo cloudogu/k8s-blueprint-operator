@@ -13,12 +13,25 @@ type StateDiff struct {
 	DoguDiffs DoguDiffs
 }
 
+func (sd StateDiff) hasChanges() bool {
+	return sd.DoguDiffs.hasChanges()
+}
+
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
 type DoguDiffs []DoguDiff
 
+func (diffs DoguDiffs) hasChanges() bool {
+	for _, diff := range diffs {
+		if diff.hasChanges() {
+			return true
+		}
+	}
+	return false
+}
+
 // Statistics aggregates various figures about the required actions of the DoguDiffs.
-func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
-	for _, doguDiff := range dd {
+func (diffs DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+	for _, doguDiff := range diffs {
 		switch doguDiff.NeededAction {
 		case ActionInstall:
 			toInstall += 1
@@ -59,6 +72,10 @@ const (
 	ActionDowngrade       = "downgrade"
 	ActionSwitchNamespace = "namespace switch"
 )
+
+func (diff *DoguDiff) hasChanges() bool {
+	return diff.Expected != diff.Actual
+}
 
 func (diff *DoguDiff) String() string {
 	return fmt.Sprintf(

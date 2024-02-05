@@ -167,14 +167,13 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 		Status: domain.StatusPhaseValidated,
 	}, nil)
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-		Id:                   "testBlueprint1",
-		Blueprint:            domain.Blueprint{},
-		BlueprintMask:        domain.BlueprintMask{},
-		EffectiveBlueprint:   domain.EffectiveBlueprint{},
-		StateDiff:            domain.StateDiff{},
-		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-		Status:               domain.StatusPhaseValidated,
-		Events:               []domain.Event{domain.BlueprintSpecValidatedEvent{}},
+		Id:                 "testBlueprint1",
+		Blueprint:          domain.Blueprint{},
+		BlueprintMask:      domain.BlueprintMask{},
+		EffectiveBlueprint: domain.EffectiveBlueprint{},
+		StateDiff:          domain.StateDiff{},
+		Status:             domain.StatusPhaseValidated,
+		Events:             []domain.Event{domain.BlueprintSpecValidatedEvent{}},
 	}).Return(nil)
 
 	// when
