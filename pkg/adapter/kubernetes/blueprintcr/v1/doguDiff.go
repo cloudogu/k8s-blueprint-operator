@@ -1,88 +1,51 @@
-package stateDiffV1
+package v1
 
 import (
 	"errors"
 	"fmt"
+
 	"github.com/cloudogu/cesapp-lib/core"
+
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 )
 
-// StateDiffV1 is the result of comparing the EffectiveBlueprint to the current cluster state.
-// It describes what operations need to be done to achieve the desired state of the blueprint.
-type StateDiffV1 struct {
-	// DoguDiffs maps simple dogu names to the determined diff.
-	DoguDiffs map[string]DoguDiffV1 `json:"doguDiffs,omitempty"`
-}
-
-// DoguDiffV1 is the comparison of a Dogu's desired state vs. its cluster state.
+// DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
 // It contains the operation that needs to be done to achieve this desired state.
-type DoguDiffV1 struct {
-	Actual       DoguDiffV1State `json:"actual"`
-	Expected     DoguDiffV1State `json:"expected"`
-	NeededAction DoguActionV1    `json:"neededAction"`
+type DoguDiff struct {
+	Actual       DoguDiffState `json:"actual"`
+	Expected     DoguDiffState `json:"expected"`
+	NeededAction DoguAction    `json:"neededAction"`
 }
 
-// DoguDiffV1State is either the actual or desired state of a dogu in the cluster.
-type DoguDiffV1State struct {
+// DoguDiffState is either the actual or desired state of a dogu in the cluster.
+type DoguDiffState struct {
 	Namespace         string `json:"namespace,omitempty"`
 	Version           string `json:"version,omitempty"`
 	InstallationState string `json:"installationState"`
 }
 
-// DoguActionV1 is the action that needs to be done for a dogu
+// DoguAction is the action that needs to be done for a dogu
 // to achieve the desired state in the cluster.
-type DoguActionV1 string
+type DoguAction string
 
-func ConvertToDTO(domainModel domain.StateDiff) StateDiffV1 {
-	doguDiffsV1 := make(map[string]DoguDiffV1, len(domainModel.DoguDiffs))
-	for _, doguDiff := range domainModel.DoguDiffs {
-		doguDiffsV1[doguDiff.DoguName] = convertToDoguDiffDTO(doguDiff)
-	}
-
-	return StateDiffV1{
-		DoguDiffs: doguDiffsV1,
-		// in the future, this will also contain component and registry diffs
-	}
-}
-
-func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiffV1 {
-	return DoguDiffV1{
-		Actual: DoguDiffV1State{
+func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
+	return DoguDiff{
+		Actual: DoguDiffState{
 			Namespace:         domainModel.Actual.Namespace,
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 		},
-		Expected: DoguDiffV1State{
+		Expected: DoguDiffState{
 			Namespace:         domainModel.Expected.Namespace,
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
 		},
-		NeededAction: DoguActionV1(domainModel.NeededAction),
+		NeededAction: DoguAction(domainModel.NeededAction),
 	}
 }
 
-func ConvertToDomainModel(dto StateDiffV1) (domain.StateDiff, error) {
-	var errs []error
-
-	doguDiffs := make([]domain.DoguDiff, 0)
-	for doguName, doguDiff := range dto.DoguDiffs {
-		doguDiffDomainModel, err := convertToDoguDiffDomainModel(doguName, doguDiff)
-		errs = append(errs, err)
-		doguDiffs = append(doguDiffs, doguDiffDomainModel)
-	}
-
-	err := errors.Join(errs...)
-	if err != nil {
-		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff dto to domain model: %w", err)
-	}
-
-	return domain.StateDiff{
-		DoguDiffs: doguDiffs,
-	}, nil
-}
-
-func convertToDoguDiffDomainModel(doguName string, dto DoguDiffV1) (domain.DoguDiff, error) {
+func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, error) {
 	var actualVersion core.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {

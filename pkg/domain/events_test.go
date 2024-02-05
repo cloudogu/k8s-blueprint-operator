@@ -67,19 +67,36 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "",
 		},
 		{
-			name: "state diff determined",
-			event: StateDiffDeterminedEvent{StateDiff: StateDiff{DoguDiffs: DoguDiffs{
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionNone},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionDowngrade},
-			}}},
-			expectedName:    "StateDiffDetermined",
+			name: "dogu state diff determined",
+			event: newStateDiffDoguEvent(
+				DoguDiffs{
+					{NeededAction: ActionInstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionNone},
+					{NeededAction: ActionInstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionUpgrade},
+					{NeededAction: ActionDowngrade},
+				}),
+			expectedName:    "StateDiffDoguDetermined",
 			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
+		},
+		{
+			name: "component state diff determined",
+			event: newStateDiffComponentEvent(
+				ComponentDiffs{
+					{NeededAction: ActionInstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionNone},
+					{NeededAction: ActionInstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionUninstall},
+					{NeededAction: ActionUpgrade},
+					{NeededAction: ActionDowngrade},
+				}),
+			expectedName:    "StateDiffComponentDetermined",
+			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{
 			name:            "In progress",

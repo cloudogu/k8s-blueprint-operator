@@ -1,4 +1,4 @@
-package effectiveBlueprintV1
+package v1
 
 import (
 	"errors"
@@ -10,12 +10,12 @@ import (
 
 var configKeySeparator = "/"
 
-// EffectiveBlueprintV1 describes an abstraction of CES components that should be absent or present within one or more CES
+// EffectiveBlueprint describes an abstraction of CES components that should be absent or present within one or more CES
 // instances after combining the blueprint with the blueprint mask.
 //
 // In general additions without changing the version are fine, as long as they don't change semantics. Removal or
 // renaming are breaking changes and require a new blueprint API version.
-type EffectiveBlueprintV1 struct {
+type EffectiveBlueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
@@ -30,7 +30,7 @@ type EffectiveBlueprintV1 struct {
 	RegistryConfigEncrypted map[string]string `json:"registryConfigEncrypted,omitempty"`
 }
 
-func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (EffectiveBlueprintV1, error) {
+func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (EffectiveBlueprint, error) {
 	var errorList []error
 	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, componentError := serializer.ConvertToComponentDTOs(blueprint.Components)
@@ -38,7 +38,7 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 
 	err := errors.Join(errorList...)
 	if err != nil {
-		return EffectiveBlueprintV1{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
+		return EffectiveBlueprint{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
 	}
 
 	registryConfigAbsent := blueprint.RegistryConfigAbsent
@@ -46,7 +46,7 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 		registryConfigAbsent = []string{}
 	}
 
-	return EffectiveBlueprintV1{
+	return EffectiveBlueprint{
 		Dogus:                   convertedDogus,
 		Components:              convertedComponents,
 		RegistryConfig:          flattenRegistryConfig(blueprint.RegistryConfig),
@@ -55,7 +55,7 @@ func ConvertToEffectiveBlueprintV1(blueprint domain.EffectiveBlueprint) (Effecti
 	}, nil
 }
 
-func ConvertToEffectiveBlueprint(blueprint EffectiveBlueprintV1) (domain.EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDomain(blueprint EffectiveBlueprint) (domain.EffectiveBlueprint, error) {
 	convertedDogus, doguErr := serializer.ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := serializer.ConvertComponents(blueprint.Components)
 	convertedConfig, configError := convertToRegistryConfig(blueprint.RegistryConfig)

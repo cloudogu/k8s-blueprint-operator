@@ -1,7 +1,8 @@
-package effectiveBlueprintV1
+package v1
 
 import (
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -11,25 +12,31 @@ import (
 )
 
 var (
-	version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
-	version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
+	version3211, _    = core.ParseVersion("3.2.1-1")
+	version3212, _    = core.ParseVersion("3.2.1-2")
 	version1_2_3_3, _ = core.ParseVersion("1.2.3-3")
+)
+
+var (
+	compVersion1233 = semver.MustParse("1.2.3-3")
+	compVersion3211 = semver.MustParse("3.2.1-1")
+	compVersion3212 = semver.MustParse("3.2.1-2")
 )
 
 func TestConvertToEffectiveBlueprint(t *testing.T) {
 	//given
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
 		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: compVersion1233},
 	}
 	blueprint := domain.EffectiveBlueprint{
 		Dogus:      dogus,
@@ -48,25 +55,25 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	//when
-	blueprintV2, err := ConvertToEffectiveBlueprintV1(blueprint)
+	blueprintV2, err := ConvertToEffectiveBlueprintDTO(blueprint)
 
 	//then
 	convertedDogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/component1", TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
-		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: compVersion3212.String(), TargetState: "present"},
+		{Name: "present/component4", Version: compVersion1233.String(), TargetState: "present"},
 	}
 
-	require.Nil(t, err)
-	assert.Equal(t, EffectiveBlueprintV1{
+	require.NoError(t, err)
+	assert.Equal(t, EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		RegistryConfig: map[string]string{
@@ -82,20 +89,20 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	//given
 	convertedDogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "component1", Version: version3_2_1_1.Raw, TargetState: "absent"},
+		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present-component3", Version: version3_2_1_2.Raw, TargetState: "present"},
+		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	dto := EffectiveBlueprintV1{
+	dto := EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		RegistryConfig: map[string]string{
@@ -107,21 +114,21 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		},
 	}
 	//when
-	blueprint, err := ConvertToEffectiveBlueprint(dto)
+	blueprint, err := ConvertToEffectiveBlueprintDomain(dto)
 
 	//then
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
+		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
+		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
 		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", Version: version3_2_1_1, TargetState: domain.TargetStateAbsent},
-		{Name: "absent/component2", TargetState: domain.TargetStateAbsent},
-		{Name: "present-component3", Version: version3_2_1_2, TargetState: domain.TargetStatePresent},
-		{Name: "present/component4", Version: version1_2_3_3},
+		{Name: "component1", DistributionNamespace: "absent", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
+		{Name: "component3", DistributionNamespace: "present", Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: "component4", DistributionNamespace: "present", Version: compVersion1233},
 	}
 	expected := domain.EffectiveBlueprint{
 		Dogus:      dogus,
@@ -139,7 +146,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		},
 	}
 
-	require.Nil(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, blueprint)
 }
 

@@ -1,19 +1,20 @@
-package kubernetes
+package blueprintcr
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
 const blueprintSpecRepoContextKey = "blueprintSpecRepoContext"
@@ -23,7 +24,7 @@ type blueprintSpecRepoContext struct {
 }
 
 type blueprintSpecRepo struct {
-	blueprintClient         BlueprintInterface
+	blueprintClient         blueprintInterface
 	blueprintSerializer     serializer.BlueprintSerializer
 	blueprintMaskSerializer serializer.BlueprintMaskSerializer
 	eventRecorder           eventRecorder
@@ -31,7 +32,7 @@ type blueprintSpecRepo struct {
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
 func NewBlueprintSpecRepository(
-	blueprintClient BlueprintInterface,
+	blueprintClient kubernetes.BlueprintInterface,
 	blueprintSerializer serializer.BlueprintSerializer,
 	blueprintMaskSerializer serializer.BlueprintMaskSerializer,
 	eventRecorder eventRecorder,
@@ -60,12 +61,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprint(blueprintCR.Status.EffectiveBlueprint)
+	effectiveBlueprint, err := v1.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
 		return nil, err
 	}
 
-	stateDiff, err := stateDiffV1.ConvertToDomainModel(blueprintCR.Status.StateDiff)
+	stateDiff, err := v1.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +106,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	effectiveBlueprint, err := effectiveBlueprintV1.ConvertToEffectiveBlueprintV1(spec.EffectiveBlueprint)
+	effectiveBlueprint, err := v1.ConvertToEffectiveBlueprintDTO(spec.EffectiveBlueprint)
 	if err != nil {
 		return err
 	}
@@ -120,7 +121,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		Status: v1.BlueprintStatus{
 			Phase:              spec.Status,
 			EffectiveBlueprint: effectiveBlueprint,
-			StateDiff:          stateDiffV1.ConvertToDTO(spec.StateDiff),
+			StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
 		},
 	}
 
@@ -133,7 +134,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 				Message:      fmt.Sprintf("cannot update blueprint CR %q as it was modified in the meantime", spec.Id),
 			}
 		}
-		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("Cannot update blueprint CR %q", spec.Id)}
+		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("cannot update blueprint CR %q", spec.Id)}
 	}
 
 	setPersistenceContext(CRAfterUpdate, spec)

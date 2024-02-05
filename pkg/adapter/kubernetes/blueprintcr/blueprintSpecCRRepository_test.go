@@ -1,26 +1,27 @@
-package kubernetes
+package blueprintcr
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/effectiveBlueprintV1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/stateDiffV1"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"testing"
 )
 
 var ctx = context.Background()
@@ -30,7 +31,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 	t.Run("all ok", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -66,14 +67,14 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				RegistryConfig:          domain.RegistryConfig{},
 				RegistryConfigEncrypted: domain.RegistryConfig{},
 			},
-			StateDiff:          domain.StateDiff{DoguDiffs: make([]domain.DoguDiff, 0)},
+			StateDiff:          domain.StateDiff{DoguDiffs: make(domain.DoguDiffs, 0), ComponentDiffs: make(domain.ComponentDiffs, 0)},
 			PersistenceContext: persistenceContext,
 		}, spec)
 	})
 
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -102,7 +103,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 	t.Run("internal error while loading", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -121,7 +122,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 	t.Run("not found error while loading", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -145,7 +146,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 	t.Run("all ok", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
@@ -157,14 +158,14 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
-				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+				EffectiveBlueprint: v1.EffectiveBlueprint{
 					Dogus:                   []serializer.TargetDogu{},
 					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
+				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},
 		}
 		restClientMock.EXPECT().
@@ -190,7 +191,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 	t.Run("no version counter", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -208,7 +209,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 	t.Run("version counter of different type", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
@@ -229,7 +230,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 	t.Run("conflict error", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
@@ -241,14 +242,14 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
-				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+				EffectiveBlueprint: v1.EffectiveBlueprint{
 					Dogus:                   []serializer.TargetDogu{},
 					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
+				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -282,7 +283,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 	t.Run("internal error", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expected := v1.Blueprint{
@@ -294,14 +295,14 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Spec: v1.BlueprintSpec{},
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
-				EffectiveBlueprint: effectiveBlueprintV1.EffectiveBlueprintV1{
+				EffectiveBlueprint: v1.EffectiveBlueprint{
 					Dogus:                   []serializer.TargetDogu{},
 					Components:              []serializer.TargetComponent{},
 					RegistryConfig:          map[string]string{},
 					RegistryConfigAbsent:    []string{},
 					RegistryConfigEncrypted: map[string]string{},
 				},
-				StateDiff: stateDiffV1.StateDiffV1{DoguDiffs: map[string]stateDiffV1.DoguDiffV1{}},
+				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
@@ -334,7 +335,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 	blueprintId := "MyBlueprint"
 	t.Run("publish events", func(t *testing.T) {
 		// given
-		restClientMock := NewMockBlueprintInterface(t)
+		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		restClientMock.EXPECT().
@@ -350,7 +351,8 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			domain.BlueprintSpecStaticallyValidatedEvent{},
 			domain.BlueprintSpecValidatedEvent{},
 			domain.EffectiveBlueprintCalculatedEvent{},
-			domain.StateDiffDeterminedEvent{StateDiff: domain.StateDiff{}},
+			domain.StateDiffDoguDeterminedEvent{StateDiffDeterminedEvent: domain.StateDiffDeterminedEvent{EventSubject: "dogu diffs"}},
+			domain.StateDiffComponentDeterminedEvent{StateDiffDeterminedEvent: domain.StateDiffDeterminedEvent{EventSubject: "component diffs"}},
 			domain.EcosystemHealthyUpfrontEvent{},
 			domain.EcosystemUnhealthyUpfrontEvent{HealthResult: ecosystem.HealthResult{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
@@ -358,7 +360,8 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecStaticallyValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecValidated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculated", "")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDetermined", "state diff determined: 0 dogu diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDoguDetermined", "state diff determined: 0 dogu diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffComponentDetermined", "state diff determined: 0 component diffs (0 to install, 0 to upgrade, 0 to delete, 0 others)")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemHealthyUpfront", "dogu health ignored: false")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemUnhealthyUpfront", "ecosystem health:\n  0 dogu(s) are unhealthy: \n  0 component(s) are unhealthy: ")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")

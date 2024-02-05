@@ -4,10 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Masterminds/semver/v3"
+
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	compCli "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 
@@ -40,10 +41,7 @@ func (repo *componentInstallationRepo) GetByName(ctx context.Context, componentN
 				Message:      fmt.Sprintf("cannot read component CR %q as it does not exist", componentName),
 			}
 		}
-		return nil, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      fmt.Sprintf("error while reading component CR %q", componentName),
-		}
+		return nil, domainservice.NewInternalError(err, "error while reading component CR %q", componentName)
 	}
 
 	return parseComponentCR(cr)
@@ -60,30 +58,22 @@ func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*
 	for _, componentCr := range list.Items {
 		cr, err := parseComponentCR(&componentCr)
 		if err != nil {
-			return nil, &domainservice.InternalError{
-				WrappedError: err,
-				Message:      fmt.Sprintf("failed to parse component CR %#v", componentCr),
-			}
+			return nil, domainservice.NewInternalError(err, "failed to parse component CR %#v", componentCr)
 		}
 		componentInstallations[componentCr.Name] = cr
 	}
 
-	return nil, nil
+	return componentInstallations, nil
 }
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
 	if cr == nil {
-		return nil, &domainservice.InternalError{
-			Message: "cannot parse component CR as it is nil",
-		}
+		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
 	}
 
-	version, err := core.ParseVersion(cr.Spec.Version)
+	version, err := semver.NewVersion(cr.Spec.Version)
 	if err != nil {
-		return nil, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "cannot load component CR as it cannot be parsed correctly",
-		}
+		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
 	}
 
 	persistenceContext := make(map[string]interface{}, 1)
@@ -91,10 +81,11 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		resourceVersion: cr.GetResourceVersion(),
 	}
 	return &ecosystem.ComponentInstallation{
-		Name:               cr.Name,
-		Version:            version,
-		Status:             cr.Status.Status,
-		Health:             ecosystem.HealthStatus(cr.Status.Health),
-		PersistenceContext: persistenceContext,
+		Name:                  cr.Name,
+		DistributionNamespace: cr.Spec.Namespace,
+		Version:               version,
+		Status:                cr.Status.Status,
+		Health:                ecosystem.HealthStatus(cr.Status.Health),
+		PersistenceContext:    persistenceContext,
 	}, nil
 }
