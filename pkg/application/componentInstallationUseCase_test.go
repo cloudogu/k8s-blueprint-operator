@@ -9,8 +9,9 @@ import (
 	"time"
 )
 
-var (
+const (
 	componentName1 = "operator1"
+	testNamespace  = "k8s"
 )
 
 func TestNewComponentInstallationUseCase(t *testing.T) {
@@ -189,11 +190,16 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentDiff := domain.ComponentDiff{
 			Name:         componentName1,
 			NeededAction: domain.ActionInstall,
+			Expected: domain.ComponentDiffState{
+				DistributionNamespace: testNamespace,
+				Version:               version3212,
+			},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:                  componentName1,
-			DistributionNamespace: "k8s",
+			DistributionNamespace: testNamespace,
+			Version:               version3212,
 		}
 
 		blueprintConfigurationMock := domain.BlueprintConfiguration{}
@@ -254,14 +260,16 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentDiff := domain.ComponentDiff{
 			Name: componentName1,
 			Expected: domain.ComponentDiffState{
-				Version: version3212,
+				DistributionNamespace: testNamespace,
+				Version:               version3212,
 			},
 			NeededAction: domain.ActionUpgrade,
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    componentName1,
-			Version: version3212,
+			Name:                  componentName1,
+			Version:               version3212,
+			DistributionNamespace: testNamespace,
 		}
 
 		blueprintConfigurationMock := domain.BlueprintConfiguration{}

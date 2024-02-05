@@ -53,7 +53,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot get installed components to determine state diff: %w", err)
 	}
 
-	// for now, state diff only takes dogus, but there will be components and registry keys as well
+	// for now, state diff only takes dogus and components, but there will be registry keys as well
 	stateDiffError := blueprintSpec.DetermineStateDiff(ctx, installedDogus, installedComponents)
 	if stateDiffError != nil {
 		return fmt.Errorf("failed to determine state diff for blueprint %q: %w", blueprintId, stateDiffError)

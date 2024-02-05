@@ -112,10 +112,11 @@ func Test_toComponentCR(t *testing.T) {
 			name: "success",
 			args: args{
 				componentInstallation: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
-					Status:  testStatus,
-					Health:  ecosystem.HealthStatus(testHealthStatus),
+					Name:                  testComponentName,
+					Version:               testVersion1,
+					Status:                testStatus,
+					DistributionNamespace: testDistributionNamespace,
+					Health:                ecosystem.HealthStatus(testHealthStatus),
 					PersistenceContext: map[string]interface{}{
 						componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 					},
@@ -130,7 +131,7 @@ func Test_toComponentCR(t *testing.T) {
 					},
 				},
 				Spec: compV1.ComponentSpec{
-					Namespace: testHelmNamespace,
+					Namespace: testDistributionNamespace,
 					Name:      testComponentName,
 					Version:   testVersion1.Raw,
 				},

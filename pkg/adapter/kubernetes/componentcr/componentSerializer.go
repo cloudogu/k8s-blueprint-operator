@@ -24,7 +24,7 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 	persistenceContext[componentInstallationRepoContextKey] = componentInstallationRepoContext{
 		resourceVersion: cr.GetResourceVersion(),
 	}
-	// TODO Namespace missing? Add test
+
 	return &ecosystem.ComponentInstallation{
 		DistributionNamespace: cr.Spec.Namespace,
 		Name:                  cr.Name,
@@ -47,8 +47,7 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) *comp
 			// empty Namespace????
 		},
 		Spec: compV1.ComponentSpec{
-			// TODO
-			Namespace: "k8s",
+			Namespace: componentInstallation.DistributionNamespace,
 			Name:      componentInstallation.Name,
 			Version:   componentInstallation.Version.Raw,
 			// TODO

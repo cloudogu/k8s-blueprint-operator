@@ -76,8 +76,8 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		return nil
 	case domain.ActionInstall:
 		logger.Info("install component")
-		// TODO wait for namespace, deployNamespace and valuesYamlOverwrite in diff
-		newComponent := ecosystem.InstallComponent("k8s", componentDiff.Name, componentDiff.Expected.Version)
+		// TODO wait for deployNamespace and valuesYamlOverwrite in diff
+		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")
