@@ -6,12 +6,16 @@ import (
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 const testComponentName = "my-component"
+
+var (
+	compVersion3211 = semver.MustParse("3.2.1-1")
+)
 
 func Test_determineComponentDiff(t *testing.T) {
 	type args struct {
@@ -27,65 +31,65 @@ func Test_determineComponentDiff(t *testing.T) {
 		{
 			name: "equal, no action",
 			args: args{
-				blueprintComponent: mockTargetComponent(version3211, TargetStatePresent),
-				installedComponent: mockComponentInstallation(version3211),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(version3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(version3211, TargetStatePresent),
+				Actual:       mockComponentDiffState(compVersion3211, TargetStatePresent),
+				Expected:     mockComponentDiffState(compVersion3211, TargetStatePresent),
 				NeededAction: ActionNone,
 			},
 		},
 		{
 			name: "install",
 			args: args{
-				blueprintComponent: mockTargetComponent(version3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(core.Version{}, TargetStateAbsent),
-				Expected:     mockComponentDiffState(version3211, TargetStatePresent),
+				Actual:       mockComponentDiffState(nil, TargetStateAbsent),
+				Expected:     mockComponentDiffState(compVersion3211, TargetStatePresent),
 				NeededAction: ActionInstall,
 			},
 		},
 		{
 			name: "uninstall",
 			args: args{
-				blueprintComponent: mockTargetComponent(core.Version{}, TargetStateAbsent),
-				installedComponent: mockComponentInstallation(version3211),
+				blueprintComponent: mockTargetComponent(nil, TargetStateAbsent),
+				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(version3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(core.Version{}, TargetStateAbsent),
+				Actual:       mockComponentDiffState(compVersion3211, TargetStatePresent),
+				Expected:     mockComponentDiffState(nil, TargetStateAbsent),
 				NeededAction: ActionUninstall,
 			},
 		},
 		{
 			name: "upgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(version3212, TargetStatePresent),
-				installedComponent: mockComponentInstallation(version3211),
+				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent),
+				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(version3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(version3212, TargetStatePresent),
+				Actual:       mockComponentDiffState(compVersion3211, TargetStatePresent),
+				Expected:     mockComponentDiffState(compVersion3212, TargetStatePresent),
 				NeededAction: ActionUpgrade,
 			},
 		},
 		{
 			name: "downgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(version3211, TargetStatePresent),
-				installedComponent: mockComponentInstallation(version3212),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				installedComponent: mockComponentInstallation(compVersion3212),
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(version3212, TargetStatePresent),
-				Expected:     mockComponentDiffState(version3211, TargetStatePresent),
+				Actual:       mockComponentDiffState(compVersion3212, TargetStatePresent),
+				Expected:     mockComponentDiffState(compVersion3211, TargetStatePresent),
 				NeededAction: ActionDowngrade,
 			},
 		},
@@ -93,12 +97,12 @@ func Test_determineComponentDiff(t *testing.T) {
 			name: "ignore present component, no action",
 			args: args{
 				blueprintComponent: nil,
-				installedComponent: mockComponentInstallation(version3211),
+				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:         testComponentName,
-				Actual:       mockComponentDiffState(version3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(version3211, TargetStatePresent),
+				Actual:       mockComponentDiffState(compVersion3211, TargetStatePresent),
+				Expected:     mockComponentDiffState(compVersion3211, TargetStatePresent),
 				NeededAction: ActionNone,
 			},
 		},
@@ -118,7 +122,9 @@ func Test_determineComponentDiff(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, determineComponentDiff(tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent), "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
+			compDiff, err := determineComponentDiff(tt.args.blueprintComponent, tt.args.installedComponent)
+			assert.NoError(t, err)
+			assert.Equalf(t, tt.want, compDiff, "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
 		})
 	}
 }
@@ -174,11 +180,11 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 
 func TestComponentDiff_String(t *testing.T) {
 	actual := ComponentDiffState{
-		Version:           version3211,
+		Version:           compVersion3211,
 		InstallationState: TargetStatePresent,
 	}
 	expected := ComponentDiffState{
-		Version:           version3212,
+		Version:           compVersion3212,
 		InstallationState: TargetStatePresent,
 	}
 	diff := &ComponentDiff{
@@ -199,14 +205,14 @@ func TestComponentDiff_String(t *testing.T) {
 func TestComponentDiffState_String(t *testing.T) {
 	diff := &ComponentDiffState{
 		DistributionNamespace: "k8s",
-		Version:               version3211,
+		Version:               compVersion3211,
 		InstallationState:     TargetStatePresent,
 	}
 
 	assert.Equal(t, `{DistributionNamespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
 }
 
-func mockTargetComponent(version core.Version, state TargetState) *Component {
+func mockTargetComponent(version *semver.Version, state TargetState) *Component {
 	return &Component{
 		Name:        testComponentName,
 		Version:     version,
@@ -214,14 +220,14 @@ func mockTargetComponent(version core.Version, state TargetState) *Component {
 	}
 }
 
-func mockComponentInstallation(version core.Version) *ecosystem.ComponentInstallation {
+func mockComponentInstallation(version *semver.Version) *ecosystem.ComponentInstallation {
 	return &ecosystem.ComponentInstallation{
 		Name:    testComponentName,
 		Version: version,
 	}
 }
 
-func mockComponentDiffState(version core.Version, state TargetState) ComponentDiffState {
+func mockComponentDiffState(version *semver.Version, state TargetState) ComponentDiffState {
 	return ComponentDiffState{
 		Version:           version,
 		InstallationState: state,
@@ -253,7 +259,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 				blueprintComponents: []Component{
 					{
 						Name:        testComponentName,
-						Version:     version3211,
+						Version:     compVersion3211,
 						TargetState: TargetStatePresent,
 					},
 				},
@@ -266,7 +272,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						InstallationState: TargetStateAbsent,
 					},
 					Expected: ComponentDiffState{
-						Version:           version3211,
+						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionInstall,
@@ -280,7 +286,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 				installedComponents: map[string]*ecosystem.ComponentInstallation{
 					testComponentName: {
 						Name:    testComponentName,
-						Version: version3211,
+						Version: compVersion3211,
 					},
 				},
 			},
@@ -288,11 +294,11 @@ func Test_determineComponentDiffs(t *testing.T) {
 				{
 					Name: testComponentName,
 					Actual: ComponentDiffState{
-						Version:           version3211,
+						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
 					Expected: ComponentDiffState{
-						Version:           version3211,
+						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionNone,
@@ -305,14 +311,14 @@ func Test_determineComponentDiffs(t *testing.T) {
 				blueprintComponents: []Component{
 					{
 						Name:        testComponentName,
-						Version:     version3212,
+						Version:     compVersion3212,
 						TargetState: TargetStatePresent,
 					},
 				},
 				installedComponents: map[string]*ecosystem.ComponentInstallation{
 					testComponentName: {
 						Name:    testComponentName,
-						Version: version3211,
+						Version: compVersion3211,
 					},
 				},
 			},
@@ -320,11 +326,11 @@ func Test_determineComponentDiffs(t *testing.T) {
 				{
 					Name: testComponentName,
 					Actual: ComponentDiffState{
-						Version:           version3211,
+						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
 					Expected: ComponentDiffState{
-						Version:           version3212,
+						Version:           compVersion3212,
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionUpgrade,
@@ -334,7 +340,9 @@ func Test_determineComponentDiffs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, determineComponentDiffs(tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents), "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
+			compDiffs, err := determineComponentDiffs(tt.args.blueprintComponents, tt.args.installedComponents)
+			assert.NoError(t, err)
+			assert.Equalf(t, tt.want, compDiffs, "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
 		})
 	}
 }

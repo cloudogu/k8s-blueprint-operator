@@ -3,8 +3,7 @@ package v1
 import (
 	"errors"
 	"fmt"
-
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -26,7 +25,7 @@ type ComponentDiff struct {
 type ComponentDiffState struct {
 	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
-	DistributionNamespace string `json:"distributionNamespace"`
+	DistributionNamespace string `json:"distributionNamespace,omitempty"`
 	// Version contains the component's version.
 	Version string `json:"version,omitempty"`
 	// InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
@@ -42,15 +41,25 @@ type ComponentDiffState struct {
 type ComponentAction string
 
 func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
+	actualVersion := ""
+	expectedVersion := ""
+
+	if domainModel.Actual.Version != nil {
+		actualVersion = domainModel.Actual.Version.String()
+	}
+	if domainModel.Expected.Version != nil {
+		expectedVersion = domainModel.Expected.Version.String()
+	}
+
 	return ComponentDiff{
 		Actual: ComponentDiffState{
 			DistributionNamespace: domainModel.Actual.DistributionNamespace,
-			Version:               domainModel.Actual.Version.Raw,
+			Version:               actualVersion,
 			InstallationState:     domainModel.Actual.InstallationState.String(),
 		},
 		Expected: ComponentDiffState{
 			DistributionNamespace: domainModel.Expected.DistributionNamespace,
-			Version:               domainModel.Expected.Version.Raw,
+			Version:               expectedVersion,
 			InstallationState:     domainModel.Expected.InstallationState.String(),
 		},
 		NeededAction: ComponentAction(domainModel.NeededAction),
@@ -58,19 +67,19 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 }
 
 func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (domain.ComponentDiff, error) {
-	var actualVersion core.Version
+	var actualVersion *semver.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {
-		actualVersion, actualVersionErr = core.ParseVersion(dto.Actual.Version)
+		actualVersion, actualVersionErr = semver.NewVersion(dto.Actual.Version)
 		if actualVersionErr != nil {
 			actualVersionErr = fmt.Errorf("failed to parse actual version %q: %w", dto.Actual.Version, actualVersionErr)
 		}
 	}
 
-	var expectedVersion core.Version
+	var expectedVersion *semver.Version
 	var expectedVersionErr error
 	if dto.Expected.Version != "" {
-		expectedVersion, expectedVersionErr = core.ParseVersion(dto.Expected.Version)
+		expectedVersion, expectedVersionErr = semver.NewVersion(dto.Expected.Version)
 		if expectedVersionErr != nil {
 			expectedVersionErr = fmt.Errorf("failed to parse expected version %q: %w", dto.Expected.Version, expectedVersionErr)
 		}

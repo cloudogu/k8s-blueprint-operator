@@ -2,6 +2,7 @@ package blueprintV2
 
 import (
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,10 @@ import (
 var (
 	version1201, _ = core.ParseVersion("1.2.0-1")
 	version3022, _ = core.ParseVersion("3.0.2-2")
-	version0211, _ = core.ParseVersion("0.2.1-1")
+)
+
+var (
+	compVersion0211 = semver.MustParse("0.2.1-1")
 )
 
 func TestSerializeBlueprint_ok(t *testing.T) {
@@ -47,11 +51,11 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"components in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", DistributionNamespace: "present", Version: version0211, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", DistributionNamespace: "absent", Version: version3211, TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", DistributionNamespace: "present", Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", DistributionNamespace: "absent", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"absent/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`,
+			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"absent/dogu-operator","version":"","targetState":"absent"}]}`,
 			assert.NoError,
 		},
 		{
@@ -150,8 +154,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", DistributionNamespace: "k8s", Version: version0211, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", DistributionNamespace: "k8s", Version: version3211, TargetState: domain.TargetStateAbsent},
+					{Name: "blueprint-operator", DistributionNamespace: "k8s", Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: "dogu-operator", DistributionNamespace: "k8s", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,

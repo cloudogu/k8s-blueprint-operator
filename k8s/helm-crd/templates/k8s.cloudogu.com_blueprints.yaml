@@ -135,7 +135,6 @@ spec:
                                 description: Version contains the component's version.
                                 type: string
                             required:
-                              - distributionNamespace
                               - installationState
                             type: object
                           expected:
@@ -151,7 +150,6 @@ spec:
                                 description: Version contains the component's version.
                                 type: string
                             required:
-                              - distributionNamespace
                               - installationState
                             type: object
                           neededAction:

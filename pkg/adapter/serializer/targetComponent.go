@@ -3,7 +3,7 @@ package serializer
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
@@ -30,9 +30,9 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 			errorList = append(errorList, err)
 			continue
 		}
-		var version core.Version
+		var version *semver.Version
 		if component.Version != "" {
-			version, err = core.ParseVersion(component.Version)
+			version, err = semver.NewVersion(component.Version)
 			if err != nil {
 				errorList = append(errorList, fmt.Errorf("could not parse version of target component %q: %w", component.Name, err))
 				continue
@@ -72,10 +72,14 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 		// as the original blueprint json from the Blueprint resource.
 		joinedComponentName, err := JoinComponentName(component.Name, component.DistributionNamespace)
 		errorList = append(errorList, err)
+		version := ""
+		if newState == "present" {
+			version = component.Version.String()
+		}
 
 		return TargetComponent{
 			Name:        joinedComponentName,
-			Version:     component.Version.Raw,
+			Version:     version,
 			TargetState: newState,
 		}
 	})

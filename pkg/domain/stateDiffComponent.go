@@ -2,10 +2,9 @@ package domain
 
 import (
 	"fmt"
-	"github.com/go-logr/logr"
+	"github.com/Masterminds/semver/v3"
 	"golang.org/x/exp/maps"
 
-	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
@@ -48,7 +47,7 @@ type ComponentDiffState struct {
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
 	// Version contains the component's version.
-	Version core.Version
+	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
 }
@@ -69,17 +68,21 @@ func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
 		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
 		diff.DistributionNamespace,
-		diff.Version.Raw,
+		diff.Version.String(),
 		diff.InstallationState,
 	)
 }
 
 // determineComponentDiffs creates ComponentDiffs for all components in the blueprint and all installed components as well.
-func determineComponentDiffs(logger logr.Logger, blueprintComponents []Component, installedComponents map[string]*ecosystem.ComponentInstallation) []ComponentDiff {
+func determineComponentDiffs(blueprintComponents []Component, installedComponents map[string]*ecosystem.ComponentInstallation) ([]ComponentDiff, error) {
 	var componentDiffs = map[string]ComponentDiff{}
 	for _, blueprintComponent := range blueprintComponents {
 		installedComponent := installedComponents[blueprintComponent.Name]
-		componentDiffs[blueprintComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
+		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
+		if err != nil {
+			return nil, err
+		}
+		componentDiffs[blueprintComponent.Name] = compDiff
 	}
 
 	for _, installedComponent := range installedComponents {
@@ -87,19 +90,27 @@ func determineComponentDiffs(logger logr.Logger, blueprintComponents []Component
 
 		if !found {
 			var notFoundInBlueprint *Component = nil
-			componentDiffs[installedComponent.Name] = determineComponentDiff(logger, notFoundInBlueprint, installedComponent)
+			compDiff, err := determineComponentDiff(notFoundInBlueprint, installedComponent)
+			if err != nil {
+				return nil, err
+			}
+			componentDiffs[installedComponent.Name] = compDiff
 			continue
 		}
 
-		componentDiffs[installedComponent.Name] = determineComponentDiff(logger, &blueprintComponent, installedComponent)
+		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
+		if err != nil {
+			return nil, err
+		}
+		componentDiffs[installedComponent.Name] = compDiff
 	}
-	return maps.Values(componentDiffs)
+	return maps.Values(componentDiffs), nil
 }
 
 // determineComponentDiff creates a ComponentDiff out of a Component from the blueprint and the ecosystem.ComponentInstallation in the ecosystem.
 // If the Component is nil (was not in the blueprint), the actual state is also the expected state.
 // If the installedComponent is nil, it is considered to be not installed currently.
-func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) ComponentDiff {
+func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) (ComponentDiff, error) {
 	var expectedState, actualState ComponentDiffState
 	componentName := "" // either blueprintComponent or installedComponent could be nil
 
@@ -127,12 +138,17 @@ func determineComponentDiff(logger logr.Logger, blueprintComponent *Component, i
 		}
 	}
 
+	nextAction, err := getNextComponentAction(expectedState, actualState)
+	if err != nil {
+		return ComponentDiff{}, fmt.Errorf("failed to determine diff for component %q : %w", componentName, err)
+	}
+
 	return ComponentDiff{
 		Name:         componentName,
 		Expected:     expectedState,
 		Actual:       actualState,
-		NeededAction: getNextComponentAction(logger, expectedState, actualState),
-	}
+		NeededAction: nextAction,
+	}, nil
 }
 
 func findComponentByName(components []Component, name string) (Component, bool) {
@@ -144,44 +160,39 @@ func findComponentByName(components []Component, name string) (Component, bool) 
 	return Component{}, false
 }
 
-func getNextComponentAction(logger logr.Logger, expected ComponentDiffState, actual ComponentDiffState) Action {
+func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
 	if expected.InstallationState == actual.InstallationState {
-		return decideOnEqualState(logger, expected, actual)
+		return decideOnEqualState(expected, actual)
 	}
 
-	return decideOnDifferentState(logger, expected)
+	return decideOnDifferentState(expected)
 }
 
-func decideOnEqualState(logger logr.Logger, expected ComponentDiffState, actual ComponentDiffState) Action {
+func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		if expected.Version.IsNewerThan(actual.Version) {
-			return ActionUpgrade
+		if expected.Version.GreaterThan(actual.Version) {
+			return ActionUpgrade, nil
 		}
-		if expected.Version.IsEqualTo(actual.Version) {
-			return ActionNone
+		if expected.Version.Equal(actual.Version) {
+			return ActionNone, nil
 		}
-		return ActionDowngrade
+		return ActionDowngrade, nil
 	case TargetStateAbsent:
-		return ActionNone
+		return ActionNone, nil
 	default:
-		logger.Info("Warning: Component has unexpected target state, deciding for no action",
-			"component", expected.InstallationState, "expected states", "")
-		return ActionNone
-
+		return ActionNone, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
 	}
 }
 
-func decideOnDifferentState(logger logr.Logger, expected ComponentDiffState) Action {
+func decideOnDifferentState(expected ComponentDiffState) (Action, error) {
 	// at this place, the actual state is always the opposite to the expected state so just follow the expected state.
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		return ActionInstall
+		return ActionInstall, nil
 	case TargetStateAbsent:
-		return ActionUninstall
+		return ActionUninstall, nil
 	default:
-		logger.Info("Warning: Component has unexpected installation state, deciding for no action",
-			"component", expected.InstallationState, "expected states", "")
-		return ActionNone
+		return ActionNone, fmt.Errorf("component has unexpected installation state %q", expected.InstallationState)
 	}
 }

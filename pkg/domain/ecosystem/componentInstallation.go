@@ -1,7 +1,7 @@
 package ecosystem
 
 import (
-	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/Masterminds/semver/v3"
 )
 
 // ComponentInstallation represents an installed or to be installed component in the ecosystem.
@@ -16,8 +16,8 @@ type ComponentInstallation struct {
 	// The default value is empty and indicated that the component should be deployed in the current namespace.
 	DeployNamespace string
 	// Version is the version of the component
-	Version core.Version
-	// Status is the installation status of the component in the ecosystem.
+	Version *semver.Version
+	// Status is the installation status of the component in the ecosystem
 	Status string
 	// ValuesYamlOverwrite represents a helm configuration as string in yaml format.
 	// Example:
@@ -70,6 +70,6 @@ func InstallComponent(namespace, componentName string, version core.Version) *Co
 	}
 }
 
-func (ci *ComponentInstallation) Upgrade(version core.Version) {
+func (ci *ComponentInstallation) Upgrade(version semver.Version) {
 	ci.Version = version
 }
