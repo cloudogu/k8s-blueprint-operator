@@ -9,7 +9,7 @@ import (
 )
 
 var (
-	version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
+	version3211, _ = core.ParseVersion("3.2.1-1")
 )
 
 func TestConvertDogus(t *testing.T) {
@@ -36,13 +36,13 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "normal dogu",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3_2_1_1.Raw, TargetState: "present"}}},
-			want:    []domain.Dogu{{Namespace: "official", Name: "postgres", Version: version3_2_1_1, TargetState: domain.TargetStatePresent}},
+			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}}},
+			want:    []domain.Dogu{{Namespace: "official", Name: "postgres", Version: version3211, TargetState: domain.TargetStatePresent}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "no namespace",
-			args:    args{dogus: []TargetDogu{{Name: "postgres", Version: version3_2_1_1.Raw, TargetState: "present"}}},
+			args:    args{dogus: []TargetDogu{{Name: "postgres", Version: version3211.Raw, TargetState: "present"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -54,7 +54,7 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "unknown target state",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3_2_1_1.Raw, TargetState: "unknown"}}},
+			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -94,8 +94,8 @@ func TestConvertToDoguDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{dogus: []domain.Dogu{{Namespace: "official", Name: "postgres", Version: version3_2_1_1, TargetState: domain.TargetStatePresent}}},
-			want:    []TargetDogu{{Name: "official/postgres", Version: version3_2_1_1.Raw, TargetState: "present"}},
+			args:    args{dogus: []domain.Dogu{{Namespace: "official", Name: "postgres", Version: version3211, TargetState: domain.TargetStatePresent}}},
+			want:    []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},
 	}

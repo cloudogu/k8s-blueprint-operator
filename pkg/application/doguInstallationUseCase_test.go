@@ -13,8 +13,8 @@ import (
 
 const blueprintId = "blueprint1"
 
-var version3_2_1_1, _ = core.ParseVersion("3.2.1-1")
-var version3_2_1_2, _ = core.ParseVersion("3.2.1-2")
+var version3211, _ = core.ParseVersion("3.2.1-1")
+var version3212, _ = core.ParseVersion("3.2.1-2")
 
 const healthCheckInterval = 10 * time.Second
 
@@ -28,19 +28,19 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			DoguName: "postgresql",
 			Actual: domain.DoguDiffState{
 				Namespace:         "official",
-				Version:           version3_2_1_1,
+				Version:           version3211,
 				InstallationState: domain.TargetStatePresent,
 			},
 			Expected: domain.DoguDiffState{
 				Namespace:         "official",
-				Version:           version3_2_1_1,
+				Version:           version3211,
 				InstallationState: domain.TargetStatePresent,
 			},
 			NeededAction: domain.ActionNone,
 		}, &ecosystem.DoguInstallation{
 			Namespace: "official",
 			Name:      "postgresql",
-			Version:   version3_2_1_1,
+			Version:   version3211,
 		}, domain.BlueprintConfiguration{})
 
 		// then
@@ -50,7 +50,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action install", func(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
-			Create(testCtx, ecosystem.InstallDogu("official", "postgresql", version3_2_1_1)).
+			Create(testCtx, ecosystem.InstallDogu("official", "postgresql", version3211)).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
@@ -62,12 +62,12 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				DoguName: "postgresql",
 				Actual: domain.DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: domain.TargetStateAbsent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:         "official",
-					Version:           version3_2_1_1,
+					Version:           version3211,
 					InstallationState: domain.TargetStatePresent,
 				},
 				NeededAction: domain.ActionInstall,
@@ -98,7 +98,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			&ecosystem.DoguInstallation{
 				Namespace: "official",
 				Name:      "postgresql",
-				Version:   version3_2_1_1,
+				Version:   version3211,
 			},
 			domain.BlueprintConfiguration{},
 		)
@@ -111,7 +111,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Namespace: "official",
 			Name:      "postgresql",
-			Version:   version3_2_1_1,
+			Version:   version3211,
 		}
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
@@ -126,7 +126,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					Version: version3_2_1_2,
+					Version: version3212,
 				},
 				NeededAction: domain.ActionUpgrade,
 			},
@@ -136,7 +136,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, version3_2_1_2, dogu.Version)
+		assert.Equal(t, version3212, dogu.Version)
 	})
 
 	t.Run("action downgrade", func(t *testing.T) {
@@ -144,7 +144,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Namespace: "official",
 			Name:      "postgresql",
-			Version:   version3_2_1_2,
+			Version:   version3212,
 		}
 
 		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
@@ -155,7 +155,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					Version: version3_2_1_1,
+					Version: version3211,
 				},
 				NeededAction: domain.ActionDowngrade,
 			},
@@ -165,14 +165,14 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 		// then
 		require.ErrorContains(t, err, noDowngradesExplanationText)
-		assert.Equal(t, version3_2_1_2, dogu.Version)
+		assert.Equal(t, version3212, dogu.Version)
 	})
 
 	t.Run("action SwitchNamespace not allowed", func(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Namespace: "official",
 			Name:      "postgresql",
-			Version:   version3_2_1_2,
+			Version:   version3212,
 		}
 
 		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
@@ -185,7 +185,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchNamespace,
+				NeededAction: domain.ActionSwitchDoguNamespace,
 			},
 			dogu,
 			domain.BlueprintConfiguration{
@@ -201,7 +201,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Namespace: "official",
 			Name:      "postgresql",
-			Version:   version3_2_1_2,
+			Version:   version3212,
 		}
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, dogu).Return(nil)
@@ -216,7 +216,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchNamespace,
+				NeededAction: domain.ActionSwitchDoguNamespace,
 			},
 			dogu,
 			domain.BlueprintConfiguration{
@@ -335,7 +335,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			"postgresql": {
 				Namespace:     "official",
 				Name:          "postgresql",
-				Version:       version3_2_1_1,
+				Version:       version3211,
 				UpgradeConfig: ecosystem.UpgradeConfig{},
 			},
 		}, nil)

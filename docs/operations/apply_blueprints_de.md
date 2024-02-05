@@ -27,3 +27,10 @@ spec:
       "dogus": [ ... ]
     }
 ```
+
+Blueprint-CR-[Beispiele](../../samples/k8s_v1_blueprint.yaml) können dem [Sample-Verzeichnis](../../samples/) entnommen werden. Wenn `k8s-blueprint-operator` korrekt installiert wurde, lässt sich dies z. B. so auf den Cluster anwenden:
+
+```bash
+kubectl -n ecosystem -f k8s_v1_blueprint.yaml
+```
+

@@ -18,6 +18,15 @@ func GetDuplicates(list []string) []string {
 	return duplicates
 }
 
+// Map returns a slice where each element is the result of invoking fn on each corresponding element of the given slice.
+//
+// Example:
+//
+//	fruits := []string{"apple", "banana", "raspberry"}
+//	loudFruits := Map(fruits, strings.ToUpper)
+//	fmt.Println(loudFruits)
+//
+// This should print: [APPLE BANANA RASPBERRY]
 func Map[T, V any](ts []T, fn func(T) V) []V {
 	result := make([]V, len(ts))
 	for i, t := range ts {

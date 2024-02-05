@@ -9,7 +9,22 @@ metadata:
   name: blueprint-sample
 spec:
   blueprint: |
-    {"blueprintApi":"v2","dogus":[{"name":"official/postgresql","version":"12.15-2","targetState":"present"}]}
+    {
+    "blueprintApi":"v2",
+    "dogus":[
+      {
+        "name":"official/postgresql",
+        "version":"12.15-2",
+        "targetState":"present"
+      }
+    ],
+    "components": [
+      {
+        "name":"k8s/k8s-dogu-operator",
+        "version":"0.41.0",
+        "targetState":"present"
+      }
+    ]}
   blueprintMask: |
     {"blueprintMaskApi":"v1"}
   ignoreDoguHealth: false
