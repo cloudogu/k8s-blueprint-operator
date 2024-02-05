@@ -444,6 +444,27 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("handle Application failed", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		doguInstallMock := newMockDoguInstallationUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, doguInstallMock, applyMock)
+
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{
+			Id:     blueprintId,
+			Status: domain.StatusPhaseBlueprintApplicationFailed,
+		}, nil)
+		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintId).Return(nil)
+		// when
+		err := useCase.HandleChange(testCtx, blueprintId)
+		// then
+		require.NoError(t, err)
+	})
+
 	t.Run("handle failed blueprint", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -529,6 +550,19 @@ func TestBlueprintSpecChangeUseCase_applyBlueprintSpec(t *testing.T) {
 		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, nil, applyMock)
 		// when
 		err := useCase.applyBlueprintSpec(testCtx, blueprintId)
+		// then
+		require.ErrorIs(t, err, assert.AnError)
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_checkEcosystemHealthAfterwards(t *testing.T) {
+	t.Run("error", func(t *testing.T) {
+		// given
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, blueprintId).Return(assert.AnError)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, nil, applyMock)
+		// when
+		err := useCase.checkEcosystemHealthAfterwards(testCtx, blueprintId)
 		// then
 		require.ErrorIs(t, err, assert.AnError)
 	})
