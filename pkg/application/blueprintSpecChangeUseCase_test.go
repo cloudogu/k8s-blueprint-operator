@@ -352,7 +352,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.ErrorIs(t, actualErr, assert.AnError)
 	})
 
-	t.Run("handle blueprint applied", func(t *testing.T) {
+	t.Run("handle error after blueprint was applied", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
 		validationMock := newMockBlueprintSpecValidationUseCase(t)
@@ -367,13 +367,11 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseBlueprintApplied,
 		}
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
-			blueprintSpec.Status = domain.StatusPhaseCompleted
-		})
+		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, "testBlueprint1").Return(assert.AnError)
 		// when
 		err := useCase.HandleChange(testCtx, "testBlueprint1")
 		// then
-		require.NoError(t, err)
+		require.ErrorIs(t, err, assert.AnError)
 	})
 
 	t.Run("handle ecosystem healthy afterwards", func(t *testing.T) {
