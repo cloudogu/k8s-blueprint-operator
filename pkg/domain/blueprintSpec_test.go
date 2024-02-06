@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"context"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -14,8 +13,6 @@ import (
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 var version3213, _ = core.ParseVersion("3.2.1-3")
-
-var testContext = context.Background()
 
 const (
 	testDistributionNamespace       = "k8s"

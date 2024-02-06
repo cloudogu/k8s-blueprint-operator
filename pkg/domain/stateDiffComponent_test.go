@@ -12,8 +12,7 @@ import (
 )
 
 const (
-	testComponentName   = "my-component"
-	testDeployNamespace = "longhorn-system"
+	testComponentName = "my-component"
 )
 
 var (
