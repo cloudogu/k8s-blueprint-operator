@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -24,28 +23,6 @@ const (
 	waitHealthConfigKey      = "wait"
 )
 
-type duration struct {
-	time.Duration
-}
-
-func (d *duration) UnmarshalJSON(b []byte) (err error) {
-	if b[0] == '"' {
-		sd := string(b[1 : len(b)-1])
-		d.Duration, err = time.ParseDuration(sd)
-		return err
-	}
-
-	var id int64
-	id, err = json.Number(b).Int64()
-	d.Duration = time.Duration(id)
-
-	return err
-}
-
-func (d *duration) MarshalJSON() ([]byte, error) {
-	return []byte(fmt.Sprintf(`"%s"`, d.String())), nil
-}
-
 var defaultHealthConfig = healthConfig{
 	Components: componentHealthConfig{
 		Required: nil,
@@ -57,8 +34,10 @@ var defaultHealthConfig = healthConfig{
 }
 
 type healthConfig struct {
+	// Components
 	Components componentHealthConfig `yaml:"components,omitempty" json:"components,omitempty"`
-	Wait       waitHealthConfig      `yaml:"wait,omitempty" json:"wait,omitempty"`
+	// Wait contains configuration concerning how the stand-by-period for the ecosystem to become healthy.
+	Wait waitHealthConfig `yaml:"wait,omitempty" json:"wait,omitempty"`
 }
 
 type componentHealthConfig struct {
