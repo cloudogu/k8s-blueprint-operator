@@ -10,6 +10,18 @@ import (
 	"time"
 )
 
+const (
+	noDowngradesExplanationTextFmt = "downgrades are not allowed as the data model of the %s could have changed and " +
+		"doing rollbacks to older models is not supported. " +
+		"You can downgrade %s by restoring a backup. " +
+		"If you want an 'allow-downgrades' flag, issue a feature request"
+
+	noDistributionNamespaceSwitchExplanationText = "switching distribution namespace is not allowed. If you want an " +
+		"`allow-switch-distribution-namespace` flag, issue a feature request"
+	noDeployNamespaceSwitchExplanationText = "switching deploy namespace is not allowed. If you want an " +
+		"`allow-switch-deploy-namespace` flag, issue a feature request"
+)
+
 type ComponentInstallationUseCase struct {
 	blueprintSpecRepo   domainservice.BlueprintSpecRepository
 	componentRepo       domainservice.ComponentInstallationRepository
@@ -52,7 +64,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	}
 
 	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
-		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name], blueprintSpec.Config)
+		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
 		}
@@ -64,7 +76,6 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	ctx context.Context,
 	componentDiff domain.ComponentDiff,
 	componentInstallation *ecosystem.ComponentInstallation,
-	blueprintConfig domain.BlueprintConfiguration,
 ) error {
 	logger := log.FromContext(ctx).
 		WithName("ComponentInstallationUseCase.applyComponentState").
@@ -76,31 +87,26 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		return nil
 	case domain.ActionInstall:
 		logger.Info("install component")
-		// TODO wait for deployNamespace and valuesYamlOverwrite in diff
-		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.Version)
+		// TODO apply valuesYamlOverwrite
+		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.DeployNamespace, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")
 		return useCase.componentRepo.Delete(ctx, componentInstallation.Name)
 	case domain.ActionUpgrade:
 		logger.Info("upgrade component")
+		// TODO apply valuesYamlOverwrite
 		componentInstallation.Upgrade(componentDiff.Expected.Version)
 		return useCase.componentRepo.Update(ctx, componentInstallation)
+	case domain.ActionSwitchComponentDistributionNamespace:
+		logger.Info("switch distribution namespace")
+		return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
+	case domain.ActionSwitchComponentDeployNamespace:
+		logger.Info("switch deploy namespace")
+		return fmt.Errorf(noDeployNamespaceSwitchExplanationText)
 	case domain.ActionDowngrade:
 		logger.Info("downgrade component")
 		return fmt.Errorf(getNoDowngradesExplanationTextForComponents())
-	case domain.ActionSwitchDoguNamespace:
-		logger.Info("do namespace switch for component")
-		// TODO
-		// err := componentInstallation.SwitchNamespace(
-		// 	componentDiff.Expected.Namespace,
-		// 	componentDiff.Expected.Version,
-		// 	blueprintConfig.AllowDoguNamespaceSwitch,
-		// )
-		// if err != nil {
-		// 	return err
-		// }
-		return useCase.componentRepo.Update(ctx, componentInstallation)
 	default:
 		return fmt.Errorf("cannot perform unknown action %q", componentDiff.NeededAction)
 	}
@@ -109,8 +115,3 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 func getNoDowngradesExplanationTextForComponents() string {
 	return fmt.Sprintf(noDowngradesExplanationTextFmt, "components", "components")
 }
-
-const noDowngradesExplanationTextFmt = "downgrades are not allowed as the data model of the %s could have changed and " +
-	"doing rollbacks to older models is not supported. " +
-	"You can downgrade %s by restoring a backup. " +
-	"If you want an 'allow-downgrades' flag, issue a feature request"

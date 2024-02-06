@@ -50,6 +50,9 @@ type ComponentDiffState struct {
 	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
+	// DeployNamespace defines the namespace where the component should be installed to. Actually this is only used for
+	// the component `k8s-longhorn` because it requires the `longhorn-system` namespace.
+	DeployNamespace string
 }
 
 // String returns a string representation of the ComponentDiff.
@@ -130,6 +133,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		componentName = installedComponent.Name
 		actualState = ComponentDiffState{
 			DistributionNamespace: installedComponent.DistributionNamespace,
+			DeployNamespace:       installedComponent.DeployNamespace,
 			Version:               installedComponent.Version,
 			InstallationState:     TargetStatePresent,
 		}
@@ -141,6 +145,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		componentName = blueprintComponent.Name
 		expectedState = ComponentDiffState{
 			DistributionNamespace: blueprintComponent.DistributionNamespace,
+			DeployNamespace:       blueprintComponent.DeployNamespace,
 			Version:               blueprintComponent.Version,
 			InstallationState:     blueprintComponent.TargetState,
 		}
@@ -179,6 +184,14 @@ func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffSta
 func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
 	switch expected.InstallationState {
 	case TargetStatePresent:
+		if expected.DistributionNamespace != actual.DistributionNamespace {
+			return ActionSwitchComponentDistributionNamespace, nil
+		}
+
+		if expected.DeployNamespace != actual.DeployNamespace {
+			return ActionSwitchComponentDeployNamespace, nil
+		}
+
 		if expected.Version.GreaterThan(actual.Version) {
 			return ActionUpgrade, nil
 		}

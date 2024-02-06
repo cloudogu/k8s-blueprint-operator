@@ -11,7 +11,10 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
-const testComponentName = "my-component"
+const (
+	testComponentName   = "my-component"
+	testDeployNamespace = "longhorn-system"
+)
 
 var (
 	compVersion3211 = semver.MustParse("3.2.1-1")
@@ -302,6 +305,80 @@ func Test_determineComponentDiffs(t *testing.T) {
 						InstallationState: TargetStatePresent,
 					},
 					NeededAction: ActionNone,
+				},
+			},
+		},
+		{
+			name: "determine distribution namespace switch",
+			args: args{
+				blueprintComponents: []Component{
+					{
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						TargetState:           TargetStatePresent,
+						DistributionNamespace: testChangeDistributionNamespace,
+					},
+				},
+				installedComponents: map[string]*ecosystem.ComponentInstallation{
+					testComponentName: {
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						DistributionNamespace: testDistributionNamespace,
+					},
+				},
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testDistributionNamespace,
+					},
+					Expected: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testChangeDistributionNamespace,
+					},
+					NeededAction: ActionSwitchComponentDistributionNamespace,
+				},
+			},
+		},
+		{
+			name: "determine deploy namespace switch",
+			args: args{
+				blueprintComponents: []Component{
+					{
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						TargetState:           TargetStatePresent,
+						DistributionNamespace: testDistributionNamespace,
+						DeployNamespace:       testDeployNamespace,
+					},
+				},
+				installedComponents: map[string]*ecosystem.ComponentInstallation{
+					testComponentName: {
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						DistributionNamespace: testDistributionNamespace,
+					},
+				},
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testDistributionNamespace,
+					},
+					Expected: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testDistributionNamespace,
+						DeployNamespace:       testDeployNamespace,
+					},
+					NeededAction: ActionSwitchComponentDeployNamespace,
 				},
 			},
 		},

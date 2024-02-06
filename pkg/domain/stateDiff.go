@@ -11,10 +11,12 @@ type StateDiff struct {
 type Action string
 
 const (
-	ActionNone                = "none"
-	ActionInstall             = "install"
-	ActionUninstall           = "uninstall"
-	ActionUpgrade             = "upgrade"
-	ActionDowngrade           = "downgrade"
-	ActionSwitchDoguNamespace = "dogu namespace switch"
+	ActionNone                                 = "none"
+	ActionInstall                              = "install"
+	ActionUninstall                            = "uninstall"
+	ActionUpgrade                              = "upgrade"
+	ActionDowngrade                            = "downgrade"
+	ActionSwitchDoguNamespace                  = "dogu namespace switch"
+	ActionSwitchComponentDeployNamespace       = "component deploy namespace switch"
+	ActionSwitchComponentDistributionNamespace = "component distribution namespace switch"
 )

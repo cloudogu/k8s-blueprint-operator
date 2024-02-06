@@ -17,6 +17,11 @@ var version3213, _ = core.ParseVersion("3.2.1-3")
 
 var testContext = context.Background()
 
+const (
+	testDistributionNamespace       = "k8s"
+	testChangeDistributionNamespace = "k8s-testing"
+)
+
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
 	require.Equal(t, StatusPhaseNew, spec.Status, "Status new should be the default")
@@ -376,6 +381,67 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, spec.Status, initialStatus)
 		require.Equal(t, 0, len(spec.Events))
+	})
+
+	t.Run("should return error with not allowed component distribution namespace switch action", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Components: []Component{
+					{
+						Name:                  testComponentName,
+						DistributionNamespace: testChangeDistributionNamespace,
+						Version:               compVersion3211,
+					},
+				},
+			},
+			Status: StatusPhaseValidated,
+		}
+		installedComponents := map[string]*ecosystem.ComponentInstallation{
+			testComponentName: {
+				DistributionNamespace: testDistributionNamespace,
+				Version:               compVersion3211,
+			},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(nil, installedComponents)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, StatusPhaseInvalid, spec.Status)
+		assert.ErrorContains(t, err, "action \"component distribution namespace switch\" for following components is not allowed")
+	})
+
+	t.Run("should return error with not allowed component deploy namespace switch action", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Components: []Component{
+					{
+						Name:                  testComponentName,
+						DistributionNamespace: testDistributionNamespace,
+						Version:               compVersion3211,
+						DeployNamespace:       "other-namespace",
+					},
+				},
+			},
+			Status: StatusPhaseValidated,
+		}
+		installedComponents := map[string]*ecosystem.ComponentInstallation{
+			testComponentName: {
+				DistributionNamespace: testDistributionNamespace,
+				Version:               compVersion3211,
+			},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(nil, installedComponents)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, StatusPhaseInvalid, spec.Status)
+		assert.ErrorContains(t, err, "action \"component deploy namespace switch\" for following components is not allowed")
 	})
 }
 

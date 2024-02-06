@@ -213,8 +213,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			Version:               semVer3212,
 		}
 
-		blueprintConfigurationMock := domain.BlueprintConfiguration{}
-
 		componentRepoMock.EXPECT().Create(testCtx, componentInstallation).Return(nil)
 
 		sut := &ComponentInstallationUseCase{
@@ -225,7 +223,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation, blueprintConfigurationMock)
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -245,8 +243,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			Name: componentName1,
 		}
 
-		blueprintConfigurationMock := domain.BlueprintConfiguration{}
-
 		componentRepoMock.EXPECT().Delete(testCtx, componentInstallation.Name).Return(nil)
 
 		sut := &ComponentInstallationUseCase{
@@ -257,7 +253,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation, blueprintConfigurationMock)
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -283,8 +279,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			DistributionNamespace: testNamespace,
 		}
 
-		blueprintConfigurationMock := domain.BlueprintConfiguration{}
-
 		componentRepoMock.EXPECT().Update(testCtx, componentInstallation).Return(nil)
 
 		sut := &ComponentInstallationUseCase{
@@ -295,7 +289,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation, blueprintConfigurationMock)
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -315,7 +309,34 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			Name: componentName1,
 		}
 
-		blueprintConfigurationMock := domain.BlueprintConfiguration{}
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+			// TODO
+			// healthCheckInterval:
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, getNoDowngradesExplanationTextForComponents())
+	})
+
+	t.Run("should return error on action distribution namespace switch", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name:         componentName1,
+			NeededAction: domain.ActionSwitchComponentDistributionNamespace,
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name: componentName1,
+		}
 
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
@@ -325,10 +346,39 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation, blueprintConfigurationMock)
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, getNoDowngradesExplanationTextForComponents())
+		assert.ErrorContains(t, err, noDistributionNamespaceSwitchExplanationText)
+	})
+
+	t.Run("should return error on action deploy namespace switch", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name:         componentName1,
+			NeededAction: domain.ActionSwitchComponentDeployNamespace,
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name: componentName1,
+		}
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+			// TODO
+			// healthCheckInterval:
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, noDeployNamespaceSwitchExplanationText)
 	})
 }
