@@ -12,20 +12,23 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo               domainservice.BlueprintSpecRepository
-	doguInstallUseCase doguInstallationUseCase
-	healthUseCase      ecosystemHealthUseCase
+	repo                   blueprintSpecRepository
+	doguInstallUseCase     doguInstallationUseCase
+	healthUseCase          ecosystemHealthUseCase
+	maintenanceModeAdapter maintenanceMode
 }
 
 func NewApplyBlueprintSpecUseCase(
-	repo domainservice.BlueprintSpecRepository,
+	repo blueprintSpecRepository,
 	doguInstallUseCase doguInstallationUseCase,
 	healthUseCase ecosystemHealthUseCase,
+	maintenanceModeAdapter maintenanceMode,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
-		repo:               repo,
-		doguInstallUseCase: doguInstallUseCase,
-		healthUseCase:      healthUseCase,
+		repo:                   repo,
+		doguInstallUseCase:     doguInstallUseCase,
+		healthUseCase:          healthUseCase,
+		maintenanceModeAdapter: maintenanceModeAdapter,
 	}
 }
 
@@ -85,7 +88,68 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return nil
 }
 
-// TODO: activate maintenance mode
+// PreProcessBlueprintApplication prepares the environment for applying the blueprint, e.g. activating the maintenance mode.
+// returns a domainservice.ConflictError if another party activated the maintenance mode or
+// returns a domainservice.InternalError on any other error.
+func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PreProcessBlueprintApplication").
+		WithValues("blueprintId", blueprintId)
+
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q to activate maintenance mode: %w", blueprintId, err)
+	}
+
+	if !blueprintSpec.ShouldBeApplied() {
+		logger.Info("stop before activating maintenance mode as blueprint should not be applied")
+	} else {
+		logger.Info("activate maintenance mode")
+		err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
+			Title: "Blueprint getting applied",
+			Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied.",
+		})
+		if err != nil {
+			return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
+		}
+	}
+
+	blueprintSpec.CompletePreProcessing()
+
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot save blueprint spec %q after activating the maintenance mode: %w", blueprintId, err)
+	}
+
+	return nil
+}
+
+// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. deactivating the maintenance mode.
+// returns a domainservice.ConflictError if another party holds the lock to the maintenance mode or
+// returns a domainservice.InternalError on any other error.
+func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PostProcessBlueprintApplication").
+		WithValues("blueprintId", blueprintId)
+
+	logger.Info("deactivate maintenance mode")
+	err := useCase.maintenanceModeAdapter.Deactivate()
+	if err != nil {
+		return fmt.Errorf("could not deactivate maintenance mode after applying the blueprint: %w", err)
+	}
+
+	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q while post-processing blueprint application: %w", blueprintId, err)
+	}
+
+	blueprintSpec.CompletePostProcessing()
+
+	err = useCase.repo.Update(ctx, blueprintSpec)
+	if err != nil {
+		return fmt.Errorf("cannot update blueprint spec %q while post-processing blueprint application: %w", blueprintId, err)
+	}
+
+	return nil
+}
 
 // ApplyBlueprintSpec applies the expected state to the ecosystem. It will stop if any unexpected error happens and sets blueprint status.
 // Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or other resources or
@@ -100,46 +164,42 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return fmt.Errorf("cannot load blueprint to apply blueprint spec: %w", err)
 	}
 
-	shouldApply, err := useCase.startApplying(ctx, blueprintSpec)
+	logger.Info("start applying blueprint to the cluster")
+	err = useCase.startApplying(ctx, blueprintSpec)
 	if err != nil {
 		return err
 	}
 
-	if !shouldApply {
-		logger.Info("skip applying states to the cluster")
-		return nil
-	}
-
 	applyError := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
 	if applyError != nil {
-		err := useCase.MarkFailed(ctx, blueprintSpec, err)
+		err := useCase.markBlueprintApplicationFailed(ctx, blueprintSpec, applyError)
 		if err != nil {
 			return err
 		}
 		return applyError
 	}
 
+	logger.Info("blueprint successfully applied to the cluster")
 	return useCase.markBlueprintApplied(ctx, blueprintSpec)
 }
 
-// TODO: deactivate maintenance mode
-
-func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) (bool, error) {
-	shouldApply := blueprintSpec.StartApplying()
+func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+	blueprintSpec.StartApplying()
 	err := useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return false, fmt.Errorf("cannot mark blueprint as in progress: %w", err)
+		return fmt.Errorf("cannot mark blueprint as in progress: %w", err)
 	}
-	return shouldApply, nil
+	return nil
 }
 
-// MarkFailed marks the blueprint as failed. The error which leads to the failed blueprint needs to be provided.
-func (useCase *ApplyBlueprintSpecUseCase) MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
+// markBlueprintApplicationFailed marks the blueprint application as failed.
+// Returns the error which leads to the failed blueprint needs to be provided.
+func (useCase *ApplyBlueprintSpecUseCase) markBlueprintApplicationFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
-		WithName("ApplyBlueprintSpecUseCase.MarkFailed").
+		WithName("ApplyBlueprintSpecUseCase.markBlueprintApplicationFailed").
 		WithValues("blueprintId", blueprintSpec.Id)
 
-	blueprintSpec.MarkFailed(err)
+	blueprintSpec.MarkBlueprintApplicationFailed(err)
 	repoErr := useCase.repo.Update(ctx, blueprintSpec)
 
 	if repoErr != nil {
@@ -155,15 +215,6 @@ func (useCase *ApplyBlueprintSpecUseCase) markBlueprintApplied(ctx context.Conte
 	err := useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("cannot mark blueprint as waiting for a healthy ecosystem: %w", err)
-	}
-	return nil
-}
-
-func (useCase *ApplyBlueprintSpecUseCase) markCompleted(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.MarkCompleted()
-	err := useCase.repo.Update(ctx, blueprintSpec)
-	if err != nil {
-		return fmt.Errorf("cannot mark blueprint as completed: %w", err)
 	}
 	return nil
 }

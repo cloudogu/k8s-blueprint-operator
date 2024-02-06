@@ -22,14 +22,13 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 		Status: domain.StatusPhaseValidated,
 	}, nil)
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-		Id:                   "testBlueprint1",
-		Blueprint:            domain.Blueprint{},
-		BlueprintMask:        domain.BlueprintMask{},
-		EffectiveBlueprint:   domain.EffectiveBlueprint{},
-		StateDiff:            domain.StateDiff{},
-		BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-		Status:               domain.StatusPhaseEffectiveBlueprintGenerated,
-		Events:               []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
+		Id:                 "testBlueprint1",
+		Blueprint:          domain.Blueprint{},
+		BlueprintMask:      domain.BlueprintMask{},
+		EffectiveBlueprint: domain.EffectiveBlueprint{},
+		StateDiff:          domain.StateDiff{},
+		Status:             domain.StatusPhaseEffectiveBlueprintGenerated,
+		Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
 	}).Return(nil)
 
 	// when
@@ -88,14 +87,13 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 		}, nil)
 
 		repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-			Id:                   "testBlueprint1",
-			Blueprint:            domain.Blueprint{},
-			BlueprintMask:        domain.BlueprintMask{},
-			EffectiveBlueprint:   domain.EffectiveBlueprint{},
-			StateDiff:            domain.StateDiff{},
-			BlueprintUpgradePlan: domain.BlueprintUpgradePlan{},
-			Status:               domain.StatusPhaseEffectiveBlueprintGenerated,
-			Events:               []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
+			Id:                 "testBlueprint1",
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{},
+			StateDiff:          domain.StateDiff{},
+			Status:             domain.StatusPhaseEffectiveBlueprintGenerated,
+			Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
 		}).Return(&domainservice.InternalError{Message: "test-error"})
 
 		//when

@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -14,8 +14,6 @@ import (
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 var version3213, _ = core.ParseVersion("3.2.1-3")
-
-var testContext = context.Background()
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
@@ -489,54 +487,60 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	}
 }
 
+func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+		}
+		// when
+		spec.CompletePreProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseBlueprintApplicationPreProcessed,
+			Events: []Event{BlueprintApplicationPreProcessedEvent{}},
+		})
+	})
+	t.Run("dry run", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Config: BlueprintConfiguration{DryRun: true},
+		}
+		// when
+		spec.CompletePreProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyUpfront,
+			Config: BlueprintConfiguration{DryRun: true},
+			Events: []Event{BlueprintDryRunEvent{}},
+		})
+	})
+}
+
 func TestBlueprintSpec_StartApplying(t *testing.T) {
-	t.Run("success without dry run", func(t *testing.T) {
+	t.Run("ok", func(t *testing.T) {
 		// given
 		spec := &BlueprintSpec{}
-
 		// when
 		spec.StartApplying()
-
 		// then
 		assert.Equal(t, spec, &BlueprintSpec{
 			Status: StatusPhaseInProgress,
 			Events: []Event{InProgressEvent{}},
 		})
 	})
-
-	t.Run("should not change status and add dry run event", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Config: BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-
-		// when
-		spec.StartApplying()
-
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Config: BlueprintConfiguration{
-				DryRun: true,
-			},
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Events: []Event{BlueprintDryRunEvent{}},
-		})
-	})
-
 }
 
-func TestBlueprintSpec_MarkFailed(t *testing.T) {
+func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
 	// given
 	spec := &BlueprintSpec{}
 	err := fmt.Errorf("test-error")
 	// when
-	spec.MarkFailed(err)
+	spec.MarkBlueprintApplicationFailed(err)
 	// then
 	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseFailed,
+		Status: StatusPhaseBlueprintApplicationFailed,
 		Events: []Event{ExecutionFailedEvent{err: err}},
 	})
 }
@@ -553,15 +557,61 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkCompleted(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	// when
-	spec.MarkCompleted()
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseCompleted,
-		Events: []Event{CompletedEvent{}},
+func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
+	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemHealthyAfterwards,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseCompleted,
+			Events: []Event{CompletedEvent{}},
+		})
+	})
+
+	t.Run("status change on failure InProgress -> Failed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseInProgress,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New(handleInProgressMsg)}},
+		})
+	})
+
+	t.Run("status change on failure EcosystemUnhealthyAfterwards -> Failed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseEcosystemUnhealthyAfterwards,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New("ecosystem is unhealthy")}},
+		})
+	})
+
+	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Status: StatusPhaseBlueprintApplicationFailed,
+		}
+		// when
+		spec.CompletePostProcessing()
+		// then
+		assert.Equal(t, spec, &BlueprintSpec{
+			Status: StatusPhaseFailed,
+			Events: []Event{ExecutionFailedEvent{errors.New("could not apply blueprint")}},
+		})
 	})
 }
 
@@ -608,16 +658,15 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			spec := &BlueprintSpec{
-				Id:                   tt.fields.Id,
-				Blueprint:            tt.fields.Blueprint,
-				BlueprintMask:        tt.fields.BlueprintMask,
-				EffectiveBlueprint:   tt.fields.EffectiveBlueprint,
-				StateDiff:            tt.fields.StateDiff,
-				BlueprintUpgradePlan: tt.fields.BlueprintUpgradePlan,
-				Config:               tt.fields.Config,
-				Status:               tt.fields.Status,
-				PersistenceContext:   tt.fields.PersistenceContext,
-				Events:               tt.fields.Events,
+				Id:                 tt.fields.Id,
+				Blueprint:          tt.fields.Blueprint,
+				BlueprintMask:      tt.fields.BlueprintMask,
+				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
+				StateDiff:          tt.fields.StateDiff,
+				Config:             tt.fields.Config,
+				Status:             tt.fields.Status,
+				PersistenceContext: tt.fields.PersistenceContext,
+				Events:             tt.fields.Events,
 			}
 			spec.ValidateDynamically(tt.args.possibleInvalidDependenciesError)
 
@@ -625,4 +674,24 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 			assert.Equal(t, tt.expectedEvents, spec.Events)
 		})
 	}
+}
+
+func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
+	t.Run("should be applied", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: false,
+			},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should not be applied due to dry run", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: true,
+			},
+		}
+		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+
 }
