@@ -15,11 +15,8 @@ const (
 		"doing rollbacks to older models is not supported. " +
 		"You can downgrade %s by restoring a backup. " +
 		"If you want an 'allow-downgrades' flag, issue a feature request"
-
 	noDistributionNamespaceSwitchExplanationText = "switching distribution namespace is not allowed. If you want an " +
 		"`allow-switch-distribution-namespace` flag, issue a feature request"
-	noDeployNamespaceSwitchExplanationText = "switching deploy namespace is not allowed. If you want an " +
-		"`allow-switch-deploy-namespace` flag, issue a feature request"
 )
 
 type ComponentInstallationUseCase struct {
@@ -88,7 +85,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	case domain.ActionInstall:
 		logger.Info("install component")
 		// TODO apply valuesYamlOverwrite
-		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.DeployNamespace, componentDiff.Expected.Version)
+		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")
@@ -101,9 +98,6 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	case domain.ActionSwitchComponentDistributionNamespace:
 		logger.Info("switch distribution namespace")
 		return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
-	case domain.ActionSwitchComponentDeployNamespace:
-		logger.Info("switch deploy namespace")
-		return fmt.Errorf(noDeployNamespaceSwitchExplanationText)
 	case domain.ActionDowngrade:
 		logger.Info("downgrade component")
 		return fmt.Errorf(getNoDowngradesExplanationTextForComponents())

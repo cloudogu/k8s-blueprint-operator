@@ -271,7 +271,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	return nil
 }
 
-var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace, ActionSwitchComponentDeployNamespace}
+var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
 
 func (spec *BlueprintSpec) checkComponentActions() error {
 	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {

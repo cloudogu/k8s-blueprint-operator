@@ -17,6 +17,5 @@ const (
 	ActionUpgrade                              = "upgrade"
 	ActionDowngrade                            = "downgrade"
 	ActionSwitchDoguNamespace                  = "dogu namespace switch"
-	ActionSwitchComponentDeployNamespace       = "component deploy namespace switch"
 	ActionSwitchComponentDistributionNamespace = "component distribution namespace switch"
 )

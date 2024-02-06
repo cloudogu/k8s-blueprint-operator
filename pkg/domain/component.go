@@ -19,9 +19,6 @@ type Component struct {
 	Version *semver.Version
 	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
-	// DeployNamespace defines the namespace where the component should be installed to. Actually this is only used for
-	// the component `k8s-longhorn` because it requires the `longhorn-system` namespace.
-	DeployNamespace string
 }
 
 // Validate checks if the component is semantically correct.

@@ -51,7 +51,6 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 		convertedComponents = append(convertedComponents, domain.Component{
 			Name:                  name,
 			DistributionNamespace: namespace,
-			DeployNamespace:       component.DeployNamespace,
 			Version:               version,
 			TargetState:           newState,
 		})
@@ -81,10 +80,17 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 			version = component.Version.String()
 		}
 
+		// TODO Delete this if the blueprint can handle a component configuration.
+		// This section would contain the deployNamespace in a generic Map.
+		var deployNamespace string
+		if component.Name == "k8s-longhorn" {
+			deployNamespace = "longhorn-system"
+		}
 		return TargetComponent{
-			Name:        joinedComponentName,
-			Version:     version,
-			TargetState: newState,
+			Name:            joinedComponentName,
+			Version:         version,
+			TargetState:     newState,
+			DeployNamespace: deployNamespace,
 		}
 	})
 	return converted, errors.Join(errorList...)

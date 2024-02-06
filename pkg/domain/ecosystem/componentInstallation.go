@@ -60,7 +60,14 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(namespace, componentName, deployNamespace string, version *semver.Version) *ComponentInstallation {
+func InstallComponent(namespace, componentName string, version *semver.Version) *ComponentInstallation {
+	// TODO Delete this if the blueprint can handle a component configuration.
+	// This section would contain the deployNamespace in a generic Map.
+	var deployNamespace string
+	if componentName == "k8s-longhorn" {
+		deployNamespace = "longhorn-system"
+	}
+
 	return &ComponentInstallation{
 		DistributionNamespace: namespace,
 		Name:                  componentName,

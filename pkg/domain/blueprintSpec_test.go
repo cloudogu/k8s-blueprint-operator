@@ -412,37 +412,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"component distribution namespace switch\" for following components is not allowed")
 	})
-
-	t.Run("should return error with not allowed component deploy namespace switch action", func(t *testing.T) {
-		// given
-		spec := BlueprintSpec{
-			EffectiveBlueprint: EffectiveBlueprint{
-				Components: []Component{
-					{
-						Name:                  testComponentName,
-						DistributionNamespace: testDistributionNamespace,
-						Version:               compVersion3211,
-						DeployNamespace:       "other-namespace",
-					},
-				},
-			},
-			Status: StatusPhaseValidated,
-		}
-		installedComponents := map[string]*ecosystem.ComponentInstallation{
-			testComponentName: {
-				DistributionNamespace: testDistributionNamespace,
-				Version:               compVersion3211,
-			},
-		}
-
-		// when
-		err := spec.DetermineStateDiff(nil, installedComponents)
-
-		// then
-		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"component deploy namespace switch\" for following components is not allowed")
-	})
 }
 
 func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
