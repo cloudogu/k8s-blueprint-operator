@@ -47,6 +47,12 @@ func TestConvertComponents(t *testing.T) {
 			wantErr: assert.Error,
 		},
 		{
+			name:    "invalid component name",
+			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0", TargetState: "present"}}},
+			want:    nil,
+			wantErr: assert.Error,
+		},
+		{
 			name:    "unknown target state",
 			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,

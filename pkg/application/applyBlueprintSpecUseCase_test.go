@@ -265,7 +265,25 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
 	})
 
-	t.Run("fail to apply state", func(t *testing.T) {
+	t.Run("fail to apply component state", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(2)
+
+		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
+		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, "blueprintId").Return(assert.AnError)
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil, componentInstallUseCase: componentInstallUseCaseMock}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.ErrorIs(t, err, assert.AnError)
+		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+	})
+
+	t.Run("fail to apply dogu state", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
 			Status: domain.StatusPhaseEcosystemHealthyUpfront,
 		}
