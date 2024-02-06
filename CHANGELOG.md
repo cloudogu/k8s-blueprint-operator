@@ -27,3 +27,4 @@ Dogu-specific:
 
 Component-specific:
 - [#19] Create component differences between effective blueprint and cluster state
+- [#14] Apply new component states based on blueprint.
