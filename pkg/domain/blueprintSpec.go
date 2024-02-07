@@ -42,7 +42,6 @@ const (
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
 	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
-
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
 	// were successful.
 	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
@@ -63,8 +62,10 @@ const (
 )
 
 type BlueprintConfiguration struct {
-	// Force blueprint upgrade even when a dogu is unhealthy
+	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
 	IgnoreDoguHealth bool
+	// IgnoreComponentHealth forces blueprint upgrades even if components are unhealthy
+	IgnoreComponentHealth bool
 	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
 	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.

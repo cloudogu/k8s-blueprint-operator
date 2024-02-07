@@ -10,7 +10,7 @@ import (
 )
 
 type BlueprintSpecValidationUseCase struct {
-	repo                        domainservice.BlueprintSpecRepository
+	repo                        blueprintSpecRepository
 	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase
 }
 

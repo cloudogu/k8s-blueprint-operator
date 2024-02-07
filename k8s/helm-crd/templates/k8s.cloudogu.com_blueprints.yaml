@@ -45,6 +45,9 @@ spec:
                 dryRun:
                   description: DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
                   type: boolean
+                ignoreComponentHealth:
+                  description: IgnoreComponentHealth lets the user execute the blueprint even if components are unhealthy at the moment.
+                  type: boolean
                 ignoreDoguHealth:
                   description: IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
                   type: boolean

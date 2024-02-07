@@ -30,12 +30,12 @@ type ComponentInstallation struct {
 	// MappedValues represents also a helm configuration like ValuesYamlOverwrite.
 	// The difference here is that these values will be mapped by the component-operator with a metadata file in the component's chart.
 	MappedValues map[string]string
+	// Health is the current health status of the component in the ecosystem
+	Health HealthStatus
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
-	// Health is the current health status of the component in the ecosystem
-	Health HealthStatus
 }
 
 const (
@@ -47,6 +47,7 @@ const (
 	ComponentStatusUpgrading = "upgrading"
 	// ComponentStatusDeleting represents a status for a component that is currently being deleted
 	ComponentStatusDeleting = "deleting"
+	ComponentStatusIgnored      = "ignored"
 	// ComponentStatusInstalled represents a status for a component that was successfully installed
 	ComponentStatusInstalled = "installed"
 	// ComponentStatusTryToInstall represents a status for a component that is not installed but its install process is in requeue loop.

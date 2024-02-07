@@ -16,12 +16,10 @@ const blueprintId = "blueprint1"
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 
-const healthCheckInterval = 10 * time.Second
-
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(testCtx, domain.DoguDiff{
@@ -53,7 +51,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Create(testCtx, ecosystem.InstallDogu("official", "postgresql", version3211)).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -86,7 +84,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Delete(testCtx, "postgresql").
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -118,7 +116,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Update(testCtx, dogu).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -147,7 +145,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version:   version3212,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -175,7 +173,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version:   version3212,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -206,7 +204,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, dogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -231,7 +229,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 	t.Run("unknown action", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -261,7 +259,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -278,7 +276,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -306,7 +304,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -340,7 +338,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			},
 		}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, healthCheckInterval)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
@@ -360,10 +358,13 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 		defer cancel()
 		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
 
+		waitConfigMock := newMockHealthWaitConfigProvider(t)
+		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: time.Millisecond}, nil)
+
 		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:   nil,
-			doguRepo:            doguRepoMock,
-			healthCheckInterval: 1 * time.Millisecond,
+			blueprintSpecRepo:  nil,
+			doguRepo:           doguRepoMock,
+			waitConfigProvider: waitConfigMock,
 		}
 
 		// when
@@ -372,6 +373,27 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.True(t, result.AllHealthy())
+	})
+
+	t.Run("fail to get health check interval", func(t *testing.T) {
+		t.Parallel()
+		// given
+		waitConfigMock := newMockHealthWaitConfigProvider(t)
+		waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{}, assert.AnError)
+
+		sut := DoguInstallationUseCase{
+			blueprintSpecRepo:  nil,
+			doguRepo:           nil,
+			waitConfigProvider: waitConfigMock,
+		}
+
+		// when
+		_, err := sut.WaitForHealthyDogus(testCtx)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "failed to get health check interval")
 	})
 
 	t.Run("timeout", func(t *testing.T) {
@@ -385,10 +407,13 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 			"postgresql": {Health: ecosystem.DoguStatusInstalling},
 		}, nil).Maybe()
 
+		waitConfigMock := newMockHealthWaitConfigProvider(t)
+		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: 5 * time.Millisecond}, nil)
+
 		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:   nil,
-			doguRepo:            doguRepoMock,
-			healthCheckInterval: 5 * time.Millisecond,
+			blueprintSpecRepo:  nil,
+			doguRepo:           doguRepoMock,
+			waitConfigProvider: waitConfigMock,
 		}
 
 		// when
@@ -408,10 +433,13 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 		defer cancel()
 		doguRepoMock.EXPECT().GetAll(timedCtx).Return(nil, assert.AnError).Maybe()
 
+		waitConfigMock := newMockHealthWaitConfigProvider(t)
+		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: time.Millisecond}, nil)
+
 		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:   nil,
-			doguRepo:            doguRepoMock,
-			healthCheckInterval: 1 * time.Millisecond,
+			blueprintSpecRepo:  nil,
+			doguRepo:           doguRepoMock,
+			waitConfigProvider: waitConfigMock,
 		}
 
 		// when

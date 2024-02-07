@@ -443,7 +443,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 			},
 			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
 			expectedEventNames: []string{"EcosystemUnhealthyUpfront"},
-			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
 		},
 		{
 			name:      "all dogus healthy",
@@ -494,7 +494,7 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 			},
 			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
 			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
-			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
 		},
 		{
 			name:      "ecosystem healthy",

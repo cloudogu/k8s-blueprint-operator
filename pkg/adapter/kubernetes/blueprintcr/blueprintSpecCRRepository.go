@@ -77,6 +77,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		StateDiff:          stateDiff,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
+			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 			DryRun:                   blueprintCR.Spec.DryRun,
 		},

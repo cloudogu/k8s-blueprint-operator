@@ -3,7 +3,6 @@ package componentcr
 import (
 	"context"
 	"fmt"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"

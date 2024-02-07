@@ -55,6 +55,14 @@ type ComponentInstallationRepository interface {
 	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
 }
 
+type RequiredComponentsProvider interface {
+	GetRequiredComponents(ctx context.Context) ([]ecosystem.RequiredComponent, error)
+}
+
+type HealthWaitConfigProvider interface {
+	GetWaitConfig(ctx context.Context) (ecosystem.WaitConfig, error)
+}
+
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or

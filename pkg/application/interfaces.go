@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
@@ -27,6 +28,8 @@ type doguInstallationUseCase interface {
 
 type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprintId string) error
+	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
+	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 }
 
 type applyBlueprintSpecUseCase interface {
@@ -38,14 +41,10 @@ type applyBlueprintSpecUseCase interface {
 }
 
 type ecosystemHealthUseCase interface {
-	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error)
+	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error)
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 
-// interface duplication for mocks
-
-//nolint:unused
-//goland:noinspection GoUnusedType
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
@@ -61,6 +60,21 @@ type componentInstallationRepository interface {
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
+
+type requiredComponentsProvider interface {
+	domainservice.RequiredComponentsProvider
+}
+
+type healthWaitConfigProvider interface {
+	domainservice.HealthWaitConfigProvider
+}
+
+type healthConfigProvider interface {
+	requiredComponentsProvider
+	healthWaitConfigProvider
+}
+
+// interface duplication for mocks
 
 //nolint:unused
 //goland:noinspection GoUnusedType

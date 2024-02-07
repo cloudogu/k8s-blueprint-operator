@@ -11,7 +11,7 @@ import (
 )
 
 type BlueprintSpecChangeUseCase struct {
-	repo               domainservice.BlueprintSpecRepository
+	repo               blueprintSpecRepository
 	validation         blueprintSpecValidationUseCase
 	effectiveBlueprint effectiveBlueprintUseCase
 	stateDiff          stateDiffUseCase

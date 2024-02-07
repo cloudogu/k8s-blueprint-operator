@@ -14,7 +14,7 @@ type DoguHealthResult struct {
 	DogusByStatus map[HealthStatus][]DoguName
 }
 
-func (result DoguHealthResult) GetUnhealthyDogus() []DoguName {
+func (result DoguHealthResult) getUnhealthyDogus() []DoguName {
 	var unhealthyDogus []DoguName
 	for healthState, doguNames := range result.DogusByStatus {
 		if healthState != AvailableHealthStatus {
@@ -25,9 +25,9 @@ func (result DoguHealthResult) GetUnhealthyDogus() []DoguName {
 }
 
 func (result DoguHealthResult) String() string {
-	unhealthyDogus := util.Map(result.GetUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
+	unhealthyDogus := util.Map(result.getUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
 	slices.Sort(unhealthyDogus)
-	return fmt.Sprintf("%d dogus are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
+	return fmt.Sprintf("%d dogu(s) are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
 }
 
 // CalculateDoguHealthResult collects the health states from DoguInstallation and creates a DoguHealthResult.
