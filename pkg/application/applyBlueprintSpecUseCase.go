@@ -12,11 +12,11 @@ import (
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
-	repo                    domainservice.BlueprintSpecRepository
+	repo                    blueprintSpecRepository
 	doguInstallUseCase      doguInstallationUseCase
 	healthUseCase           ecosystemHealthUseCase
 	componentInstallUseCase componentInstallationUseCase
-	maintenanceModeAdapter maintenanceMode
+	maintenanceModeAdapter  maintenanceMode
 }
 
 func NewApplyBlueprintSpecUseCase(
@@ -31,7 +31,7 @@ func NewApplyBlueprintSpecUseCase(
 		doguInstallUseCase:      doguInstallUseCase,
 		healthUseCase:           healthUseCase,
 		componentInstallUseCase: componentInstallUseCase,
-		maintenanceModeAdapter: maintenanceModeAdapter,
+		maintenanceModeAdapter:  maintenanceModeAdapter,
 	}
 }
 
@@ -168,14 +168,9 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	}
 
 	logger.Info("start applying blueprint to the cluster")
-	shouldApply, err := useCase.startApplying(ctx, blueprintSpec)
+	err = useCase.startApplying(ctx, blueprintSpec)
 	if err != nil {
 		return err
-	}
-
-	if !shouldApply {
-		logger.Info("skip applying states to the cluster")
-		return nil
 	}
 
 	applyError := useCase.componentInstallUseCase.ApplyComponentStates(ctx, blueprintId)
@@ -200,13 +195,13 @@ func (useCase *ApplyBlueprintSpecUseCase) handleApplyFailedError(ctx context.Con
 	return applyError
 }
 
-func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) (bool, error) {
-	shouldApply := blueprintSpec.StartApplying()
+func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+	blueprintSpec.StartApplying()
 	err := useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return false, fmt.Errorf("cannot mark blueprint as in progress: %w", err)
+		return fmt.Errorf("cannot mark blueprint as in progress: %w", err)
 	}
-	return shouldApply, nil
+	return nil
 }
 
 // markBlueprintApplicationFailed marks the blueprint application as failed.

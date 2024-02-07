@@ -15,13 +15,15 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 	installUseCaseMock := newMockDoguInstallationUseCase(t)
 	componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
 	healthMock := newMockEcosystemHealthUseCase(t)
+	maintenanceMock := newMockMaintenanceMode(t)
 
-	sut := NewApplyBlueprintSpecUseCase(repoMock, installUseCaseMock, healthMock, componentInstallUseCaseMock)
+	sut := NewApplyBlueprintSpecUseCase(repoMock, installUseCaseMock, healthMock, componentInstallUseCaseMock, maintenanceMock)
 
 	assert.Equal(t, installUseCaseMock, sut.doguInstallUseCase)
 	assert.Equal(t, componentInstallUseCaseMock, sut.componentInstallUseCase)
 	assert.Equal(t, repoMock, sut.repo)
 	assert.Equal(t, healthMock, sut.healthUseCase)
+	assert.Equal(t, maintenanceMock, sut.maintenanceModeAdapter)
 }
 
 func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) {
@@ -35,7 +37,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
 		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -45,7 +47,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 	t.Run("repo error while loading", func(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, nil)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -61,7 +63,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
 		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -76,7 +78,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -92,76 +94,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
-
-		require.NoError(t, err)
-		require.Equal(t, 1, len(spec.Events))
-		assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-	})
-}
-
-func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		installUseCaseMock := newMockDoguInstallationUseCase(t)
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
-
-		shouldApply, err := useCase.startApplying(testCtx, spec)
-
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
-		assert.True(t, shouldApply)
-	})
-
-	t.Run("repo error while saving", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		maintenanceMock := newMockMaintenanceMode(t)
-		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
-		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
-
-		require.ErrorIs(t, err, assert.AnError)
-	})
-	t.Run("error activating maintenance mode", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		maintenanceMock := newMockMaintenanceMode(t)
-		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
-
-		require.ErrorIs(t, err, assert.AnError)
-	})
-	t.Run("do nothing on dry run", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		maintenanceMock := newMockMaintenanceMode(t)
-		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -188,20 +121,54 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
 	})
 
-	t.Run("repo error", func(t *testing.T) {
+	t.Run("repo error while saving", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
 			Status: domain.StatusPhaseEcosystemHealthyUpfront,
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		installUseCaseMock := newMockDoguInstallationUseCase(t)
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
+		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
-		err := useCase.startApplying(testCtx, spec)
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
+	})
+	t.Run("error activating maintenance mode", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.ErrorIs(t, err, assert.AnError)
+	})
+	t.Run("do nothing on dry run", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+			Config: domain.BlueprintConfiguration{DryRun: true},
+		}
+
+		repoMock := newMockBlueprintSpecRepository(t)
+		maintenanceMock := newMockMaintenanceMode(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
+
+		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
+
+		require.NoError(t, err)
+		require.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
 	})
 }
 
@@ -304,48 +271,6 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
 	})
 
-	t.Run("should do nothing and return nil on dry run", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Config: domain.BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(1).Run(func(args mock.Arguments) {
-			spec := args.Get(1).(*domain.BlueprintSpec)
-			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-		})
-
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
-
-		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
-
-		require.NoError(t, err)
-	})
-
-	t.Run("should return error on error updating blueprint spec with dry run event", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Config: domain.BlueprintConfiguration{
-				DryRun: true,
-			},
-		}
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil).Times(1)
-		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError).Times(1).Run(func(args mock.Arguments) {
-			spec := args.Get(1).(*domain.BlueprintSpec)
-			assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-		})
-
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
-
-		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
-
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot mark blueprint as in progress")
-	})
-
 	t.Run("cannot load spec", func(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(nil, assert.AnError)
@@ -391,7 +316,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 
 	t.Run("fail to apply dogu state", func(t *testing.T) {
@@ -449,7 +374,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
@@ -467,7 +392,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().CheckEcosystemHealth(testCtx, false).Return(ecosystem.HealthResult{}, assert.AnError)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
@@ -487,7 +412,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
@@ -509,7 +434,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, true).Return(ecosystem.HealthResult{}, nil)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
@@ -527,7 +452,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().CheckEcosystemHealth(mock.Anything, false).Return(ecosystem.HealthResult{}, nil)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthUpfront(testCtx, blueprintId)
@@ -543,7 +468,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
@@ -562,7 +487,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().WaitForHealthyEcosystem(testCtx).Return(ecosystem.HealthResult{}, assert.AnError)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
@@ -583,7 +508,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().WaitForHealthyEcosystem(testCtx).Return(ecosystem.HealthResult{}, nil)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
@@ -604,7 +529,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 		healthMock := newMockEcosystemHealthUseCase(t)
 		healthMock.EXPECT().WaitForHealthyEcosystem(testCtx).Return(ecosystem.HealthResult{}, nil)
 
-		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil)
+		sut := NewApplyBlueprintSpecUseCase(repoMock, nil, healthMock, nil, nil)
 
 		// when
 		err := sut.CheckEcosystemHealthAfterwards(testCtx, blueprintId)
@@ -626,7 +551,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		maintenanceMock.EXPECT().Deactivate().Return(nil)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -641,7 +566,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		maintenanceMock := newMockMaintenanceMode(t)
 		maintenanceMock.EXPECT().Deactivate().Return(nil)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -658,7 +583,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		maintenanceMock.EXPECT().Deactivate().Return(nil)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -669,7 +594,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		repoMock := newMockBlueprintSpecRepository(t)
 		maintenanceMock := newMockMaintenanceMode(t)
 		maintenanceMock.EXPECT().Deactivate().Return(assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)
 
