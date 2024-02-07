@@ -22,44 +22,6 @@ func (_m *mockComponentInstallationUseCase) EXPECT() *mockComponentInstallationU
 	return &mockComponentInstallationUseCase_Expecter{mock: &_m.Mock}
 }
 
-// CheckComponentHealth provides a mock function with given fields: ctx
-func (_m *mockComponentInstallationUseCase) CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-	ret := _m.Called(ctx)
-
-	var r0 ecosystem.ComponentHealthResult
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (ecosystem.ComponentHealthResult, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) ecosystem.ComponentHealthResult); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(ecosystem.ComponentHealthResult)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockComponentInstallationUseCase_CheckComponentHealth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckComponentHealth'
-type mockComponentInstallationUseCase_CheckComponentHealth_Call struct {
-	*mock.Call
-}
-
-// CheckComponentHealth is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *mockComponentInstallationUseCase_Expecter) CheckComponentHealth(ctx interface{}) *mockComponentInstallationUseCase_CheckComponentHealth_Call {
-	return &mockComponentInstallationUseCase_CheckComponentHealth_Call{Call: _e.mock.On("CheckComponentHealth", ctx)}
-}
-
-func (_c *mockComponentInstallationUseCase_CheckComponentHealth_Call) Run(run func(ctx context.Context)) *mockComponentInstallationUseCase_CheckComponentHealth_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
 // ApplyComponentStates provides a mock function with given fields: ctx, blueprintId
 func (_m *mockComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprintId string) error {
 	ret := _m.Called(ctx, blueprintId)
@@ -99,6 +61,52 @@ func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) Return(_a0
 }
 
 func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) RunAndReturn(run func(context.Context, string) error) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CheckComponentHealth provides a mock function with given fields: ctx
+func (_m *mockComponentInstallationUseCase) CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
+	ret := _m.Called(ctx)
+
+	var r0 ecosystem.ComponentHealthResult
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (ecosystem.ComponentHealthResult, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) ecosystem.ComponentHealthResult); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(ecosystem.ComponentHealthResult)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockComponentInstallationUseCase_CheckComponentHealth_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckComponentHealth'
+type mockComponentInstallationUseCase_CheckComponentHealth_Call struct {
+	*mock.Call
+}
+
+// CheckComponentHealth is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *mockComponentInstallationUseCase_Expecter) CheckComponentHealth(ctx interface{}) *mockComponentInstallationUseCase_CheckComponentHealth_Call {
+	return &mockComponentInstallationUseCase_CheckComponentHealth_Call{Call: _e.mock.On("CheckComponentHealth", ctx)}
+}
+
+func (_c *mockComponentInstallationUseCase_CheckComponentHealth_Call) Run(run func(ctx context.Context)) *mockComponentInstallationUseCase_CheckComponentHealth_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
 func (_c *mockComponentInstallationUseCase_CheckComponentHealth_Call) Return(_a0 ecosystem.ComponentHealthResult, _a1 error) *mockComponentInstallationUseCase_CheckComponentHealth_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c

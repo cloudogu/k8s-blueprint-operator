@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"fmt"
-	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -14,7 +13,7 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
-	blueprintcr "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
 	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
@@ -94,8 +93,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
-	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, healthConfigRepo)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,

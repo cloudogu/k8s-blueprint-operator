@@ -29,7 +29,7 @@ func TestNewComponentInstallationUseCase(t *testing.T) {
 		healthConfigRepo := newMockHealthConfigProvider(t)
 
 		// when
-		useCase := NewComponentInstallationUseCase(blueprintSpecRepoMock, componentRepoMock, time.Second)
+		useCase := NewComponentInstallationUseCase(blueprintSpecRepoMock, componentRepoMock, healthConfigRepo)
 
 		// then
 		assert.Equal(t, blueprintSpecRepoMock, useCase.blueprintSpecRepo)

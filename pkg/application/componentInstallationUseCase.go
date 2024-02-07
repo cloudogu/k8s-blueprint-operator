@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -19,8 +20,8 @@ const (
 )
 
 type ComponentInstallationUseCase struct {
-	blueprintSpecRepo   domainservice.BlueprintSpecRepository
-	componentRepo       domainservice.ComponentInstallationRepository
+	blueprintSpecRepo    domainservice.BlueprintSpecRepository
+	componentRepo        domainservice.ComponentInstallationRepository
 	healthConfigProvider healthConfigProvider
 }
 
@@ -30,12 +31,11 @@ func NewComponentInstallationUseCase(
 	healthConfigProvider healthConfigProvider,
 ) *ComponentInstallationUseCase {
 	return &ComponentInstallationUseCase{
-		blueprintSpecRepo:   blueprintSpecRepo,
-		componentRepo:       componentRepo,
+		blueprintSpecRepo:    blueprintSpecRepo,
+		componentRepo:        componentRepo,
 		healthConfigProvider: healthConfigProvider,
 	}
 }
-
 
 func (useCase *ComponentInstallationUseCase) CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.CheckComponentHealth")
@@ -92,6 +92,38 @@ func (useCase *ComponentInstallationUseCase) checkComponentHealthStatesRetryable
 	result = &health
 	shouldRetry = !health.AllHealthy()
 	return
+}
+
+// ApplyComponentStates applies the expected component state from the Blueprint to the ecosystem.
+// Fail-fast here, so that the possible damage is as small as possible.
+func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates").
+		WithValues("blueprintId", blueprintId)
+	log.IntoContext(ctx, logger)
+
+	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
+	if err != nil {
+		return fmt.Errorf("cannot load blueprint spec %q to install components: %w", blueprintId, err)
+	}
+
+	if len(blueprintSpec.StateDiff.ComponentDiffs) == 0 {
+		logger.Info("apply no components because blueprint has no component state differences")
+		return nil
+	}
+
+	// ComponentDiff contains all installed components anyway (but some with action none) so we can load them all at once
+	components, err := useCase.componentRepo.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot load component installations to apply component state: %w", err)
+	}
+
+	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
+		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
+		if err != nil {
+			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
+		}
+	}
+	return nil
 }
 
 func (useCase *ComponentInstallationUseCase) applyComponentState(
