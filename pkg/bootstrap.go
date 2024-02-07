@@ -45,7 +45,6 @@ type ApplicationContext struct {
 	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
 	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
 	StateDiffUseCase               *application.StateDiffUseCase
-	MaintenanceModeUseCase         *domainservice.MaintenanceUseCase
 	BlueprintSerializer            serializer.BlueprintSerializer
 	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
 	Reconciler                     *reconciler.BlueprintReconciler
@@ -81,7 +80,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}
 
 	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
-	maintenanceUseCase := domainservice.NewMaintenanceUseCase(maintenanceMode)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {
@@ -98,7 +96,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, defaultHealthCheckInterval)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, defaultHealthCheckInterval)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, defaultHealthCheckTimeout)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
@@ -117,7 +115,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
 		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
 		StateDiffUseCase:               stateDiffUseCase,
-		MaintenanceModeUseCase:         maintenanceUseCase,
 		DoguInstallationUseCase:        doguInstallationUseCase,
 		BlueprintSerializer:            blueprintSerializer,
 		BlueprintMaskSerializer:        blueprintMaskSerializer,
