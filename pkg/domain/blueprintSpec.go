@@ -269,7 +269,8 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyUpfront
-		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth})
+		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth,
+			componentHealthIgnored: spec.Config.IgnoreComponentHealth})
 	} else {
 		spec.Status = StatusPhaseEcosystemUnhealthyUpfront
 		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})

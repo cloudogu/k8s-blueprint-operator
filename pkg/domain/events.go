@@ -142,7 +142,8 @@ func (s StateDiffDoguDeterminedEvent) Message() string {
 }
 
 type EcosystemHealthyUpfrontEvent struct {
-	doguHealthIgnored bool
+	doguHealthIgnored      bool
+	componentHealthIgnored bool
 }
 
 func (d EcosystemHealthyUpfrontEvent) Name() string {
@@ -150,7 +151,7 @@ func (d EcosystemHealthyUpfrontEvent) Name() string {
 }
 
 func (d EcosystemHealthyUpfrontEvent) Message() string {
-	return fmt.Sprintf("dogu health ignored: %t", d.doguHealthIgnored)
+	return fmt.Sprintf("dogu health ignored: %t; component health ignored: %t", d.doguHealthIgnored, d.componentHealthIgnored)
 }
 
 type EcosystemUnhealthyUpfrontEvent struct {
