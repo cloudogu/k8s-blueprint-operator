@@ -28,4 +28,5 @@ spec:
   blueprintMask: |
     {"blueprintMaskApi":"v1"}
   ignoreDoguHealth: false
+  ignoreComponentHealth: false
   allowDoguNamespaceSwitch: false
