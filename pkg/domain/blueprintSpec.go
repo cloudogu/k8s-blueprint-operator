@@ -267,38 +267,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 
-	err = spec.checkComponentActions()
-	if err != nil {
-		return err
-	}
-
-	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
-		return doguDiff.NeededAction
-	})
-	dogusToNamespaceSwitch := dogusByAction[ActionSwitchDoguNamespace]
-	dogusToDowngrade := dogusByAction[ActionDowngrade]
-
-	var invalidBlueprintErrors []error
-
-	//TODO: extract this in an extra function
-	if !spec.Config.AllowDoguNamespaceSwitch && len(dogusToNamespaceSwitch) != 0 {
-		spec.Status = StatusPhaseInvalid
-		err := &InvalidBlueprintError{
-			Message: fmt.Sprintf("namespace switch for following dogus is not allowed without setting the feature flag: %v", dogusToNamespaceSwitch),
-		}
-		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
-	}
-
-	//TODO: extract this in an extra function
-	if len(dogusToDowngrade) != 0 {
-		err := &InvalidBlueprintError{
-			Message: fmt.Sprintf("dogu downgrades are not allowed: %v", dogusToNamespaceSwitch),
-		}
-		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
-	}
-
-	invalidBlueprintError := errors.Join(invalidBlueprintErrors...)
-
+	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
 		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
@@ -306,38 +275,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 	}
 
 	spec.Status = StatusPhaseStateDiffDetermined
-
-	return nil
-}
-
-var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
-
-func (spec *BlueprintSpec) checkComponentActions() error {
-	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
-		return componentDiff.NeededAction
-	})
-
-	var invalidBlueprintErrors []error
-
-	for _, action := range notAllowedComponentActions {
-		componentsWithAction := componentsByAction[action]
-
-		if len(componentsWithAction) != 0 {
-			spec.Status = StatusPhaseInvalid
-			err := &InvalidBlueprintError{
-				Message: fmt.Sprintf("action %q for following components is not allowed: %v", action, componentsWithAction),
-			}
-			invalidBlueprintErrors = append(invalidBlueprintErrors, err)
-		}
-	}
-
-	invalidBlueprintError := errors.Join(invalidBlueprintErrors...)
-
-	if invalidBlueprintError != nil {
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
-		return invalidBlueprintError
-	}
 
 	return nil
 }
@@ -420,6 +357,47 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
 	}
+}
+
+var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
+
+// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
+var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
+
+func (spec *BlueprintSpec) validateStateDiff() error {
+	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
+		return doguDiff.NeededAction
+	})
+	var invalidBlueprintErrors []error
+
+	for _, action := range notAllowedDoguActions {
+		if action == ActionSwitchDoguNamespace && spec.Config.AllowDoguNamespaceSwitch {
+			continue
+		}
+		invalidBlueprintErrors = evaluateInvalidAction(action, dogusByAction, invalidBlueprintErrors)
+	}
+
+	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
+		return componentDiff.NeededAction
+	})
+
+	for _, action := range notAllowedComponentActions {
+		invalidBlueprintErrors = evaluateInvalidAction(action, componentsByAction, invalidBlueprintErrors)
+	}
+
+	return errors.Join(invalidBlueprintErrors...)
+}
+
+func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {
+	invalidElement := mapByAction[action]
+	if len(invalidElement) != 0 {
+		err := &InvalidBlueprintError{
+			Message: fmt.Sprintf("action %q is not allowed: %v", action, invalidElement),
+		}
+		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+	}
+
+	return invalidBlueprintErrors
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
