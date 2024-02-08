@@ -41,7 +41,7 @@ const (
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
-	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "dogusUnhealthy"
+	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "ecosystemUnhealthyUpfront"
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
 	// were successful.
 	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
@@ -315,7 +315,8 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyUpfront
-		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth})
+		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth,
+			componentHealthIgnored: spec.Config.IgnoreComponentHealth})
 	} else {
 		spec.Status = StatusPhaseEcosystemUnhealthyUpfront
 		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
