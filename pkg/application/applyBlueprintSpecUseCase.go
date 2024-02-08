@@ -178,6 +178,11 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
 	}
 
+	_, err = useCase.componentInstallUseCase.WaitForHealthyComponents(ctx)
+	if err != nil {
+		return useCase.handleApplyFailedError(ctx, blueprintSpec, err)
+	}
+
 	applyError = useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprintId)
 	if applyError != nil {
 		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
