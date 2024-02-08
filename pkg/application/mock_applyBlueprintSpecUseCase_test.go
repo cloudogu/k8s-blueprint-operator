@@ -5,7 +5,6 @@ package application
 import (
 	context "context"
 
-	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -151,13 +150,13 @@ func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) RunAnd
 	return _c
 }
 
-// MarkFailed provides a mock function with given fields: ctx, blueprintSpec, err
-func (_m *mockApplyBlueprintSpecUseCase) MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
-	ret := _m.Called(ctx, blueprintSpec, err)
+// PostProcessBlueprintApplication provides a mock function with given fields: ctx, blueprintId
+func (_m *mockApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
+	ret := _m.Called(ctx, blueprintId)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec, error) error); ok {
-		r0 = rf(ctx, blueprintSpec, err)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, blueprintId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -165,32 +164,74 @@ func (_m *mockApplyBlueprintSpecUseCase) MarkFailed(ctx context.Context, bluepri
 	return r0
 }
 
-// mockApplyBlueprintSpecUseCase_MarkFailed_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MarkFailed'
-type mockApplyBlueprintSpecUseCase_MarkFailed_Call struct {
+// mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PostProcessBlueprintApplication'
+type mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call struct {
 	*mock.Call
 }
 
-// MarkFailed is a helper method to define mock.On call
+// PostProcessBlueprintApplication is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintSpec *domain.BlueprintSpec
-//   - err error
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) MarkFailed(ctx interface{}, blueprintSpec interface{}, err interface{}) *mockApplyBlueprintSpecUseCase_MarkFailed_Call {
-	return &mockApplyBlueprintSpecUseCase_MarkFailed_Call{Call: _e.mock.On("MarkFailed", ctx, blueprintSpec, err)}
+//   - blueprintId string
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) PostProcessBlueprintApplication(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
+	return &mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call{Call: _e.mock.On("PostProcessBlueprintApplication", ctx, blueprintId)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_MarkFailed_Call) Run(run func(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error)) *mockApplyBlueprintSpecUseCase_MarkFailed_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec), args[2].(error))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_MarkFailed_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_MarkFailed_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_MarkFailed_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec, error) error) *mockApplyBlueprintSpecUseCase_MarkFailed_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// PreProcessBlueprintApplication provides a mock function with given fields: ctx, blueprintId
+func (_m *mockApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
+	ret := _m.Called(ctx, blueprintId)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, blueprintId)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreProcessBlueprintApplication'
+type mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call struct {
+	*mock.Call
+}
+
+// PreProcessBlueprintApplication is a helper method to define mock.On call
+//   - ctx context.Context
+//   - blueprintId string
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) PreProcessBlueprintApplication(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+	return &mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call{Call: _e.mock.On("PreProcessBlueprintApplication", ctx, blueprintId)}
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
 	_c.Call.Return(run)
 	return _c
 }

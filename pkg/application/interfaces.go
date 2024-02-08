@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
@@ -35,8 +34,9 @@ type componentInstallationUseCase interface {
 type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
 	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
+	PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error
+	PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error
 	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
-	MarkFailed(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error
 }
 
 type ecosystemHealthUseCase interface {
@@ -75,4 +75,8 @@ type blueprintSpecRepository interface {
 //goland:noinspection GoUnusedType
 type remoteDoguRegistry interface {
 	domainservice.RemoteDoguRegistry
+}
+
+type maintenanceMode interface {
+	domainservice.MaintenanceMode
 }

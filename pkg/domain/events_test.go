@@ -18,7 +18,7 @@ func TestEvents(t *testing.T) {
 			name:            "blueprint dry run",
 			event:           BlueprintDryRunEvent{},
 			expectedName:    "BlueprintDryRun",
-			expectedMessage: "Executed blueprint in dry run mode",
+			expectedMessage: "Executed blueprint in dry run mode. Remove flag to continue",
 		},
 		{
 			name:            "blueprint spec invalid",
@@ -111,6 +111,12 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{
+			name:            "blueprint application pre-processed",
+			event:           BlueprintApplicationPreProcessedEvent{},
+			expectedName:    "BlueprintApplicationPreProcessed",
+			expectedMessage: "maintenance mode activated",
+		},
+		{
 			name:            "In progress",
 			event:           InProgressEvent{},
 			expectedName:    "InProgress",
@@ -126,7 +132,7 @@ func TestEvents(t *testing.T) {
 			name:            "completed",
 			event:           CompletedEvent{},
 			expectedName:    "completed",
-			expectedMessage: "",
+			expectedMessage: "maintenance mode deactivated",
 		},
 		{
 			name:            "execution failed",
