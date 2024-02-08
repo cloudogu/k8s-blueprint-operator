@@ -16,6 +16,8 @@ type BlueprintSpec struct {
 	BlueprintMask string `json:"blueprintMask,omitempty"`
 	// IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
 	IgnoreDoguHealth bool `json:"ignoreDoguHealth,omitempty"`
+	// IgnoreComponentHealth lets the user execute the blueprint even if components are unhealthy at the moment.
+	IgnoreComponentHealth bool `json:"ignoreComponentHealth,omitempty"`
 	// AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
 	// in comparison to the blueprint.
 	AllowDoguNamespaceSwitch bool `json:"allowDoguNamespaceSwitch,omitempty"`

@@ -16,6 +16,8 @@ General:
 - [#4] Calculate effective blueprint
 - [#7] Create diff between effective blueprint and cluster state
 - [#12] implement maintenance mode
+- [#15] Check if required components are installed
+- [#15] Check component health
 - [#17] add health checks before and after applying the blueprint
 - [#22] Add `dryRun` option. If `dryRun` is active the blueprint procedure stops before applying resources to the cluster and remains in the actual state. One can set the option to false and continue at this state.
 

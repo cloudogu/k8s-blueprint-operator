@@ -3,12 +3,14 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var version3211, _ = core.ParseVersion("3.2.1-1")
@@ -387,12 +389,28 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 		expectedEventMsgs  []string
 	}{
 		{
-			name:               "should return early if ignore dogu health is configured",
+			name:               "should return early if health result is empty",
+			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{}},
+			healthResult:       ecosystem.HealthResult{},
+			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
+		},
+		{
+			name:               "should post ignored dogu health in event",
 			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreDoguHealth: true}},
 			healthResult:       ecosystem.HealthResult{},
 			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
 			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: true"},
+			expectedEventMsgs:  []string{"dogu health ignored: true; component health ignored: false"},
+		},
+		{
+			name:               "should post ignored component health in event",
+			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreComponentHealth: true}},
+			healthResult:       ecosystem.HealthResult{},
+			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
+			expectedEventNames: []string{"EcosystemHealthyUpfront"},
+			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: true"},
 		},
 		{
 			name:      "should write unhealthy dogus in event",
@@ -408,7 +426,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 			},
 			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
 			expectedEventNames: []string{"EcosystemUnhealthyUpfront"},
-			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
 		},
 		{
 			name:      "all dogus healthy",
@@ -422,7 +440,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 			},
 			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
 			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false"},
+			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
 		},
 	}
 	for _, tt := range tests {
@@ -459,7 +477,7 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 			},
 			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
 			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
-			expectedEventMsgs:  []string{"ecosystem is unhealthy: 2 dogus are unhealthy: ldap, postgresql"},
+			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
 		},
 		{
 			name:      "ecosystem healthy",

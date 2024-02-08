@@ -9,24 +9,23 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"golang.org/x/exp/maps"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo   domainservice.BlueprintSpecRepository
-	doguRepo            domainservice.DoguInstallationRepository
-	healthCheckInterval time.Duration
+	blueprintSpecRepo  blueprintSpecRepository
+	doguRepo           doguInstallationRepository
+	waitConfigProvider healthWaitConfigProvider
 }
 
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
-	healthCheckInterval time.Duration,
+	waitConfigProvider domainservice.HealthWaitConfigProvider,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
-		blueprintSpecRepo:   blueprintSpecRepo,
-		doguRepo:            doguRepo,
-		healthCheckInterval: healthCheckInterval,
+		blueprintSpecRepo:  blueprintSpecRepo,
+		doguRepo:           doguRepo,
+		waitConfigProvider: waitConfigProvider,
 	}
 }
 
@@ -43,10 +42,16 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 
 func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.WaitForHealthyDogus")
+
+	waitConfig, err := useCase.waitConfigProvider.GetWaitConfig(ctx)
+	if err != nil {
+		return ecosystem.DoguHealthResult{}, fmt.Errorf("failed to get health check interval: %w", err)
+	}
+
 	logger.Info("start waiting for dogu health")
 	healthResult, err := util.RetryUntilSuccessOrCancellation(
 		ctx,
-		useCase.healthCheckInterval,
+		waitConfig.Interval,
 		useCase.checkDoguHealthStatesRetryable,
 	)
 	var result ecosystem.DoguHealthResult

@@ -35,14 +35,6 @@ const (
 	DoguStatusPVCResizing  = "resizing PVC"
 )
 
-type HealthStatus = string
-
-const (
-	PendingHealthStatus     HealthStatus = ""
-	AvailableHealthStatus   HealthStatus = "available"
-	UnavailableHealthStatus HealthStatus = "unavailable"
-)
-
 // UpgradeConfig contains configuration hints regarding aspects during the upgrade of dogus.
 type UpgradeConfig struct {
 	// AllowNamespaceSwitch lets a dogu switch its dogu namespace during an upgrade. The dogu must be technically the

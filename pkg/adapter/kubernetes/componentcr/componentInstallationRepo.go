@@ -3,6 +3,7 @@ package componentcr
 import (
 	"context"
 	"fmt"
+
 	"github.com/Masterminds/semver/v3"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"

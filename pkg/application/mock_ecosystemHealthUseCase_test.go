@@ -22,23 +22,23 @@ func (_m *mockEcosystemHealthUseCase) EXPECT() *mockEcosystemHealthUseCase_Expec
 	return &mockEcosystemHealthUseCase_Expecter{mock: &_m.Mock}
 }
 
-// CheckEcosystemHealth provides a mock function with given fields: ctx, ignoreDoguHealth
-func (_m *mockEcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool) (ecosystem.HealthResult, error) {
-	ret := _m.Called(ctx, ignoreDoguHealth)
+// CheckEcosystemHealth provides a mock function with given fields: ctx, ignoreDoguHealth, ignoreComponentHealth
+func (_m *mockEcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error) {
+	ret := _m.Called(ctx, ignoreDoguHealth, ignoreComponentHealth)
 
 	var r0 ecosystem.HealthResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, bool) (ecosystem.HealthResult, error)); ok {
-		return rf(ctx, ignoreDoguHealth)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) (ecosystem.HealthResult, error)); ok {
+		return rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, bool) ecosystem.HealthResult); ok {
-		r0 = rf(ctx, ignoreDoguHealth)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) ecosystem.HealthResult); ok {
+		r0 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
 	} else {
 		r0 = ret.Get(0).(ecosystem.HealthResult)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, bool) error); ok {
-		r1 = rf(ctx, ignoreDoguHealth)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, bool) error); ok {
+		r1 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -54,13 +54,14 @@ type mockEcosystemHealthUseCase_CheckEcosystemHealth_Call struct {
 // CheckEcosystemHealth is a helper method to define mock.On call
 //   - ctx context.Context
 //   - ignoreDoguHealth bool
-func (_e *mockEcosystemHealthUseCase_Expecter) CheckEcosystemHealth(ctx interface{}, ignoreDoguHealth interface{}) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
-	return &mockEcosystemHealthUseCase_CheckEcosystemHealth_Call{Call: _e.mock.On("CheckEcosystemHealth", ctx, ignoreDoguHealth)}
+//   - ignoreComponentHealth bool
+func (_e *mockEcosystemHealthUseCase_Expecter) CheckEcosystemHealth(ctx interface{}, ignoreDoguHealth interface{}, ignoreComponentHealth interface{}) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+	return &mockEcosystemHealthUseCase_CheckEcosystemHealth_Call{Call: _e.mock.On("CheckEcosystemHealth", ctx, ignoreDoguHealth, ignoreComponentHealth)}
 }
 
-func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Run(run func(ctx context.Context, ignoreDoguHealth bool)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Run(run func(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool))
+		run(args[0].(context.Context), args[1].(bool), args[2].(bool))
 	})
 	return _c
 }
@@ -70,7 +71,7 @@ func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Return(_a0 ecosy
 	return _c
 }
 
-func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) RunAndReturn(run func(context.Context, bool) (ecosystem.HealthResult, error)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) RunAndReturn(run func(context.Context, bool, bool) (ecosystem.HealthResult, error)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
 	_c.Call.Return(run)
 	return _c
 }
