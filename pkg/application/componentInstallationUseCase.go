@@ -15,7 +15,7 @@ const (
 		"doing rollbacks to older models is not supported. " +
 		"You can downgrade %s by restoring a backup. " +
 		"If you want an 'allow-downgrades' flag, issue a feature request"
-	noDistributionNamespaceSwitchExplanationText = "switching distribution namespace is not allowed. If you want an " +
+	noDistributionNamespaceSwitchExplanationText = "switching distribution namespace of components is not allowed. If you want an " +
 		"`allow-switch-distribution-namespace` flag, issue a feature request"
 )
 
