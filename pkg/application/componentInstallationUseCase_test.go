@@ -71,8 +71,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -90,8 +88,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -113,8 +109,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -143,8 +137,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -182,8 +174,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -221,8 +211,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -251,8 +239,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -287,8 +273,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -315,8 +299,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
@@ -344,8 +326,6 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
 			componentRepo:     componentRepoMock,
-			// TODO
-			// healthCheckInterval:
 		}
 
 		// when
