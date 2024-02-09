@@ -22,6 +22,92 @@ func (_m *MockComponentInstallationRepository) EXPECT() *MockComponentInstallati
 	return &MockComponentInstallationRepository_Expecter{mock: &_m.Mock}
 }
 
+// Create provides a mock function with given fields: ctx, component
+func (_m *MockComponentInstallationRepository) Create(ctx context.Context, component *ecosystem.ComponentInstallation) error {
+	ret := _m.Called(ctx, component)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *ecosystem.ComponentInstallation) error); ok {
+		r0 = rf(ctx, component)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockComponentInstallationRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockComponentInstallationRepository_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - component *ecosystem.ComponentInstallation
+func (_e *MockComponentInstallationRepository_Expecter) Create(ctx interface{}, component interface{}) *MockComponentInstallationRepository_Create_Call {
+	return &MockComponentInstallationRepository_Create_Call{Call: _e.mock.On("Create", ctx, component)}
+}
+
+func (_c *MockComponentInstallationRepository_Create_Call) Run(run func(ctx context.Context, component *ecosystem.ComponentInstallation)) *MockComponentInstallationRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*ecosystem.ComponentInstallation))
+	})
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Create_Call) Return(_a0 error) *MockComponentInstallationRepository_Create_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Create_Call) RunAndReturn(run func(context.Context, *ecosystem.ComponentInstallation) error) *MockComponentInstallationRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Delete provides a mock function with given fields: ctx, componentName
+func (_m *MockComponentInstallationRepository) Delete(ctx context.Context, componentName string) error {
+	ret := _m.Called(ctx, componentName)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, componentName)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockComponentInstallationRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockComponentInstallationRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - componentName string
+func (_e *MockComponentInstallationRepository_Expecter) Delete(ctx interface{}, componentName interface{}) *MockComponentInstallationRepository_Delete_Call {
+	return &MockComponentInstallationRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, componentName)}
+}
+
+func (_c *MockComponentInstallationRepository_Delete_Call) Run(run func(ctx context.Context, componentName string)) *MockComponentInstallationRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Delete_Call) Return(_a0 error) *MockComponentInstallationRepository_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, string) error) *MockComponentInstallationRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAll provides a mock function with given fields: ctx
 func (_m *MockComponentInstallationRepository) GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error) {
 	ret := _m.Called(ctx)
@@ -127,6 +213,49 @@ func (_c *MockComponentInstallationRepository_GetByName_Call) Return(_a0 *ecosys
 }
 
 func (_c *MockComponentInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, string) (*ecosystem.ComponentInstallation, error)) *MockComponentInstallationRepository_GetByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Update provides a mock function with given fields: ctx, component
+func (_m *MockComponentInstallationRepository) Update(ctx context.Context, component *ecosystem.ComponentInstallation) error {
+	ret := _m.Called(ctx, component)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *ecosystem.ComponentInstallation) error); ok {
+		r0 = rf(ctx, component)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockComponentInstallationRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
+type MockComponentInstallationRepository_Update_Call struct {
+	*mock.Call
+}
+
+// Update is a helper method to define mock.On call
+//   - ctx context.Context
+//   - component *ecosystem.ComponentInstallation
+func (_e *MockComponentInstallationRepository_Expecter) Update(ctx interface{}, component interface{}) *MockComponentInstallationRepository_Update_Call {
+	return &MockComponentInstallationRepository_Update_Call{Call: _e.mock.On("Update", ctx, component)}
+}
+
+func (_c *MockComponentInstallationRepository_Update_Call) Run(run func(ctx context.Context, component *ecosystem.ComponentInstallation)) *MockComponentInstallationRepository_Update_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*ecosystem.ComponentInstallation))
+	})
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Update_Call) Return(_a0 error) *MockComponentInstallationRepository_Update_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockComponentInstallationRepository_Update_Call) RunAndReturn(run func(context.Context, *ecosystem.ComponentInstallation) error) *MockComponentInstallationRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

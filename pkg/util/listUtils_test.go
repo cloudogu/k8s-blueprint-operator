@@ -1,6 +1,7 @@
 package util
 
 import (
+	"github.com/stretchr/testify/assert"
 	"reflect"
 	"sort"
 	"strconv"
@@ -16,7 +17,7 @@ func TestGetDuplicates(t *testing.T) {
 		args args
 		want []string
 	}{
-		//results get sorted by the test, so that a direct comparison is possible
+		// results get sorted by the test, so that a direct comparison is possible
 		{name: "no duplicates", args: args{list: []string{"a", "b"}}, want: nil},
 		{name: "no duplicates", args: args{list: []string{"a", "a"}}, want: []string{"a"}},
 		{name: "no duplicates", args: args{list: []string{"a", "a", "a"}}, want: []string{"a"}},
@@ -63,4 +64,47 @@ func TestMap(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGroupBy(t *testing.T) {
+	type args[V any, K comparable] struct {
+		elements    []V
+		keySelector func(V) K
+	}
+	type testCase[V any, K comparable] struct {
+		name string
+		args args[V, K]
+		want map[K][]V
+	}
+	tests := []testCase[testStruct, int]{
+		{
+			name: "should group by number",
+			args: args[testStruct, int]{
+				elements: []testStruct{
+					{status: 1, name: "a"},
+					{status: 1, name: "aa"},
+					{status: 2, name: "b"},
+					{status: 3, name: "c"},
+				},
+				keySelector: func(t testStruct) int {
+					return t.status
+				},
+			},
+			want: map[int][]testStruct{
+				1: {{status: 1, name: "a"}, {status: 1, name: "aa"}},
+				2: {{status: 2, name: "b"}},
+				3: {{status: 3, name: "c"}},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, GroupBy(tt.args.elements, tt.args.keySelector), "GroupBy(%v, %v)", tt.args.elements, tt.args.keySelector)
+		})
+	}
+}
+
+type testStruct struct {
+	name   string
+	status int
 }

@@ -64,7 +64,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
-
 	blueprintSpecRepository := blueprintcr.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
 		blueprintSerializer,
@@ -93,13 +92,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
-	componentInstallationUseCase := application.NewComponentInstallationUseCase(componentInstallationRepo, healthConfigRepo)
+	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, maintenanceMode)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
-		doguInstallationUseCase,
 		applyBlueprintSpecUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)

@@ -27,6 +27,7 @@ type doguInstallationUseCase interface {
 }
 
 type componentInstallationUseCase interface {
+	ApplyComponentStates(ctx context.Context, blueprintId string) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 }
@@ -48,8 +49,16 @@ type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
 
+//nolint:unused
+//goland:noinspection GoUnusedType
 type componentInstallationRepository interface {
 	domainservice.ComponentInstallationRepository
+}
+
+//nolint:unused
+//goland:noinspection GoUnusedType
+type blueprintSpecRepository interface {
+	domainservice.BlueprintSpecRepository
 }
 
 type requiredComponentsProvider interface {
@@ -63,10 +72,6 @@ type healthWaitConfigProvider interface {
 type healthConfigProvider interface {
 	requiredComponentsProvider
 	healthWaitConfigProvider
-}
-
-type blueprintSpecRepository interface {
-	domainservice.BlueprintSpecRepository
 }
 
 // interface duplication for mocks

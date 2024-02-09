@@ -68,9 +68,17 @@ func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
 		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
 		diff.DistributionNamespace,
-		diff.Version.String(),
+		diff.getSafeVersionString(),
 		diff.InstallationState,
 	)
+}
+
+func (diff *ComponentDiffState) getSafeVersionString() string {
+	if diff.Version != nil {
+		return diff.Version.String()
+	} else {
+		return "0.0.0"
+	}
 }
 
 // determineComponentDiffs creates ComponentDiffs for all components in the blueprint and all installed components as well.
@@ -171,6 +179,10 @@ func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffSta
 func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
 	switch expected.InstallationState {
 	case TargetStatePresent:
+		if expected.DistributionNamespace != actual.DistributionNamespace {
+			return ActionSwitchComponentDistributionNamespace, nil
+		}
+
 		if expected.Version.GreaterThan(actual.Version) {
 			return ActionUpgrade, nil
 		}
