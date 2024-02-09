@@ -33,26 +33,6 @@ var defaultHealthConfig = healthConfig{
 	},
 }
 
-type healthConfig struct {
-	// Components
-	Components componentHealthConfig `yaml:"components,omitempty" json:"components,omitempty"`
-	// Wait contains configuration concerning how the stand-by-period for the ecosystem to become healthy.
-	Wait waitHealthConfig `yaml:"wait,omitempty" json:"wait,omitempty"`
-}
-
-type componentHealthConfig struct {
-	Required []requiredComponent `yaml:"required,omitempty" json:"required,omitempty"`
-}
-
-type requiredComponent struct {
-	Name string `yaml:"name" json:"name"`
-}
-
-type waitHealthConfig struct {
-	Timeout  duration `yaml:"timeout,omitempty" json:"timeout,omitempty"`
-	Interval duration `yaml:"interval,omitempty" json:"interval,omitempty"`
-}
-
 type HealthConfigProvider struct {
 	cmClient configMapInterface
 }
