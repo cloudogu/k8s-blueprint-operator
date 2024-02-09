@@ -3,12 +3,12 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"time"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -59,7 +59,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-		return ctrl.Result{}, err //automatic requeue because of non-nil err
+		return ctrl.Result{}, err // automatic requeue because of non-nil err
 	case errors.As(err, &conflictError):
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
@@ -71,7 +71,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		return ctrl.Result{Requeue: false}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
-		return ctrl.Result{}, err //automatic requeue because of non-nil err
+		return ctrl.Result{}, err // automatic requeue because of non-nil err
 	}
 }
 

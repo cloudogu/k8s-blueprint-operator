@@ -44,6 +44,15 @@ type ComponentInstallationRepository interface {
 	// a NotFoundError if any component is not installed or
 	// an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
+	// Delete deletes the component by name from the ecosystem.
+	// returns an InternalError if there is an error.
+	Delete(ctx context.Context, componentName string) error
+	// Create creates the ecosystem.ComponentInstallation in the cluster.
+	// returns an InternalError if there is an error.
+	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
+	// Update updates the ecosystem.ComponentInstallation with a patch operation in the cluster.
+	// returns an InternalError on patch error.
+	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
 }
 
 type RequiredComponentsProvider interface {
@@ -67,14 +76,14 @@ type BlueprintSpecRepository interface {
 }
 
 type RemoteDoguRegistry interface {
-	//GetDogu returns the dogu specification for the given dogu and version or
-	//an NotFoundError indicating that there was no dogu spec found or
-	//an InternalError indicating that the caller has no fault.
+	// GetDogu returns the dogu specification for the given dogu and version or
+	// an NotFoundError indicating that there was no dogu spec found or
+	// an InternalError indicating that the caller has no fault.
 	GetDogu(qualifiedDoguName string, version string) (*core.Dogu, error)
 
-	//GetDogus returns the all requested dogu specifications or
-	//an NotFoundError indicating that any dogu spec was not found or
-	//an InternalError indicating that the caller has no fault.
+	// GetDogus returns the all requested dogu specifications or
+	// an NotFoundError indicating that any dogu spec was not found or
+	// an InternalError indicating that the caller has no fault.
 	GetDogus(dogusToLoad []DoguToLoad) (map[string]*core.Dogu, error)
 }
 

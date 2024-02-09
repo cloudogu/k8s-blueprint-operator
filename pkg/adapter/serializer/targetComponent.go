@@ -16,6 +16,9 @@ type TargetComponent struct {
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
 	TargetState string `json:"targetState"`
+	// DeployNamespace defines the namespace where the component should be installed to. Actually this is only used for
+	// the component `k8s-longhorn` because it requires the `longhorn-system` namespace.
+	DeployNamespace string `json:"deployNamespace"`
 }
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
@@ -77,10 +80,17 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 			version = component.Version.String()
 		}
 
+		// TODO Delete this if the blueprint can handle a component configuration.
+		// This section would contain the deployNamespace in a generic Map.
+		var deployNamespace string
+		if component.Name == "k8s-longhorn" {
+			deployNamespace = "longhorn-system"
+		}
 		return TargetComponent{
-			Name:        joinedComponentName,
-			Version:     version,
-			TargetState: newState,
+			Name:            joinedComponentName,
+			Version:         version,
+			TargetState:     newState,
+			DeployNamespace: deployNamespace,
 		}
 	})
 	return converted, errors.Join(errorList...)

@@ -2,6 +2,7 @@ package componentcr
 
 import (
 	"context"
+	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
@@ -237,5 +238,161 @@ func TestNewComponentInstallationRepo(t *testing.T) {
 
 		// then
 		assert.Implements(t, (*domainservice.ComponentInstallationRepository)(nil), actual)
+	})
+}
+
+func Test_componentInstallationRepo_Update(t *testing.T) {
+	t.Run("should patch cr on update", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               testVersion1,
+		}
+		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
+		componentClientMock.EXPECT().Patch(testCtx, testComponentName, types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, nil)
+
+		// when
+		err := sut.Update(testCtx, componentInstallation)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on patch error", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               testVersion1,
+		}
+		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
+		componentClientMock.EXPECT().Patch(testCtx, testComponentName, types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
+
+		// when
+		err := sut.Update(testCtx, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to patch component \"my-component\"")
+		assert.IsType(t, err, &domainservice.InternalError{})
+	})
+}
+
+func Test_componentInstallationRepo_Delete(t *testing.T) {
+	t.Run("should delete cr on delete", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+
+		componentClientMock.EXPECT().Delete(testCtx, testComponentName, metav1.DeleteOptions{}).Return(nil)
+
+		// when
+		err := sut.Delete(testCtx, testComponentName)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on delete error", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+
+		componentClientMock.EXPECT().Delete(testCtx, testComponentName, metav1.DeleteOptions{}).Return(assert.AnError)
+
+		// when
+		err := sut.Delete(testCtx, testComponentName)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to delete component CR \"my-component\"")
+		assert.IsType(t, err, &domainservice.InternalError{})
+	})
+}
+
+func Test_componentInstallationRepo_Create(t *testing.T) {
+	t.Run("should create cr on create", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               testVersion1,
+		}
+		expectedCR := &compV1.Component{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: componentInstallation.Name,
+				Labels: map[string]string{
+					ComponentNameLabelKey:    componentInstallation.Name,
+					ComponentVersionLabelKey: componentInstallation.Version.String(),
+				},
+			},
+			Spec: compV1.ComponentSpec{
+				Namespace: componentInstallation.DistributionNamespace,
+				Name:      componentInstallation.Name,
+				Version:   componentInstallation.Version.String(),
+			},
+		}
+
+		componentClientMock.EXPECT().Create(testCtx, expectedCR, metav1.CreateOptions{}).Return(nil, nil)
+
+		// when
+		err := sut.Create(testCtx, componentInstallation)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on patch error", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:                  testComponentName,
+			DistributionNamespace: testDistributionNamespace,
+			Version:               testVersion1,
+		}
+		expectedCR := &compV1.Component{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: componentInstallation.Name,
+				Labels: map[string]string{
+					ComponentNameLabelKey:    componentInstallation.Name,
+					ComponentVersionLabelKey: componentInstallation.Version.String(),
+				},
+			},
+			Spec: compV1.ComponentSpec{
+				Namespace: componentInstallation.DistributionNamespace,
+				Name:      componentInstallation.Name,
+				Version:   componentInstallation.Version.String(),
+			},
+		}
+
+		componentClientMock.EXPECT().Create(testCtx, expectedCR, metav1.CreateOptions{}).Return(nil, assert.AnError)
+
+		// when
+		err := sut.Create(testCtx, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to create component CR \"my-component\"")
+		assert.IsType(t, err, &domainservice.InternalError{})
 	})
 }

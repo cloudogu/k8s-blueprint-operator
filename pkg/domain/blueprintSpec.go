@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type BlueprintSpec struct {
@@ -41,7 +42,6 @@ const (
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
 	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "ecosystemUnhealthyUpfront"
-
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
 	// were successful.
 	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
@@ -263,9 +263,49 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 		ComponentDiffs: compDiffs,
 		// there will be more diffs, e.g. registry keys
 	}
-	spec.Status = StatusPhaseStateDiffDetermined
+
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+
+	err = spec.checkComponentActions()
+	if err != nil {
+		return err
+	}
+
+	spec.Status = StatusPhaseStateDiffDetermined
+
+	return nil
+}
+
+var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
+
+func (spec *BlueprintSpec) checkComponentActions() error {
+	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
+		return componentDiff.NeededAction
+	})
+
+	var invalidBlueprintErrors []error
+
+	for _, action := range notAllowedComponentActions {
+		componentsWithAction := componentsByAction[action]
+
+		if len(componentsWithAction) != 0 {
+			spec.Status = StatusPhaseInvalid
+			err := &InvalidBlueprintError{
+				Message: fmt.Sprintf("action %q for following components is not allowed: %v", action, componentsWithAction),
+			}
+			invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+		}
+	}
+
+	invalidBlueprintError := errors.Join(invalidBlueprintErrors...)
+
+	if invalidBlueprintError != nil {
+		spec.Status = StatusPhaseInvalid
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		return invalidBlueprintError
+	}
+
 	return nil
 }
 

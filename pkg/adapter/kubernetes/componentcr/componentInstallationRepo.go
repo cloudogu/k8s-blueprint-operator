@@ -3,20 +3,22 @@ package componentcr
 import (
 	"context"
 	"fmt"
-
-	"github.com/Masterminds/semver/v3"
+	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	compCli "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	compCli "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 )
 
-const componentInstallationRepoContextKey = "componentInstallationRepoContext"
+const (
+	ComponentNameLabelKey               = "k8s.cloudogu.com/component.name"
+	ComponentVersionLabelKey            = "k8s.cloudogu.com/component.version"
+	componentInstallationRepoContextKey = "componentInstallationRepoContext"
+)
 
 type componentInstallationRepoContext struct {
 	resourceVersion string
@@ -66,26 +68,37 @@ func (repo *componentInstallationRepo) GetAll(ctx context.Context) (map[string]*
 	return componentInstallations, nil
 }
 
-func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
-	if cr == nil {
-		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
-	}
-
-	version, err := semver.NewVersion(cr.Spec.Version)
+func (repo *componentInstallationRepo) Update(ctx context.Context, component *ecosystem.ComponentInstallation) error {
+	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
+	patch, err := toComponentCRPatchBytes(component)
 	if err != nil {
-		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
+		return domainservice.NewInternalError(err, "failed to get patch bytes from component %q", component.Name)
 	}
 
-	persistenceContext := make(map[string]interface{}, 1)
-	persistenceContext[componentInstallationRepoContextKey] = componentInstallationRepoContext{
-		resourceVersion: cr.GetResourceVersion(),
+	logger.Info("patch component CR", "doguName", component.Name, "doguPatch", string(patch))
+
+	_, err = repo.componentClient.Patch(ctx, component.Name, types.MergePatchType, patch, metav1.PatchOptions{})
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to patch component %q", component.Name)
 	}
-	return &ecosystem.ComponentInstallation{
-		Name:                  cr.Name,
-		DistributionNamespace: cr.Spec.Namespace,
-		Version:               version,
-		Status:                cr.Status.Status,
-		Health:                ecosystem.HealthStatus(cr.Status.Health),
-		PersistenceContext:    persistenceContext,
-	}, nil
+
+	return nil
+}
+
+func (repo *componentInstallationRepo) Delete(ctx context.Context, componentName string) error {
+	err := repo.componentClient.Delete(ctx, componentName, metav1.DeleteOptions{})
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to delete component CR %q", componentName)
+	}
+
+	return nil
+}
+
+func (repo *componentInstallationRepo) Create(ctx context.Context, component *ecosystem.ComponentInstallation) error {
+	_, err := repo.componentClient.Create(ctx, toComponentCR(component), metav1.CreateOptions{})
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to create component CR %q", component.Name)
+	}
+
+	return nil
 }

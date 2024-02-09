@@ -36,7 +36,7 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 	if err != nil {
 		return ecosystem.DoguHealthResult{}, fmt.Errorf("cannot evaluate dogu health states: %w", err)
 	}
-	//accept experimental maps.Values as we can implement it ourselves in a minute
+	// accept experimental maps.Values as we can implement it ourselves in a minute
 	return ecosystem.CalculateDoguHealthResult(maps.Values(installedDogus)), nil
 }
 
@@ -93,7 +93,7 @@ func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blu
 		return fmt.Errorf("cannot load blueprint spec %q to install dogus: %w", blueprintId, err)
 	}
 
-	//DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
+	// DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
 	dogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot load dogu installations to apply dogu state: %w", err)
@@ -135,7 +135,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	case domain.ActionDowngrade:
 		logger.Info("downgrade dogu")
-		return fmt.Errorf(noDowngradesExplanationText)
+		return fmt.Errorf(getNoDowngradesExplanationTextForDogus())
 	case domain.ActionSwitchDoguNamespace:
 		logger.Info("do namespace switch for dogu")
 		err := doguInstallation.SwitchNamespace(
@@ -152,7 +152,6 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	}
 }
 
-const noDowngradesExplanationText = "downgrades are not allowed as the data model of the dogu could have changed and " +
-	"doing rollbacks to older models is not supported. " +
-	"You can downgrade dogus by restoring a backup. " +
-	"If you want an 'allow-downgrades' flag, issue a feature request"
+func getNoDowngradesExplanationTextForDogus() string {
+	return fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus")
+}

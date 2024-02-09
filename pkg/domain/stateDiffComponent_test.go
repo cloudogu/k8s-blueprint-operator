@@ -11,7 +11,9 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
-const testComponentName = "my-component"
+const (
+	testComponentName = "my-component"
+)
 
 var (
 	compVersion3211 = semver.MustParse("3.2.1-1")
@@ -306,6 +308,42 @@ func Test_determineComponentDiffs(t *testing.T) {
 			},
 		},
 		{
+			name: "determine distribution namespace switch",
+			args: args{
+				blueprintComponents: []Component{
+					{
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						TargetState:           TargetStatePresent,
+						DistributionNamespace: testChangeDistributionNamespace,
+					},
+				},
+				installedComponents: map[string]*ecosystem.ComponentInstallation{
+					testComponentName: {
+						Name:                  testComponentName,
+						Version:               compVersion3211,
+						DistributionNamespace: testDistributionNamespace,
+					},
+				},
+			},
+			want: []ComponentDiff{
+				{
+					Name: testComponentName,
+					Actual: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testDistributionNamespace,
+					},
+					Expected: ComponentDiffState{
+						Version:               compVersion3211,
+						InstallationState:     TargetStatePresent,
+						DistributionNamespace: testChangeDistributionNamespace,
+					},
+					NeededAction: ActionSwitchComponentDistributionNamespace,
+				},
+			},
+		},
+		{
 			name: "determine upgrade for an installed component which is also in the blueprint",
 			args: args{
 				blueprintComponents: []Component{
@@ -343,6 +381,42 @@ func Test_determineComponentDiffs(t *testing.T) {
 			compDiffs, err := determineComponentDiffs(tt.args.blueprintComponents, tt.args.installedComponents)
 			assert.NoError(t, err)
 			assert.Equalf(t, tt.want, compDiffs, "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
+		})
+	}
+}
+
+func TestComponentDiffState_getSafeVersionString(t *testing.T) {
+	version1, _ := semver.NewVersion("1.0.0")
+
+	type fields struct {
+		DistributionNamespace string
+		Version               *semver.Version
+		InstallationState     TargetState
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   string
+	}{
+		{
+			name:   "success",
+			fields: fields{Version: version1},
+			want:   "1.0.0",
+		},
+		{
+			name:   "should return empty string and no panic on nil version",
+			fields: fields{Version: nil},
+			want:   "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diff := &ComponentDiffState{
+				DistributionNamespace: tt.fields.DistributionNamespace,
+				Version:               tt.fields.Version,
+				InstallationState:     tt.fields.InstallationState,
+			}
+			assert.Equalf(t, tt.want, diff.getSafeVersionString(), "getSafeVersionString()")
 		})
 	}
 }

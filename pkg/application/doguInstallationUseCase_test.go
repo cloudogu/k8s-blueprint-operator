@@ -162,7 +162,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		)
 
 		// then
-		require.ErrorContains(t, err, noDowngradesExplanationText)
+		require.ErrorContains(t, err, getNoDowngradesExplanationTextForDogus())
 		assert.Equal(t, version3212, dogu.Version)
 	})
 
@@ -228,7 +228,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	})
 
 	t.Run("unknown action", func(t *testing.T) {
-		//given
+		// given
 		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
 		// when
@@ -344,7 +344,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
 
 		// then
-		require.ErrorContains(t, err, noDowngradesExplanationText)
+		require.ErrorContains(t, err, getNoDowngradesExplanationTextForDogus())
 		require.ErrorContains(t, err, "an error occurred while applying dogu state to the ecosystem")
 	})
 }

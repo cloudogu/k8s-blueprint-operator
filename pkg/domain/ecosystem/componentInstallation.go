@@ -12,10 +12,24 @@ type ComponentInstallation struct {
 	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
 	DistributionNamespace string
+	// DeployNamespace is the cluster namespace where the component is deployed, e.g. `ecosystem` or `longhorn-system`
+	// The default value is empty and indicated that the component should be deployed in the current namespace.
+	DeployNamespace string
 	// Version is the version of the component
 	Version *semver.Version
 	// Status is the installation status of the component in the ecosystem
 	Status string
+	// ValuesYamlOverwrite represents a helm configuration as string in yaml format.
+	// Example:
+	// ```
+	// controller:
+	//   env:
+	//     logLevel: info
+	// ```
+	ValuesYamlOverwrite string
+	// MappedValues represents also a helm configuration like ValuesYamlOverwrite.
+	// The difference here is that these values will be mapped by the component-operator with a metadata file in the component's chart.
+	MappedValues map[string]string
 	// Health is the current health status of the component in the ecosystem
 	Health HealthStatus
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
@@ -25,10 +39,45 @@ type ComponentInstallation struct {
 }
 
 const (
+	// ComponentStatusNotInstalled represents a status for a component that is not installed
 	ComponentStatusNotInstalled = ""
-	ComponentStatusInstalling   = "installing"
-	ComponentStatusUpgrading    = "upgrading"
-	ComponentStatusDeleting     = "deleting"
-	ComponentStatusInstalled    = "installed"
+	// ComponentStatusInstalling represents a status for a component that is currently being installed
+	ComponentStatusInstalling = "installing"
+	// ComponentStatusUpgrading represents a status for a component that is currently being upgraded
+	ComponentStatusUpgrading = "upgrading"
+	// ComponentStatusDeleting represents a status for a component that is currently being deleted
+	ComponentStatusDeleting = "deleting"
 	ComponentStatusIgnored      = "ignored"
+	// ComponentStatusInstalled represents a status for a component that was successfully installed
+	ComponentStatusInstalled = "installed"
+	// ComponentStatusTryToInstall represents a status for a component that is not installed but its install process is in requeue loop.
+	ComponentStatusTryToInstall = "tryToInstall"
+	// ComponentStatusTryToUpgrade represents a status for a component that is installed but its actual upgrade process is in requeue loop.
+	// In this state the component can be healthy but the version in the spec is not installed.
+	ComponentStatusTryToUpgrade = "tryToUpgrade"
+	// ComponentStatusTryToDelete represents a status for a component that is installed but its delete process is in requeue loop.
+	// In this state the component can be healthy.
+	ComponentStatusTryToDelete = "tryToDelete"
 )
+
+// InstallComponent is a factory for new ComponentInstallation's.
+func InstallComponent(namespace, componentName string, version *semver.Version) *ComponentInstallation {
+	// TODO Delete this if the blueprint can handle a component configuration.
+	// This section would contain the deployNamespace in a generic Map.
+	var deployNamespace string
+	if componentName == "k8s-longhorn" {
+		deployNamespace = "longhorn-system"
+	}
+
+	return &ComponentInstallation{
+		DistributionNamespace: namespace,
+		Name:                  componentName,
+		Version:               version,
+		DeployNamespace:       deployNamespace,
+		// ValuesYamlOverwrite: valuesYamlOverwrite,
+	}
+}
+
+func (ci *ComponentInstallation) Upgrade(version *semver.Version) {
+	ci.Version = version
+}

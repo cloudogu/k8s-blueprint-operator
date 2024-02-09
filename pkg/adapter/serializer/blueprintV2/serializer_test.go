@@ -55,7 +55,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 					{Name: "dogu-operator", DistributionNamespace: "absent", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"absent/dogu-operator","version":"","targetState":"absent"}]}`,
+			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"absent/dogu-operator","version":"","targetState":"absent","deployNamespace":""}]}`,
 			assert.NoError,
 		},
 		{
