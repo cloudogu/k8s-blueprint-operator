@@ -272,6 +272,39 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosyst
 		return err
 	}
 
+	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
+		return doguDiff.NeededAction
+	})
+	dogusToNamespaceSwitch := dogusByAction[ActionSwitchDoguNamespace]
+	dogusToDowngrade := dogusByAction[ActionDowngrade]
+
+	var invalidBlueprintErrors []error
+
+	//TODO: extract this in an extra function
+	if !spec.Config.AllowDoguNamespaceSwitch && len(dogusToNamespaceSwitch) != 0 {
+		spec.Status = StatusPhaseInvalid
+		err := &InvalidBlueprintError{
+			Message: fmt.Sprintf("namespace switch for following dogus is not allowed without setting the feature flag: %v", dogusToNamespaceSwitch),
+		}
+		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+	}
+
+	//TODO: extract this in an extra function
+	if len(dogusToDowngrade) != 0 {
+		err := &InvalidBlueprintError{
+			Message: fmt.Sprintf("dogu downgrades are not allowed: %v", dogusToNamespaceSwitch),
+		}
+		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
+	}
+
+	invalidBlueprintError := errors.Join(invalidBlueprintErrors...)
+
+	if invalidBlueprintError != nil {
+		spec.Status = StatusPhaseInvalid
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		return invalidBlueprintError
+	}
+
 	spec.Status = StatusPhaseStateDiffDetermined
 
 	return nil
