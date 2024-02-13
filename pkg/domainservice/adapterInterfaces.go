@@ -107,6 +107,50 @@ type MaintenancePageModel struct {
 	Text  string
 }
 
+type ConfigEncryptionAdapter interface {
+	// Encrypt encrypts the given value for a dogu.
+	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
+	Encrypt(ctx context.Context, doguName string, configValue string) (string, error)
+	// EncryptAll encrypts the given values for a dogu.
+	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
+	EncryptAll(ctx context.Context, doguName string, configValues []string) (map[string]string, error)
+}
+
+type GlobalConfigRepository interface {
+	// Get retrieves the global config.
+	// It can throw the following errors:
+	// 	- NotFoundError if there is no global config.
+	// 	- InternalError if any other error happens.
+	Get(ctx context.Context) (DoguEcosystemConfig, error)
+	// Save persists the global config.
+	// It can throw the following errors:
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
+	Save(context.Context, GlobalEcosystemConfig) error
+}
+
+type DoguConfigRepository interface {
+	// Get retrieves a dogu's config.
+	// It can trow the following errors:
+	// 	- NotFoundError if there is no config for the dogu.
+	// 	- InternalError if any other error happens.
+	Get(ctx context.Context, doguName string) (DoguEcosystemConfig, error)
+	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	Save(context.Context, DoguEcosystemConfig) error
+}
+
+type GlobalEcosystemConfig struct {
+	NormalConfig map[string]string
+}
+type DoguEcosystemConfig struct {
+	DoguName       string
+	NormalConfig   map[string]string
+	SensibleConfig map[string]string
+}
+
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.
 type NotFoundError struct {
 	WrappedError error
