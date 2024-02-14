@@ -344,7 +344,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
-		installedComponents := map[string]*ecosystem.ComponentInstallation{}
+		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
 		err := spec.DetermineStateDiff(installedDogus, installedComponents)
@@ -399,18 +399,20 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Components: []Component{
 					{
-						Name:                  testComponentName,
-						DistributionNamespace: testChangeDistributionNamespace,
-						Version:               compVersion3211,
+						Name: common.QualifiedComponentName{
+							Namespace: testChangeDistributionNamespace,
+							Name:      testComponentName.Name,
+						},
+						Version: compVersion3211,
 					},
 				},
 			},
 			Status: StatusPhaseValidated,
 		}
-		installedComponents := map[string]*ecosystem.ComponentInstallation{
-			testComponentName: {
-				DistributionNamespace: testDistributionNamespace,
-				Version:               compVersion3211,
+		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+			testComponentName.Name: {
+				Name:    testComponentName,
+				Version: compVersion3211,
 			},
 		}
 

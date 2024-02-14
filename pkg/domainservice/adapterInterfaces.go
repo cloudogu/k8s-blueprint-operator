@@ -40,14 +40,14 @@ type ComponentInstallationRepository interface {
 	// GetByName returns the ecosystem.ComponentInstallation or
 	// a NotFoundError if the component is not installed or
 	// an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error)
+	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
 	// GetAll returns the installation info of all installed components or
 	// a NotFoundError if any component is not installed or
 	// an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
+	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
 	// Delete deletes the component by name from the ecosystem.
 	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName string) error
+	Delete(ctx context.Context, componentName common.SimpleComponentName) error
 	// Create creates the ecosystem.ComponentInstallation in the cluster.
 	// returns an InternalError if there is an error.
 	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error

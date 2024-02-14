@@ -5,7 +5,10 @@ package application
 import (
 	context "context"
 
+	common "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+
 	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -66,11 +69,11 @@ func (_c *mockComponentInstallationRepository_Create_Call) RunAndReturn(run func
 }
 
 // Delete provides a mock function with given fields: ctx, componentName
-func (_m *mockComponentInstallationRepository) Delete(ctx context.Context, componentName string) error {
+func (_m *mockComponentInstallationRepository) Delete(ctx context.Context, componentName common.SimpleComponentName) error {
 	ret := _m.Called(ctx, componentName)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleComponentName) error); ok {
 		r0 = rf(ctx, componentName)
 	} else {
 		r0 = ret.Error(0)
@@ -86,14 +89,14 @@ type mockComponentInstallationRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - componentName string
+//   - componentName common.SimpleComponentName
 func (_e *mockComponentInstallationRepository_Expecter) Delete(ctx interface{}, componentName interface{}) *mockComponentInstallationRepository_Delete_Call {
 	return &mockComponentInstallationRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, componentName)}
 }
 
-func (_c *mockComponentInstallationRepository_Delete_Call) Run(run func(ctx context.Context, componentName string)) *mockComponentInstallationRepository_Delete_Call {
+func (_c *mockComponentInstallationRepository_Delete_Call) Run(run func(ctx context.Context, componentName common.SimpleComponentName)) *mockComponentInstallationRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(common.SimpleComponentName))
 	})
 	return _c
 }
@@ -103,25 +106,25 @@ func (_c *mockComponentInstallationRepository_Delete_Call) Return(_a0 error) *mo
 	return _c
 }
 
-func (_c *mockComponentInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, string) error) *mockComponentInstallationRepository_Delete_Call {
+func (_c *mockComponentInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, common.SimpleComponentName) error) *mockComponentInstallationRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx
-func (_m *mockComponentInstallationRepository) GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error) {
+func (_m *mockComponentInstallationRepository) GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error) {
 	ret := _m.Called(ctx)
 
-	var r0 map[string]*ecosystem.ComponentInstallation
+	var r0 map[common.SimpleComponentName]*ecosystem.ComponentInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (map[string]*ecosystem.ComponentInstallation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) map[string]*ecosystem.ComponentInstallation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) map[common.SimpleComponentName]*ecosystem.ComponentInstallation); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]*ecosystem.ComponentInstallation)
+			r0 = ret.Get(0).(map[common.SimpleComponentName]*ecosystem.ComponentInstallation)
 		}
 	}
 
@@ -152,26 +155,26 @@ func (_c *mockComponentInstallationRepository_GetAll_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *mockComponentInstallationRepository_GetAll_Call) Return(_a0 map[string]*ecosystem.ComponentInstallation, _a1 error) *mockComponentInstallationRepository_GetAll_Call {
+func (_c *mockComponentInstallationRepository_GetAll_Call) Return(_a0 map[common.SimpleComponentName]*ecosystem.ComponentInstallation, _a1 error) *mockComponentInstallationRepository_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockComponentInstallationRepository_GetAll_Call) RunAndReturn(run func(context.Context) (map[string]*ecosystem.ComponentInstallation, error)) *mockComponentInstallationRepository_GetAll_Call {
+func (_c *mockComponentInstallationRepository_GetAll_Call) RunAndReturn(run func(context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)) *mockComponentInstallationRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByName provides a mock function with given fields: ctx, componentName
-func (_m *mockComponentInstallationRepository) GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error) {
+func (_m *mockComponentInstallationRepository) GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error) {
 	ret := _m.Called(ctx, componentName)
 
 	var r0 *ecosystem.ComponentInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*ecosystem.ComponentInstallation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)); ok {
 		return rf(ctx, componentName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *ecosystem.ComponentInstallation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleComponentName) *ecosystem.ComponentInstallation); ok {
 		r0 = rf(ctx, componentName)
 	} else {
 		if ret.Get(0) != nil {
@@ -179,7 +182,7 @@ func (_m *mockComponentInstallationRepository) GetByName(ctx context.Context, co
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleComponentName) error); ok {
 		r1 = rf(ctx, componentName)
 	} else {
 		r1 = ret.Error(1)
@@ -195,14 +198,14 @@ type mockComponentInstallationRepository_GetByName_Call struct {
 
 // GetByName is a helper method to define mock.On call
 //   - ctx context.Context
-//   - componentName string
+//   - componentName common.SimpleComponentName
 func (_e *mockComponentInstallationRepository_Expecter) GetByName(ctx interface{}, componentName interface{}) *mockComponentInstallationRepository_GetByName_Call {
 	return &mockComponentInstallationRepository_GetByName_Call{Call: _e.mock.On("GetByName", ctx, componentName)}
 }
 
-func (_c *mockComponentInstallationRepository_GetByName_Call) Run(run func(ctx context.Context, componentName string)) *mockComponentInstallationRepository_GetByName_Call {
+func (_c *mockComponentInstallationRepository_GetByName_Call) Run(run func(ctx context.Context, componentName common.SimpleComponentName)) *mockComponentInstallationRepository_GetByName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(common.SimpleComponentName))
 	})
 	return _c
 }
@@ -212,7 +215,7 @@ func (_c *mockComponentInstallationRepository_GetByName_Call) Return(_a0 *ecosys
 	return _c
 }
 
-func (_c *mockComponentInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, string) (*ecosystem.ComponentInstallation, error)) *mockComponentInstallationRepository_GetByName_Call {
+func (_c *mockComponentInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)) *mockComponentInstallationRepository_GetByName_Call {
 	_c.Call.Return(run)
 	return _c
 }

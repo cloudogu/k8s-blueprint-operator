@@ -12,7 +12,6 @@ import (
 
 const (
 	testNamespace       = "ecosystem"
-	testHelmNamespace   = "k8s"
 	testStatus          = ecosystem.ComponentStatusNotInstalled
 	testHealthStatus    = compV1.AvailableHealthStatus
 	testResourceVersion = "1"
@@ -39,13 +38,13 @@ func Test_parseComponentCR(t *testing.T) {
 			args: args{
 				cr: &compV1.Component{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:            testComponentName,
+						Name:            testComponentNameRaw,
 						Namespace:       testNamespace,
 						ResourceVersion: testResourceVersion,
 					},
 					Spec: compV1.ComponentSpec{
-						Namespace: testHelmNamespace,
-						Name:      testComponentName,
+						Namespace: testDistributionNamespace,
+						Name:      testComponentNameRaw,
 						Version:   testVersion1.String(),
 					},
 					Status: compV1.ComponentStatus{
@@ -55,11 +54,10 @@ func Test_parseComponentCR(t *testing.T) {
 				},
 			},
 			want: &ecosystem.ComponentInstallation{
-				DistributionNamespace: testHelmNamespace,
-				Name:                  testComponentName,
-				Version:               testVersion1,
-				Status:                testStatus,
-				Health:                ecosystem.HealthStatus(testHealthStatus),
+				Name:    testComponentName,
+				Version: testVersion1,
+				Status:  testStatus,
+				Health:  ecosystem.HealthStatus(testHealthStatus),
 				PersistenceContext: map[string]interface{}{
 					componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 				},
@@ -112,11 +110,10 @@ func Test_toComponentCR(t *testing.T) {
 			name: "success",
 			args: args{
 				componentInstallation: &ecosystem.ComponentInstallation{
-					Name:                  testComponentName,
-					Version:               testVersion1,
-					Status:                testStatus,
-					DistributionNamespace: testDistributionNamespace,
-					Health:                ecosystem.HealthStatus(testHealthStatus),
+					Name:    testComponentName,
+					Version: testVersion1,
+					Status:  testStatus,
+					Health:  ecosystem.HealthStatus(testHealthStatus),
 					PersistenceContext: map[string]interface{}{
 						componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 					},
@@ -124,15 +121,15 @@ func Test_toComponentCR(t *testing.T) {
 			},
 			want: &compV1.Component{
 				ObjectMeta: metav1.ObjectMeta{
-					Name: testComponentName,
+					Name: testComponentNameRaw,
 					Labels: map[string]string{
-						ComponentNameLabelKey:    testComponentName,
+						ComponentNameLabelKey:    testComponentNameRaw,
 						ComponentVersionLabelKey: testVersion1.String(),
 					},
 				},
 				Spec: compV1.ComponentSpec{
 					Namespace: testDistributionNamespace,
-					Name:      testComponentName,
+					Name:      testComponentNameRaw,
 					Version:   testVersion1.String(),
 				},
 			},
@@ -160,15 +157,14 @@ func Test_toComponentCRPatch(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:                  testComponentName,
-					Version:               testVersion1,
-					DistributionNamespace: testNamespace,
+					Name:    testComponentName,
+					Version: testVersion1,
 				},
 			},
 			want: &componentCRPatch{
 				Spec: componentSpecPatch{
-					Namespace: testNamespace,
-					Name:      testComponentName,
+					Namespace: testDistributionNamespace,
+					Name:      testComponentNameRaw,
 					Version:   testVersion1.String(),
 				},
 			},
@@ -197,9 +193,8 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:                  testComponentName,
-					Version:               testVersion1,
-					DistributionNamespace: testHelmNamespace,
+					Name:    testComponentName,
+					Version: testVersion1,
 				},
 			},
 			want:    testPatchBytes,

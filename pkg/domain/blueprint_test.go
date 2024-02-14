@@ -3,6 +3,7 @@ package domain
 import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/require"
 	"testing"
 
@@ -15,6 +16,11 @@ var (
 	compVersion3210 = semver.MustParse("3.2.1-0")
 	compVersion3212 = semver.MustParse("3.2.1-2")
 	compVersion3213 = semver.MustParse("3.2.1-3")
+
+	testComponentName1 = common.QualifiedComponentName{Namespace: "k8s", Name: "my-component1"}
+	testComponentName2 = common.QualifiedComponentName{Namespace: "official", Name: "my-component2"}
+	testComponentName3 = common.QualifiedComponentName{Namespace: "testing", Name: "my-component3"}
+	testComponentName4 = common.QualifiedComponentName{Namespace: "k8s", Name: "my-component4"}
 )
 
 func Test_validate_ok(t *testing.T) {
@@ -26,10 +32,10 @@ func Test_validate_ok(t *testing.T) {
 	}
 
 	components := []Component{
-		{Name: "absent-component1", DistributionNamespace: "", Version: compVersion3210, TargetState: TargetStateAbsent},
-		{Name: "absent-component2", TargetState: TargetStateAbsent},
-		{Name: "present-component3", DistributionNamespace: "k8s", Version: compVersion3212, TargetState: TargetStatePresent},
-		{Name: "present-component4", DistributionNamespace: "k8s", Version: compVersion3213},
+		{Name: testComponentName1, Version: compVersion3210, TargetState: TargetStateAbsent},
+		{Name: testComponentName2, TargetState: TargetStateAbsent},
+		{Name: testComponentName3, Version: compVersion3212, TargetState: TargetStatePresent},
+		{Name: testComponentName4, Version: compVersion3213},
 	}
 	blueprint := Blueprint{Dogus: dogus, Components: components}
 
@@ -37,6 +43,7 @@ func Test_validate_ok(t *testing.T) {
 
 	require.NoError(t, err)
 }
+
 func Test_validate_multipleErrors(t *testing.T) {
 	dogus := []Dogu{
 		{Version: version3212, TargetState: 666},
@@ -50,10 +57,13 @@ func Test_validate_multipleErrors(t *testing.T) {
 	err := blueprint.Validate()
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "blueprint is invalid")
-	assert.Contains(t, err.Error(), "dogu target state is invalid")
-	assert.Contains(t, err.Error(), "component name must not be empty")
-	assert.Contains(t, err.Error(), `distribution namespace of component "my-component" must not be empty`)
+	assert.ErrorContains(t, err, "blueprint is invalid")
+	assert.ErrorContains(t, err, "dogu is invalid")
+	assert.ErrorContains(t, err, "namespace of dogu \"\" must not be empty")
+	assert.ErrorContains(t, err, "dogu name must not be empty: '/'")
+	assert.ErrorContains(t, err, "dogu target state is invalid")
+	assert.ErrorContains(t, err, "component name must not be empty")
+	assert.ErrorContains(t, err, `namespace of component "" must not be empty`)
 }
 
 func Test_validateDogus_ok(t *testing.T) {
@@ -88,8 +98,21 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 
 func Test_validateComponents_ok(t *testing.T) {
 	components := []Component{
-		{Name: "absent-component", TargetState: TargetStateAbsent},
-		{Name: "present-component", DistributionNamespace: "k8s", Version: compVersion3212, TargetState: TargetStatePresent},
+		{
+			Name: common.QualifiedComponentName{
+				Namespace: "k8s",
+				Name:      "absent-component",
+			},
+			TargetState: TargetStateAbsent,
+		},
+		{
+			Name: common.QualifiedComponentName{
+				Name:      "present-component",
+				Namespace: "k8s",
+			},
+			Version:     compVersion3212,
+			TargetState: TargetStatePresent,
+		},
 	}
 	blueprint := Blueprint{Components: components}
 
@@ -108,7 +131,7 @@ func Test_validateComponents_multipleErrors(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "component name must not be empty")
-	assert.Contains(t, err.Error(), `version of component "my-component" must not be empty`)
+	assert.Contains(t, err.Error(), `version of component "k8s/my-component" must not be empty`)
 }
 
 func Test_validateDoguUniqueness(t *testing.T) {
@@ -131,10 +154,32 @@ func Test_validateDoguUniqueness(t *testing.T) {
 
 func Test_validateComponentUniqueness(t *testing.T) {
 	components := []Component{
-		{Name: "present/component1", Version: compVersion3210, TargetState: TargetStatePresent},
-		{Name: "present/component1", Version: compVersion3213},
-		{Name: "present/component2", Version: compVersion3213},
-		{Name: "present/component2", Version: compVersion3213},
+		{
+			Name: common.QualifiedComponentName{
+				Namespace: "present",
+				Name:      "component1",
+			},
+			Version:     compVersion3210,
+			TargetState: TargetStatePresent,
+		},
+		{
+			Name: common.QualifiedComponentName{
+				Namespace: "present",
+				Name:      "component1",
+			},
+			Version: compVersion3213},
+		{
+			Name: common.QualifiedComponentName{
+				Namespace: "present",
+				Name:      "component2",
+			},
+			Version: compVersion3213},
+		{
+			Name: common.QualifiedComponentName{
+				Namespace: "present",
+				Name:      "component2",
+			},
+			Version: compVersion3213},
 	}
 
 	blueprint := Blueprint{Components: components}
@@ -143,8 +188,8 @@ func Test_validateComponentUniqueness(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "there are duplicate components")
-	assert.Contains(t, err.Error(), "present/component1")
-	assert.Contains(t, err.Error(), "present/component2")
+	assert.Contains(t, err.Error(), "component1")
+	assert.Contains(t, err.Error(), "component2")
 }
 
 func TestValidationGlobalValid(t *testing.T) {

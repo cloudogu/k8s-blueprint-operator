@@ -27,17 +27,17 @@ var (
 func TestConvertToEffectiveBlueprint(t *testing.T) {
 	//given
 	dogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", DistributionNamespace: "absent", Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: "component2", DistributionNamespace: "absent", Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: "component3", DistributionNamespace: "present", Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: "component4", DistributionNamespace: "present", Version: compVersion1233},
+		{Name: common.QualifiedComponentName{Name: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Name: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Name: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{Name: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
 	}
 	blueprint := domain.EffectiveBlueprint{
 		Dogus:      dogus,
@@ -60,17 +60,17 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 
 	//then
 	convertedDogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
+		{Name: "official/dogu2", TargetState: "absent"},
+		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
+		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "absent/component1", TargetState: "absent"},
-		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present/component3", Version: compVersion3212.String(), TargetState: "present"},
-		{Name: "present/component4", Version: compVersion1233.String(), TargetState: "present"},
+		{Name: "k8s/component1", TargetState: "absent"},
+		{Name: "k8s/component2", TargetState: "absent"},
+		{Name: "k8s-testing/component3", Version: compVersion3212.String(), TargetState: "present"},
+		{Name: "k8s-testing/component4", Version: compVersion1233.String(), TargetState: "present"},
 	}
 
 	require.NoError(t, err)
@@ -90,17 +90,17 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	//given
 	convertedDogus := []serializer.TargetDogu{
-		{Name: "absent/dogu1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "absent/dogu2", TargetState: "absent"},
-		{Name: "present/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "present/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
+		{Name: "official/dogu2", TargetState: "absent"},
+		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
+		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
-		{Name: "absent/component1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "absent/component2", TargetState: "absent"},
-		{Name: "present/component3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "present/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "k8s/component1", Version: version3211.Raw, TargetState: "absent"},
+		{Name: "k8s/component2", TargetState: "absent"},
+		{Name: "k8s-testing/component3", Version: version3212.Raw, TargetState: "present"},
+		{Name: "k8s-testing/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
 	dto := EffectiveBlueprint{
@@ -119,17 +119,17 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 
 	//then
 	dogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: "component1", DistributionNamespace: "absent", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
-		{Name: "component2", DistributionNamespace: "absent", TargetState: domain.TargetStateAbsent},
-		{Name: "component3", DistributionNamespace: "present", Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: "component4", DistributionNamespace: "present", Version: compVersion1233},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component4"}, Version: compVersion1233},
 	}
 	expected := domain.EffectiveBlueprint{
 		Dogus:      dogus,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -67,7 +68,7 @@ func (h *HealthConfigProvider) GetRequiredComponents(ctx context.Context) ([]eco
 }
 
 func convertToRequiredComponentDomain(component requiredComponent) ecosystem.RequiredComponent {
-	return ecosystem.RequiredComponent{Name: component.Name}
+	return ecosystem.RequiredComponent{Name: common.SimpleComponentName(component.Name)}
 }
 
 func (h *HealthConfigProvider) getAll(ctx context.Context) (healthConfig, error) {

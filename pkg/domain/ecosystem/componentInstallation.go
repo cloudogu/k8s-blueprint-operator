@@ -2,18 +2,16 @@ package ecosystem
 
 import (
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // ComponentInstallation represents an installed or to be installed component in the ecosystem.
 type ComponentInstallation struct {
-	// Name is the name of the component, e.g. 'k8s-dogu-operator'.
-	// The name is also the ID of the component in the ecosystem as only one component with this name can be installed.
-	Name string
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
-	// to be confused with the K8s cluster namespace.
-	DistributionNamespace string
+	// Name identifies the component by simple dogu name and namespace, e.g 'k8s/k8s-dogu-operator'.
+	Name common.QualifiedComponentName
 	// DeployNamespace is the cluster namespace where the component is deployed, e.g. `ecosystem` or `longhorn-system`
 	// The default value is empty and indicated that the component should be deployed in the current namespace.
+	// TODO: this field breaks the abstraction of the domain against kubernetes. We should discuss if a generic property list is better.
 	DeployNamespace string
 	// Version is the version of the component
 	Version *semver.Version
@@ -47,7 +45,7 @@ const (
 	ComponentStatusUpgrading = "upgrading"
 	// ComponentStatusDeleting represents a status for a component that is currently being deleted
 	ComponentStatusDeleting = "deleting"
-	ComponentStatusIgnored      = "ignored"
+	ComponentStatusIgnored  = "ignored"
 	// ComponentStatusInstalled represents a status for a component that was successfully installed
 	ComponentStatusInstalled = "installed"
 	// ComponentStatusTryToInstall represents a status for a component that is not installed but its install process is in requeue loop.
@@ -61,19 +59,19 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(namespace, componentName string, version *semver.Version) *ComponentInstallation {
+func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version) *ComponentInstallation {
 	// TODO Delete this if the blueprint can handle a component configuration.
 	// This section would contain the deployNamespace in a generic Map.
 	var deployNamespace string
-	if componentName == "k8s-longhorn" {
+
+	if componentName == common.K8sK8sLonghornName {
 		deployNamespace = "longhorn-system"
 	}
 
 	return &ComponentInstallation{
-		DistributionNamespace: namespace,
-		Name:                  componentName,
-		Version:               version,
-		DeployNamespace:       deployNamespace,
+		Name:            componentName,
+		Version:         version,
+		DeployNamespace: deployNamespace,
 		// ValuesYamlOverwrite: valuesYamlOverwrite,
 	}
 }
