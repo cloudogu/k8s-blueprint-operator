@@ -40,16 +40,6 @@ func CountGrouped[T comparable](elements []T) map[T]int {
 	return counts
 }
 
-// Any determines if any element in the given list matches the given predicate
-func Any[T any](list []T, predicate func(T) bool) bool {
-	for _, t := range list {
-		if predicate(t) {
-			return true
-		}
-	}
-	return false
-}
-
 // GroupBy groups elements of the original list by the key returned by the given keySelector function
 // applied to each element and returns a map where each group key is associated with a list of corresponding elements.
 func GroupBy[K comparable, V any](elements []V, keySelector func(V) K) map[K][]V {
