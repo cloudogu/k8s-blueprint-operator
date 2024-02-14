@@ -10,6 +10,7 @@ import (
 // Component represents a CES component (e.g. operators), its version, and the installation state in which it is supposed to be
 // after a blueprint was applied.
 type Component struct {
+	// TODO Add ComponentConfig for CRD fields like deployNamespace or helmValuesOverwrite.
 	// Name defines the name and namespace of the component. Must not be empty.
 	Name common.QualifiedComponentName
 	// Version defines the version of the package that is to be installed. Must not be empty if the targetState is
