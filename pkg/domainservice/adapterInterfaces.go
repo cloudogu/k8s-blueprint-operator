@@ -116,39 +116,48 @@ type ConfigEncryptionAdapter interface {
 	EncryptAll(ctx context.Context, doguName string, configValues []string) (map[string]string, error)
 }
 
-type GlobalConfigRepository interface {
-	// Get retrieves the global config.
+type GlobalConfigKeyRepository interface {
+	// GetAll retrieves all keys from the global config.
 	// It can throw the following errors:
 	// 	- NotFoundError if there is no global config.
 	// 	- InternalError if any other error happens.
-	Get(ctx context.Context) (DoguEcosystemConfig, error)
+	GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigKey, error)
 	// Save persists the global config.
 	// It can throw the following errors:
 	//  - ConflictError if there were concurrent write accesses.
 	//  - InternalError if any other error happens.
-	Save(context.Context, GlobalEcosystemConfig) error
+	Save(context.Context, *ecosystem.GlobalConfigKey) error
+	// SaveAll persists all given config keys.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigKey) error
+	// Delete deletes a global config key.
+	// It can throw an InternalError if any error happens.
+	// If the key is not existent no error will be returned.
+	Delete(ctx context.Context, key string) error
 }
 
-type DoguConfigRepository interface {
-	// Get retrieves a dogu's config.
+type DoguConfigKeyRepository interface {
+	// GetAll retrieves a dogu's config.
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	Get(ctx context.Context, doguName string) (DoguEcosystemConfig, error)
+	GetAll(ctx context.Context) (map[string][]*ecosystem.DoguConfigKey, error)
 	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	Save(context.Context, DoguEcosystemConfig) error
-}
-
-type GlobalEcosystemConfig struct {
-	NormalConfig map[string]string
-}
-type DoguEcosystemConfig struct {
-	DoguName       string
-	NormalConfig   map[string]string
-	SensibleConfig map[string]string
+	Save(context.Context, *ecosystem.DoguConfigKey) error
+	// SaveAll persists all given config keys. Configs can be set even if the dogus are not installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	SaveAll(ctx context.Context, keys []*ecosystem.DoguConfigKey) error
+	// Delete deletes a dogu config key.
+	// It can throw an InternalError if any error happens.
+	// If the key is not existent no error will be returned.
+	Delete(ctx context.Context, doguName string, key string) error
 }
 
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.
