@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
@@ -21,7 +21,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	}
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
-	namespace, _, nameErr := serializer.SplitDoguName(cr.Spec.Name)
+	doguName, nameErr := common.QualifiedDoguNameFromString(cr.Spec.Name)
 	err := errors.Join(versionErr, nameErr)
 	if err != nil {
 		return nil, &domainservice.InternalError{
@@ -35,8 +35,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 		resourceVersion: cr.GetResourceVersion(),
 	}
 	return &ecosystem.DoguInstallation{
-		Namespace:          namespace,
-		Name:               cr.Name,
+		Name:               doguName,
 		Version:            version,
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
@@ -49,14 +48,14 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 	return &v1.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dogu.Name,
+			Name: string(dogu.Name.Name),
 			Labels: map[string]string{
 				"app":       "ces",
-				"dogu.name": dogu.Name,
+				"dogu.name": string(dogu.Name.Name),
 			},
 		},
 		Spec: v1.DoguSpec{
-			Name:    dogu.GetQualifiedName(),
+			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			Resources: v1.DoguResources{
 				DataVolumeSize: "",
@@ -100,7 +99,7 @@ type doguResourcesPatch struct {
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
-			Name:    dogu.GetQualifiedName(),
+			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			//Resources: doguResourcesPatch{
 			//	DataVolumeSize: "",

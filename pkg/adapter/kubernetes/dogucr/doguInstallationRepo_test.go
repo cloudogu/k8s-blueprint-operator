@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
@@ -56,8 +57,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		//then
 		require.NoError(t, err)
 		assert.Equal(t, &ecosystem.DoguInstallation{
-			Namespace:          "official",
-			Name:               "postgresql",
+			Name:               postgresDoguName,
 			Version:            version3_2_1_4,
 			Status:             ecosystem.DoguStatusInstalled,
 			Health:             ecosystem.AvailableHealthStatus,
@@ -189,16 +189,17 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		expectedDoguInstallations := map[string]*ecosystem.DoguInstallation{
+		expectedDoguInstallations := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
 			"postgresql": {
-				Namespace:          "official",
-				Name:               "postgresql",
+				Name:               postgresDoguName,
 				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
-				Namespace:          "official",
-				Name:               "ldap",
+				Name: common.QualifiedDoguName{
+					Namespace: "official",
+					Name:      "ldap",
+				},
 				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},

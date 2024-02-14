@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -26,10 +27,10 @@ var (
 func TestConvertToEffectiveBlueprint(t *testing.T) {
 	//given
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
-		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
@@ -118,10 +119,10 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 
 	//then
 	dogus := []domain.Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Namespace: "absent", Name: "dogu2", TargetState: domain.TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3212, TargetState: domain.TargetStatePresent},
-		{Namespace: "present", Name: "dogu4", Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "absent", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "present", Name: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{

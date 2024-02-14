@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
@@ -124,11 +125,11 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name)
+		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.Name)
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
-		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Namespace != doguMask.Namespace {
+		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Name.Namespace != doguMask.Name.Namespace {
 			errorList = append(errorList, fmt.Errorf(
 				"namespace switch is not allowed by default for dogu %q: activate the feature flag for that", doguMask.Name),
 			)
@@ -202,23 +203,22 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 
 func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	effectiveDogu := Dogu{
-		Namespace:   dogu.Namespace,
 		Name:        dogu.Name,
 		Version:     dogu.Version,
 		TargetState: dogu.TargetState,
 	}
-	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name)
+	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.Name)
 	if noMaskDoguErr == nil {
 		emptyVersion := core.Version{}
 		if maskDogu.Version != emptyVersion {
 			effectiveDogu.Version = maskDogu.Version
 		}
-		if maskDogu.Namespace != dogu.Namespace {
+		if maskDogu.Name.Namespace != dogu.Name.Namespace {
 			if spec.Config.AllowDoguNamespaceSwitch {
-				effectiveDogu.Namespace = maskDogu.Namespace
+				effectiveDogu.Name.Namespace = maskDogu.Name.Namespace
 			} else {
 				return Dogu{}, fmt.Errorf(
-					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.GetQualifiedName(), maskDogu.GetQualifiedName())
+					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.Name, maskDogu.Name)
 			}
 		}
 		effectiveDogu.TargetState = maskDogu.TargetState
@@ -239,7 +239,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[string]*ecosystem.DoguInstallation, installedComponents map[string]*ecosystem.ComponentInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[string]*ecosystem.ComponentInstallation) error {
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough

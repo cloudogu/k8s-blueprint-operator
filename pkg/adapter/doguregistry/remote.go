@@ -3,6 +3,7 @@ package doguregistry
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"strings"
 
 	"github.com/cloudogu/cesapp-lib/core"
@@ -19,8 +20,8 @@ func NewRemote(registry remote.Registry) *Remote {
 	return &Remote{registry: registry}
 }
 
-func (r *Remote) GetDogu(qualifiedDoguName string, version string) (*core.Dogu, error) {
-	dogu, err := r.registry.GetVersion(qualifiedDoguName, version)
+func (r *Remote) GetDogu(qualifiedDoguName common.QualifiedDoguName, version string) (*core.Dogu, error) {
+	dogu, err := r.registry.GetVersion(qualifiedDoguName.String(), version)
 	if err != nil {
 		// this is ugly, maybe do it better in cesapp-lib?
 		if strings.Contains(err.Error(), "404 not found") {
@@ -39,15 +40,15 @@ func (r *Remote) GetDogu(qualifiedDoguName string, version string) (*core.Dogu, 
 	return dogu, nil
 }
 
-func (r *Remote) GetDogus(dogusToLoad []domainservice.DoguToLoad) (map[string]*core.Dogu, error) {
-	dogus := make(map[string]*core.Dogu)
+func (r *Remote) GetDogus(dogusToLoad []domainservice.DoguToLoad) (map[common.QualifiedDoguName]*core.Dogu, error) {
+	dogus := make(map[common.QualifiedDoguName]*core.Dogu)
 
 	var errs []error
 	for _, doguRef := range dogusToLoad {
-		dogu, err := r.GetDogu(doguRef.QualifiedDoguName, doguRef.Version)
+		dogu, err := r.GetDogu(doguRef.DoguName, doguRef.Version)
 		errs = append(errs, err)
 
-		dogus[doguRef.QualifiedDoguName] = dogu
+		dogus[doguRef.DoguName] = dogu
 	}
 
 	return dogus, errors.Join(errs...)

@@ -18,7 +18,7 @@ type StateDiff struct {
 func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 	doguDiffs := make(map[string]DoguDiff, len(domainModel.DoguDiffs))
 	for _, doguDiff := range domainModel.DoguDiffs {
-		doguDiffs[doguDiff.DoguName] = convertToDoguDiffDTO(doguDiff)
+		doguDiffs[string(doguDiff.DoguName)] = convertToDoguDiffDTO(doguDiff)
 	}
 
 	componentDiffsV1 := make(map[string]ComponentDiff, len(domainModel.ComponentDiffs))

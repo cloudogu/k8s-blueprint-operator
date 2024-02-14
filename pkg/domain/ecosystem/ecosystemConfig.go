@@ -1,8 +1,12 @@
 package ecosystem
 
-type GlobalConfigKey struct {
-	Key   string
-	Value string
+import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+
+type GlobalConfigKey string
+type GlobalConfigValue string
+type GlobalConfigEntry struct {
+	Key   GlobalConfigKey
+	Value GlobalConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -10,9 +14,14 @@ type GlobalConfigKey struct {
 }
 
 type DoguConfigKey struct {
-	DoguName string
+	DoguName common.SimpleDoguName
 	Key      string
-	Value    string
+}
+type DoguConfigValue string
+
+type DoguConfigEntry struct {
+	Key   DoguConfigKey
+	Value DoguConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.

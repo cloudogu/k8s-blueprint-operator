@@ -3,11 +3,32 @@ package application
 import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var postfixQualifiedDoguName = common.QualifiedDoguName{
+	Namespace: "official",
+	Name:      "postfix",
+}
+
+var ldapQualifiedDoguName = common.QualifiedDoguName{
+	Namespace: "official",
+	Name:      "ldap",
+}
+
+var nginxIngressQualifiedDoguName = common.QualifiedDoguName{
+	Namespace: "k8s",
+	Name:      "nginx-ingress",
+}
+
+var nginxStaticQualifiedDoguName = common.QualifiedDoguName{
+	Namespace: "k8s",
+	Name:      "nginx-static",
+}
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should fail to load blueprint spec", func(t *testing.T) {
@@ -57,7 +78,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
@@ -101,7 +122,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[string]*ecosystem.DoguInstallation{}, nil)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
@@ -122,26 +143,22 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
 					{
-						Namespace:   "official",
-						Name:        "postfix",
+						Name:        postfixQualifiedDoguName,
 						Version:     mustParseVersion(t, "2.9.0"),
 						TargetState: domain.TargetStatePresent,
 					},
 					{
-						Namespace:   "official",
-						Name:        "ldap",
+						Name:        ldapQualifiedDoguName,
 						Version:     mustParseVersion(t, "1.2.3"),
 						TargetState: domain.TargetStatePresent,
 					},
 					{
-						Namespace:   "k8s",
-						Name:        "nginx-ingress",
+						Name:        nginxIngressQualifiedDoguName,
 						Version:     mustParseVersion(t, "1.8.5"),
 						TargetState: domain.TargetStatePresent,
 					},
 					{
-						Namespace:   "k8s",
-						Name:        "nginx-static",
+						Name:        nginxStaticQualifiedDoguName,
 						TargetState: domain.TargetStateAbsent,
 					},
 				},
@@ -154,10 +171,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		installedDogus := map[string]*ecosystem.DoguInstallation{
-			"ldap":          {Name: "ldap", Namespace: "official", Version: mustParseVersion(t, "1.1.1")},
-			"nginx-ingress": {Name: "nginx-ingress", Namespace: "k8s", Version: mustParseVersion(t, "1.8.5")},
-			"nginx-static":  {Name: "nginx-static", Namespace: "k8s", Version: mustParseVersion(t, "1.8.6")},
+		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+			"ldap":          {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.1.1")},
+			"nginx-ingress": {Name: nginxIngressQualifiedDoguName, Version: mustParseVersion(t, "1.8.5")},
+			"nginx-static":  {Name: nginxStaticQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
