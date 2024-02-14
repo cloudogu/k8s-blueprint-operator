@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -23,9 +24,9 @@ type ComponentDiff struct {
 // ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
 // determine the kind of changed if there is a drift between actual or desired state.
 type ComponentDiffState struct {
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
+	// Namespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
-	DistributionNamespace string `json:"distributionNamespace,omitempty"`
+	Namespace string `json:"distributionNamespace,omitempty"`
 	// Version contains the component's version.
 	Version string `json:"version,omitempty"`
 	// InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
@@ -53,14 +54,14 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 
 	return ComponentDiff{
 		Actual: ComponentDiffState{
-			DistributionNamespace: domainModel.Actual.DistributionNamespace,
-			Version:               actualVersion,
-			InstallationState:     domainModel.Actual.InstallationState.String(),
+			Namespace:         string(domainModel.Actual.Namespace),
+			Version:           actualVersion,
+			InstallationState: domainModel.Actual.InstallationState.String(),
 		},
 		Expected: ComponentDiffState{
-			DistributionNamespace: domainModel.Expected.DistributionNamespace,
-			Version:               expectedVersion,
-			InstallationState:     domainModel.Expected.InstallationState.String(),
+			Namespace:         string(domainModel.Expected.Namespace),
+			Version:           expectedVersion,
+			InstallationState: domainModel.Expected.InstallationState.String(),
 		},
 		NeededAction: ComponentAction(domainModel.NeededAction),
 	}
@@ -95,8 +96,8 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}
 
-	actualDistributionNamespace := dto.Actual.DistributionNamespace
-	expectedDistributionNamespace := dto.Expected.DistributionNamespace
+	actualDistributionNamespace := dto.Actual.Namespace
+	expectedDistributionNamespace := dto.Expected.Namespace
 
 	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr)
 	if err != nil {
@@ -104,16 +105,16 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	}
 
 	return domain.ComponentDiff{
-		Name: componentName,
+		Name: common.SimpleComponentName(componentName),
 		Actual: domain.ComponentDiffState{
-			DistributionNamespace: actualDistributionNamespace,
-			Version:               actualVersion,
-			InstallationState:     actualState,
+			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
+			Version:           actualVersion,
+			InstallationState: actualState,
 		},
 		Expected: domain.ComponentDiffState{
-			DistributionNamespace: expectedDistributionNamespace,
-			Version:               expectedVersion,
-			InstallationState:     expectedState,
+			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
+			Version:           expectedVersion,
+			InstallationState: expectedState,
 		},
 		NeededAction: domain.Action(dto.NeededAction),
 	}, nil

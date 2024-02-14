@@ -239,7 +239,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[string]*ecosystem.ComponentInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) error {
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough

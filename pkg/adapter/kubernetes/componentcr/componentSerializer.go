@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
@@ -25,30 +26,33 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		resourceVersion: cr.GetResourceVersion(),
 	}
 
+	name, err := common.NewQualifiedComponentName(common.ComponentNamespace(cr.Spec.Namespace), common.SimpleComponentName(cr.Name))
+	if err != nil {
+		return nil, err
+	}
+
 	return &ecosystem.ComponentInstallation{
-		DistributionNamespace: cr.Spec.Namespace,
-		Name:                  cr.Name,
-		DeployNamespace:       cr.Spec.DeployNamespace,
-		Version:               version,
-		Status:                cr.Status.Status,
-		Health:                ecosystem.HealthStatus(cr.Status.Health),
-		PersistenceContext:    persistenceContext,
+		Name:               name,
+		DeployNamespace:    cr.Spec.DeployNamespace,
+		Version:            version,
+		Status:             cr.Status.Status,
+		Health:             ecosystem.HealthStatus(cr.Status.Health),
+		PersistenceContext: persistenceContext,
 	}, nil
 }
 
 func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) *compV1.Component {
 	return &compV1.Component{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: componentInstallation.Name,
+			Name: string(componentInstallation.Name.Name),
 			Labels: map[string]string{
-				ComponentNameLabelKey:    componentInstallation.Name,
+				ComponentNameLabelKey:    string(componentInstallation.Name.Name),
 				ComponentVersionLabelKey: componentInstallation.Version.String(),
 			},
-			// empty Namespace????
 		},
 		Spec: compV1.ComponentSpec{
-			Namespace: componentInstallation.DistributionNamespace,
-			Name:      componentInstallation.Name,
+			Namespace: string(componentInstallation.Name.Namespace),
+			Name:      string(componentInstallation.Name.Name),
 			Version:   componentInstallation.Version.String(),
 			// TODO
 			DeployNamespace: "",
@@ -71,8 +75,8 @@ type componentSpecPatch struct {
 func toComponentCRPatch(component *ecosystem.ComponentInstallation) *componentCRPatch {
 	return &componentCRPatch{
 		Spec: componentSpecPatch{
-			Namespace: component.DistributionNamespace,
-			Name:      component.Name,
+			Namespace: string(component.Name.Namespace),
+			Name:      string(component.Name.Name),
 			Version:   component.Version.String(),
 		},
 	}
