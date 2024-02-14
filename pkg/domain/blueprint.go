@@ -26,7 +26,19 @@ type Blueprint struct {
 	RegistryConfigAbsent []string
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigEncrypted RegistryConfig
-	// TODO Add ComponentConfig for CRD fields like deployNamespace or helmValuesOverwrite.
+	// TODO: need to refactor this struct for configuration
+	//config
+	//	dogus
+	//		dogu1
+	//			normal
+	//				present
+	//				absent
+	//			sensible
+	//				present
+	//				absent
+	//	global
+	//		present
+	//		absent
 }
 
 type RegistryConfig map[string]map[string]interface{}
