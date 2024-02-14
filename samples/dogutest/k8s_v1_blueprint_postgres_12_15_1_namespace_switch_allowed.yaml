@@ -6,10 +6,10 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-postgres-12-15-2
+  name: blueprint-postgres-12-15-1-ns-switch-allowed
 spec:
   blueprint: |
-    {"blueprintApi":"v2","dogus":[{"name":"official/postgresql","version":"12.15-2","targetState":"present"}]}
+    {"blueprintApi":"v2","dogus":[{"name":"testing/postgresql","version":"12.15-1","targetState":"present"}]}
   blueprintMask: |
     {"blueprintMaskApi":"v1"}
   ignoreDoguHealth: false
