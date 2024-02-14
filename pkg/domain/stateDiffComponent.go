@@ -77,7 +77,7 @@ func (diff *ComponentDiffState) getSafeVersionString() string {
 	if diff.Version != nil {
 		return diff.Version.String()
 	} else {
-		return "0.0.0"
+		return ""
 	}
 }
 

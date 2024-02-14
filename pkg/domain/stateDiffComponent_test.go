@@ -404,9 +404,9 @@ func TestComponentDiffState_getSafeVersionString(t *testing.T) {
 			want:   "1.0.0",
 		},
 		{
-			name:   "should return 0.0.0 and no panic on nil version",
+			name:   "should return empty string and no panic on nil version",
 			fields: fields{Version: nil},
-			want:   "0.0.0",
+			want:   "",
 		},
 	}
 	for _, tt := range tests {
