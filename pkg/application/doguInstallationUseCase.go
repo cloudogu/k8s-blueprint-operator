@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
@@ -124,11 +125,14 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		return nil
 	case domain.ActionInstall:
 		logger.Info("install dogu")
-		newDogu := ecosystem.InstallDogu(doguDiff.Expected.Namespace, doguDiff.DoguName, doguDiff.Expected.Version)
+		newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
+			Namespace: doguDiff.Expected.Namespace,
+			Name:      doguDiff.DoguName,
+		}, doguDiff.Expected.Version)
 		return useCase.doguRepo.Create(ctx, newDogu)
 	case domain.ActionUninstall:
 		logger.Info("uninstall dogu")
-		return useCase.doguRepo.Delete(ctx, doguInstallation.Name)
+		return useCase.doguRepo.Delete(ctx, doguInstallation.Name.Name)
 	case domain.ActionUpgrade:
 		logger.Info("upgrade dogu")
 		doguInstallation.Upgrade(doguDiff.Expected.Version)

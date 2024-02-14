@@ -23,6 +23,8 @@ type BlueprintV2 struct {
 	Components []serializer.TargetComponent `json:"components,omitempty"`
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig RegistryConfig `json:"registryConfig,omitempty"`
+	//TODO: we need to introduce `SensibleDoguConfigAbsent` as we need to distinguish them for k8s later (we divide them into a configMap and a secret)
+
 	// Used to remove registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigAbsent []string `json:"registryConfigAbsent,omitempty"`
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades

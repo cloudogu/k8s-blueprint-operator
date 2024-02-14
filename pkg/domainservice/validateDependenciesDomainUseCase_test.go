@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -14,6 +15,24 @@ var (
 	version1_0_0_1, _ = core.ParseVersion("1.0.0-1")
 	version2_0_0_1, _ = core.ParseVersion("2.0.0-1")
 	version2_0_0_3, _ = core.ParseVersion("2.0.0-3")
+
+	officialNamespace   = common.DoguNamespace("official")
+	premiumNamespace    = common.DoguNamespace("premium")
+	k8sNamespace        = common.DoguNamespace("k8s")
+	helloworldNamespace = common.DoguNamespace("helloworld")
+
+	officialNginx         = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("nginx")}
+	officialRedmine       = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("redmine")}
+	officialRedmine2      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("redmine2")}
+	officialPostgres      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("postgres")}
+	premiumPostgres       = common.QualifiedDoguName{Namespace: premiumNamespace, Name: common.SimpleDoguName("postgres")}
+	officialK8sCesControl = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("k8s-ces-control")}
+	officialScm           = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("scm")}
+	k8sNginxStatic        = common.QualifiedDoguName{Namespace: k8sNamespace, Name: common.SimpleDoguName("nginx-static")}
+	k8sNginxIngress       = common.QualifiedDoguName{Namespace: k8sNamespace, Name: common.SimpleDoguName("nginx-ingress")}
+	officialPlantuml      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("plantuml")}
+	officialUnknownDogu   = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("unknownDogu")}
+	helloworldBluespice   = common.QualifiedDoguName{Namespace: helloworldNamespace, Name: common.SimpleDoguName("bluespice")}
 
 	ctx = context.Background()
 )
@@ -28,14 +47,14 @@ func Test_checkDependencyVersion(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "exact version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_1}, expectedVersion: "2.0.0-1"}, wantErr: false},
-		{name: "has lower version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_1}, expectedVersion: ">=2.0.0-2"}, wantErr: true},
-		{name: "has higher version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_3}, expectedVersion: ">=2.0.0-2"}, wantErr: false},
-		{name: "needs lower version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_3}, expectedVersion: "<=2.0.0-2"}, wantErr: true},
-		{name: "needs higher version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_1}, expectedVersion: ">2.0.0-1"}, wantErr: true},
-		{name: "no constraint", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_1}, expectedVersion: ""}, wantErr: false},
-		{name: "not parsable expected version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: version2_0_0_1}, expectedVersion: "abc"}, wantErr: true},
-		{name: "not parsable actual version", args: args{doguInBlueprint: domain.Dogu{Name: "nginx", Version: core.Version{Raw: "abc"}}, expectedVersion: "2.0.0-1"}, wantErr: true},
+		{name: "exact version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: "2.0.0-1"}, wantErr: false},
+		{name: "has lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ">=2.0.0-2"}, wantErr: true},
+		{name: "has higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_3}, expectedVersion: ">=2.0.0-2"}, wantErr: false},
+		{name: "needs lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_3}, expectedVersion: "<=2.0.0-2"}, wantErr: true},
+		{name: "needs higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ">2.0.0-1"}, wantErr: true},
+		{name: "no constraint", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ""}, wantErr: false},
+		{name: "not parsable expected version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: "abc"}, wantErr: true},
+		{name: "not parsable actual version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: core.Version{Raw: "abc"}}, expectedVersion: "2.0.0-1"}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -61,8 +80,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
-						{Namespace: "official", Name: "postgres", Version: version1_0_0_1},
+						{Name: officialRedmine, Version: version1_0_0_1},
+						{Name: officialPostgres, Version: version1_0_0_1},
 					},
 				},
 			},
@@ -73,8 +92,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
-						{Namespace: "premium", Name: "postgres", Version: version1_0_0_1},
+						{Name: officialRedmine, Version: version1_0_0_1},
+						{Name: officialPostgres, Version: version1_0_0_1},
 					},
 				},
 			},
@@ -85,19 +104,19 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
+						{Name: officialRedmine, Version: version1_0_0_1},
 					},
 				},
 			},
 			wantErr:       true,
-			errorContains: "dependencies for dogu 'redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
+			errorContains: "dependencies for dogu 'official/redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
 		},
 		{
 			name: "unknown dogu",
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Namespace: "official", Name: "redmine2", Version: version1_0_0_1},
+						{Name: officialRedmine2, Version: version1_0_0_1},
 					},
 				},
 			},
@@ -109,7 +128,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Namespace: "official", Name: "k8s-ces-control", Version: version1_0_0_1},
+						{Name: officialK8sCesControl, Version: version1_0_0_1},
 					},
 				},
 			},
@@ -119,7 +138,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			name: "missing nginx-static and nginx ingress on nginx dependency",
 			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "scm", Version: version1_0_0_1},
+					{Name: officialScm, Version: version1_0_0_1},
 				},
 			}},
 			wantErr: true,
@@ -128,9 +147,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			name: "ok with nginx dependency",
 			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "plantuml", Version: version1_0_0_1},
-					{Namespace: "k8s", Name: "nginx-static", Version: version1_0_0_1},
-					{Namespace: "k8s", Name: "nginx-ingress", Version: version1_0_0_1},
+					{Name: officialPlantuml, Version: version1_0_0_1},
+					{Name: k8sNginxStatic, Version: version1_0_0_1},
+					{Name: k8sNginxIngress, Version: version1_0_0_1},
 				},
 			}},
 			wantErr: false,
@@ -159,7 +178,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFo
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
-			{Namespace: "official", Name: "unknownDogu", Version: version1_0_0_1},
+			{Name: officialUnknownDogu, Version: version1_0_0_1},
 		},
 	})
 	// then
@@ -188,8 +207,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_colle
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
-			{Namespace: "official", Name: "redmine", Version: version1_0_0_1},
-			{Namespace: "helloworld", Name: "bluespice", Version: version1_0_0_1},
+			{Name: officialRedmine, Version: version1_0_0_1},
+			{Name: helloworldBluespice, Version: version1_0_0_1},
 		},
 	})
 	// then
@@ -197,6 +216,6 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_colle
 	var expectedErrorType *domain.InvalidBlueprintError
 	require.ErrorAs(t, err, &expectedErrorType)
 	assert.ErrorContains(t, err, "dependencies are not satisfied in effective blueprint")
-	assert.ErrorContains(t, err, "dependencies for dogu 'redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint")
-	assert.ErrorContains(t, err, "dependencies for dogu 'bluespice' are not satisfied in blueprint: dependency 'official/mysql' in version '1.0.0-1' is not a present dogu in the effective blueprint")
+	assert.ErrorContains(t, err, "dependencies for dogu 'official/redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint")
+	assert.ErrorContains(t, err, "dependencies for dogu 'helloworld/bluespice' are not satisfied in blueprint: dependency 'official/mysql' in version '1.0.0-1' is not a present dogu in the effective blueprint")
 }

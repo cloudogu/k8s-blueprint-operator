@@ -5,12 +5,18 @@ import (
 	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var redmineQualifiedDoguName = common.QualifiedDoguName{
+	Namespace: "official",
+	Name:      "redmine",
+}
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	//given
@@ -160,7 +166,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
 	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
 
-	registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{}).Return(map[string]*core.Dogu{}, nil)
+	registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{}).Return(map[common.QualifiedDoguName]*core.Dogu{}, nil)
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 		Id:     "testBlueprint1",
@@ -195,8 +201,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	blueprintSpec := &domain.BlueprintSpec{
 		Id: "testBlueprint1",
 		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
-			Namespace:   "official",
-			Name:        "redmine",
+			Name:        redmineQualifiedDoguName,
 			Version:     version,
 			TargetState: domain.TargetStatePresent,
 		}}},
@@ -207,8 +212,8 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 
 	registryMock.EXPECT().GetDogus([]domainservice.DoguToLoad{
 		{
-			QualifiedDoguName: "official/redmine",
-			Version:           version.Raw,
+			DoguName: redmineQualifiedDoguName,
+			Version:  version.Raw,
 		},
 	}).Return(nil, errors.New("dogu not found for testing"))
 

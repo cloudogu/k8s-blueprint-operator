@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"golang.org/x/exp/maps"
 
 	"github.com/cloudogu/cesapp-lib/core"
@@ -31,7 +32,7 @@ func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int,
 
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
-	DoguName     string
+	DoguName     common.SimpleDoguName
 	Actual       DoguDiffState
 	Expected     DoguDiffState
 	NeededAction Action
@@ -39,7 +40,7 @@ type DoguDiff struct {
 
 // DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
-	Namespace         string
+	Namespace         common.DoguNamespace
 	Version           core.Version
 	InstallationState TargetState
 }
@@ -67,20 +68,20 @@ func (diff *DoguDiffState) String() string {
 
 // determineDoguDiffs creates DoguDiffs for all dogus in the blueprint and all installed dogus as well.
 // see determineDoguDiff for more information.
-func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[string]*ecosystem.DoguInstallation) []DoguDiff {
-	var doguDiffs = map[string]DoguDiff{}
+func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation) []DoguDiff {
+	var doguDiffs = map[common.SimpleDoguName]DoguDiff{}
 	for _, blueprintDogu := range blueprintDogus {
-		installedDogu := installedDogus[blueprintDogu.Name]
-		doguDiffs[blueprintDogu.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
+		installedDogu := installedDogus[blueprintDogu.Name.Name]
+		doguDiffs[blueprintDogu.Name.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
 	}
 	for _, installedDogu := range installedDogus {
-		blueprintDogu, notFound := FindDoguByName(blueprintDogus, installedDogu.Name)
+		blueprintDogu, notFound := FindDoguByName(blueprintDogus, installedDogu.Name.Name)
 
 		if notFound == nil {
-			doguDiffs[installedDogu.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
+			doguDiffs[installedDogu.Name.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
 		} else {
 			// if no dogu with this name in blueprint, use nil to indicate that
-			doguDiffs[installedDogu.Name] = determineDoguDiff(nil, installedDogu)
+			doguDiffs[installedDogu.Name.Name] = determineDoguDiff(nil, installedDogu)
 		}
 	}
 	return maps.Values(doguDiffs)
@@ -92,16 +93,16 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[string]*ecosys
 // returns a DoguDiff
 func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstallation) DoguDiff {
 	var expectedState, actualState DoguDiffState
-	doguName := "" // either blueprintDogu or installedDogu could be nil
+	var doguName common.SimpleDoguName = "" // either blueprintDogu or installedDogu could be nil
 
 	if installedDogu == nil {
 		actualState = DoguDiffState{
 			InstallationState: TargetStateAbsent,
 		}
 	} else {
-		doguName = installedDogu.Name
+		doguName = installedDogu.Name.Name
 		actualState = DoguDiffState{
-			Namespace:         installedDogu.Namespace,
+			Namespace:         installedDogu.Name.Namespace,
 			Version:           installedDogu.Version,
 			InstallationState: TargetStatePresent,
 		}
@@ -110,9 +111,9 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	if blueprintDogu == nil {
 		expectedState = actualState
 	} else {
-		doguName = blueprintDogu.Name
+		doguName = blueprintDogu.Name.Name
 		expectedState = DoguDiffState{
-			Namespace:         blueprintDogu.Namespace,
+			Namespace:         blueprintDogu.Name.Namespace,
 			Version:           blueprintDogu.Version,
 			InstallationState: blueprintDogu.TargetState,
 		}

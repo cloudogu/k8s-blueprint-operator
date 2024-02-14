@@ -18,17 +18,8 @@ func Test_TargetDogu_validate_errorOnMissingDoguName(t *testing.T) {
 	assert.Contains(t, err.Error(), "dogu name must not be empty")
 }
 
-func Test_TargetDogu_validate_errorOnEmptyDoguName(t *testing.T) {
-	dogu := Dogu{Name: "", Version: version3212, TargetState: TargetStatePresent}
-
-	err := dogu.validate()
-
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu name must not be empty")
-}
-
 func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) {
-	dogu := Dogu{Name: "present/dogu", TargetState: TargetStatePresent}
+	dogu := Dogu{Name: officialDogu1, TargetState: TargetStatePresent}
 
 	err := dogu.validate()
 
@@ -37,7 +28,7 @@ func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) 
 }
 
 func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := Dogu{Namespace: "present", Name: "dogu", TargetState: TargetStateAbsent}
+	dogu := Dogu{Name: officialDogu1, TargetState: TargetStateAbsent}
 
 	err := dogu.validate()
 
@@ -45,7 +36,7 @@ func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_defaultToPresentState(t *testing.T) {
-	dogu := Dogu{Namespace: "present", Name: "dogu", Version: version1_2_3}
+	dogu := Dogu{Name: officialDogu1, Version: version1_2_3}
 
 	err := dogu.validate()
 
@@ -54,7 +45,7 @@ func Test_TargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
-	dogu := Dogu{Namespace: "official", Name: "dogu1", TargetState: -1}
+	dogu := Dogu{Name: officialDogu1, TargetState: -1}
 
 	err := dogu.validate()
 

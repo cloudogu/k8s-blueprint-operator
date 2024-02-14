@@ -2,6 +2,7 @@ package dogucr
 
 import (
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
 	"github.com/stretchr/testify/assert"
@@ -9,6 +10,11 @@ import (
 	"reflect"
 	"testing"
 )
+
+var postgresDoguName = common.QualifiedDoguName{
+	Namespace: common.DoguNamespace("official"),
+	Name:      common.SimpleDoguName("postgresql"),
+}
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
@@ -48,11 +54,10 @@ func Test_parseDoguCR(t *testing.T) {
 				},
 			}},
 			want: &ecosystem.DoguInstallation{
-				Namespace: "official",
-				Name:      "postgresql",
-				Version:   version3_2_1_4,
-				Status:    ecosystem.DoguStatusInstalled,
-				Health:    ecosystem.AvailableHealthStatus,
+				Name:    postgresDoguName,
+				Version: version3_2_1_4,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
@@ -108,11 +113,10 @@ func Test_toDoguCR(t *testing.T) {
 		{
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
-				Namespace: "official",
-				Name:      "postgresql",
-				Version:   version3_2_1_4,
-				Status:    ecosystem.DoguStatusInstalled,
-				Health:    ecosystem.AvailableHealthStatus,
+				Name:    postgresDoguName,
+				Version: version3_2_1_4,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
@@ -160,11 +164,10 @@ func Test_toDoguCRPatch(t *testing.T) {
 		{
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
-				Namespace: "official",
-				Name:      "postgresql",
-				Version:   version3_2_1_4,
-				Status:    ecosystem.DoguStatusInstalled,
-				Health:    ecosystem.AvailableHealthStatus,
+				Name:    postgresDoguName,
+				Version: version3_2_1_4,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
@@ -202,11 +205,10 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 		{
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
-				Namespace: "official",
-				Name:      "postgresql",
-				Version:   version3_2_1_4,
-				Status:    ecosystem.DoguStatusInstalled,
-				Health:    ecosystem.AvailableHealthStatus,
+				Name:    postgresDoguName,
+				Version: version3_2_1_4,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},

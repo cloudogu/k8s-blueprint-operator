@@ -3,15 +3,13 @@ package ecosystem
 import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // DoguInstallation represents an installed or to be installed dogu in the ecosystem.
 type DoguInstallation struct {
-	// Namespace is the namespace of the dogu, e.g. 'official' like in 'official/postgresql'
-	Namespace string
-	// Name is the simple name of the dogu, e.g. 'postgresql' like in 'official/postgresql'.
-	// the name is also the id of the dogu in the ecosystem as only one dogu with this name can be installed.
-	Name string
+	// Name identifies the dogu by simple dogu name and namespace.
+	Name common.QualifiedDoguName
 	// Version is the version of the dogu
 	Version core.Version
 	// Status is the installation status of the dogu in the ecosystem
@@ -43,16 +41,10 @@ type UpgradeConfig struct {
 	AllowNamespaceSwitch bool `json:"allowNamespaceSwitch,omitempty"`
 }
 
-// GetQualifiedName returns the dogu name with namespace, e.g. official/postgresql
-func (dogu *DoguInstallation) GetQualifiedName() string {
-	return fmt.Sprintf("%s/%s", dogu.Namespace, dogu.Name)
-}
-
 // InstallDogu is a factory for new DoguInstallation's.
-func InstallDogu(namespace string, doguName string, version core.Version) *DoguInstallation {
+func InstallDogu(name common.QualifiedDoguName, version core.Version) *DoguInstallation {
 	return &DoguInstallation{
-		Namespace:     namespace,
-		Name:          doguName,
+		Name:          name,
 		Version:       version,
 		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
 	}
@@ -67,11 +59,11 @@ func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {
 	dogu.UpgradeConfig.AllowNamespaceSwitch = false
 }
 
-func (dogu *DoguInstallation) SwitchNamespace(newNamespace string, newVersion core.Version, isNamespaceSwitchAllowed bool) error {
+func (dogu *DoguInstallation) SwitchNamespace(newNamespace common.DoguNamespace, newVersion core.Version, isNamespaceSwitchAllowed bool) error {
 	if !isNamespaceSwitchAllowed {
-		return fmt.Errorf("not allowed to switch dogu namespace from %q to %q", dogu.Namespace, newNamespace)
+		return fmt.Errorf("not allowed to switch dogu namespace from %q to %q", dogu.Name.Namespace, newNamespace)
 	}
-	dogu.Namespace = newNamespace
+	dogu.Name.Namespace = newNamespace
 	dogu.Version = newVersion
 	dogu.UpgradeConfig.AllowNamespaceSwitch = true
 	return nil

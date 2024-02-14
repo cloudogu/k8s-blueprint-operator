@@ -19,10 +19,10 @@ var (
 
 func Test_validate_ok(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "absent", Name: "dogu1", Version: version3_2_1_0, TargetState: TargetStateAbsent},
-		{Namespace: "absent", Name: "dogu2", TargetState: TargetStateAbsent},
-		{Namespace: "present", Name: "dogu3", Version: version3_2_1_0, TargetState: TargetStatePresent},
-		{Namespace: "present", Name: "dogu4", Version: version3213},
+		{Name: officialDogu1, Version: version3_2_1_0, TargetState: TargetStateAbsent},
+		{Name: officialDogu2, TargetState: TargetStateAbsent},
+		{Name: officialDogu3, Version: version3_2_1_0, TargetState: TargetStatePresent},
+		{Name: officialNexus, Version: version3213},
 	}
 
 	components := []Component{
@@ -39,7 +39,7 @@ func Test_validate_ok(t *testing.T) {
 }
 func Test_validate_multipleErrors(t *testing.T) {
 	dogus := []Dogu{
-		{Version: version3212},
+		{Version: version3212, TargetState: 666},
 	}
 	components := []Component{
 		{Version: compVersion3212},
@@ -51,17 +51,19 @@ func Test_validate_multipleErrors(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "blueprint is invalid")
-	assert.Contains(t, err.Error(), "dogu name must not be empty")
+	assert.Contains(t, err.Error(), "dogu target state is invalid")
 	assert.Contains(t, err.Error(), "component name must not be empty")
 	assert.Contains(t, err.Error(), `distribution namespace of component "my-component" must not be empty`)
 }
 
 func Test_validateDogus_ok(t *testing.T) {
 	dogus := []Dogu{
-		{Namespace: "absent", Name: "dogu", Version: version3_2_1_4, TargetState: TargetStateAbsent},
-		{Namespace: "absent", Name: "versionIsOptionalForStateAbsent", TargetState: TargetStateAbsent},
-		{Namespace: "present", Name: "dogu", Version: version3212, TargetState: TargetStatePresent},
-		{Namespace: "present", Name: "StateDefaultsToPresent", Version: version3212},
+		{Name: officialDogu1, Version: version3_2_1_4, TargetState: TargetStateAbsent},
+		//versionIsOptionalForStateAbsent
+		{Name: officialDogu2, TargetState: TargetStateAbsent},
+		{Name: officialDogu3, Version: version3212, TargetState: TargetStatePresent},
+		//StateDefaultsToPresent
+		{Name: officialNexus, Version: version3212},
 	}
 	blueprint := Blueprint{Dogus: dogus}
 
@@ -72,15 +74,15 @@ func Test_validateDogus_ok(t *testing.T) {
 
 func Test_validateDogus_multipleErrors(t *testing.T) {
 	dogus := []Dogu{
-		{Name: "test"},
-		{Version: version3212},
+		{Name: officialDogu1},
+		{Name: officialDogu2, TargetState: 666},
 	}
 	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.validateDogus()
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "dogu name must not be empty")
+	assert.Contains(t, err.Error(), "dogu target state is invalid")
 	assert.Contains(t, err.Error(), "dogu version must not be empty")
 }
 
@@ -111,10 +113,10 @@ func Test_validateComponents_multipleErrors(t *testing.T) {
 
 func Test_validateDoguUniqueness(t *testing.T) {
 	dogus := []Dogu{
-		{Name: "present/dogu1", Version: version3_2_1_0, TargetState: TargetStatePresent},
-		{Name: "present/dogu1", Version: version3213},
-		{Name: "present/dogu2", Version: version3213},
-		{Name: "present/dogu2", Version: version3213},
+		{Name: officialDogu1, Version: version3_2_1_0, TargetState: TargetStatePresent},
+		{Name: officialDogu1, Version: version3213},
+		{Name: officialDogu2, Version: version3213},
+		{Name: officialDogu2, Version: version3213},
 	}
 
 	blueprint := Blueprint{Dogus: dogus}
@@ -123,8 +125,8 @@ func Test_validateDoguUniqueness(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "there are duplicate dogus")
-	assert.Contains(t, err.Error(), "present/dogu1")
-	assert.Contains(t, err.Error(), "present/dogu2")
+	assert.Contains(t, err.Error(), "dogu1")
+	assert.Contains(t, err.Error(), "dogu2")
 }
 
 func Test_validateComponentUniqueness(t *testing.T) {
@@ -180,9 +182,9 @@ func TestSetDoguRegistryKeysSuccessful(t *testing.T) {
 	dogu2 := map[string]interface{}{"keyDogu2": "valDogu2"}
 	dogu3 := map[string]interface{}{"keyDogu3": "valDogu3"}
 	dogus := []Dogu{
-		{Namespace: "present", Name: "dogu1", Version: version3_2_1_0, TargetState: TargetStatePresent},
-		{Namespace: "present", Name: "dogu2", Version: version3213, TargetState: TargetStatePresent},
-		{Namespace: "present", Name: "dogu3", Version: version3213, TargetState: TargetStatePresent},
+		{Name: officialDogu1, Version: version3_2_1_0, TargetState: TargetStatePresent},
+		{Name: officialDogu2, Version: version3213, TargetState: TargetStatePresent},
+		{Name: officialDogu3, Version: version3213, TargetState: TargetStatePresent},
 	}
 
 	blueprint := Blueprint{

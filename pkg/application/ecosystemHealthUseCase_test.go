@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"testing"
 	"time"
 
@@ -27,7 +28,7 @@ func TestNewEcosystemHealthUseCase(t *testing.T) {
 func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+			DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 				ecosystem.AvailableHealthStatus:   {"postgresql"},
 				ecosystem.UnavailableHealthStatus: {"postfix"},
 				ecosystem.PendingHealthStatus:     {"scm"},
@@ -74,7 +75,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 	t.Run("ok, ignore component health", func(t *testing.T) {
 		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+			DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 				ecosystem.AvailableHealthStatus:   {"postgresql"},
 				ecosystem.UnavailableHealthStatus: {"postfix"},
 				ecosystem.PendingHealthStatus:     {"scm"},
@@ -112,7 +113,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 	t.Run("error checking component health", func(t *testing.T) {
 		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+			DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 				ecosystem.AvailableHealthStatus:   {"postgresql"},
 				ecosystem.UnavailableHealthStatus: {"postfix"},
 				ecosystem.PendingHealthStatus:     {"scm"},
@@ -279,7 +280,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 					doguMock := newMockDoguInstallationUseCase(t)
 					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
 						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 								ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
 							}}, nil
 						})
@@ -300,7 +301,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 				},
 			},
 			want: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 					ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
 				}},
 				ComponentHealth: ecosystem.ComponentHealthResult{},
@@ -316,7 +317,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 					doguMock := newMockDoguInstallationUseCase(t)
 					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
 						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 								ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
 							}}, nil
 						})
@@ -339,7 +340,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 				},
 			},
 			want: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 					ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
 				}},
 				ComponentHealth: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]ecosystem.ComponentName{
