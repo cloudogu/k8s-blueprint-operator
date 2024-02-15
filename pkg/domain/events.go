@@ -241,34 +241,34 @@ func (e CompletedEvent) Message() string {
 	return "maintenance mode deactivated"
 }
 
-type ApplyDoguConfigEvent struct{}
+type ApplyRegistryConfigEvent struct{}
 
-func (e ApplyDoguConfigEvent) Name() string {
+func (e ApplyRegistryConfigEvent) Name() string {
 	return "apply dogu config"
 }
 
-func (e ApplyDoguConfigEvent) Message() string {
+func (e ApplyRegistryConfigEvent) Message() string {
 	return ""
 }
 
-type ApplyDoguConfigFailedEvent struct {
+type ApplyRegistryConfigFailedEvent struct {
 	err error
 }
 
-func (e ApplyDoguConfigFailedEvent) Name() string {
+func (e ApplyRegistryConfigFailedEvent) Name() string {
 	return "ApplyDoguConfigFailed"
 }
 
-func (e ApplyDoguConfigFailedEvent) Message() string {
+func (e ApplyRegistryConfigFailedEvent) Message() string {
 	return e.err.Error()
 }
 
-type DoguConfigAppliedEvent struct{}
+type RegistryConfigAppliedEvent struct{}
 
-func (e DoguConfigAppliedEvent) Name() string {
+func (e RegistryConfigAppliedEvent) Name() string {
 	return "dogu config applied"
 }
 
-func (e DoguConfigAppliedEvent) Message() string {
+func (e RegistryConfigAppliedEvent) Message() string {
 	return ""
 }

@@ -15,21 +15,21 @@ func NewEtcdGlobalConfigRepository(configStore globalConfigStore) *EtcdGlobalCon
 }
 
 func (e EtcdGlobalConfigRepository) GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (e EtcdGlobalConfigRepository) Save(ctx context.Context, entry *ecosystem.GlobalConfigEntry) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
 func (e EtcdGlobalConfigRepository) SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigEntry) error {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
-func (e EtcdGlobalConfigRepository) Delete(ctx context.Context, key common.SimpleDoguName) error {
-	//TODO implement me
+func (e EtcdGlobalConfigRepository) Delete(ctx context.Context, key common.GlobalConfigKey) error {
+	// TODO implement me
 	panic("implement me")
 }

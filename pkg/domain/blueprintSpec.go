@@ -59,10 +59,10 @@ const (
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
-	StatusPhaseCompleted             StatusPhase = "completed"
-	StatusPhaseApplyDoguConfig       StatusPhase = "applyDoguConfig"
-	StatusPhaseApplyDoguConfigFailed StatusPhase = "applyDoguConfigFailed"
-	StatusPhaseDoguConfigApplied     StatusPhase = "doguConfigApplied"
+	StatusPhaseCompleted                 StatusPhase = "completed"
+	StatusPhaseApplyRegistryConfig       StatusPhase = "applyRegistryConfig"
+	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
+	StatusPhaseRegistryConfigApplied     StatusPhase = "registryConfigApplied"
 )
 
 type BlueprintConfiguration struct {
@@ -392,19 +392,19 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	}
 }
 
-func (spec *BlueprintSpec) StartApplyDoguConfig() {
-	spec.Status = StatusPhaseApplyDoguConfig
-	spec.Events = append(spec.Events, ApplyDoguConfigEvent{})
+func (spec *BlueprintSpec) StartApplyRegistryConfig() {
+	spec.Status = StatusPhaseApplyRegistryConfig
+	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
 }
 
-func (spec *BlueprintSpec) MarkApplyDoguConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyDoguConfigFailed
-	spec.Events = append(spec.Events, ApplyDoguConfigFailedEvent{err: err})
+func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyRegistryConfigFailed
+	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
 }
 
-func (spec *BlueprintSpec) MarkDoguConfigApplied() {
-	spec.Status = StatusPhaseDoguConfigApplied
-	spec.Events = append(spec.Events, DoguConfigAppliedEvent{})
+func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
+	spec.Status = StatusPhaseRegistryConfigApplied
+	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

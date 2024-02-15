@@ -21,8 +21,8 @@ func (_m *mockDoguConfigUseCase) EXPECT() *mockDoguConfigUseCase_Expecter {
 	return &mockDoguConfigUseCase_Expecter{mock: &_m.Mock}
 }
 
-// ApplyDoguConfig provides a mock function with given fields: ctx, blueprintId
-func (_m *mockDoguConfigUseCase) ApplyDoguConfig(ctx context.Context, blueprintId string) error {
+// ApplyConfig provides a mock function with given fields: ctx, blueprintId
+func (_m *mockDoguConfigUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
 	ret := _m.Called(ctx, blueprintId)
 
 	var r0 error
@@ -35,31 +35,31 @@ func (_m *mockDoguConfigUseCase) ApplyDoguConfig(ctx context.Context, blueprintI
 	return r0
 }
 
-// mockDoguConfigUseCase_ApplyDoguConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyDoguConfig'
-type mockDoguConfigUseCase_ApplyDoguConfig_Call struct {
+// mockDoguConfigUseCase_ApplyConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyConfig'
+type mockDoguConfigUseCase_ApplyConfig_Call struct {
 	*mock.Call
 }
 
-// ApplyDoguConfig is a helper method to define mock.On call
+// ApplyConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - blueprintId string
-func (_e *mockDoguConfigUseCase_Expecter) ApplyDoguConfig(ctx interface{}, blueprintId interface{}) *mockDoguConfigUseCase_ApplyDoguConfig_Call {
-	return &mockDoguConfigUseCase_ApplyDoguConfig_Call{Call: _e.mock.On("ApplyDoguConfig", ctx, blueprintId)}
+func (_e *mockDoguConfigUseCase_Expecter) ApplyConfig(ctx interface{}, blueprintId interface{}) *mockDoguConfigUseCase_ApplyConfig_Call {
+	return &mockDoguConfigUseCase_ApplyConfig_Call{Call: _e.mock.On("ApplyConfig", ctx, blueprintId)}
 }
 
-func (_c *mockDoguConfigUseCase_ApplyDoguConfig_Call) Run(run func(ctx context.Context, blueprintId string)) *mockDoguConfigUseCase_ApplyDoguConfig_Call {
+func (_c *mockDoguConfigUseCase_ApplyConfig_Call) Run(run func(ctx context.Context, blueprintId string)) *mockDoguConfigUseCase_ApplyConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *mockDoguConfigUseCase_ApplyDoguConfig_Call) Return(_a0 error) *mockDoguConfigUseCase_ApplyDoguConfig_Call {
+func (_c *mockDoguConfigUseCase_ApplyConfig_Call) Return(_a0 error) *mockDoguConfigUseCase_ApplyConfig_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *mockDoguConfigUseCase_ApplyDoguConfig_Call) RunAndReturn(run func(context.Context, string) error) *mockDoguConfigUseCase_ApplyDoguConfig_Call {
+func (_c *mockDoguConfigUseCase_ApplyConfig_Call) RunAndReturn(run func(context.Context, string) error) *mockDoguConfigUseCase_ApplyConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

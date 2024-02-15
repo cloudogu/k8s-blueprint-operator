@@ -136,7 +136,7 @@ type GlobalConfigEntryRepository interface {
 	// Delete deletes a global config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key ecosystem.GlobalConfigKey) error
+	Delete(ctx context.Context, key common.GlobalConfigKey) error
 }
 
 type DoguConfigEntryRepository interface {
