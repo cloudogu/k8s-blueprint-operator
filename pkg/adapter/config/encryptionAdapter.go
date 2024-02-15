@@ -8,6 +8,10 @@ import (
 type PublicKeyConfigEncryptionAdapter struct {
 }
 
+func NewPublicKeyConfigEncryptionAdapter() *PublicKeyConfigEncryptionAdapter {
+	return &PublicKeyConfigEncryptionAdapter{}
+}
+
 func (p PublicKeyConfigEncryptionAdapter) Encrypt(
 	ctx context.Context,
 	name common.SimpleDoguName,
