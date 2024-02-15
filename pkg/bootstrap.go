@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	config3 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	etcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -100,10 +100,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
+	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
