@@ -1,11 +1,11 @@
 package domain
 
 type DoguConfigDiff struct {
-	SensibleDoguConfigDiff SensibleDoguConfigDiff
-	NormalDoguConfigDiff   NormalDoguConfigDiff
+	NormalDoguConfigDiff    NormalDoguConfigDiff
+	SensitiveDoguConfigDiff SensitiveDoguConfigDiff
 }
 
-type SensibleDoguConfigDiff []ConfigKeyDiff
+type SensitiveDoguConfigDiff []ConfigKeyDiff
 
 type NormalDoguConfigDiff []ConfigKeyDiff
 

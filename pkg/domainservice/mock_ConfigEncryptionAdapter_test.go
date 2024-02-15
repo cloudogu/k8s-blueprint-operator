@@ -7,6 +7,8 @@ import (
 
 	common "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
+	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -24,21 +26,21 @@ func (_m *MockConfigEncryptionAdapter) EXPECT() *MockConfigEncryptionAdapter_Exp
 }
 
 // Encrypt provides a mock function with given fields: ctx, doguName, configValue
-func (_m *MockConfigEncryptionAdapter) Encrypt(ctx context.Context, doguName common.SimpleDoguName, configValue string) (string, error) {
+func (_m *MockConfigEncryptionAdapter) Encrypt(ctx context.Context, doguName common.SimpleDoguName, configValue ecosystem.DoguConfigValue) (ecosystem.DoguConfigValue, error) {
 	ret := _m.Called(ctx, doguName, configValue)
 
-	var r0 string
+	var r0 ecosystem.DoguConfigValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, string) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, ecosystem.DoguConfigValue) (ecosystem.DoguConfigValue, error)); ok {
 		return rf(ctx, doguName, configValue)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, string) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, ecosystem.DoguConfigValue) ecosystem.DoguConfigValue); ok {
 		r0 = rf(ctx, doguName, configValue)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(ecosystem.DoguConfigValue)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleDoguName, string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleDoguName, ecosystem.DoguConfigValue) error); ok {
 		r1 = rf(ctx, doguName, configValue)
 	} else {
 		r1 = ret.Error(1)
@@ -55,46 +57,46 @@ type MockConfigEncryptionAdapter_Encrypt_Call struct {
 // Encrypt is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doguName common.SimpleDoguName
-//   - configValue string
+//   - configValue ecosystem.DoguConfigValue
 func (_e *MockConfigEncryptionAdapter_Expecter) Encrypt(ctx interface{}, doguName interface{}, configValue interface{}) *MockConfigEncryptionAdapter_Encrypt_Call {
 	return &MockConfigEncryptionAdapter_Encrypt_Call{Call: _e.mock.On("Encrypt", ctx, doguName, configValue)}
 }
 
-func (_c *MockConfigEncryptionAdapter_Encrypt_Call) Run(run func(ctx context.Context, doguName common.SimpleDoguName, configValue string)) *MockConfigEncryptionAdapter_Encrypt_Call {
+func (_c *MockConfigEncryptionAdapter_Encrypt_Call) Run(run func(ctx context.Context, doguName common.SimpleDoguName, configValue ecosystem.DoguConfigValue)) *MockConfigEncryptionAdapter_Encrypt_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.SimpleDoguName), args[2].(string))
+		run(args[0].(context.Context), args[1].(common.SimpleDoguName), args[2].(ecosystem.DoguConfigValue))
 	})
 	return _c
 }
 
-func (_c *MockConfigEncryptionAdapter_Encrypt_Call) Return(_a0 string, _a1 error) *MockConfigEncryptionAdapter_Encrypt_Call {
+func (_c *MockConfigEncryptionAdapter_Encrypt_Call) Return(_a0 ecosystem.DoguConfigValue, _a1 error) *MockConfigEncryptionAdapter_Encrypt_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConfigEncryptionAdapter_Encrypt_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName, string) (string, error)) *MockConfigEncryptionAdapter_Encrypt_Call {
+func (_c *MockConfigEncryptionAdapter_Encrypt_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName, ecosystem.DoguConfigValue) (ecosystem.DoguConfigValue, error)) *MockConfigEncryptionAdapter_Encrypt_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // EncryptAll provides a mock function with given fields: ctx, doguName, configValues
-func (_m *MockConfigEncryptionAdapter) EncryptAll(ctx context.Context, doguName common.SimpleDoguName, configValues []string) (map[common.SimpleDoguName]string, error) {
+func (_m *MockConfigEncryptionAdapter) EncryptAll(ctx context.Context, doguName common.SimpleDoguName, configValues []ecosystem.DoguConfigValue) (map[common.SimpleDoguName]ecosystem.DoguConfigValue, error) {
 	ret := _m.Called(ctx, doguName, configValues)
 
-	var r0 map[common.SimpleDoguName]string
+	var r0 map[common.SimpleDoguName]ecosystem.DoguConfigValue
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, []string) (map[common.SimpleDoguName]string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, []ecosystem.DoguConfigValue) (map[common.SimpleDoguName]ecosystem.DoguConfigValue, error)); ok {
 		return rf(ctx, doguName, configValues)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, []string) map[common.SimpleDoguName]string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, []ecosystem.DoguConfigValue) map[common.SimpleDoguName]ecosystem.DoguConfigValue); ok {
 		r0 = rf(ctx, doguName, configValues)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[common.SimpleDoguName]string)
+			r0 = ret.Get(0).(map[common.SimpleDoguName]ecosystem.DoguConfigValue)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleDoguName, []string) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleDoguName, []ecosystem.DoguConfigValue) error); ok {
 		r1 = rf(ctx, doguName, configValues)
 	} else {
 		r1 = ret.Error(1)
@@ -111,24 +113,24 @@ type MockConfigEncryptionAdapter_EncryptAll_Call struct {
 // EncryptAll is a helper method to define mock.On call
 //   - ctx context.Context
 //   - doguName common.SimpleDoguName
-//   - configValues []string
+//   - configValues []ecosystem.DoguConfigValue
 func (_e *MockConfigEncryptionAdapter_Expecter) EncryptAll(ctx interface{}, doguName interface{}, configValues interface{}) *MockConfigEncryptionAdapter_EncryptAll_Call {
 	return &MockConfigEncryptionAdapter_EncryptAll_Call{Call: _e.mock.On("EncryptAll", ctx, doguName, configValues)}
 }
 
-func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) Run(run func(ctx context.Context, doguName common.SimpleDoguName, configValues []string)) *MockConfigEncryptionAdapter_EncryptAll_Call {
+func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) Run(run func(ctx context.Context, doguName common.SimpleDoguName, configValues []ecosystem.DoguConfigValue)) *MockConfigEncryptionAdapter_EncryptAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.SimpleDoguName), args[2].([]string))
+		run(args[0].(context.Context), args[1].(common.SimpleDoguName), args[2].([]ecosystem.DoguConfigValue))
 	})
 	return _c
 }
 
-func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) Return(_a0 map[common.SimpleDoguName]string, _a1 error) *MockConfigEncryptionAdapter_EncryptAll_Call {
+func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) Return(_a0 map[common.SimpleDoguName]ecosystem.DoguConfigValue, _a1 error) *MockConfigEncryptionAdapter_EncryptAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName, []string) (map[common.SimpleDoguName]string, error)) *MockConfigEncryptionAdapter_EncryptAll_Call {
+func (_c *MockConfigEncryptionAdapter_EncryptAll_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName, []ecosystem.DoguConfigValue) (map[common.SimpleDoguName]ecosystem.DoguConfigValue, error)) *MockConfigEncryptionAdapter_EncryptAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
