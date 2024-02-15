@@ -26,11 +26,11 @@ func (_m *MockGlobalConfigEntryRepository) EXPECT() *MockGlobalConfigEntryReposi
 }
 
 // Delete provides a mock function with given fields: ctx, key
-func (_m *MockGlobalConfigEntryRepository) Delete(ctx context.Context, key common.SimpleDoguName) error {
+func (_m *MockGlobalConfigEntryRepository) Delete(ctx context.Context, key common.GlobalConfigKey) error {
 	ret := _m.Called(ctx, key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) error); ok {
 		r0 = rf(ctx, key)
 	} else {
 		r0 = ret.Error(0)
@@ -46,14 +46,14 @@ type MockGlobalConfigEntryRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - key common.SimpleDoguName
+//   - key common.GlobalConfigKey
 func (_e *MockGlobalConfigEntryRepository_Expecter) Delete(ctx interface{}, key interface{}) *MockGlobalConfigEntryRepository_Delete_Call {
 	return &MockGlobalConfigEntryRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, key)}
 }
 
-func (_c *MockGlobalConfigEntryRepository_Delete_Call) Run(run func(ctx context.Context, key common.SimpleDoguName)) *MockGlobalConfigEntryRepository_Delete_Call {
+func (_c *MockGlobalConfigEntryRepository_Delete_Call) Run(run func(ctx context.Context, key common.GlobalConfigKey)) *MockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(common.GlobalConfigKey))
 	})
 	return _c
 }
@@ -63,7 +63,7 @@ func (_c *MockGlobalConfigEntryRepository_Delete_Call) Return(_a0 error) *MockGl
 	return _c
 }
 
-func (_c *MockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName) error) *MockGlobalConfigEntryRepository_Delete_Call {
+func (_c *MockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, common.GlobalConfigKey) error) *MockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }

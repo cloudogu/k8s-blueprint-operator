@@ -26,11 +26,11 @@ func (_m *mockDoguConfigRepository) EXPECT() *mockDoguConfigRepository_Expecter 
 }
 
 // Delete provides a mock function with given fields: ctx, key
-func (_m *mockDoguConfigRepository) Delete(ctx context.Context, key ecosystem.DoguConfigKey) error {
+func (_m *mockDoguConfigRepository) Delete(ctx context.Context, key common.DoguConfigKey) error {
 	ret := _m.Called(ctx, key)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, ecosystem.DoguConfigKey) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, common.DoguConfigKey) error); ok {
 		r0 = rf(ctx, key)
 	} else {
 		r0 = ret.Error(0)
@@ -46,14 +46,14 @@ type mockDoguConfigRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - key ecosystem.DoguConfigKey
+//   - key common.DoguConfigKey
 func (_e *mockDoguConfigRepository_Expecter) Delete(ctx interface{}, key interface{}) *mockDoguConfigRepository_Delete_Call {
 	return &mockDoguConfigRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, key)}
 }
 
-func (_c *mockDoguConfigRepository_Delete_Call) Run(run func(ctx context.Context, key ecosystem.DoguConfigKey)) *mockDoguConfigRepository_Delete_Call {
+func (_c *mockDoguConfigRepository_Delete_Call) Run(run func(ctx context.Context, key common.DoguConfigKey)) *mockDoguConfigRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(ecosystem.DoguConfigKey))
+		run(args[0].(context.Context), args[1].(common.DoguConfigKey))
 	})
 	return _c
 }
@@ -63,21 +63,21 @@ func (_c *mockDoguConfigRepository_Delete_Call) Return(_a0 error) *mockDoguConfi
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_Delete_Call) RunAndReturn(run func(context.Context, ecosystem.DoguConfigKey) error) *mockDoguConfigRepository_Delete_Call {
+func (_c *mockDoguConfigRepository_Delete_Call) RunAndReturn(run func(context.Context, common.DoguConfigKey) error) *mockDoguConfigRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllByKey provides a mock function with given fields: ctx, keys
-func (_m *mockDoguConfigRepository) GetAllByKey(ctx context.Context, keys []ecosystem.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error) {
+func (_m *mockDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error) {
 	ret := _m.Called(ctx, keys)
 
 	var r0 map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []ecosystem.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)); ok {
 		return rf(ctx, keys)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []ecosystem.DoguConfigKey) map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []common.DoguConfigKey) map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry); ok {
 		r0 = rf(ctx, keys)
 	} else {
 		if ret.Get(0) != nil {
@@ -85,7 +85,7 @@ func (_m *mockDoguConfigRepository) GetAllByKey(ctx context.Context, keys []ecos
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []ecosystem.DoguConfigKey) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []common.DoguConfigKey) error); ok {
 		r1 = rf(ctx, keys)
 	} else {
 		r1 = ret.Error(1)
@@ -101,14 +101,14 @@ type mockDoguConfigRepository_GetAllByKey_Call struct {
 
 // GetAllByKey is a helper method to define mock.On call
 //   - ctx context.Context
-//   - keys []ecosystem.DoguConfigKey
+//   - keys []common.DoguConfigKey
 func (_e *mockDoguConfigRepository_Expecter) GetAllByKey(ctx interface{}, keys interface{}) *mockDoguConfigRepository_GetAllByKey_Call {
 	return &mockDoguConfigRepository_GetAllByKey_Call{Call: _e.mock.On("GetAllByKey", ctx, keys)}
 }
 
-func (_c *mockDoguConfigRepository_GetAllByKey_Call) Run(run func(ctx context.Context, keys []ecosystem.DoguConfigKey)) *mockDoguConfigRepository_GetAllByKey_Call {
+func (_c *mockDoguConfigRepository_GetAllByKey_Call) Run(run func(ctx context.Context, keys []common.DoguConfigKey)) *mockDoguConfigRepository_GetAllByKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]ecosystem.DoguConfigKey))
+		run(args[0].(context.Context), args[1].([]common.DoguConfigKey))
 	})
 	return _c
 }
@@ -118,7 +118,7 @@ func (_c *mockDoguConfigRepository_GetAllByKey_Call) Return(_a0 map[common.Simpl
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_GetAllByKey_Call) RunAndReturn(run func(context.Context, []ecosystem.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)) *mockDoguConfigRepository_GetAllByKey_Call {
+func (_c *mockDoguConfigRepository_GetAllByKey_Call) RunAndReturn(run func(context.Context, []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)) *mockDoguConfigRepository_GetAllByKey_Call {
 	_c.Call.Return(run)
 	return _c
 }

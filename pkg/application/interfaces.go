@@ -47,7 +47,7 @@ type ecosystemHealthUseCase interface {
 }
 
 type doguConfigUseCase interface {
-	ApplyDoguConfig(ctx context.Context, blueprintId string) error
+	ApplyConfig(ctx context.Context, blueprintId string) error
 }
 
 type doguInstallationRepository interface {
@@ -92,9 +92,13 @@ type maintenanceMode interface {
 }
 
 type doguConfigRepository interface {
-	domainservice.DoguConfigKeyRepository
+	domainservice.DoguConfigEntryRepository
 }
 
-type doguSensibleConfigRepository interface {
-	domainservice.DoguSensibleConfigKeyRepository
+type doguSensitiveConfigRepository interface {
+	domainservice.SensitiveDoguConfigEntryRepository
+}
+
+type globalConfigRepository interface {
+	domainservice.GlobalConfigEntryRepository
 }

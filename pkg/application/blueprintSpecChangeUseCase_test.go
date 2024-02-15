@@ -55,8 +55,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
 			})
-		doguConfigUseCaseMock.EXPECT().ApplyDoguConfig(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
-			blueprintSpec.Status = domain.StatusPhaseDoguConfigApplied
+		doguConfigUseCaseMock.EXPECT().ApplyConfig(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
+			blueprintSpec.Status = domain.StatusPhaseRegistryConfigApplied
 		})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {

@@ -100,20 +100,18 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	// TODO
-	doguConfigUseCase := application.NewDoguConfigUseCase(nil, nil)
-
-	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
-		blueprintSpecRepository, blueprintValidationUseCase,
-		effectiveBlueprintUseCase, stateDiffUseCase,
-		applyBlueprintSpecUseCase, doguConfigUseCase,
-	)
-	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
-
 	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
 	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
+
+	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
+		blueprintSpecRepository, blueprintValidationUseCase,
+		effectiveBlueprintUseCase, stateDiffUseCase,
+		applyBlueprintSpecUseCase, registryConfigUseCase,
+	)
+	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
 		RemoteDoguRegistry:             remoteDoguRegistry,

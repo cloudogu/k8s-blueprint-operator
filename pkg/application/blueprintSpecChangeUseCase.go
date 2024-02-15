@@ -78,7 +78,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
 		return useCase.applyDoguConfig(ctx, blueprintId)
-	case domain.StatusPhaseDoguConfigApplied:
+	case domain.StatusPhaseRegistryConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
@@ -182,7 +182,7 @@ func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx co
 }
 
 func (useCase *BlueprintSpecChangeUseCase) applyDoguConfig(ctx context.Context, blueprintId string) error {
-	err := useCase.doguConfigUseCase.ApplyDoguConfig(ctx, blueprintId)
+	err := useCase.doguConfigUseCase.ApplyConfig(ctx, blueprintId)
 	if err != nil {
 		return err
 	}
