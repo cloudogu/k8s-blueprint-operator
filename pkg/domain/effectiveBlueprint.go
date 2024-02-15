@@ -11,12 +11,6 @@ type EffectiveBlueprint struct {
 	Components []Component
 	// Config contains all config entries to set via blueprint.
 	Config Config
-	// Used to configure registry globalRegistryEntries on blueprint upgrades
-	RegistryConfig RegistryConfig
-	// Used to remove registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigAbsent []string
-	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigEncrypted RegistryConfig
 }
 
 // GetWantedDogus returns a list of all dogus which should be installed

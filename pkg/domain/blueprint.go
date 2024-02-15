@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"golang.org/x/exp/maps"
 )
 
 // Blueprint describes an abstraction of CES components that should be absent or present within one or more CES
@@ -22,12 +23,6 @@ type Blueprint struct {
 	Components []Component
 	// Config contains all config entries to set via blueprint.
 	Config Config
-	// RegistryConfig used to configure registry globalRegistryEntries on blueprint upgrades
-	RegistryConfig RegistryConfig
-	// RegistryConfigAbsent used to remove registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigAbsent []string
-	// RegistryConfigEncrypted used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigEncrypted RegistryConfig
 }
 
 type RegistryConfig map[string]map[string]interface{}
@@ -39,8 +34,10 @@ func (blueprint *Blueprint) Validate() error {
 		blueprint.validateDoguUniqueness(),
 		blueprint.validateComponents(),
 		blueprint.validateComponentUniqueness(),
-		blueprint.validateRegistryConfig(),
+		blueprint.Config.Global.validate(),
 	}
+	doguConfigErrors := util.Map(maps.Values(blueprint.Config.Dogus), CombinedDoguConfig.validate)
+	errorList = append(errorList, doguConfigErrors...)
 
 	err := errors.Join(errorList...)
 	if err != nil {
@@ -76,21 +73,6 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
-	return nil
-}
-
-func (blueprint *Blueprint) validateRegistryConfig() error {
-	for key, value := range blueprint.RegistryConfig {
-		if len(key) == 0 {
-			return fmt.Errorf("a registry config key is empty")
-		}
-
-		err := validateKeysNotEmpty(value)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
