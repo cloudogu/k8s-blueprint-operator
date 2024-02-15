@@ -16,6 +16,7 @@ type BlueprintSpecChangeUseCase struct {
 	effectiveBlueprint effectiveBlueprintUseCase
 	stateDiff          stateDiffUseCase
 	applyUseCase       applyBlueprintSpecUseCase
+	doguConfigUseCase  doguConfigUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -24,6 +25,7 @@ func NewBlueprintSpecChangeUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
+	doguConfigUseCase doguConfigUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:               repo,
@@ -31,6 +33,7 @@ func NewBlueprintSpecChangeUseCase(
 		effectiveBlueprint: effectiveBlueprint,
 		stateDiff:          stateDiff,
 		applyUseCase:       applyUseCase,
+		doguConfigUseCase:  doguConfigUseCase,
 	}
 }
 
@@ -74,6 +77,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
+		return useCase.applyDoguConfig(ctx, blueprintId)
+	case domain.StatusPhaseDoguConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
@@ -169,6 +174,15 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Contex
 
 func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
 	err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) applyDoguConfig(ctx context.Context, blueprintId string) error {
+	err := useCase.doguConfigUseCase.ApplyDoguConfig(ctx, blueprintId)
 	if err != nil {
 		return err
 	}
