@@ -7,6 +7,11 @@ import (
 )
 
 type EtcdGlobalConfigRepository struct {
+	configStore globalConfigStore
+}
+
+func NewEtcdGlobalConfigRepository(configStore globalConfigStore) *EtcdGlobalConfigRepository {
+	return &EtcdGlobalConfigRepository{configStore: configStore}
 }
 
 func (e EtcdGlobalConfigRepository) GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error) {

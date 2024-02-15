@@ -7,6 +7,11 @@ import (
 )
 
 type EtcdSensitiveDoguConfigRepository struct {
+	etcdStore etcdStore
+}
+
+func NewEtcdSensitiveDoguConfigRepository(etcdStore etcdStore) *EtcdSensitiveDoguConfigRepository {
+	return &EtcdSensitiveDoguConfigRepository{etcdStore: etcdStore}
 }
 
 func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error) {
