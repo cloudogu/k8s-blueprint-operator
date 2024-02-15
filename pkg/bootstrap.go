@@ -2,6 +2,7 @@ package pkg
 
 import (
 	"fmt"
+	config3 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -45,6 +46,10 @@ type ApplicationContext struct {
 	BlueprintSerializer            serializer.BlueprintSerializer
 	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
 	Reconciler                     *reconciler.BlueprintReconciler
+	configEncryptionAdapter        domainservice.ConfigEncryptionAdapter
+	doguConfigAdapter              domainservice.DoguConfigEntryRepository
+	sensitiveDoguConfigAdapter     domainservice.SensitiveDoguConfigEntryRepository
+	globalConfigAdapter            domainservice.GlobalConfigEntryRepository
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -102,6 +107,11 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
+	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
+	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+
 	return &ApplicationContext{
 		RemoteDoguRegistry:             remoteDoguRegistry,
 		DoguInstallationRepository:     doguInstallationRepo,
@@ -117,6 +127,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		BlueprintSerializer:            blueprintSerializer,
 		BlueprintMaskSerializer:        blueprintMaskSerializer,
 		Reconciler:                     blueprintReconciler,
+		configEncryptionAdapter:        configEncryptionAdapter,
+		doguConfigAdapter:              doguConfigAdapter,
+		sensitiveDoguConfigAdapter:     sensitiveDoguConfigAdapter,
+		globalConfigAdapter:            globalConfigAdapter,
 	}, nil
 }
 
