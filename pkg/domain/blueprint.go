@@ -20,30 +20,14 @@ type Blueprint struct {
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
-	// Used to configure registry globalRegistryEntries on blueprint upgrades
+	// Config contains all config entries to set via blueprint.
+	Config Config
+	// RegistryConfig used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig RegistryConfig
-	// Used to remove registry globalRegistryEntries on blueprint upgrades
+	// RegistryConfigAbsent used to remove registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigAbsent []string
-	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
+	// RegistryConfigEncrypted used to configure encrypted registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigEncrypted RegistryConfig
-	// TODO: need to refactor this struct for configuration
-	//config
-	//	dogus
-	//		dogu1
-	//			normal
-	//				present
-	//					"logLevel": "error"
-	//					"my/config/key": "myValue"
-	//					...
-	//				absent
-	//			sensitive
-	//				present
-	//				absent
-	//	global
-	//		present
-	//			"fqdn": "fqdnValue"
-	//			"my/config/key": "myValue"
-	//		absent
 }
 
 type RegistryConfig map[string]map[string]interface{}

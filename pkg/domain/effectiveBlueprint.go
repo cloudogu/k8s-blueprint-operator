@@ -9,6 +9,8 @@ type EffectiveBlueprint struct {
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
+	// Config contains all config entries to set via blueprint.
+	Config Config
 	// Used to configure registry globalRegistryEntries on blueprint upgrades
 	RegistryConfig RegistryConfig
 	// Used to remove registry globalRegistryEntries on blueprint upgrades
