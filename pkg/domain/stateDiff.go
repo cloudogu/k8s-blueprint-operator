@@ -1,11 +1,13 @@
 package domain
 
+import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+
 // StateDiff represents the diff between the defined state in the effective blueprint and the actual state in the ecosystem.
 // If there is a state in the ecosystem, which is not represented in the effective blueprint, then the expected state is the actual state.
 type StateDiff struct {
 	DoguDiffs        DoguDiffs
 	ComponentDiffs   ComponentDiffs
-	DoguConfigDiff   map[string]DoguConfigDiff
+	DoguConfigDiff   map[common.SimpleDoguName]DoguConfigDiff
 	GlobalConfigDiff GlobalConfigDiff
 }
 

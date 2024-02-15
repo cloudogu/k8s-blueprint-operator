@@ -32,12 +32,17 @@ type Blueprint struct {
 	//		dogu1
 	//			normal
 	//				present
+	//					"logLevel": "error"
+	//					"my/config/key": "myValue"
+	//					...
 	//				absent
-	//			sensible
+	//			sensitive
 	//				present
 	//				absent
 	//	global
 	//		present
+	//			"fqdn": "fqdnValue"
+	//			"my/config/key": "myValue"
 	//		absent
 }
 
