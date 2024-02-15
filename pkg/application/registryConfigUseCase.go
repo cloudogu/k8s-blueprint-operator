@@ -119,7 +119,6 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 }
 
 // Values of sensitiveConfig from existing Dogus are already encrypted???
-// TODO Check if Dogus are not installed. Maybe sensitive config has to be created as secrets.
 func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiff) error {
 	var errs []error
 
@@ -130,6 +129,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 				Key:   common.SensitiveDoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
 				Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
 			}
+			// TODO: Check if dogu is installed
 			errs = append(errs, useCase.doguSensitiveConfigRepository.Save(ctx, entry))
 		case domain.ConfigActionRemove:
 			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguName: doguName, Key: diff.Key.Key}))
