@@ -1,12 +1,7 @@
 package util
 
 func GetDuplicates(list []string) []string {
-	elementCount := make(map[string]int)
-
-	// countByName
-	for _, name := range list {
-		elementCount[name] += 1
-	}
+	elementCount := CountGrouped(list)
 
 	// get list of names with count != 1
 	var duplicates []string
@@ -33,6 +28,16 @@ func Map[T, V any](ts []T, fn func(T) V) []V {
 		result[i] = fn(t)
 	}
 	return result
+}
+
+// CountGrouped counts the occurrences of equal elements (groups).
+// You can use this to determine if there are duplicates or if an element exists.
+func CountGrouped[T comparable](elements []T) map[T]int {
+	counts := map[T]int{}
+	for _, element := range elements {
+		counts[element] += 1
+	}
+	return counts
 }
 
 // GroupBy groups elements of the original list by the key returned by the given keySelector function

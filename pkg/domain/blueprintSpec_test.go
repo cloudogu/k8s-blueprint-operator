@@ -349,6 +349,67 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
 
+	t.Run("ok with allowed dogu namespace switch", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Dogus: []Dogu{
+					{
+						Namespace: "namespace-change",
+						Name:      "name",
+					},
+				},
+			},
+			Config: BlueprintConfiguration{
+				AllowDoguNamespaceSwitch: true,
+			},
+			Status: StatusPhaseValidated,
+		}
+
+		installedDogus := map[string]*ecosystem.DoguInstallation{
+			"name": {Name: "name", Namespace: "namespace"},
+		}
+		installedComponents := map[string]*ecosystem.ComponentInstallation{}
+
+		// when
+		err := spec.DetermineStateDiff(installedDogus, installedComponents)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
+	})
+
+	t.Run("invalid blueprint state with not allowed dogu namespace switch", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Dogus: []Dogu{
+					{
+						Namespace: "namespace-change",
+						Name:      "name",
+					},
+				},
+			},
+			Config: BlueprintConfiguration{
+				AllowDoguNamespaceSwitch: false,
+			},
+			Status: StatusPhaseValidated,
+		}
+
+		installedDogus := map[string]*ecosystem.DoguInstallation{
+			"name": {Name: "name", Namespace: "namespace"},
+		}
+		installedComponents := map[string]*ecosystem.ComponentInstallation{}
+
+		// when
+		err := spec.DetermineStateDiff(installedDogus, installedComponents)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, StatusPhaseInvalid, spec.Status)
+		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
+	})
+
 	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
 	for _, initialStatus := range notAllowedStatus {
 		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
@@ -410,7 +471,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"component distribution namespace switch\" for following components is not allowed")
+		assert.ErrorContains(t, err, "action \"component distribution namespace switch\" is not allowed")
 	})
 }
 
