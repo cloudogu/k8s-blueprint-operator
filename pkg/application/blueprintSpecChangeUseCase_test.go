@@ -23,7 +23,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -54,6 +55,9 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
 			})
+		doguConfigUseCaseMock.EXPECT().ApplyDoguConfig(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
+			blueprintSpec.Status = domain.StatusPhaseDoguConfigApplied
+		})
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprintId string) {
 				blueprintSpec.Status = domain.StatusPhaseBlueprintApplied
@@ -81,7 +85,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		expectedError := &domainservice.InternalError{
 			WrappedError: nil,
@@ -104,7 +109,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -130,7 +136,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -159,7 +166,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -192,7 +200,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -228,7 +237,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -269,7 +279,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -288,7 +299,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -307,7 +319,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -326,7 +339,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -347,7 +361,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -368,7 +383,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -389,7 +405,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -412,7 +429,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -435,7 +453,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -454,7 +473,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{
 			Id:     blueprintId,
@@ -474,7 +494,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -493,7 +514,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -516,7 +538,7 @@ func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T)
 		}
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprintId).Return(nil)
-		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock, nil)
 		// when
 		err := useCase.preProcessBlueprintApplication(testCtx, spec)
 		// then
@@ -533,7 +555,8 @@ func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T)
 		stateDiffMock := newMockStateDiffUseCase(t)
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprintId).Return(assert.AnError)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock)
+		doguConfigUseCaseMock := newMockDoguConfigUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, doguConfigUseCaseMock)
 		// when
 		err := useCase.preProcessBlueprintApplication(testCtx, spec)
 		// then
@@ -546,7 +569,7 @@ func TestBlueprintSpecChangeUseCase_applyBlueprintSpec(t *testing.T) {
 		// given
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		applyMock.EXPECT().ApplyBlueprintSpec(testCtx, blueprintId).Return(assert.AnError)
-		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock, nil)
 		// when
 		err := useCase.applyBlueprintSpec(testCtx, blueprintId)
 		// then
@@ -559,7 +582,7 @@ func TestBlueprintSpecChangeUseCase_checkEcosystemHealthAfterwards(t *testing.T)
 		// given
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, blueprintId).Return(assert.AnError)
-		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock)
+		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock, nil)
 		// when
 		err := useCase.checkEcosystemHealthAfterwards(testCtx, blueprintId)
 		// then

@@ -37,12 +37,17 @@ type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
 	PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error
 	PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error
+	// TODO refactor in apply components and dogus
 	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
 }
 
 type ecosystemHealthUseCase interface {
 	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error)
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
+}
+
+type doguConfigUseCase interface {
+	ApplyDoguConfig(ctx context.Context, blueprintId string) error
 }
 
 type doguInstallationRepository interface {
@@ -84,4 +89,12 @@ type remoteDoguRegistry interface {
 
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
+}
+
+type doguConfigRepository interface {
+	domainservice.DoguConfigKeyRepository
+}
+
+type doguSensibleConfigRepository interface {
+	domainservice.DoguSensibleConfigKeyRepository
 }

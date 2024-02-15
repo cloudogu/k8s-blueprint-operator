@@ -240,3 +240,35 @@ func (e CompletedEvent) Name() string {
 func (e CompletedEvent) Message() string {
 	return "maintenance mode deactivated"
 }
+
+type ApplyDoguConfigEvent struct{}
+
+func (e ApplyDoguConfigEvent) Name() string {
+	return "apply dogu config"
+}
+
+func (e ApplyDoguConfigEvent) Message() string {
+	return ""
+}
+
+type ApplyDoguConfigFailedEvent struct {
+	err error
+}
+
+func (e ApplyDoguConfigFailedEvent) Name() string {
+	return "ApplyDoguConfigFailed"
+}
+
+func (e ApplyDoguConfigFailedEvent) Message() string {
+	return e.err.Error()
+}
+
+type DoguConfigAppliedEvent struct{}
+
+func (e DoguConfigAppliedEvent) Name() string {
+	return "dogu config applied"
+}
+
+func (e DoguConfigAppliedEvent) Message() string {
+	return ""
+}
