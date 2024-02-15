@@ -1,27 +1,45 @@
 package domain
 
-type DoguConfigDiff struct {
-	NormalDoguConfigDiff    NormalDoguConfigDiff
+import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+
+type CombinedDoguConfigDiff struct {
+	DoguConfigDiff          DoguConfigDiff
 	SensitiveDoguConfigDiff SensitiveDoguConfigDiff
 }
 
-type SensitiveDoguConfigDiff []ConfigKeyDiff
+type DoguConfigDiff []DoguConfigEntryDiff
+type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
+type GlobalConfigDiff []GlobalConfigEntryDiff
 
-type NormalDoguConfigDiff []ConfigKeyDiff
+type DoguConfigValueState ConfigValueState
+type EncryptedDoguConfigValueState ConfigValueState
+type GlobalConfigValueState ConfigValueState
 
-type ConfigKeyDiff struct {
-	Key      string
-	Actual   ConfigValue
-	Expected ConfigValue
+type DoguConfigEntryDiff struct {
+	Key      common.DoguConfigKey
+	Actual   DoguConfigValueState
+	Expected DoguConfigValueState
 	Action   ConfigAction
 }
 
-type ConfigValue struct {
+type SensitiveDoguConfigEntryDiff struct {
+	Key      common.SensitiveDoguConfigKey
+	Actual   EncryptedDoguConfigValueState
+	Expected EncryptedDoguConfigValueState
+	Action   ConfigAction
+}
+
+type GlobalConfigEntryDiff struct {
+	Key      common.GlobalConfigKey
+	Actual   GlobalConfigValueState
+	Expected GlobalConfigValueState
+	Action   ConfigAction
+}
+
+type ConfigValueState struct {
 	Value  string
 	Exists bool
 }
-
-type GlobalConfigDiff []ConfigKeyDiff
 
 type ConfigAction string
 
@@ -31,7 +49,7 @@ const (
 	ConfigActionRemove ConfigAction = "remove"
 )
 
-func getNeededConfigAction(expected ConfigValue, actual ConfigValue) ConfigAction {
+func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) ConfigAction {
 	if expected == actual {
 		return ConfigActionNone
 	}
