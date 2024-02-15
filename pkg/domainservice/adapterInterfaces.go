@@ -114,7 +114,7 @@ type ConfigEncryptionAdapter interface {
 	Encrypt(context.Context, common.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
 	// EncryptAll encrypts the given values for a dogu.
 	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
-	EncryptAll(context.Context, common.SimpleDoguName, []common.SensitiveDoguConfigValue) (map[common.SimpleDoguName]common.EncryptedDoguConfigValue, error)
+	EncryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error)
 }
 
 type GlobalConfigEntryRepository interface {
