@@ -365,8 +365,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus: []Dogu{
 					{
-						Namespace: "namespace-change",
-						Name:      "name",
+						Name: common.QualifiedDoguName{Name: "name", Namespace: "namespace-change"},
 					},
 				},
 			},
@@ -376,10 +375,10 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		installedDogus := map[string]*ecosystem.DoguInstallation{
-			"name": {Name: "name", Namespace: "namespace"},
+		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+			"name": {Name: common.QualifiedDoguName{Name: "name", Namespace: "namespace"}},
 		}
-		installedComponents := map[string]*ecosystem.ComponentInstallation{}
+		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
 		err := spec.DetermineStateDiff(installedDogus, installedComponents)
@@ -395,8 +394,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus: []Dogu{
 					{
-						Namespace: "namespace-change",
-						Name:      "name",
+						Name: common.QualifiedDoguName{Name: "name", Namespace: "namespace-change"},
 					},
 				},
 			},
@@ -406,10 +404,10 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		installedDogus := map[string]*ecosystem.DoguInstallation{
-			"name": {Name: "name", Namespace: "namespace"},
+		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+			"name": {Name: common.QualifiedDoguName{Name: "name", Namespace: "namespace"}},
 		}
-		installedComponents := map[string]*ecosystem.ComponentInstallation{}
+		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
 		err := spec.DetermineStateDiff(installedDogus, installedComponents)
