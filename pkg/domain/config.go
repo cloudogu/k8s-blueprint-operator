@@ -62,7 +62,7 @@ func (config CombinedDoguConfig) validate() error {
 	return nil
 }
 
-func (config DoguConfig) validate(doguName common.SimpleDoguName) error {
+func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) error {
 	var errs []error
 	for configKey := range config.Present {
 		err := configKey.Validate()
@@ -71,8 +71,8 @@ func (config DoguConfig) validate(doguName common.SimpleDoguName) error {
 		}
 
 		// validate that all keys are of the same dogu
-		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, doguName))
+		if superordinateDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, superordinateDoguName))
 		}
 	}
 
@@ -89,8 +89,8 @@ func (config DoguConfig) validate(doguName common.SimpleDoguName) error {
 		}
 
 		// validate that all keys are of the same dogu
-		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, doguName))
+		if superordinateDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, superordinateDoguName))
 		}
 	}
 
@@ -152,7 +152,7 @@ func (config GlobalConfig) validate() error {
 		// absent keys cannot be present
 		_, isPresent := config.Present[configKey]
 		if isPresent {
-			errs = append(errs, fmt.Errorf("global config key %s cannot be present and absent at the same time", configKey))
+			errs = append(errs, fmt.Errorf("global config key %q cannot be present and absent at the same time", configKey))
 		}
 	}
 
