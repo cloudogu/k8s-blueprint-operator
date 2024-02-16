@@ -32,33 +32,100 @@ type GlobalConfig struct {
 	Absent  []common.GlobalConfigKey
 }
 
+func (config Config) validate() error {
+	var errs []error
+	for doguName, doguConfig := range config.Dogus {
+		if doguName != doguConfig.DoguName {
+			errs = append(errs, fmt.Errorf("dogu name %q in map and dogu name %q in value are not equal", doguName, doguConfig.DoguName))
+		}
+
+		errs = append(errs, doguConfig.validate())
+	}
+
+	errs = append(errs, config.Global.validate())
+
+	return errors.Join(errs...)
+}
+
 func (config CombinedDoguConfig) validate() error {
-	return nil //TODO
+	var errs []error
+	err := config.Config.validate(config.DoguName)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("config for dogu %q invalid: %w", config.DoguName, err))
+	}
+
+	err = config.SensitiveConfig.validate(config.DoguName)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("sensitive config for dogu %q invalid: %w", config.DoguName, err))
+	}
+
+	return nil
 }
 
 func (config DoguConfig) validate(doguName common.SimpleDoguName) error {
 	var errs []error
-	for configKey, _ := range config.Present {
-		errs = append(errs, configKey.Validate())
+	for configKey := range config.Present {
+		err := configKey.Validate()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("present dogu config key invalid: %w", err))
+		}
 
 		// validate that all keys are of the same dogu
 		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("dogu ")) // TODO: better error message
+			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, doguName))
 		}
 	}
 
 	for _, configKey := range config.Absent {
-		errs = append(errs, configKey.Validate())
+		err := configKey.Validate()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("absent dogu config key invalid: %w", err))
+		}
 
 		// absent keys cannot be present
 		_, isPresent := config.Present[configKey]
 		if isPresent {
-			errs = append(errs, fmt.Errorf("%q cannot be present and absent at the same time", configKey))
+			errs = append(errs, fmt.Errorf("%s cannot be present and absent at the same time", configKey))
 		}
 
 		// validate that all keys are of the same dogu
 		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("dogu ")) // TODO: better error message
+			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, doguName))
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (config SensitiveDoguConfig) validate(doguName common.SimpleDoguName) error {
+	var errs []error
+	for configKey := range config.Present {
+		err := configKey.Validate()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("present dogu config key invalid: %w", err))
+		}
+
+		// validate that all keys are of the same dogu
+		if doguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, doguName))
+		}
+	}
+
+	for _, configKey := range config.Absent {
+		err := configKey.Validate()
+		if err != nil {
+			errs = append(errs, fmt.Errorf("absent dogu config key invalid: %w", err))
+		}
+
+		// absent keys cannot be present
+		_, isPresent := config.Present[configKey]
+		if isPresent {
+			errs = append(errs, fmt.Errorf("%s cannot be present and absent at the same time", configKey))
+		}
+
+		// validate that all keys are of the same dogu
+		if doguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, doguName))
 		}
 	}
 
@@ -67,16 +134,17 @@ func (config DoguConfig) validate(doguName common.SimpleDoguName) error {
 
 func (config GlobalConfig) validate() error {
 	var errs []error
-	for configKey, _ := range config.Present {
+	for configKey := range config.Present {
 
-		// empty value is allowed
+		// empty key is not allowed
 		if string(configKey) == "" {
 			errs = append(errs, fmt.Errorf("key for present global config should not be empty"))
 		}
 	}
+
 	for _, configKey := range config.Absent {
 
-		// empty value is allowed
+		// empty key is not allowed
 		if string(configKey) == "" {
 			errs = append(errs, fmt.Errorf("key for absent global config should not be empty"))
 		}
@@ -84,7 +152,7 @@ func (config GlobalConfig) validate() error {
 		// absent keys cannot be present
 		_, isPresent := config.Present[configKey]
 		if isPresent {
-			errs = append(errs, fmt.Errorf("global config key %q cannot be present and absent at the same time", configKey))
+			errs = append(errs, fmt.Errorf("global config key %s cannot be present and absent at the same time", configKey))
 		}
 	}
 
