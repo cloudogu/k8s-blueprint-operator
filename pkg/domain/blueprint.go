@@ -25,8 +25,6 @@ type Blueprint struct {
 	Config Config
 }
 
-type RegistryConfig map[string]map[string]interface{}
-
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems
 func (blueprint *Blueprint) Validate() error {
 	errorList := []error{
@@ -73,23 +71,5 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
-	return nil
-}
-
-func validateKeysNotEmpty(config map[string]interface{}) error {
-	for key, value := range config {
-		if len(key) == 0 {
-			return fmt.Errorf("a Config key is empty")
-		}
-
-		switch vTyped := value.(type) {
-		case map[string]interface{}:
-			err := validateKeysNotEmpty(vTyped)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
 }

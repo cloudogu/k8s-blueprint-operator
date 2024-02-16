@@ -41,20 +41,32 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	blueprint := domain.Blueprint{
 		Dogus:      dogus,
 		Components: components,
-		RegistryConfig: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: domain.Config{
+			Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+				"my-dogu": {
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+							{
+								DoguName: "my-dogu",
+								Key:      "config",
+							}: "42",
+						},
+					},
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+							{DoguConfigKey: common.DoguConfigKey{
+								DoguName: "my-dogu",
+								Key:      "config-encrypted",
+							}}: "42",
+						},
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
-			},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}
 
-	blueprintV2, err := ConvertToBlueprintV2(blueprint)
+	blueprintV2, err := ConvertToBlueprintDTO(blueprint)
 
 	convertedDogus := []serializer.TargetDogu{
 		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
@@ -75,15 +87,26 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
 		Components:       convertedComponents,
-		RegistryConfig: RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: Config{
+			Dogus: map[string]CombinedDoguConfig{
+				"my-dogu": {
+					Config: DoguConfig{
+						Present: map[string]string{
+							"config": "42",
+						},
+						Absent: make([]string, 0),
+					},
+					SensitiveConfig: SensitiveDoguConfig{
+						Present: map[string]string{
+							"config-encrypted": "42",
+						},
+						Absent: make([]string, 0),
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+			Global: GlobalConfig{
+				Present: make(map[string]string),
+				Absent:  []string{"test/key"},
 			},
 		},
 	}, blueprintV2)
@@ -108,19 +131,25 @@ func Test_ConvertToBlueprint(t *testing.T) {
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            dogus,
 		Components:       components,
-		RegistryConfig: RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: Config{
+			Dogus: map[string]CombinedDoguConfig{
+				"my-dogu": {
+					Config: DoguConfig{
+						Present: map[string]string{
+							"config": "42",
+						},
+					},
+					SensitiveConfig: SensitiveDoguConfig{
+						Present: map[string]string{
+							"config-encrypted": "42",
+						},
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
-			},
+			Global: GlobalConfig{Absent: []string{"test/key"}},
 		},
 	}
-	blueprint, err := convertToBlueprint(blueprintV2)
+	blueprint, err := convertToBlueprintDomain(blueprintV2)
 
 	require.NoError(t, err)
 
@@ -141,16 +170,28 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	assert.Equal(t, domain.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		RegistryConfig: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: domain.Config{
+			Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+				"my-dogu": {
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+							{
+								DoguName: "my-dogu",
+								Key:      "config",
+							}: "42",
+						},
+					},
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+							{DoguConfigKey: common.DoguConfigKey{
+								DoguName: "my-dogu",
+								Key:      "config-encrypted",
+							}}: "42",
+						},
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
-			},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}, blueprint)
 }
@@ -170,7 +211,7 @@ func Test_ConvertToBlueprint_errors(t *testing.T) {
 		},
 	}
 
-	_, err := convertToBlueprint(blueprintV2)
+	_, err := convertToBlueprintDomain(blueprintV2)
 
 	require.ErrorContains(t, err, "syntax of blueprintV2 is not correct: ")
 
