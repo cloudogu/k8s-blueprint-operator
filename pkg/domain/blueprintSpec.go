@@ -362,21 +362,6 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	}
 }
 
-func (spec *BlueprintSpec) StartApplyRegistryConfig() {
-	spec.Status = StatusPhaseApplyRegistryConfig
-	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
-}
-
-func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyRegistryConfigFailed
-	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
-}
-
-func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
-	spec.Status = StatusPhaseRegistryConfigApplied
-	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
-}
-
 var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
 
 // ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
@@ -416,6 +401,21 @@ func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, inv
 	}
 
 	return invalidBlueprintErrors
+}
+
+func (spec *BlueprintSpec) StartApplyRegistryConfig() {
+	spec.Status = StatusPhaseApplyRegistryConfig
+	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
+}
+
+func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyRegistryConfigFailed
+	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
+	spec.Status = StatusPhaseRegistryConfigApplied
+	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
