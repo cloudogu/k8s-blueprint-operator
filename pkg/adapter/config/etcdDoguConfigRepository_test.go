@@ -6,12 +6,15 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/client/v2"
 	"testing"
 )
 
 var testCtx = context.Background()
 
 const testSimpleDoguNameRedmine = common.SimpleDoguName("redmine")
+
+var etcdNotFoundError = client.Error{Code: client.ErrorCodeKeyNotFound}
 
 func TestEtcdDoguConfigRepository_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
@@ -23,6 +26,23 @@ func TestEtcdDoguConfigRepository_Delete(t *testing.T) {
 		key := common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(nil)
+
+		// when
+		err := sut.Delete(testCtx, key)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return nil on not found error", func(t *testing.T) {
+		// given
+		etcdMock := newMockEtcdStore(t)
+		configurationContextMock := newMockConfigurationContext(t)
+		sut := EtcdDoguConfigRepository{etcdStore: etcdMock}
+
+		key := common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
+		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
+		configurationContextMock.EXPECT().Delete(key.Key).Return(etcdNotFoundError)
 
 		// when
 		err := sut.Delete(testCtx, key)

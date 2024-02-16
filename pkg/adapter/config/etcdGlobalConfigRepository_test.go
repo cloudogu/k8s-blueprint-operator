@@ -23,6 +23,20 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should return nil on not found error", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockGlobalConfigStore(t)
+		sut := EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		key := common.GlobalConfigKey("key")
+		globalConfigMock.EXPECT().Delete(string(key)).Return(etcdNotFoundError)
+
+		// when
+		err := sut.Delete(testCtx, key)
+
+		// then
+		require.NoError(t, err)
+	})
+
 	t.Run("should return error on delete error", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
