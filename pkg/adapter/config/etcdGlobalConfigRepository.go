@@ -25,7 +25,7 @@ func (e EtcdGlobalConfigRepository) Save(_ context.Context, entry *ecosystem.Glo
 	strValue := string(entry.Value)
 	err := e.configStore.Set(strKey, strValue)
 	if err != nil {
-		return fmt.Errorf("failed to set global config key %q with value %q : %w", strKey, strValue, err)
+		return fmt.Errorf("failed to set global config key %q with value %q: %w", strKey, strValue, err)
 	}
 
 	return nil

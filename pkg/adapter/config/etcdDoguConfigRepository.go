@@ -24,7 +24,7 @@ func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguC
 	strDoguName := string(entry.Key.DoguName)
 	strKey := entry.Key.Key
 	strValue := string(entry.Value)
-	err := e.etcdStore.DoguConfig(strDoguName).Set(strKey, strValue)
+	err := setEtcdKey(strKey, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
 		return fmt.Errorf("failed to set config key %q with value %q for dogu %q: %w", strKey, strValue, strDoguName, err)
 	}
@@ -40,9 +40,9 @@ func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, keys []*ecosystem
 func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfigKey) error {
 	strDoguName := string(key.DoguName)
 	strKey := key.Key
-	err := e.etcdStore.DoguConfig(strDoguName).Delete(strKey)
+	err := deleteEtcdKey(strKey, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return fmt.Errorf("failed to delete config key %q for dogu %q: %w", strDoguName, strKey, err)
+		return fmt.Errorf("failed to delete config key %q for dogu %q: %w", strKey, strDoguName, err)
 	}
 
 	return nil
