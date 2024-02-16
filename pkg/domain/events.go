@@ -244,11 +244,11 @@ func (e CompletedEvent) Message() string {
 type ApplyRegistryConfigEvent struct{}
 
 func (e ApplyRegistryConfigEvent) Name() string {
-	return "apply dogu config"
+	return "ApplyRegistryConfig"
 }
 
 func (e ApplyRegistryConfigEvent) Message() string {
-	return ""
+	return "apply registry config"
 }
 
 type ApplyRegistryConfigFailedEvent struct {
@@ -266,9 +266,9 @@ func (e ApplyRegistryConfigFailedEvent) Message() string {
 type RegistryConfigAppliedEvent struct{}
 
 func (e RegistryConfigAppliedEvent) Name() string {
-	return "dogu config applied"
+	return "RegistryConfigApplied"
 }
 
 func (e RegistryConfigAppliedEvent) Message() string {
-	return ""
+	return "registry config applied"
 }
