@@ -141,6 +141,24 @@ func TestEvents(t *testing.T) {
 			expectedName:    "ExecutionFailed",
 			expectedMessage: "test-error",
 		},
+		{
+			name:            "apply registry config",
+			event:           ApplyRegistryConfigEvent{},
+			expectedName:    "ApplyRegistryConfig",
+			expectedMessage: "apply registry config",
+		},
+		{
+			name:            "registry config applied",
+			event:           RegistryConfigAppliedEvent{},
+			expectedName:    "RegistryConfigApplied",
+			expectedMessage: "registry config applied",
+		},
+		{
+			name:            "registry config apply failed",
+			event:           ApplyRegistryConfigFailedEvent{fmt.Errorf("test-error")},
+			expectedName:    "ApplyDoguConfigFailed",
+			expectedMessage: "test-error",
+		},
 	}
 
 	for _, tt := range tests {
