@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
@@ -39,7 +40,7 @@ func (e EtcdGlobalConfigRepository) SaveAll(ctx context.Context, keys []*ecosyst
 func (e EtcdGlobalConfigRepository) Delete(ctx context.Context, key common.GlobalConfigKey) error {
 	strKey := string(key)
 	err := e.configStore.Delete(strKey)
-	if err != nil {
+	if err != nil && !registry.IsKeyNotFoundError(err) {
 		return fmt.Errorf("failed to delete global config key %q: %w", strKey, err)
 	}
 

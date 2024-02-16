@@ -3,6 +3,7 @@ package config
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
@@ -41,7 +42,7 @@ func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.
 	strDoguName := string(key.DoguName)
 	strKey := key.Key
 	err := deleteEtcdKey(strKey, e.etcdStore.DoguConfig(strDoguName))
-	if err != nil {
+	if err != nil && !registry.IsKeyNotFoundError(err) {
 		return fmt.Errorf("failed to delete encrypted config key %q for dogu %q: %w", strKey, strDoguName, err)
 	}
 

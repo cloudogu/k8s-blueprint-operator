@@ -25,6 +25,22 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should return nil on not found error", func(t *testing.T) {
+		// given
+		etcdMock := newMockEtcdStore(t)
+		configurationContextMock := newMockConfigurationContext(t)
+		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		key := common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
+		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
+		configurationContextMock.EXPECT().Delete(key.Key).Return(etcdNotFoundError)
+
+		// when
+		err := sut.Delete(testCtx, key)
+
+		// then
+		require.NoError(t, err)
+	})
+
 	t.Run("should return error on delete error", func(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
