@@ -178,11 +178,9 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	}
 
 	spec.EffectiveBlueprint = EffectiveBlueprint{
-		Dogus:                   effectiveDogus,
-		Components:              spec.Blueprint.Components,
-		RegistryConfig:          spec.Blueprint.RegistryConfig,
-		RegistryConfigAbsent:    spec.Blueprint.RegistryConfigAbsent,
-		RegistryConfigEncrypted: spec.Blueprint.RegistryConfigEncrypted,
+		Dogus:      effectiveDogus,
+		Components: spec.Blueprint.Components,
+		Config:     spec.Blueprint.Config,
 	}
 	spec.Status = StatusPhaseEffectiveBlueprintGenerated
 	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{})

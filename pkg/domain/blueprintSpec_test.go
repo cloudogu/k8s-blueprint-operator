@@ -334,11 +334,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
-				Dogus:                   []Dogu{},
-				Components:              []Component{},
-				RegistryConfig:          nil,
-				RegistryConfigAbsent:    nil,
-				RegistryConfigEncrypted: nil,
+				Dogus:      []Dogu{},
+				Components: []Component{},
 			},
 			Status: StatusPhaseValidated,
 		}
