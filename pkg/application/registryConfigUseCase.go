@@ -32,7 +32,7 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 
 	blueprintSpec, err := useCase.blueprintRepository.GetById(ctx, blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint to apply dogu config: %w", err)
+		return fmt.Errorf("cannot load blueprint to apply config: %w", err)
 	}
 
 	doguConfigDiffs := blueprintSpec.StateDiff.DoguConfigDiff
@@ -49,12 +49,12 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 
 	if isEmptyDoguDiff && isEmptyGlobalDiff {
 		// TODO Correct Status or create new for no Action needed?
-		return useCase.MarkConfigApplied(ctx, blueprintSpec)
+		return useCase.markConfigApplied(ctx, blueprintSpec)
 	}
 
-	err = useCase.StartApplyConfig(ctx, blueprintSpec)
+	err = useCase.markApplyConfigStart(ctx, blueprintSpec)
 	if err != nil {
-		return err
+		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
 	}
 
 	var errs []error
@@ -65,11 +65,12 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 
 	errs = append(errs, useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs))
 
-	if len(errs) > 0 {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, errors.Join(errs...))
+	joinedErr := errors.Join(errs...)
+	if joinedErr != nil {
+		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, joinedErr)
 	}
 
-	return useCase.MarkConfigApplied(ctx, blueprintSpec)
+	return useCase.markConfigApplied(ctx, blueprintSpec)
 }
 
 func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiff) error {
@@ -111,7 +112,7 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 		case domain.ConfigActionNone:
 			continue
 		default:
-			errs = append(errs, fmt.Errorf("cannot perform unknown action %q for dogu %q with key %q", diff.Action, doguName, diff.Key))
+			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
 		}
 	}
 
@@ -136,18 +137,22 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		case domain.ConfigActionNone:
 			continue
 		default:
-			errs = append(errs, fmt.Errorf("cannot perform unknown action %q for dogu %q with key %q", diff.Action, doguName, diff.Key))
+			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
 		}
 	}
 
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) StartApplyConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func doguUnknownConfigActionError(action domain.ConfigAction, key string, doguName common.SimpleDoguName) error {
+	return fmt.Errorf("cannot perform unknown action %q for dogu %q with key %q", action, doguName, key)
+}
+
+func (useCase *EcosystemRegistryUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.StartApplyRegistryConfig()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot mark blueprint as in progress: %w", err)
+		return fmt.Errorf("cannot mark blueprint as applying config: %w", err)
 	}
 	return nil
 }
@@ -162,13 +167,13 @@ func (useCase *EcosystemRegistryUseCase) handleFailedApplyRegistryConfig(ctx con
 
 	if repoErr != nil {
 		repoErr = errors.Join(repoErr, err)
-		logger.Error(repoErr, "cannot mark blueprint as failed")
-		return fmt.Errorf("cannot mark blueprint as failed while handling %q status: %w", blueprintSpec.Status, repoErr)
+		logger.Error(repoErr, "cannot mark blueprint config apply as failed")
+		return fmt.Errorf("cannot mark blueprint config apply as failed while handling %q status: %w", blueprintSpec.Status, repoErr)
 	}
 	return nil
 }
 
-func (useCase *EcosystemRegistryUseCase) MarkConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func (useCase *EcosystemRegistryUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.MarkRegistryConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
