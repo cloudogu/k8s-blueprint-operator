@@ -115,6 +115,9 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
+		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
+			errorList = append(errorList, fmt.Errorf("absent dogu %q cannot be present in blueprint mask", dogu.Name.Name))
+		}
 		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Name.Namespace != doguMask.Name.Namespace {
 			errorList = append(errorList, fmt.Errorf(
 				"namespace switch is not allowed by default for dogu %q: activate the feature flag for that", doguMask.Name),
@@ -167,6 +170,12 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		Dogus:      effectiveDogus,
 		Components: spec.Blueprint.Components,
 		Config:     spec.Blueprint.Config,
+	}
+	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
+	if validationError != nil {
+		spec.Status = StatusPhaseInvalid
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: validationError})
+		return validationError
 	}
 	spec.Status = StatusPhaseEffectiveBlueprintGenerated
 	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{})

@@ -1,5 +1,13 @@
 package domain
 
+import (
+	"errors"
+	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"slices"
+)
+
 // EffectiveBlueprint describes what the wanted state after evaluating the blueprint and the blueprintMask is.
 // This is still a static description, so no actual state of the ecosystem is taken into consideration here.
 type EffectiveBlueprint struct {
@@ -22,4 +30,17 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 		}
 	}
 	return wantedDogus
+}
+
+func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
+	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) common.SimpleDoguName {
+		return dogu.Name.Name
+	})
+	var errorList []error
+	for doguInConfig := range effectiveBlueprint.Config.Dogus {
+		if !slices.Contains(wantedDogus, doguInConfig) {
+			errorList = append(errorList, fmt.Errorf("setting config for dogu %q is not allowed as it will not be installed with the blueprint", doguInConfig))
+		}
+	}
+	return errors.Join(errorList...)
 }
