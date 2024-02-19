@@ -750,16 +750,15 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 
 func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 	type fields struct {
-		Id                   string
-		Blueprint            Blueprint
-		BlueprintMask        BlueprintMask
-		EffectiveBlueprint   EffectiveBlueprint
-		StateDiff            StateDiff
-		BlueprintUpgradePlan BlueprintUpgradePlan
-		Config               BlueprintConfiguration
-		Status               StatusPhase
-		PersistenceContext   map[string]interface{}
-		Events               []Event
+		Id                 string
+		Blueprint          Blueprint
+		BlueprintMask      BlueprintMask
+		EffectiveBlueprint EffectiveBlueprint
+		StateDiff          StateDiff
+		Config             BlueprintConfiguration
+		Status             StatusPhase
+		PersistenceContext map[string]interface{}
+		Events             []Event
 	}
 	type args struct {
 		possibleInvalidDependenciesError error

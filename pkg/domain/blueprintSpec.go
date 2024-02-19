@@ -73,20 +73,6 @@ type BlueprintConfiguration struct {
 	DryRun bool
 }
 
-type BlueprintUpgradePlan struct {
-	DogusToInstall   []string
-	DogusToUpgrade   []string
-	DogusToUninstall []string
-
-	ComponentsToInstall   []string
-	ComponentsToUpgrade   []string
-	ComponentsToUninstall []string
-
-	RegistryConfigToAdd    []string
-	RegistryConfigToUpdate []string
-	RegistryConfigToRemove []string
-}
-
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
 // Here will be only checked, what can be checked without any external information, e.g. without dogu specification.
 // returns a domain.InvalidBlueprintError if blueprint is invalid
