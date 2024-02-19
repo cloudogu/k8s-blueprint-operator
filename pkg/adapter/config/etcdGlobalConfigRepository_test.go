@@ -49,7 +49,7 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to delete global config key \"key\"")
+		assert.ErrorContains(t, err, "failed to delete global config key \"key\" from etcd")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }
@@ -91,7 +91,7 @@ func TestEtcdGlobalConfigRepository_Save(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to set global config key \"key\" with value \"value\"")
+		assert.ErrorContains(t, err, "failed to set global config key \"key\" with value \"value\" in etcd")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }
