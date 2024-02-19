@@ -1,10 +1,10 @@
 package util
 
-func GetDuplicates(list []string) []string {
+func GetDuplicates[T comparable](list []T) []T {
 	elementCount := CountGrouped(list)
 
 	// get list of names with count != 1
-	var duplicates []string
+	var duplicates []T
 	for name, count := range elementCount {
 		if count != 1 {
 			duplicates = append(duplicates, name)
