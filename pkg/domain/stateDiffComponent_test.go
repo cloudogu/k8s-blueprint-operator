@@ -14,8 +14,8 @@ import (
 
 var (
 	testComponentName = common.QualifiedComponentName{
-		Namespace: "k8s",
-		Name:      "my-component",
+		Namespace:  "k8s",
+		SimpleName: "my-component",
 	}
 )
 
@@ -41,7 +41,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				NeededAction: ActionNone,
@@ -54,7 +54,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState("", nil, TargetStateAbsent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				NeededAction: ActionInstall,
@@ -67,7 +67,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent),
 				NeededAction: ActionUninstall,
@@ -80,7 +80,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
 				NeededAction: ActionUpgrade,
@@ -93,7 +93,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3212),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				NeededAction: ActionDowngrade,
@@ -106,7 +106,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.Name,
+				Name:         testComponentName.SimpleName,
 				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
 				NeededAction: ActionNone,
@@ -194,7 +194,7 @@ func TestComponentDiff_String(t *testing.T) {
 		InstallationState: TargetStatePresent,
 	}
 	diff := &ComponentDiff{
-		Name:         testComponentName.Name,
+		Name:         testComponentName.SimpleName,
 		Actual:       actual,
 		Expected:     expected,
 		NeededAction: ActionInstall,
@@ -274,7 +274,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 			},
 			want: []ComponentDiff{
 				{
-					Name: testComponentName.Name,
+					Name: testComponentName.SimpleName,
 					Actual: ComponentDiffState{
 						InstallationState: TargetStateAbsent,
 					},
@@ -292,7 +292,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 			args: args{
 				blueprintComponents: nil,
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-					testComponentName.Name: {
+					testComponentName.SimpleName: {
 						Name:    testComponentName,
 						Version: compVersion3211,
 					},
@@ -300,7 +300,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 			},
 			want: []ComponentDiff{
 				{
-					Name: testComponentName.Name,
+					Name: testComponentName.SimpleName,
 					Actual: ComponentDiffState{
 						Namespace:         testComponentName.Namespace,
 						Version:           compVersion3211,
@@ -320,21 +320,21 @@ func Test_determineComponentDiffs(t *testing.T) {
 			args: args{
 				blueprintComponents: []Component{
 					{
-						Name:        common.QualifiedComponentName{Namespace: "k8s-testing", Name: "my-component"},
+						Name:        common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "my-component"},
 						Version:     compVersion3211,
 						TargetState: TargetStatePresent,
 					},
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-					testComponentName.Name: {
-						Name:    common.QualifiedComponentName{Namespace: "k8s", Name: "my-component"},
+					testComponentName.SimpleName: {
+						Name:    common.QualifiedComponentName{Namespace: "k8s", SimpleName: "my-component"},
 						Version: compVersion3211,
 					},
 				},
 			},
 			want: []ComponentDiff{
 				{
-					Name: testComponentName.Name,
+					Name: testComponentName.SimpleName,
 					Actual: ComponentDiffState{
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
@@ -360,7 +360,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 					},
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-					testComponentName.Name: {
+					testComponentName.SimpleName: {
 						Name:    testComponentName,
 						Version: compVersion3211,
 					},
@@ -368,7 +368,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 			},
 			want: []ComponentDiff{
 				{
-					Name: testComponentName.Name,
+					Name: testComponentName.SimpleName,
 					Actual: ComponentDiffState{
 						Version:           compVersion3211,
 						Namespace:         testComponentName.Namespace,

@@ -34,66 +34,121 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		{
 			"empty blueprint",
 			args{spec: domain.Blueprint{}},
-			`{"blueprintApi":"v2"}`,
+			`{"blueprintApi":"v2","config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
+			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
 			"components in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployNamespace":""}]}`,
+			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployNamespace":""}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
-			"RegistryConfig in blueprint",
+			"regular dogu config in blueprint",
 			args{spec: domain.Blueprint{
-				RegistryConfig: domain.RegistryConfig{
-					"dogu": map[string]interface{}{
-						"test": "42",
-					},
-				},
-			}},
-			`{"blueprintApi":"v2","registryConfig":{"dogu":{"test":"42"}}}`,
-			assert.NoError,
-		},
-		{
-			"RegistryConfigAbsent in blueprint",
-			args{spec: domain.Blueprint{
-				RegistryConfigAbsent: []string{
-					"dogu/jenkins/java_mem",
-					"second/key",
-				},
-			}},
-			`{"blueprintApi":"v2","registryConfigAbsent":["dogu/jenkins/java_mem","second/key"]}`,
-			assert.NoError,
-		},
-		{
-			"RegistryConfigEncrypted in blueprint",
-			args{spec: domain.Blueprint{
-				RegistryConfigEncrypted: domain.RegistryConfig{
-					"dogu": map[string]interface{}{
-						"jenkins": map[string]string{
-							"privateKey": "==key to encrypt later==",
+				Config: domain.Config{
+					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+						"ldap": {
+							Config: domain.DoguConfig{
+								Present: map[common.DoguConfigKey]common.DoguConfigValue{
+									{
+										DoguName: "ldap",
+										Key:      "container_config/memory_limit",
+									}: "500m",
+									{
+										DoguName: "ldap",
+										Key:      "container_config/swap_limit",
+									}: "500m",
+									{
+										DoguName: "ldap",
+										Key:      "password_change/notification_enabled",
+									}: "true",
+								},
+								Absent: []common.DoguConfigKey{
+									{
+										DoguName: "ldap",
+										Key:      "password_change/mail_subject",
+									},
+									{
+										DoguName: "ldap",
+										Key:      "password_change/mail_text",
+									},
+									{
+										DoguName: "ldap",
+										Key:      "user_search_size_limit",
+									},
+								},
+							},
 						},
 					},
 				},
 			}},
-			`{"blueprintApi":"v2","registryConfigEncrypted":{"dogu":{"jenkins":{"privateKey":"==key to encrypt later=="}}}}`,
+			`{"blueprintApi":"v2","config":{"dogus":{"ldap":{"config":{"present":{"container_config/memory_limit":"500m","container_config/swap_limit":"500m","password_change/notification_enabled":"true"},"absent":["password_change/mail_subject","password_change/mail_text","user_search_size_limit"]},"sensitiveConfig":{}}},"global":{}}}`,
+			assert.NoError,
+		},
+		{
+			"sensitive dogu config in blueprint",
+			args{spec: domain.Blueprint{
+				Config: domain.Config{
+					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+						"redmine": {
+							SensitiveConfig: domain.SensitiveDoguConfig{
+								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+									{DoguConfigKey: common.DoguConfigKey{
+										DoguName: "redmine",
+										Key:      "my-secret-password",
+									}}: "password-value",
+									{DoguConfigKey: common.DoguConfigKey{
+										DoguName: "redmine",
+										Key:      "my-secret-password-2",
+									}}: "password-value-2",
+								},
+								Absent: []common.SensitiveDoguConfigKey{{DoguConfigKey: common.DoguConfigKey{
+									DoguName: "redmine",
+									Key:      "my-secret-password-3",
+								}}},
+							},
+						},
+					},
+				},
+			}},
+			`{"blueprintApi":"v2","config":{"dogus":{"redmine":{"config":{},"sensitiveConfig":{"present":{"my-secret-password":"password-value","my-secret-password-2":"password-value-2"},"absent":["my-secret-password-3"]}}},"global":{}}}`,
+			assert.NoError,
+		},
+		{
+			"global config in blueprint",
+			args{spec: domain.Blueprint{
+				Config: domain.Config{
+					Global: domain.GlobalConfig{
+						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+							"key_provider": "pkcs1v15",
+							"fqdn":         "ces.example.com",
+							"admin_group":  "ces-admin",
+						},
+						Absent: []common.GlobalConfigKey{
+							"default_dogu",
+							"some_other_key",
+						},
+					},
+				},
+			}},
+			`{"blueprintApi":"v2","config":{"global":{"present":{"admin_group":"ces-admin","fqdn":"ces.example.com","key_provider":"pkcs1v15"},"absent":["default_dogu","some_other_key"]}}}`,
 			assert.NoError,
 		},
 	}
@@ -112,7 +167,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: -1},
+			{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: -1},
 		},
 	}
 
@@ -145,8 +200,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
@@ -155,42 +210,101 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,
 		},
 		{
-			"RegistryConfig in blueprint",
-			args{spec: `{"blueprintApi":"v2","registryConfig":{"dogu":{"test":"42"}}}`},
+			"regular dogu config in blueprint",
+			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"ldap":{"config":{"present":{"container_config/memory_limit":"500m","container_config/swap_limit":"500m","password_change/notification_enabled":"true"},"absent":["password_change/mail_subject","password_change/mail_text","user_search_size_limit"]}}}}}`},
 			domain.Blueprint{
-				RegistryConfig: domain.RegistryConfig{
-					"dogu": map[string]interface{}{
-						"test": "42",
+				Config: domain.Config{
+					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+						"ldap": {
+							DoguName: "ldap",
+							Config: domain.DoguConfig{
+								Present: map[common.DoguConfigKey]common.DoguConfigValue{
+									{
+										DoguName: "ldap",
+										Key:      "container_config/memory_limit",
+									}: "500m",
+									{
+										DoguName: "ldap",
+										Key:      "container_config/swap_limit",
+									}: "500m",
+									{
+										DoguName: "ldap",
+										Key:      "password_change/notification_enabled",
+									}: "true",
+								},
+								Absent: []common.DoguConfigKey{
+									{
+										DoguName: "ldap",
+										Key:      "password_change/mail_subject",
+									},
+									{
+										DoguName: "ldap",
+										Key:      "password_change/mail_text",
+									},
+									{
+										DoguName: "ldap",
+										Key:      "user_search_size_limit",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
 			assert.NoError,
 		},
 		{
-			"RegistryConfigAbsent in blueprint",
-			args{spec: `{"blueprintApi":"v2","registryConfigAbsent":["dogu/jenkins/java_mem","second/key"]}`},
+			"sensitive dogu config in blueprint",
+			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"redmine":{"sensitiveConfig":{"present":{"my-secret-password":"password-value","my-secret-password-2":"password-value-2"},"absent":["my-secret-password-3"]}}}}}`},
 			domain.Blueprint{
-				RegistryConfigAbsent: []string{
-					"dogu/jenkins/java_mem",
-					"second/key",
+				Config: domain.Config{
+					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+						"redmine": {
+							DoguName: "redmine",
+							SensitiveConfig: domain.SensitiveDoguConfig{
+								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+									{DoguConfigKey: common.DoguConfigKey{
+										DoguName: "redmine",
+										Key:      "my-secret-password",
+									}}: "password-value",
+									{DoguConfigKey: common.DoguConfigKey{
+										DoguName: "redmine",
+										Key:      "my-secret-password-2",
+									}}: "password-value-2",
+								},
+								Absent: []common.SensitiveDoguConfigKey{{DoguConfigKey: common.DoguConfigKey{
+									DoguName: "redmine",
+									Key:      "my-secret-password-3",
+								}}},
+							},
+						},
+					},
 				},
 			},
 			assert.NoError,
 		},
 		{
-			"RegistryConfigEncrypted in blueprint",
-			args{spec: `{"blueprintApi":"v2","registryConfigEncrypted":{"dogu":{"privateKey":"==key to encrypt later=="}}}`},
+			"global config in blueprint",
+			args{spec: `{"blueprintApi":"v2","config":{"global":{"present":{"admin_group":"ces-admin","fqdn":"ces.example.com","key_provider":"pkcs1v15"},"absent":["default_dogu","some_other_key"]}}}`},
 			domain.Blueprint{
-				RegistryConfigEncrypted: domain.RegistryConfig{
-					"dogu": map[string]interface{}{
-						"privateKey": "==key to encrypt later==",
+				Config: domain.Config{
+					Global: domain.GlobalConfig{
+						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+							"key_provider": "pkcs1v15",
+							"fqdn":         "ces.example.com",
+							"admin_group":  "ces-admin",
+						},
+						Absent: []common.GlobalConfigKey{
+							"default_dogu",
+							"some_other_key",
+						},
 					},
 				},
 			},

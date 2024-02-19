@@ -202,7 +202,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    common.QualifiedComponentName{Name: componentName1, Namespace: testNamespace},
+			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			Version: semVer3212,
 		}
 
@@ -231,10 +231,10 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{Name: componentName1, Namespace: testNamespace},
+			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
-		componentRepoMock.EXPECT().Delete(testCtx, componentInstallation.Name.Name).Return(nil)
+		componentRepoMock.EXPECT().Delete(testCtx, componentInstallation.Name.SimpleName).Return(nil)
 
 		sut := &ComponentInstallationUseCase{
 			blueprintSpecRepo: blueprintSpecRepoMock,
@@ -263,7 +263,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    common.QualifiedComponentName{Name: componentName1, Namespace: testNamespace},
+			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			Version: semVer3212,
 		}
 
@@ -292,7 +292,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{Name: componentName1, Namespace: testNamespace},
+			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		sut := &ComponentInstallationUseCase{
@@ -319,7 +319,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{Name: componentName1, Namespace: testNamespace},
+			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		sut := &ComponentInstallationUseCase{
@@ -395,7 +395,7 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 					componentMock.EXPECT().GetAll(testCtx).
 						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 							"k8s-component-operator": {
-								Name:   common.QualifiedComponentName{Name: "k8s-component-operator", Namespace: testNamespace},
+								Name:   common.QualifiedComponentName{SimpleName: "k8s-component-operator", Namespace: testNamespace},
 								Health: ecosystem.UnavailableHealthStatus},
 						}, nil)
 					return componentMock
@@ -520,7 +520,7 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 							"k8s-dogu-operator": {
 
-								Name: common.QualifiedComponentName{Name: "k8s-dogu-operator", Namespace: testNamespace}, Health: ecosystem.AvailableHealthStatus,
+								Name: common.QualifiedComponentName{SimpleName: "k8s-dogu-operator", Namespace: testNamespace}, Health: ecosystem.AvailableHealthStatus,
 							},
 						}, nil).
 						Once().NotBefore(unsuccessfulCall)

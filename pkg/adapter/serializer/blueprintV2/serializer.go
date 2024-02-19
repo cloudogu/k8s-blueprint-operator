@@ -9,7 +9,7 @@ import (
 type Serializer struct{}
 
 func (b Serializer) Serialize(blueprint domain.Blueprint) (string, error) {
-	blueprintDTO, err := ConvertToBlueprintV2(blueprint)
+	blueprintDTO, err := ConvertToBlueprintDTO(blueprint)
 
 	if err != nil {
 		return "", fmt.Errorf("cannot serialize blueprint: %w", err)
@@ -31,7 +31,7 @@ func (b Serializer) Deserialize(rawBlueprint string) (domain.Blueprint, error) {
 	if err != nil {
 		return domain.Blueprint{}, &domain.InvalidBlueprintError{WrappedError: err, Message: "cannot deserialize blueprint"}
 	}
-	blueprint, err := convertToBlueprint(blueprintDTO)
+	blueprint, err := convertToBlueprintDomain(blueprintDTO)
 
 	if err != nil {
 		return domain.Blueprint{}, &domain.InvalidBlueprintError{WrappedError: err, Message: "cannot deserialize blueprint"}

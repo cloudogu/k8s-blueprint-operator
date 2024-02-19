@@ -144,13 +144,13 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		logger.Info("install component")
 		// TODO apply valuesYamlOverwrite
 		newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
-			Namespace: componentDiff.Expected.Namespace,
-			Name:      componentDiff.Name,
+			Namespace:  componentDiff.Expected.Namespace,
+			SimpleName: componentDiff.Name,
 		}, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")
-		return useCase.componentRepo.Delete(ctx, componentInstallation.Name.Name)
+		return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
 	case domain.ActionUpgrade:
 		logger.Info("upgrade component")
 		// TODO apply valuesYamlOverwrite

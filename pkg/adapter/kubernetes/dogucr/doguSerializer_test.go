@@ -12,8 +12,8 @@ import (
 )
 
 var postgresDoguName = common.QualifiedDoguName{
-	Namespace: common.DoguNamespace("official"),
-	Name:      common.SimpleDoguName("postgresql"),
+	Namespace:  common.DoguNamespace("official"),
+	SimpleName: common.SimpleDoguName("postgresql"),
 }
 
 func Test_parseDoguCR(t *testing.T) {

@@ -38,7 +38,7 @@ func TestConvertDogus(t *testing.T) {
 		{
 			name:    "normal dogu",
 			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}}},
-			want:    []domain.Dogu{{Name: common.QualifiedDoguName{Namespace: "official", Name: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}},
+			want:    []domain.Dogu{{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -95,7 +95,7 @@ func TestConvertToDoguDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{dogus: []domain.Dogu{{Name: common.QualifiedDoguName{Namespace: "official", Name: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}}},
+			args:    args{dogus: []domain.Dogu{{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}}},
 			want:    []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},

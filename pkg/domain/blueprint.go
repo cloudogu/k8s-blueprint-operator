@@ -20,33 +20,9 @@ type Blueprint struct {
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
-	// Used to configure registry globalRegistryEntries on blueprint upgrades
-	RegistryConfig RegistryConfig
-	// Used to remove registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigAbsent []string
-	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigEncrypted RegistryConfig
-	// TODO: need to refactor this struct for configuration
-	//config
-	//	dogus
-	//		dogu1
-	//			normal
-	//				present
-	//					"logLevel": "error"
-	//					"my/config/key": "myValue"
-	//					...
-	//				absent
-	//			sensitive
-	//				present
-	//				absent
-	//	global
-	//		present
-	//			"fqdn": "fqdnValue"
-	//			"my/config/key": "myValue"
-	//		absent
+	// Config contains all config entries to set via blueprint.
+	Config Config
 }
-
-type RegistryConfig map[string]map[string]interface{}
 
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems
 func (blueprint *Blueprint) Validate() error {
@@ -55,7 +31,7 @@ func (blueprint *Blueprint) Validate() error {
 		blueprint.validateDoguUniqueness(),
 		blueprint.validateComponents(),
 		blueprint.validateComponentUniqueness(),
-		blueprint.validateRegistryConfig(),
+		blueprint.Config.validate(),
 	}
 
 	err := errors.Join(errorList...)
@@ -72,7 +48,7 @@ func (blueprint *Blueprint) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.Name })
+	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -87,43 +63,10 @@ func (blueprint *Blueprint) validateComponents() error {
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.Name })
+	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.SimpleName })
 	duplicates := util.GetDuplicates(componentNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
-	return nil
-}
-
-func (blueprint *Blueprint) validateRegistryConfig() error {
-	for key, value := range blueprint.RegistryConfig {
-		if len(key) == 0 {
-			return fmt.Errorf("a registry config key is empty")
-		}
-
-		err := validateKeysNotEmpty(value)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func validateKeysNotEmpty(config map[string]interface{}) error {
-	for key, value := range config {
-		if len(key) == 0 {
-			return fmt.Errorf("a Config key is empty")
-		}
-
-		switch vTyped := value.(type) {
-		case map[string]interface{}:
-			err := validateKeysNotEmpty(vTyped)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
 	return nil
 }

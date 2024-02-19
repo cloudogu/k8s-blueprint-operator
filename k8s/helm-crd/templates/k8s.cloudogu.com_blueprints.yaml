@@ -83,6 +83,48 @@ spec:
                           - version
                         type: object
                       type: array
+                    config:
+                      description: Config is used for ecosystem configuration to be applied. Optional.
+                      properties:
+                        dogus:
+                          additionalProperties:
+                            properties:
+                              config:
+                                properties:
+                                  absent:
+                                    items:
+                                      type: string
+                                    type: array
+                                  present:
+                                    additionalProperties:
+                                      type: string
+                                    type: object
+                                type: object
+                              sensitiveConfig:
+                                properties:
+                                  absent:
+                                    items:
+                                      type: string
+                                    type: array
+                                  present:
+                                    additionalProperties:
+                                      type: string
+                                    type: object
+                                type: object
+                            type: object
+                          type: object
+                        global:
+                          properties:
+                            absent:
+                              items:
+                                type: string
+                              type: array
+                            present:
+                              additionalProperties:
+                                type: string
+                              type: object
+                          type: object
+                      type: object
                     dogus:
                       description: Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
                       items:
@@ -103,21 +145,6 @@ spec:
                           - version
                         type: object
                       type: array
-                    registryConfig:
-                      additionalProperties:
-                        type: string
-                      description: Used to configure registry globalRegistryEntries on blueprint upgrades
-                      type: object
-                    registryConfigAbsent:
-                      description: Used to remove registry globalRegistryEntries on blueprint upgrades
-                      items:
-                        type: string
-                      type: array
-                    registryConfigEncrypted:
-                      additionalProperties:
-                        type: string
-                      description: Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-                      type: object
                   type: object
                 phase:
                   description: Phase represents the processing state of the blueprint
@@ -133,7 +160,7 @@ spec:
                             description: Actual contains the component's state in the current system.
                             properties:
                               distributionNamespace:
-                                description: DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
+                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
                                 description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
@@ -148,7 +175,7 @@ spec:
                             description: Expected contains the desired component's target state.
                             properties:
                               distributionNamespace:
-                                description: DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
+                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
                                 description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"

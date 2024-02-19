@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 )
@@ -15,25 +16,23 @@ import (
 // renaming are breaking changes and require a new blueprint API version.
 type BlueprintV2 struct {
 	serializer.GeneralBlueprint
-	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
-	// blueprint was applied. Optional.
+	// Dogus contains a set of exact dogu versions, which should be present or absent
+	// in the CES instance after this blueprint was applied.
+	// Optional.
 	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
-	// Packages contains a set of exact package versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. The packages must correspond to the used operation system package manager. Optional.
+	// Components are a set of exact package versions,
+	// which should be present or absent in the CES instance after which this blueprint was applied.
+	// The packages must correspond to the used package manager.
+	// Optional.
 	Components []serializer.TargetComponent `json:"components,omitempty"`
-	// Used to configure registry globalRegistryEntries on blueprint upgrades
-	RegistryConfig RegistryConfig `json:"registryConfig,omitempty"`
-	//TODO: we need to introduce `SensitiveDoguConfigAbsent` as we need to distinguish them for k8s later (we divide them into a configMap and a secret)
-
-	// Used to remove registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigAbsent []string `json:"registryConfigAbsent,omitempty"`
-	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
-	RegistryConfigEncrypted RegistryConfig `json:"registryConfigEncrypted,omitempty"`
+	// Config is used for ecosystem configuration to be applied.
+	// Optional.
+	Config v1.Config `json:"config,omitempty"`
 }
 
 type RegistryConfig map[string]map[string]interface{}
 
-func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
+func ConvertToBlueprintDTO(blueprint domain.Blueprint) (BlueprintV2, error) {
 	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, compError := serializer.ConvertToComponentDTOs(blueprint.Components)
 
@@ -43,16 +42,14 @@ func ConvertToBlueprintV2(blueprint domain.Blueprint) (BlueprintV2, error) {
 	}
 
 	return BlueprintV2{
-		GeneralBlueprint:        serializer.GeneralBlueprint{API: serializer.V2},
-		Dogus:                   convertedDogus,
-		Components:              convertedComponents,
-		RegistryConfig:          RegistryConfig(blueprint.RegistryConfig),
-		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
-		RegistryConfigEncrypted: RegistryConfig(blueprint.RegistryConfigEncrypted),
+		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
+		Dogus:            convertedDogus,
+		Components:       convertedComponents,
+		Config:           v1.ConvertToConfigDTO(blueprint.Config),
 	}, nil
 }
 
-func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
+func convertToBlueprintDomain(blueprint BlueprintV2) (domain.Blueprint, error) {
 	switch blueprint.API {
 	case serializer.V1:
 		return domain.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
@@ -67,11 +64,10 @@ func convertToBlueprint(blueprint BlueprintV2) (domain.Blueprint, error) {
 	if err != nil {
 		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
+
 	return domain.Blueprint{
-		Dogus:                   convertedDogus,
-		Components:              convertedComponents,
-		RegistryConfig:          domain.RegistryConfig(blueprint.RegistryConfig),
-		RegistryConfigAbsent:    blueprint.RegistryConfigAbsent,
-		RegistryConfigEncrypted: domain.RegistryConfig(blueprint.RegistryConfigEncrypted),
+		Dogus:      convertedDogus,
+		Components: convertedComponents,
+		Config:     v1.ConvertToConfigDomain(blueprint.Config),
 	}, nil
 }
