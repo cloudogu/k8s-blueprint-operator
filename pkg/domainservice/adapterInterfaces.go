@@ -132,11 +132,11 @@ type GlobalConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.GlobalConfigEntry) error
 	// Delete deletes a global config key.
 	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.SimpleDoguName) error
+	// If the key is not existent, no error will be returned.
+	Delete(context.Context, *common.GlobalConfigKey) error
 }
 
 type DoguConfigEntryRepository interface {
@@ -183,6 +183,12 @@ type SensitiveDoguConfigEntryRepository interface {
 	Delete(ctx context.Context, key common.SensitiveDoguConfigKey) error
 }
 
+// NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
+// omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
+func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {
+	return &NotFoundError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
+}
+
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.
 type NotFoundError struct {
 	WrappedError error
@@ -204,7 +210,7 @@ func (e *NotFoundError) Unwrap() error {
 
 // NewInternalError creates an InternalError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by InternalError.Error().
-func NewInternalError(wrappedError error, message string, msgArgs ...interface{}) *InternalError {
+func NewInternalError(wrappedError error, message string, msgArgs ...any) *InternalError {
 	return &InternalError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
