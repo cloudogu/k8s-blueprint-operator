@@ -1,6 +1,7 @@
 package ecosystem
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -26,8 +27,8 @@ func TestHealthResult_String(t *testing.T) {
 		{
 			name: "should print dogu and component health results with unhealthy",
 			fields: fields{
-				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
-				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
+				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]common.SimpleDoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
+				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
 			},
 			want: "ecosystem health:\n  1 dogu(s) are unhealthy: nginx-ingress\n  1 component(s) are unhealthy: k8s-etcd",
 		},
@@ -56,32 +57,32 @@ func TestHealthResult_AllHealthy(t *testing.T) {
 		{
 			name: "should be healthy if no dogus or components are unavailable",
 			fields: fields{
-				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{AvailableHealthStatus: {"nginx-ingress"}}},
-				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{AvailableHealthStatus: {"k8s-etcd"}}},
+				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]common.SimpleDoguName{AvailableHealthStatus: {"nginx-ingress"}}},
+				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{AvailableHealthStatus: {"k8s-etcd"}}},
 			},
 			want: true,
 		},
 		{
 			name: "should be unhealthy if dogus are unavailable",
 			fields: fields{
-				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
-				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{AvailableHealthStatus: {"k8s-etcd"}}},
+				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]common.SimpleDoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
+				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{AvailableHealthStatus: {"k8s-etcd"}}},
 			},
 			want: false,
 		},
 		{
 			name: "should be unhealthy if components are unavailable",
 			fields: fields{
-				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{AvailableHealthStatus: {"nginx-ingress"}}},
-				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
+				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]common.SimpleDoguName{AvailableHealthStatus: {"nginx-ingress"}}},
+				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
 			},
 			want: false,
 		},
 		{
 			name: "should be unhealthy if dogus and components are unavailable",
 			fields: fields{
-				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]DoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
-				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]ComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
+				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]common.SimpleDoguName{UnavailableHealthStatus: {"nginx-ingress"}}},
+				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
 			},
 			want: false,
 		},

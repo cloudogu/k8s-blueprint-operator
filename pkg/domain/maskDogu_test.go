@@ -2,13 +2,14 @@ package domain
 
 import (
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
 func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testing.T) {
-	dogu := MaskDogu{Namespace: "present", Name: "dogu", TargetState: TargetStatePresent}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: TargetStatePresent}
 
 	err := dogu.validate()
 
@@ -16,7 +17,7 @@ func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testi
 }
 
 func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := MaskDogu{Namespace: "present", Name: "dogu", TargetState: TargetStateAbsent}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: TargetStateAbsent}
 
 	err := dogu.validate()
 
@@ -25,7 +26,7 @@ func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) 
 
 func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 	version, _ := core.ParseVersion("2018-1")
-	dogu := MaskDogu{Namespace: "present", Name: "dogu", Version: version}
+	dogu := MaskDogu{Name: officialDogu1, Version: version}
 
 	err := dogu.validate()
 
@@ -34,16 +35,16 @@ func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
-	dogu := MaskDogu{Namespace: "official"}
+	dogu := MaskDogu{Name: common.QualifiedDoguName{Namespace: "official"}}
 
 	err := dogu.validate()
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, "dogu mask is invalid: dogu field Name must not be empty")
+	require.ErrorContains(t, err, "dogu name must not be empty: '/official'")
 }
 
 func Test_MaskTargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
-	dogu := MaskDogu{Namespace: "official", Name: "dogu1", TargetState: -1}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: -1}
 
 	err := dogu.validate()
 

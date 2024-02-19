@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -25,7 +26,24 @@ type Blueprint struct {
 	RegistryConfigAbsent []string
 	// Used to configure encrypted registry globalRegistryEntries on blueprint upgrades
 	RegistryConfigEncrypted RegistryConfig
-	// TODO Add ComponentConfig for CRD fields like deployNamespace or helmValuesOverwrite.
+	// TODO: need to refactor this struct for configuration
+	//config
+	//	dogus
+	//		dogu1
+	//			normal
+	//				present
+	//					"logLevel": "error"
+	//					"my/config/key": "myValue"
+	//					...
+	//				absent
+	//			sensitive
+	//				present
+	//				absent
+	//	global
+	//		present
+	//			"fqdn": "fqdnValue"
+	//			"my/config/key": "myValue"
+	//		absent
 }
 
 type RegistryConfig map[string]map[string]interface{}
@@ -54,7 +72,7 @@ func (blueprint *Blueprint) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) string { return dogu.Name })
+	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.Name })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -69,7 +87,7 @@ func (blueprint *Blueprint) validateComponents() error {
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := util.Map(blueprint.Components, func(component Component) string { return component.Name })
+	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.Name })
 	duplicates := util.GetDuplicates(componentNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
@@ -142,11 +143,14 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	case domain.ActionInstall:
 		logger.Info("install component")
 		// TODO apply valuesYamlOverwrite
-		newComponent := ecosystem.InstallComponent(componentDiff.Expected.DistributionNamespace, componentDiff.Name, componentDiff.Expected.Version)
+		newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
+			Namespace: componentDiff.Expected.Namespace,
+			Name:      componentDiff.Name,
+		}, componentDiff.Expected.Version)
 		return useCase.componentRepo.Create(ctx, newComponent)
 	case domain.ActionUninstall:
 		logger.Info("uninstall component")
-		return useCase.componentRepo.Delete(ctx, componentInstallation.Name)
+		return useCase.componentRepo.Delete(ctx, componentInstallation.Name.Name)
 	case domain.ActionUpgrade:
 		logger.Info("upgrade component")
 		// TODO apply valuesYamlOverwrite

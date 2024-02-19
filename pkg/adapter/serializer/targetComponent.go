@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -42,17 +43,16 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 			}
 		}
 
-		namespace, name, err := SplitComponentName(component.Name)
+		name, err := common.QualifiedComponentNameFromString(component.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
 		}
 
 		convertedComponents = append(convertedComponents, domain.Component{
-			Name:                  name,
-			DistributionNamespace: namespace,
-			Version:               version,
-			TargetState:           newState,
+			Name:        name,
+			Version:     version,
+			TargetState: newState,
 		})
 	}
 
@@ -73,8 +73,7 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 
 		// convert the distribution namespace back into the name field so the EffectiveBlueprint has the same syntax
 		// as the original blueprint json from the Blueprint resource.
-		joinedComponentName, err := JoinComponentName(component.Name, component.DistributionNamespace)
-		errorList = append(errorList, err)
+		joinedComponentName := component.Name.String()
 		version := ""
 		if newState == "present" {
 			version = component.Version.String()
@@ -83,7 +82,7 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 		// TODO Delete this if the blueprint can handle a component configuration.
 		// This section would contain the deployNamespace in a generic Map.
 		var deployNamespace string
-		if component.Name == "k8s-longhorn" {
+		if component.Name == common.K8sK8sLonghornName {
 			deployNamespace = "longhorn-system"
 		}
 		return TargetComponent{

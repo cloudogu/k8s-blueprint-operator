@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"golang.org/x/exp/maps"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -31,7 +32,7 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
 	// Name contains the component's name.
-	Name string
+	Name common.SimpleComponentName
 	// Actual contains that state of a component how it is currently found in the system.
 	Actual ComponentDiffState
 	// Expected contains that desired state of a component how it is supposed to be.
@@ -43,9 +44,9 @@ type ComponentDiff struct {
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
 type ComponentDiffState struct {
-	// DistributionNamespace is part of the address under which the component will be obtained. This namespace must NOT
+	// Namespace is part of the address under which the component will be obtained. This namespace must NOT
 	// to be confused with the K8s cluster namespace.
-	DistributionNamespace string
+	Namespace common.ComponentNamespace
 	// Version contains the component's version.
 	Version *semver.Version
 	// InstallationState contains the component's target state.
@@ -66,8 +67,8 @@ func (diff *ComponentDiff) String() string {
 // String returns a string representation of the ComponentDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
-		"{DistributionNamespace: %q, Version: %q, InstallationState: %q}",
-		diff.DistributionNamespace,
+		"{Namespace: %q, Version: %q, InstallationState: %q}",
+		diff.Namespace,
 		diff.getSafeVersionString(),
 		diff.InstallationState,
 	)
@@ -82,19 +83,19 @@ func (diff *ComponentDiffState) getSafeVersionString() string {
 }
 
 // determineComponentDiffs creates ComponentDiffs for all components in the blueprint and all installed components as well.
-func determineComponentDiffs(blueprintComponents []Component, installedComponents map[string]*ecosystem.ComponentInstallation) ([]ComponentDiff, error) {
-	var componentDiffs = map[string]ComponentDiff{}
+func determineComponentDiffs(blueprintComponents []Component, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) ([]ComponentDiff, error) {
+	var componentDiffs = map[common.SimpleComponentName]ComponentDiff{}
 	for _, blueprintComponent := range blueprintComponents {
-		installedComponent := installedComponents[blueprintComponent.Name]
+		installedComponent := installedComponents[blueprintComponent.Name.Name]
 		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
 		if err != nil {
 			return nil, err
 		}
-		componentDiffs[blueprintComponent.Name] = compDiff
+		componentDiffs[blueprintComponent.Name.Name] = compDiff
 	}
 
 	for _, installedComponent := range installedComponents {
-		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name)
+		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name.Name)
 
 		if !found {
 			var notFoundInBlueprint *Component = nil
@@ -102,7 +103,7 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 			if err != nil {
 				return nil, err
 			}
-			componentDiffs[installedComponent.Name] = compDiff
+			componentDiffs[installedComponent.Name.Name] = compDiff
 			continue
 		}
 
@@ -110,7 +111,7 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 		if err != nil {
 			return nil, err
 		}
-		componentDiffs[installedComponent.Name] = compDiff
+		componentDiffs[installedComponent.Name.Name] = compDiff
 	}
 	return maps.Values(componentDiffs), nil
 }
@@ -120,29 +121,29 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 // If the installedComponent is nil, it is considered to be not installed currently.
 func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) (ComponentDiff, error) {
 	var expectedState, actualState ComponentDiffState
-	componentName := "" // either blueprintComponent or installedComponent could be nil
+	componentName := common.SimpleComponentName("") // either blueprintComponent or installedComponent could be nil
 
 	if installedComponent == nil {
 		actualState = ComponentDiffState{
 			InstallationState: TargetStateAbsent,
 		}
 	} else {
-		componentName = installedComponent.Name
+		componentName = installedComponent.Name.Name
 		actualState = ComponentDiffState{
-			DistributionNamespace: installedComponent.DistributionNamespace,
-			Version:               installedComponent.Version,
-			InstallationState:     TargetStatePresent,
+			Namespace:         installedComponent.Name.Namespace,
+			Version:           installedComponent.Version,
+			InstallationState: TargetStatePresent,
 		}
 	}
 
 	if blueprintComponent == nil {
 		expectedState = actualState
 	} else {
-		componentName = blueprintComponent.Name
+		componentName = blueprintComponent.Name.Name
 		expectedState = ComponentDiffState{
-			DistributionNamespace: blueprintComponent.DistributionNamespace,
-			Version:               blueprintComponent.Version,
-			InstallationState:     blueprintComponent.TargetState,
+			Namespace:         blueprintComponent.Name.Namespace,
+			Version:           blueprintComponent.Version,
+			InstallationState: blueprintComponent.TargetState,
 		}
 	}
 
@@ -159,9 +160,9 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 	}, nil
 }
 
-func findComponentByName(components []Component, name string) (Component, bool) {
+func findComponentByName(components []Component, name common.SimpleComponentName) (Component, bool) {
 	for _, component := range components {
-		if component.Name == name {
+		if component.Name.Name == name {
 			return component, true
 		}
 	}
@@ -179,7 +180,7 @@ func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffSta
 func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		if expected.DistributionNamespace != actual.DistributionNamespace {
+		if expected.Namespace != actual.Namespace {
 			return ActionSwitchComponentDistributionNamespace, nil
 		}
 

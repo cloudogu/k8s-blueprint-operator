@@ -2,20 +2,19 @@ package ecosystem
 
 import (
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"slices"
 	"strings"
 )
 
-type DoguName string
-
 // DoguHealthResult is a snapshot of the health states of all dogus.
 type DoguHealthResult struct {
-	DogusByStatus map[HealthStatus][]DoguName
+	DogusByStatus map[HealthStatus][]common.SimpleDoguName
 }
 
-func (result DoguHealthResult) getUnhealthyDogus() []DoguName {
-	var unhealthyDogus []DoguName
+func (result DoguHealthResult) getUnhealthyDogus() []common.SimpleDoguName {
+	var unhealthyDogus []common.SimpleDoguName
 	for healthState, doguNames := range result.DogusByStatus {
 		if healthState != AvailableHealthStatus {
 			unhealthyDogus = append(unhealthyDogus, doguNames...)
@@ -25,7 +24,7 @@ func (result DoguHealthResult) getUnhealthyDogus() []DoguName {
 }
 
 func (result DoguHealthResult) String() string {
-	unhealthyDogus := util.Map(result.getUnhealthyDogus(), func(dogu DoguName) string { return string(dogu) })
+	unhealthyDogus := util.Map(result.getUnhealthyDogus(), func(dogu common.SimpleDoguName) string { return string(dogu) })
 	slices.Sort(unhealthyDogus)
 	return fmt.Sprintf("%d dogu(s) are unhealthy: %s", len(unhealthyDogus), strings.Join(unhealthyDogus, ", "))
 }
@@ -33,10 +32,10 @@ func (result DoguHealthResult) String() string {
 // CalculateDoguHealthResult collects the health states from DoguInstallation and creates a DoguHealthResult.
 func CalculateDoguHealthResult(dogus []*DoguInstallation) DoguHealthResult {
 	result := DoguHealthResult{
-		DogusByStatus: map[HealthStatus][]DoguName{},
+		DogusByStatus: map[HealthStatus][]common.SimpleDoguName{},
 	}
 	for _, dogu := range dogus {
-		result.DogusByStatus[dogu.Health] = append(result.DogusByStatus[dogu.Health], DoguName(dogu.Name))
+		result.DogusByStatus[dogu.Health] = append(result.DogusByStatus[dogu.Health], dogu.Name.Name)
 	}
 	return result
 }

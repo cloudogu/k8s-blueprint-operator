@@ -3,8 +3,8 @@ package v1
 import (
 	"errors"
 	"fmt"
-
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
@@ -32,12 +32,12 @@ type DoguAction string
 func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 	return DoguDiff{
 		Actual: DoguDiffState{
-			Namespace:         domainModel.Actual.Namespace,
+			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 		},
 		Expected: DoguDiffState{
-			Namespace:         domainModel.Expected.Namespace,
+			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
 		},
@@ -80,14 +80,14 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 	}
 
 	return domain.DoguDiff{
-		DoguName: doguName,
+		DoguName: common.SimpleDoguName(doguName),
 		Actual: domain.DoguDiffState{
-			Namespace:         dto.Actual.Namespace,
+			Namespace:         common.DoguNamespace(dto.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
 		},
 		Expected: domain.DoguDiffState{
-			Namespace:         dto.Expected.Namespace,
+			Namespace:         common.DoguNamespace(dto.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
 		},

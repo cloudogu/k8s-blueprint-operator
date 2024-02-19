@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
@@ -27,8 +28,8 @@ type doguInstallationRepo struct {
 func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface) domainservice.DoguInstallationRepository {
 	return &doguInstallationRepo{doguClient: doguClient}
 }
-func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string) (*ecosystem.DoguInstallation, error) {
-	cr, err := repo.doguClient.Get(ctx, doguName, metav1.GetOptions{})
+func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error) {
+	cr, err := repo.doguClient.Get(ctx, string(doguName), metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			return nil, &domainservice.NotFoundError{
@@ -45,7 +46,7 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName string
 	return parseDoguCR(cr)
 }
 
-func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error) {
 	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, &domainservice.InternalError{
@@ -55,14 +56,14 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[string]*ecosy
 	}
 
 	var errs []error
-	doguInstallations := make(map[string]*ecosystem.DoguInstallation, len(crList.Items))
+	doguInstallations := make(map[common.SimpleDoguName]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
 		doguInstallation, err := parseDoguCR(&cr)
 		if err != nil {
 			errs = append(errs, err)
 			continue
 		}
-		doguInstallations[doguInstallation.Name] = doguInstallation
+		doguInstallations[doguInstallation.Name.Name] = doguInstallation
 	}
 
 	err = errors.Join(errs...)
@@ -98,7 +99,7 @@ func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.Do
 		}
 	}
 	logger.Info("patch dogu CR", "doguName", dogu.Name, "doguPatch", string(patch))
-	_, err = repo.doguClient.Patch(ctx, dogu.Name, types.MergePatchType, patch, metav1.PatchOptions{})
+	_, err = repo.doguClient.Patch(ctx, string(dogu.Name.Name), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return &domainservice.InternalError{
 			WrappedError: err,
@@ -108,8 +109,8 @@ func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.Do
 	return nil
 }
 
-func (repo *doguInstallationRepo) Delete(ctx context.Context, doguName string) error {
-	err := repo.doguClient.Delete(ctx, doguName, metav1.DeleteOptions{})
+func (repo *doguInstallationRepo) Delete(ctx context.Context, doguName common.SimpleDoguName) error {
+	err := repo.doguClient.Delete(ctx, string(doguName), metav1.DeleteOptions{})
 	if err != nil {
 		return &domainservice.InternalError{
 			WrappedError: err,

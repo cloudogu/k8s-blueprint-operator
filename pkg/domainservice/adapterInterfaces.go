@@ -3,6 +3,7 @@ package domainservice
 import (
 	"context"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 
 	"github.com/cloudogu/cesapp-lib/core"
@@ -14,11 +15,11 @@ type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
 	// a NotFoundError if the dogu is not installed or
 	// an InternalError if there is any other error.
-	GetByName(ctx context.Context, doguName string) (*ecosystem.DoguInstallation, error)
+	GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
 	// a NotFoundError if any dogu is not installed or
 	// an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[string]*ecosystem.DoguInstallation, error)
+	GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
 	// a ConflictError if there is already a DoguInstallation with this name or
 	// an InternalError if there is any error while saving the DoguInstallation
@@ -32,21 +33,21 @@ type DoguInstallationRepository interface {
 	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
 	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
 	// returns an InternalError if there is any other error
-	Delete(ctx context.Context, doguName string) error
+	Delete(ctx context.Context, doguName common.SimpleDoguName) error
 }
 
 type ComponentInstallationRepository interface {
 	// GetByName returns the ecosystem.ComponentInstallation or
 	// a NotFoundError if the component is not installed or
 	// an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName string) (*ecosystem.ComponentInstallation, error)
+	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
 	// GetAll returns the installation info of all installed components or
 	// a NotFoundError if any component is not installed or
 	// an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[string]*ecosystem.ComponentInstallation, error)
+	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
 	// Delete deletes the component by name from the ecosystem.
 	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName string) error
+	Delete(ctx context.Context, componentName common.SimpleComponentName) error
 	// Create creates the ecosystem.ComponentInstallation in the cluster.
 	// returns an InternalError if there is an error.
 	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
@@ -79,17 +80,17 @@ type RemoteDoguRegistry interface {
 	// GetDogu returns the dogu specification for the given dogu and version or
 	// an NotFoundError indicating that there was no dogu spec found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogu(qualifiedDoguName string, version string) (*core.Dogu, error)
+	GetDogu(doguName common.QualifiedDoguName, version string) (*core.Dogu, error)
 
 	// GetDogus returns the all requested dogu specifications or
 	// an NotFoundError indicating that any dogu spec was not found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogus(dogusToLoad []DoguToLoad) (map[string]*core.Dogu, error)
+	GetDogus(dogusToLoad []DoguToLoad) (map[common.QualifiedDoguName]*core.Dogu, error)
 }
 
 type DoguToLoad struct {
-	QualifiedDoguName string
-	Version           string
+	DoguName common.QualifiedDoguName
+	Version  string
 }
 
 type MaintenanceMode interface {
@@ -105,6 +106,81 @@ type MaintenanceMode interface {
 type MaintenancePageModel struct {
 	Title string
 	Text  string
+}
+
+type ConfigEncryptionAdapter interface {
+	// Encrypt encrypts the given value for a dogu.
+	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
+	Encrypt(context.Context, common.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
+	// EncryptAll encrypts the given values for a dogu.
+	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
+	EncryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error)
+}
+
+type GlobalConfigEntryRepository interface {
+	// GetAll retrieves all keys from the global config.
+	// It can throw the following errors:
+	// 	- NotFoundError if there is no global config.
+	// 	- InternalError if any other error happens.
+	GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error)
+	// Save persists the global config.
+	// It can throw the following errors:
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
+	Save(context.Context, *ecosystem.GlobalConfigEntry) error
+	// SaveAll persists all given config keys.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigEntry) error
+	// Delete deletes a global config key.
+	// It can throw an InternalError if any error happens.
+	// If the key is not existent no error will be returned.
+	Delete(ctx context.Context, key common.SimpleDoguName) error
+}
+
+type DoguConfigEntryRepository interface {
+	// GetAllByKey retrieves all ecosystem.DoguConfigEntry's for the given ecosystem.DoguConfigKey's config.
+	// It can trow the following errors:
+	// 	- NotFoundError if there is no config for the dogu.
+	// 	- InternalError if any other error happens.
+	GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
+	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	Save(context.Context, *ecosystem.DoguConfigEntry) error
+	// SaveAll persists all given config keys. Configs can be set even if the dogus are not installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	SaveAll(ctx context.Context, keys []*ecosystem.DoguConfigEntry) error
+	// Delete deletes a dogu config key.
+	// It can throw an InternalError if any error happens.
+	// If the key is not existent no error will be returned.
+	Delete(ctx context.Context, key common.DoguConfigKey) error
+}
+
+type SensitiveDoguConfigEntryRepository interface {
+	// GetAllByKey retrieves a dogu's sensitive config for the given keys.
+	// It can trow the following errors:
+	// 	- NotFoundError if there is no config for the dogu.
+	// 	- InternalError if any other error happens.
+	GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
+	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	Save(context.Context, *ecosystem.SensitiveDoguConfigEntry) error
+	// SaveAll persists all given sensitive config keys. sensitive configs can be set even if the dogus are not installed.
+	// It can throw the following errors:
+	//	- ConflictError if there were concurrent write accesses.
+	//	- InternalError if any other error happens.
+	SaveAll(ctx context.Context, keys []*ecosystem.SensitiveDoguConfigEntry) error
+	// Delete deletes a sensitive dogu config key.
+	// It can throw an InternalError if any error happens.
+	// If the key is not existent no error will be returned.
+	Delete(ctx context.Context, key common.SensitiveDoguConfigKey) error
 }
 
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -36,8 +37,8 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) DoguToLoad {
 		return DoguToLoad{
-			QualifiedDoguName: dogu.GetQualifiedName(),
-			Version:           dogu.Version.Raw,
+			DoguName: dogu.Name,
+			Version:  dogu.Version.Raw,
 		}
 	})
 	logger.Info("load dogu specifications...", "wantedDogus", wantedDogus)
@@ -54,7 +55,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 
 	var errorList []error
 	for _, wantedDogu := range wantedDogus {
-		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.GetQualifiedName()]
+		dependencyDoguSpec := doguSpecsOfWantedDogus[wantedDogu.Name]
 		logger.Info(fmt.Sprintf("check dependencies of %q in version %q", wantedDogu.Name, wantedDogu.Version.Raw))
 		err = useCase.checkDoguDependencies(ctx, wantedDogus, doguSpecsOfWantedDogus, dependencyDoguSpec.Dependencies)
 		if err != nil {
@@ -74,7 +75,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 	ctx context.Context,
 	wantedDogus []domain.Dogu,
-	knownDoguSpecs map[string]*core.Dogu,
+	knownDoguSpecs map[common.QualifiedDoguName]*core.Dogu,
 	dependenciesOfWantedDogu []core.Dependency,
 ) error {
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.checkDoguDependencies")
@@ -112,9 +113,9 @@ func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
 	return foundNginxIngress && foundNginxStatic
 }
 
-func isDoguInSlice(dogus []domain.Dogu, name string) bool {
+func isDoguInSlice(dogus []domain.Dogu, name common.SimpleDoguName) bool {
 	for _, dogu := range dogus {
-		if dogu.Name == name {
+		if dogu.Name.Name == name {
 			return true
 		}
 	}
@@ -125,15 +126,15 @@ func isDoguInSlice(dogus []domain.Dogu, name string) bool {
 func checkDoguDependency(
 	dependencyOfWantedDogu core.Dependency,
 	wantedDogus []domain.Dogu,
-	knownDoguSpecs map[string]*core.Dogu,
+	knownDoguSpecs map[common.QualifiedDoguName]*core.Dogu,
 ) error {
 	// this also works with namespace changes as only the simple dogu name get searched
-	dependencyInBlueprint, err := domain.FindDoguByName(wantedDogus, dependencyOfWantedDogu.Name)
+	dependencyInBlueprint, err := domain.FindDoguByName(wantedDogus, common.SimpleDoguName(dependencyOfWantedDogu.Name))
 	if err != nil {
 		return fmt.Errorf("dependency '%s' in version '%s' is not a present dogu in the effective blueprint", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version)
 	}
 	// dependencyDoguSpec := useCase.remoteDoguRegistry.GetDogu(dependencyInBlueprint.GetQualifiedName(), dependencyInBlueprint.Version)
-	dependencyDoguSpec := knownDoguSpecs[dependencyInBlueprint.GetQualifiedName()]
+	dependencyDoguSpec := knownDoguSpecs[dependencyInBlueprint.Name]
 	return checkDependencyVersion(dependencyInBlueprint, dependencyDoguSpec.Version)
 }
 

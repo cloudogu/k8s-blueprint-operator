@@ -2,6 +2,7 @@ package componentcr
 
 import (
 	"context"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
@@ -22,9 +23,14 @@ import (
 var testCtx = context.Background()
 
 const (
-	testComponentName         = "my-component"
+	testComponentNameRaw      = "my-component"
 	testDistributionNamespace = "k8s"
 )
+
+var testComponentName = common.QualifiedComponentName{
+	Namespace: testDistributionNamespace,
+	Name:      testComponentNameRaw,
+}
 
 func Test_componentInstallationRepo_GetAll(t *testing.T) {
 	t.Run("should return error when k8s client fails generically", func(t *testing.T) {
@@ -46,7 +52,7 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		listWithErroneousElement := &compV1.ComponentList{Items: []compV1.Component{{
 			Spec: compV1.ComponentSpec{
-				Name:      testComponentName,
+				Name:      string(testComponentName.Name),
 				Namespace: testDistributionNamespace,
 				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
@@ -69,12 +75,12 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		list := &compV1.ComponentList{Items: []compV1.Component{
 			{
 				ObjectMeta: metav1.ObjectMeta{
-					Name:            testComponentName,
+					Name:            string(testComponentName.Name),
 					ResourceVersion: "42",
 				},
 				Spec: compV1.ComponentSpec{
-					Name:      testComponentName,
-					Namespace: testDistributionNamespace,
+					Name:      string(testComponentName.Name),
+					Namespace: string(testComponentName.Namespace),
 					Version:   "1.2.3-4",
 				},
 				Status: compV1.ComponentStatus{
@@ -91,25 +97,23 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		expected := map[string]*ecosystem.ComponentInstallation{}
+		expected := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 		version, _ := semver.NewVersion("1.2.3-4")
-		expected[testComponentName] = &ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               version,
-			Status:                "installed",
-			Health:                "",
-			PersistenceContext:    nil,
+		expected[testComponentName.Name] = &ecosystem.ComponentInstallation{
+			Name:               testComponentName,
+			Version:            version,
+			Status:             "installed",
+			Health:             "",
+			PersistenceContext: nil,
 		}
-		assert.Equal(t, expected[testComponentName].Name, actual[testComponentName].Name)
-		assert.Equal(t, expected[testComponentName].DistributionNamespace, actual[testComponentName].DistributionNamespace)
-		assert.Equal(t, expected[testComponentName].Status, actual[testComponentName].Status)
-		assert.Equal(t, expected[testComponentName].Version, actual[testComponentName].Version)
-		assert.Equal(t, expected[testComponentName].Health, actual[testComponentName].Health)
+		assert.Equal(t, expected[testComponentName.Name].Name, actual[testComponentName.Name].Name)
+		assert.Equal(t, expected[testComponentName.Name].Status, actual[testComponentName.Name].Status)
+		assert.Equal(t, expected[testComponentName.Name].Version, actual[testComponentName.Name].Version)
+		assert.Equal(t, expected[testComponentName.Name].Health, actual[testComponentName.Name].Health)
 		// map pointers are hard to compare, test each field individually
 		assert.Equal(t,
 			map[string]any{componentInstallationRepoContextKey: componentInstallationRepoContext{resourceVersion: "42"}},
-			actual[testComponentName].PersistenceContext)
+			actual[testComponentName.Name].PersistenceContext)
 	})
 }
 
@@ -117,11 +121,11 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 	t.Run("should return error when k8s client fails generically", func(t *testing.T) {
 		// given
 		mockRepo := newMockComponentRepo(t)
-		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(nil, assert.AnError)
+		mockRepo.EXPECT().Get(testCtx, string(testComponentName.Name), metav1.GetOptions{}).Return(nil, assert.AnError)
 		sut := componentInstallationRepo{componentClient: mockRepo}
 
 		// when
-		_, err := sut.GetByName(testCtx, testComponentName)
+		_, err := sut.GetByName(testCtx, testComponentName.Name)
 
 		// then
 		require.Error(t, err)
@@ -133,15 +137,15 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		erroneousComponent := &compV1.Component{
 			Spec: compV1.ComponentSpec{
-				Name:      testComponentName,
+				Name:      string(testComponentName.Name),
 				Namespace: testDistributionNamespace,
 				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
 		}
-		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(erroneousComponent, nil)
+		mockRepo.EXPECT().Get(testCtx, string(testComponentName.Name), metav1.GetOptions{}).Return(erroneousComponent, nil)
 
 		// when
-		_, err := sut.GetByName(testCtx, testComponentName)
+		_, err := sut.GetByName(testCtx, testComponentName.Name)
 
 		// then
 		require.Error(t, err)
@@ -152,10 +156,10 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		// given
 		mockRepo := newMockComponentRepo(t)
 		sut := componentInstallationRepo{componentClient: mockRepo}
-		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(nil, nil)
+		mockRepo.EXPECT().Get(testCtx, string(testComponentName.Name), metav1.GetOptions{}).Return(nil, nil)
 
 		// when
-		_, err := sut.GetByName(testCtx, testComponentName)
+		_, err := sut.GetByName(testCtx, testComponentName.Name)
 
 		// then
 		require.Error(t, err)
@@ -168,11 +172,11 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		errNotFound := errors.NewNotFound(
 			schema.GroupResource{Group: compV1.GroupVersion.Group, Resource: "component"},
-			testComponentName)
-		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(nil, errNotFound)
+			string(testComponentName.Name))
+		mockRepo.EXPECT().Get(testCtx, string(testComponentName.Name), metav1.GetOptions{}).Return(nil, errNotFound)
 
 		// when
-		_, err := sut.GetByName(testCtx, testComponentName)
+		_, err := sut.GetByName(testCtx, testComponentName.Name)
 
 		// then
 		require.Error(t, err)
@@ -185,11 +189,11 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		sut := componentInstallationRepo{componentClient: mockRepo}
 		result := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
-				Name:            testComponentName,
+				Name:            string(testComponentName.Name),
 				ResourceVersion: "42",
 			},
 			Spec: compV1.ComponentSpec{
-				Name:      testComponentName,
+				Name:      string(testComponentName.Name),
 				Namespace: testDistributionNamespace,
 				Version:   "1.2.3-4",
 			},
@@ -198,27 +202,24 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 				Health: compV1.PendingHealthStatus,
 			},
 		}
-		mockRepo.EXPECT().Get(testCtx, testComponentName, mock.Anything).Return(result, nil)
+		mockRepo.EXPECT().Get(testCtx, string(testComponentName.Name), metav1.GetOptions{}).Return(result, nil)
 
 		// when
-		actual, err := sut.GetByName(testCtx, testComponentName)
+		actual, err := sut.GetByName(testCtx, testComponentName.Name)
 
 		// then
 		require.NoError(t, err)
 
 		version, _ := semver.NewVersion("1.2.3-4")
 		expected := ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               version,
-			Status:                "installed",
-			Health:                "",
-			PersistenceContext:    nil,
+			Name:               testComponentName,
+			Version:            version,
+			Status:             "installed",
+			Health:             "",
+			PersistenceContext: nil,
 		}
 		assert.Equal(t, expected.Name, actual.Name)
 		assert.Equal(t, expected.Name, testComponentName)
-		assert.Equal(t, expected.DistributionNamespace, actual.DistributionNamespace)
-		assert.Equal(t, expected.DistributionNamespace, testDistributionNamespace)
 		assert.Equal(t, expected.Status, actual.Status)
 		assert.Equal(t, expected.Version, actual.Version)
 		assert.Equal(t, expected.Health, actual.Health)
@@ -249,12 +250,11 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               testVersion1,
+			Name:    testComponentName,
+			Version: testVersion1,
 		}
 		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
-		componentClientMock.EXPECT().Patch(testCtx, testComponentName, types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, nil)
+		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.Name), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, nil)
 
 		// when
 		err := sut.Update(testCtx, componentInstallation)
@@ -270,12 +270,11 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               testVersion1,
+			Name:    testComponentName,
+			Version: testVersion1,
 		}
 		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
-		componentClientMock.EXPECT().Patch(testCtx, testComponentName, types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
+		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.Name), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
 
 		// when
 		err := sut.Update(testCtx, componentInstallation)
@@ -295,10 +294,10 @@ func Test_componentInstallationRepo_Delete(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 
-		componentClientMock.EXPECT().Delete(testCtx, testComponentName, metav1.DeleteOptions{}).Return(nil)
+		componentClientMock.EXPECT().Delete(testCtx, string(testComponentName.Name), metav1.DeleteOptions{}).Return(nil)
 
 		// when
-		err := sut.Delete(testCtx, testComponentName)
+		err := sut.Delete(testCtx, testComponentName.Name)
 
 		// then
 		require.NoError(t, err)
@@ -311,10 +310,10 @@ func Test_componentInstallationRepo_Delete(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 
-		componentClientMock.EXPECT().Delete(testCtx, testComponentName, metav1.DeleteOptions{}).Return(assert.AnError)
+		componentClientMock.EXPECT().Delete(testCtx, string(testComponentName.Name), metav1.DeleteOptions{}).Return(assert.AnError)
 
 		// when
-		err := sut.Delete(testCtx, testComponentName)
+		err := sut.Delete(testCtx, testComponentName.Name)
 
 		// then
 		require.Error(t, err)
@@ -331,21 +330,20 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               testVersion1,
+			Name:    testComponentName,
+			Version: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: componentInstallation.Name,
+				Name: string(componentInstallation.Name.Name),
 				Labels: map[string]string{
-					ComponentNameLabelKey:    componentInstallation.Name,
+					ComponentNameLabelKey:    string(componentInstallation.Name.Name),
 					ComponentVersionLabelKey: componentInstallation.Version.String(),
 				},
 			},
 			Spec: compV1.ComponentSpec{
-				Namespace: componentInstallation.DistributionNamespace,
-				Name:      componentInstallation.Name,
+				Namespace: string(componentInstallation.Name.Namespace),
+				Name:      string(componentInstallation.Name.Name),
 				Version:   componentInstallation.Version.String(),
 			},
 		}
@@ -366,21 +364,20 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:                  testComponentName,
-			DistributionNamespace: testDistributionNamespace,
-			Version:               testVersion1,
+			Name:    testComponentName,
+			Version: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: componentInstallation.Name,
+				Name: string(componentInstallation.Name.Name),
 				Labels: map[string]string{
-					ComponentNameLabelKey:    componentInstallation.Name,
+					ComponentNameLabelKey:    string(componentInstallation.Name.Name),
 					ComponentVersionLabelKey: componentInstallation.Version.String(),
 				},
 			},
 			Spec: compV1.ComponentSpec{
-				Namespace: componentInstallation.DistributionNamespace,
-				Name:      componentInstallation.Name,
+				Namespace: string(componentInstallation.Name.Namespace),
+				Name:      string(componentInstallation.Name.Name),
 				Version:   componentInstallation.Version.String(),
 			},
 		}
