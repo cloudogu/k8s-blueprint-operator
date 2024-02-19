@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -61,7 +62,7 @@ func TestEvents(t *testing.T) {
 			event: EcosystemUnhealthyUpfrontEvent{
 				HealthResult: ecosystem.HealthResult{
 					DoguHealth: ecosystem.DoguHealthResult{
-						DogusByStatus: map[ecosystem.HealthStatus][]ecosystem.DoguName{
+						DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
 							ecosystem.AvailableHealthStatus:   {"postgresql"},
 							ecosystem.UnavailableHealthStatus: {"ldap"},
 							ecosystem.PendingHealthStatus:     {"admin"},

@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -43,7 +44,7 @@ func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return MaskTargetDogu{
-			Name:        dogu.GetQualifiedName(),
+			Name:        dogu.Name.String(),
 			Version:     dogu.Version.Raw,
 			TargetState: newState,
 		}
@@ -78,7 +79,7 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguNamespace, doguName, err := serializer.SplitDoguName(dogu.Name)
+		doguName, err := common.QualifiedDoguNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
@@ -97,7 +98,6 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 			}
 		}
 		convertedDogus = append(convertedDogus, domain.MaskDogu{
-			Namespace:   doguNamespace,
 			Name:        doguName,
 			Version:     version,
 			TargetState: state,

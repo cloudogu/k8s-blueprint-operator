@@ -3,11 +3,17 @@ package doguregistry
 import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
+
+var myQualifiedTestDoguName = common.QualifiedDoguName{
+	Namespace: "testing",
+	Name:      "my-dogu",
+}
 
 func TestNewRemote(t *testing.T) {
 	// given
@@ -30,7 +36,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{regMock}
 
 		// when
-		actual, err := sut.GetDogu("testing/my-dogu", "1.2.3")
+		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
 
 		// then
 		require.Error(t, err)
@@ -48,7 +54,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{regMock}
 
 		// when
-		actual, err := sut.GetDogu("testing/my-dogu", "1.2.3")
+		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
 
 		// then
 		require.Error(t, err)
@@ -68,7 +74,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{regMock}
 
 		// when
-		actual, err := sut.GetDogu("testing/my-dogu", "1.2.3")
+		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
 
 		// then
 		require.NoError(t, err)
@@ -88,15 +94,24 @@ func TestRemote_GetDogus(t *testing.T) {
 
 		sut := &Remote{regMock}
 		dogusToLoad := []domainservice.DoguToLoad{
-			{QualifiedDoguName: "testing/good-dogu", Version: "0.1.2"},
-			{QualifiedDoguName: "testing/not-found", Version: "1.2.3"},
-			{QualifiedDoguName: "testing/other-error", Version: "2.3.4"},
+			{DoguName: common.QualifiedDoguName{
+				Namespace: "testing",
+				Name:      "good-dogu",
+			}, Version: "0.1.2"},
+			{DoguName: common.QualifiedDoguName{
+				Namespace: "testing",
+				Name:      "not-found",
+			}, Version: "1.2.3"},
+			{DoguName: common.QualifiedDoguName{
+				Namespace: "testing",
+				Name:      "other-error",
+			}, Version: "2.3.4"},
 		}
 
-		expectedDogus := map[string]*core.Dogu{
-			"testing/good-dogu":   &expectedDogu,
-			"testing/not-found":   nil,
-			"testing/other-error": nil,
+		expectedDogus := map[common.QualifiedDoguName]*core.Dogu{
+			common.QualifiedDoguName{Namespace: "testing", Name: "good-dogu"}:   &expectedDogu,
+			common.QualifiedDoguName{Namespace: "testing", Name: "not-found"}:   nil,
+			common.QualifiedDoguName{Namespace: "testing", Name: "other-error"}: nil,
 		}
 
 		// when

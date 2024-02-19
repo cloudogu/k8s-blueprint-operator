@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -25,7 +26,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguNamespace, doguName, err := SplitDoguName(dogu.Name)
+		name, err := common.QualifiedDoguNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
@@ -44,8 +45,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 			}
 		}
 		convertedDogus = append(convertedDogus, domain.Dogu{
-			Namespace:   doguNamespace,
-			Name:        doguName,
+			Name:        name,
 			Version:     version,
 			TargetState: newState,
 		})
@@ -65,7 +65,7 @@ func ConvertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
 		newState, err := ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return TargetDogu{
-			Name:        dogu.GetQualifiedName(),
+			Name:        dogu.Name.String(),
 			Version:     dogu.Version.Raw,
 			TargetState: newState,
 		}

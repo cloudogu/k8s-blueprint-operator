@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -35,8 +36,8 @@ func TestSerializeBlueprintMask_ok(t *testing.T) {
 			"dogus in blueprint mask",
 			args{spec: domain.BlueprintMask{
 				Dogus: []domain.MaskDogu{
-					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintMaskApi":"v1","blueprintMaskId":"","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
@@ -58,7 +59,7 @@ func TestSerializeBlueprintMask_error(t *testing.T) {
 	serializer := Serializer{}
 	mask := domain.BlueprintMask{
 		Dogus: []domain.MaskDogu{
-			{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: -1},
+			{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1_2_0_1, TargetState: -1},
 		},
 	}
 
@@ -91,8 +92,8 @@ func TestDeserializeBlueprintMask_ok(t *testing.T) {
 			args{spec: `{"blueprintMaskApi":"v1","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.BlueprintMask{
 				Dogus: []domain.MaskDogu{
-					{Namespace: "official", Name: "nginx", Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},

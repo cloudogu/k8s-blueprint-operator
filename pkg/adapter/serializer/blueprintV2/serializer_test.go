@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -40,8 +41,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: version1201, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
@@ -51,11 +52,11 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"components in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", DistributionNamespace: "present", Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", DistributionNamespace: "absent", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"present/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"absent/dogu-operator","version":"","targetState":"absent","deployNamespace":""}]}`,
+			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployNamespace":""}]}`,
 			assert.NoError,
 		},
 		{
@@ -111,7 +112,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Namespace: "official", Name: "nginx", Version: version1201, TargetState: -1},
+			{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: -1},
 		},
 	}
 
@@ -144,8 +145,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Namespace: "official", Name: "nginx", Version: version1201, TargetState: domain.TargetStatePresent},
-					{Namespace: "premium", Name: "jira", Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
@@ -154,8 +155,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: "blueprint-operator", DistributionNamespace: "k8s", Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: "dogu-operator", DistributionNamespace: "k8s", Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,
