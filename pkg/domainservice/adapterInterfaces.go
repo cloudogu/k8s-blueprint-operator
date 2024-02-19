@@ -144,7 +144,7 @@ type DoguConfigEntryRepository interface {
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
 	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -154,11 +154,11 @@ type DoguConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.DoguConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.DoguConfigEntry) error
 	// Delete deletes a dogu config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.DoguConfigKey) error
+	Delete(context.Context, common.DoguConfigKey) error
 }
 
 type SensitiveDoguConfigEntryRepository interface {
@@ -166,7 +166,7 @@ type SensitiveDoguConfigEntryRepository interface {
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
 	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -176,11 +176,11 @@ type SensitiveDoguConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.SensitiveDoguConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
 	// Delete deletes a sensitive dogu config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.SensitiveDoguConfigKey) error
+	Delete(context.Context, common.SensitiveDoguConfigKey) error
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
