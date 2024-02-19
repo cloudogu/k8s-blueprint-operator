@@ -24,12 +24,12 @@ const (
 )
 
 var officialNexus = common.QualifiedDoguName{
-	Namespace: "official",
-	Name:      "nexus",
+	Namespace:  "official",
+	SimpleName: "nexus",
 }
 var premiumNexus = common.QualifiedDoguName{
-	Namespace: "premium",
-	Name:      "nexus",
+	Namespace:  "premium",
+	SimpleName: "nexus",
 }
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
@@ -365,8 +365,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus: []Dogu{
 					{
 						Name: common.QualifiedDoguName{
-							Namespace: "namespace-change",
-							Name:      "name",
+							Namespace:  "namespace-change",
+							SimpleName: "name",
 						},
 					},
 				},
@@ -379,8 +379,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
 			"name": {Name: common.QualifiedDoguName{
-				Namespace: "namespace",
-				Name:      "name",
+				Namespace:  "namespace",
+				SimpleName: "name",
 			}},
 		}
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
@@ -400,8 +400,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus: []Dogu{
 					{
 						Name: common.QualifiedDoguName{
-							Namespace: "namespace-change",
-							Name:      "name",
+							Namespace:  "namespace-change",
+							SimpleName: "name",
 						},
 					},
 				},
@@ -414,8 +414,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
 			"name": {Name: common.QualifiedDoguName{
-				Namespace: "namespace",
-				Name:      "name",
+				Namespace:  "namespace",
+				SimpleName: "name",
 			}},
 		}
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}

@@ -21,18 +21,18 @@ var (
 	k8sNamespace        = common.DoguNamespace("k8s")
 	helloworldNamespace = common.DoguNamespace("helloworld")
 
-	officialNginx         = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("nginx")}
-	officialRedmine       = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("redmine")}
-	officialRedmine2      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("redmine2")}
-	officialPostgres      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("postgres")}
-	premiumPostgres       = common.QualifiedDoguName{Namespace: premiumNamespace, Name: common.SimpleDoguName("postgres")}
-	officialK8sCesControl = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("k8s-ces-control")}
-	officialScm           = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("scm")}
-	k8sNginxStatic        = common.QualifiedDoguName{Namespace: k8sNamespace, Name: common.SimpleDoguName("nginx-static")}
-	k8sNginxIngress       = common.QualifiedDoguName{Namespace: k8sNamespace, Name: common.SimpleDoguName("nginx-ingress")}
-	officialPlantuml      = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("plantuml")}
-	officialUnknownDogu   = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("unknownDogu")}
-	helloworldBluespice   = common.QualifiedDoguName{Namespace: helloworldNamespace, Name: common.SimpleDoguName("bluespice")}
+	officialNginx         = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("nginx")}
+	officialRedmine       = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("redmine")}
+	officialRedmine2      = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("redmine2")}
+	officialPostgres      = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("postgres")}
+	premiumPostgres       = common.QualifiedDoguName{Namespace: premiumNamespace, SimpleName: common.SimpleDoguName("postgres")}
+	officialK8sCesControl = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("k8s-ces-control")}
+	officialScm           = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("scm")}
+	k8sNginxStatic        = common.QualifiedDoguName{Namespace: k8sNamespace, SimpleName: common.SimpleDoguName("nginx-static")}
+	k8sNginxIngress       = common.QualifiedDoguName{Namespace: k8sNamespace, SimpleName: common.SimpleDoguName("nginx-ingress")}
+	officialPlantuml      = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("plantuml")}
+	officialUnknownDogu   = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("unknownDogu")}
+	helloworldBluespice   = common.QualifiedDoguName{Namespace: helloworldNamespace, SimpleName: common.SimpleDoguName("bluespice")}
 
 	ctx = context.Background()
 )

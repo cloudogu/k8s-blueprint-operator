@@ -15,16 +15,16 @@ const (
 
 var (
 	postgresqlQualifiedName = common.QualifiedDoguName{
-		Namespace: testDoguNamespace,
-		Name:      postgresqlSimpleName,
+		Namespace:  testDoguNamespace,
+		SimpleName: postgresqlSimpleName,
 	}
 	postfixQualifiedName = common.QualifiedDoguName{
-		Namespace: testDoguNamespace,
-		Name:      postfixSimpleName,
+		Namespace:  testDoguNamespace,
+		SimpleName: postfixSimpleName,
 	}
 	ldapQualifiedName = common.QualifiedDoguName{
-		Namespace: testDoguNamespace,
-		Name:      ldapSimpleName,
+		Namespace:  testDoguNamespace,
+		SimpleName: ldapSimpleName,
 	}
 )
 

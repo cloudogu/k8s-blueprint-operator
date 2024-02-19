@@ -72,7 +72,7 @@ func (_m *MockEvent) Name() string {
 	return r0
 }
 
-// MockEvent_Name_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SimpleName'
+// MockEvent_Name_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Name'
 type MockEvent_Name_Call struct {
 	*mock.Call
 }

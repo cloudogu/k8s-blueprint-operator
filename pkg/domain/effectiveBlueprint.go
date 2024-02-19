@@ -34,7 +34,7 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
 	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) common.SimpleDoguName {
-		return dogu.Name.Name
+		return dogu.Name.SimpleName
 	})
 	var errorList []error
 	for doguInConfig := range effectiveBlueprint.Config.Dogus {

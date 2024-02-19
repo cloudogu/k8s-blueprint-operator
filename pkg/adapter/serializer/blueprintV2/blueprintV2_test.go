@@ -27,10 +27,10 @@ var (
 
 func Test_ConvertToBlueprintV2(t *testing.T) {
 	dogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
@@ -152,10 +152,10 @@ func Test_ConvertToBlueprint(t *testing.T) {
 	require.NoError(t, err)
 
 	convertedDogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	convertedComponents := []domain.Component{

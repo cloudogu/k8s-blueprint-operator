@@ -48,7 +48,7 @@ func (blueprint *Blueprint) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.Name })
+	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)

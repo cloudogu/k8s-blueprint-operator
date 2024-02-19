@@ -41,8 +41,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}],"config":{"global":{}}}`,
@@ -167,7 +167,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: -1},
+			{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: -1},
 		},
 	}
 
@@ -200,8 +200,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", Name: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedDoguName{Namespace: "premium", Name: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},

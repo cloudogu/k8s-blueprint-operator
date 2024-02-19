@@ -111,12 +111,12 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.Name)
+		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
 		if noDoguFoundError != nil {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
 		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
-			errorList = append(errorList, fmt.Errorf("absent dogu %q cannot be present in blueprint mask", dogu.Name.Name))
+			errorList = append(errorList, fmt.Errorf("absent dogu %q cannot be present in blueprint mask", dogu.Name.SimpleName))
 		}
 		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Name.Namespace != doguMask.Name.Namespace {
 			errorList = append(errorList, fmt.Errorf(
@@ -200,7 +200,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 		Version:     dogu.Version,
 		TargetState: dogu.TargetState,
 	}
-	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.Name)
+	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.SimpleName)
 	if noMaskDoguErr == nil {
 		emptyVersion := core.Version{}
 		if maskDogu.Version != emptyVersion {

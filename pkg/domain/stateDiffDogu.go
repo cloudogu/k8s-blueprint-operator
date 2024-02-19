@@ -71,17 +71,17 @@ func (diff *DoguDiffState) String() string {
 func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation) []DoguDiff {
 	var doguDiffs = map[common.SimpleDoguName]DoguDiff{}
 	for _, blueprintDogu := range blueprintDogus {
-		installedDogu := installedDogus[blueprintDogu.Name.Name]
-		doguDiffs[blueprintDogu.Name.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
+		installedDogu := installedDogus[blueprintDogu.Name.SimpleName]
+		doguDiffs[blueprintDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
 	}
 	for _, installedDogu := range installedDogus {
-		blueprintDogu, notFound := FindDoguByName(blueprintDogus, installedDogu.Name.Name)
+		blueprintDogu, notFound := FindDoguByName(blueprintDogus, installedDogu.Name.SimpleName)
 
 		if notFound == nil {
-			doguDiffs[installedDogu.Name.Name] = determineDoguDiff(&blueprintDogu, installedDogu)
+			doguDiffs[installedDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
 		} else {
 			// if no dogu with this name in blueprint, use nil to indicate that
-			doguDiffs[installedDogu.Name.Name] = determineDoguDiff(nil, installedDogu)
+			doguDiffs[installedDogu.Name.SimpleName] = determineDoguDiff(nil, installedDogu)
 		}
 	}
 	return maps.Values(doguDiffs)
@@ -100,7 +100,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState: TargetStateAbsent,
 		}
 	} else {
-		doguName = installedDogu.Name.Name
+		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
 			Namespace:         installedDogu.Name.Namespace,
 			Version:           installedDogu.Version,
@@ -111,7 +111,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	if blueprintDogu == nil {
 		expectedState = actualState
 	} else {
-		doguName = blueprintDogu.Name.Name
+		doguName = blueprintDogu.Name.SimpleName
 		expectedState = DoguDiffState{
 			Namespace:         blueprintDogu.Name.Namespace,
 			Version:           blueprintDogu.Version,
