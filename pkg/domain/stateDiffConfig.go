@@ -60,62 +60,10 @@ func determineConfigDiff(
 ) (CombinedDoguConfigDiff, GlobalConfigDiff, error) {
 	return CombinedDoguConfigDiff{
 			DoguConfigDiff:          determineDoguConfigDiffs(blueprintConfig.Dogus, actualDoguConfig),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiff(blueprintConfig.Dogus, actualSensitiveDoguConfig),
+			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(blueprintConfig.Dogus, actualSensitiveDoguConfig),
 		},
-		determineGlobalConfigDiff(blueprintConfig.Global, actualGlobalConfig),
+		determineGlobalConfigDiffs(blueprintConfig.Global, actualGlobalConfig),
 		nil
-}
-
-func determineDoguConfigDiffs(
-	config map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-) DoguConfigDiff {
-	var doguConfigDiff []DoguConfigEntryDiff
-
-	for _, doguConfig := range config {
-		// present entries
-		for key, expectedValue := range doguConfig.Config.Present {
-			actualEntry, actualExists := actualDoguConfig[key]
-			doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(expectedValue), true))
-		}
-		// absent entries
-		for _, key := range doguConfig.Config.Absent {
-			actualEntry, actualExists := actualDoguConfig[key]
-			doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(actualEntry.Value), false))
-		}
-	}
-	return doguConfigDiff
-}
-
-func determineDoguConfigDiff(key common.DoguConfigKey, actualValue string, actualExists bool, expectedValue string, expectedExists bool) DoguConfigEntryDiff {
-	actual := DoguConfigValueState{
-		Value:  actualValue,
-		Exists: actualExists,
-	}
-	expected := DoguConfigValueState{
-		Value:  expectedValue,
-		Exists: expectedExists,
-	}
-	return DoguConfigEntryDiff{
-		Key:      key,
-		Actual:   actual,
-		Expected: expected,
-		Action:   getNeededConfigAction(ConfigValueState(actual), ConfigValueState(expected)),
-	}
-}
-
-func determineSensitiveDoguConfigDiff(
-	config map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
-) SensitiveDoguConfigDiff {
-	return nil
-}
-
-func determineGlobalConfigDiff(
-	config GlobalConfig,
-	actualDoguConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
-) GlobalConfigDiff {
-	return nil
 }
 
 func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) ConfigAction {
