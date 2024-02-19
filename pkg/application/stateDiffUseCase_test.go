@@ -134,7 +134,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot save blueprint spec \"testBlueprint1\" after Determining the state diff to the ecosystem")
+		assert.ErrorContains(t, err, "cannot save blueprint spec \"testBlueprint1\" after determining the state diff to the ecosystem")
 	})
 	t.Run("should succeed", func(t *testing.T) {
 		// given

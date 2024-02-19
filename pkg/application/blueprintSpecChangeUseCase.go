@@ -126,6 +126,9 @@ func (useCase *BlueprintSpecChangeUseCase) validateDynamically(ctx context.Conte
 
 func (useCase *BlueprintSpecChangeUseCase) determineStateDiff(ctx context.Context, blueprintId string) error {
 	err := useCase.stateDiff.DetermineStateDiff(ctx, blueprintId)
+
+	// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
+	// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
 	if err != nil {
 		return err
 	}
