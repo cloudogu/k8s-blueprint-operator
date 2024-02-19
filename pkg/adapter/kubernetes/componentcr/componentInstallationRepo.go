@@ -73,14 +73,14 @@ func (repo *componentInstallationRepo) Update(ctx context.Context, component *ec
 	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
 	patch, err := toComponentCRPatchBytes(component)
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to get patch bytes from component %q", component.Name.Name)
+		return domainservice.NewInternalError(err, "failed to get patch bytes from component %q", component.Name.SimpleName)
 	}
 
-	logger.Info("patch component CR", "doguName", component.Name.Name, "doguPatch", string(patch))
+	logger.Info("patch component CR", "doguName", component.Name.SimpleName, "doguPatch", string(patch))
 
-	_, err = repo.componentClient.Patch(ctx, string(component.Name.Name), types.MergePatchType, patch, metav1.PatchOptions{})
+	_, err = repo.componentClient.Patch(ctx, string(component.Name.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to patch component %q", component.Name.Name)
+		return domainservice.NewInternalError(err, "failed to patch component %q", component.Name.SimpleName)
 	}
 
 	return nil
@@ -98,7 +98,7 @@ func (repo *componentInstallationRepo) Delete(ctx context.Context, componentName
 func (repo *componentInstallationRepo) Create(ctx context.Context, component *ecosystem.ComponentInstallation) error {
 	_, err := repo.componentClient.Create(ctx, toComponentCR(component), metav1.CreateOptions{})
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to create component CR %q", component.Name.Name)
+		return domainservice.NewInternalError(err, "failed to create component CR %q", component.Name.SimpleName)
 	}
 
 	return nil

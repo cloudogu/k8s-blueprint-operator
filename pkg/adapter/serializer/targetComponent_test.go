@@ -11,7 +11,7 @@ import (
 
 var (
 	compVersion3211    = semver.MustParse("3.2.1-1")
-	k8sK8sDoguOperator = common.QualifiedComponentName{Namespace: "k8s", Name: "k8s-dogu-operator"}
+	k8sK8sDoguOperator = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-dogu-operator"}
 )
 
 func TestConvertComponents(t *testing.T) {

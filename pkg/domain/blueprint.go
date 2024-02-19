@@ -63,7 +63,7 @@ func (blueprint *Blueprint) validateComponents() error {
 
 // validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.Name })
+	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.SimpleName })
 	duplicates := util.GetDuplicates(componentNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)

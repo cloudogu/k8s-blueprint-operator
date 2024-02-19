@@ -33,10 +33,10 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Name: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Name: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Name: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Name: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
+		{Name: common.QualifiedComponentName{SimpleName: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{SimpleName: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
 	}
 	blueprint := domain.EffectiveBlueprint{
 		Dogus:      dogus,
@@ -159,10 +159,10 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	}
 
 	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component4"}, Version: compVersion1233},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
 	}
 	expected := domain.EffectiveBlueprint{
 		Dogus:      dogus,

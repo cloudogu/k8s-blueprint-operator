@@ -470,8 +470,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Components: []Component{
 					{
 						Name: common.QualifiedComponentName{
-							Namespace: testChangeDistributionNamespace,
-							Name:      testComponentName.Name,
+							Namespace:  testChangeDistributionNamespace,
+							SimpleName: testComponentName.SimpleName,
 						},
 						Version: compVersion3211,
 					},
@@ -480,7 +480,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-			testComponentName.Name: {
+			testComponentName.SimpleName: {
 				Name:    testComponentName,
 				Version: compVersion3211,
 			},

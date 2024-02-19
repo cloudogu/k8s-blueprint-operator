@@ -17,10 +17,10 @@ var (
 	compVersion3212 = semver.MustParse("3.2.1-2")
 	compVersion3213 = semver.MustParse("3.2.1-3")
 
-	testComponentName1 = common.QualifiedComponentName{Namespace: "k8s", Name: "my-component1"}
-	testComponentName2 = common.QualifiedComponentName{Namespace: "official", Name: "my-component2"}
-	testComponentName3 = common.QualifiedComponentName{Namespace: "testing", Name: "my-component3"}
-	testComponentName4 = common.QualifiedComponentName{Namespace: "k8s", Name: "my-component4"}
+	testComponentName1 = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "my-component1"}
+	testComponentName2 = common.QualifiedComponentName{Namespace: "official", SimpleName: "my-component2"}
+	testComponentName3 = common.QualifiedComponentName{Namespace: "testing", SimpleName: "my-component3"}
+	testComponentName4 = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "my-component4"}
 )
 
 func Test_validate_ok(t *testing.T) {
@@ -112,15 +112,15 @@ func Test_validateComponents_ok(t *testing.T) {
 	components := []Component{
 		{
 			Name: common.QualifiedComponentName{
-				Namespace: "k8s",
-				Name:      "absent-component",
+				Namespace:  "k8s",
+				SimpleName: "absent-component",
 			},
 			TargetState: TargetStateAbsent,
 		},
 		{
 			Name: common.QualifiedComponentName{
-				Name:      "present-component",
-				Namespace: "k8s",
+				SimpleName: "present-component",
+				Namespace:  "k8s",
 			},
 			Version:     compVersion3212,
 			TargetState: TargetStatePresent,
@@ -168,28 +168,28 @@ func Test_validateComponentUniqueness(t *testing.T) {
 	components := []Component{
 		{
 			Name: common.QualifiedComponentName{
-				Namespace: "present",
-				Name:      "component1",
+				Namespace:  "present",
+				SimpleName: "component1",
 			},
 			Version:     compVersion3210,
 			TargetState: TargetStatePresent,
 		},
 		{
 			Name: common.QualifiedComponentName{
-				Namespace: "present",
-				Name:      "component1",
+				Namespace:  "present",
+				SimpleName: "component1",
 			},
 			Version: compVersion3213},
 		{
 			Name: common.QualifiedComponentName{
-				Namespace: "present",
-				Name:      "component2",
+				Namespace:  "present",
+				SimpleName: "component2",
 			},
 			Version: compVersion3213},
 		{
 			Name: common.QualifiedComponentName{
-				Namespace: "present",
-				Name:      "component2",
+				Namespace:  "present",
+				SimpleName: "component2",
 			},
 			Version: compVersion3213},
 	}

@@ -52,8 +52,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"components in blueprint",
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployNamespace":""}],"config":{"global":{}}}`,
@@ -210,8 +210,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,
