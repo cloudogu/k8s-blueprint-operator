@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 )
@@ -26,7 +27,7 @@ type BlueprintV2 struct {
 	Components []serializer.TargetComponent `json:"components,omitempty"`
 	// Config is used for ecosystem configuration to be applied.
 	// Optional.
-	Config Config `json:"config,omitempty"`
+	Config v1.Config `json:"config,omitempty"`
 }
 
 type RegistryConfig map[string]map[string]interface{}
@@ -44,7 +45,7 @@ func ConvertToBlueprintDTO(blueprint domain.Blueprint) (BlueprintV2, error) {
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
 		Components:       convertedComponents,
-		Config:           ConvertToConfigDTO(blueprint.Config),
+		Config:           v1.ConvertToConfigDTO(blueprint.Config),
 	}, nil
 }
 
@@ -63,9 +64,10 @@ func convertToBlueprintDomain(blueprint BlueprintV2) (domain.Blueprint, error) {
 	if err != nil {
 		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
+
 	return domain.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		Config:     ConvertToConfigDomain(blueprint.Config),
+		Config:     v1.ConvertToConfigDomain(blueprint.Config),
 	}, nil
 }

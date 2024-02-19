@@ -63,9 +63,6 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				AllowDoguNamespaceSwitch: true,
 				DryRun:                   true,
 			},
-			EffectiveBlueprint: domain.EffectiveBlueprint{
-				Config: domain.Config{},
-			},
 			StateDiff:          domain.StateDiff{DoguDiffs: make(domain.DoguDiffs, 0), ComponentDiffs: make(domain.ComponentDiffs, 0)},
 			PersistenceContext: persistenceContext,
 		}, spec)

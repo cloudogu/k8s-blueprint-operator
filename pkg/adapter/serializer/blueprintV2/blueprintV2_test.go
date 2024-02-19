@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
@@ -87,26 +88,23 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            convertedDogus,
 		Components:       convertedComponents,
-		Config: Config{
-			Dogus: map[string]CombinedDoguConfig{
+		Config: v1.Config{
+			Dogus: map[string]v1.CombinedDoguConfig{
 				"my-dogu": {
-					Config: DoguConfig{
+					Config: v1.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
-						Absent: make([]string, 0),
 					},
-					SensitiveConfig: SensitiveDoguConfig{
+					SensitiveConfig: v1.SensitiveDoguConfig{
 						Present: map[string]string{
 							"config-encrypted": "42",
 						},
-						Absent: make([]string, 0),
 					},
 				},
 			},
-			Global: GlobalConfig{
-				Present: make(map[string]string),
-				Absent:  []string{"test/key"},
+			Global: v1.GlobalConfig{
+				Absent: []string{"test/key"},
 			},
 		},
 	}, blueprintV2)
@@ -131,22 +129,22 @@ func Test_ConvertToBlueprint(t *testing.T) {
 		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
 		Dogus:            dogus,
 		Components:       components,
-		Config: Config{
-			Dogus: map[string]CombinedDoguConfig{
+		Config: v1.Config{
+			Dogus: map[string]v1.CombinedDoguConfig{
 				"my-dogu": {
-					Config: DoguConfig{
+					Config: v1.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
 					},
-					SensitiveConfig: SensitiveDoguConfig{
+					SensitiveConfig: v1.SensitiveDoguConfig{
 						Present: map[string]string{
 							"config-encrypted": "42",
 						},
 					},
 				},
 			},
-			Global: GlobalConfig{Absent: []string{"test/key"}},
+			Global: v1.GlobalConfig{Absent: []string{"test/key"}},
 		},
 	}
 	blueprint, err := convertToBlueprintDomain(blueprintV2)
@@ -173,6 +171,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 		Config: domain.Config{
 			Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
 				"my-dogu": {
+					DoguName: "my-dogu",
 					Config: domain.DoguConfig{
 						Present: map[common.DoguConfigKey]common.DoguConfigValue{
 							{
