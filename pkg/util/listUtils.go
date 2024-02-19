@@ -3,7 +3,7 @@ package util
 func GetDuplicates[T comparable](list []T) []T {
 	elementCount := CountGrouped(list)
 
-	// get list of names with count != 1
+	// get list of values with count != 1
 	var duplicates []T
 	for value, count := range elementCount {
 		if count != 1 {
