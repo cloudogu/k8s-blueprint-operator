@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type Config struct {
@@ -64,6 +65,7 @@ func (config CombinedDoguConfig) validate() error {
 
 func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) error {
 	var errs []error
+
 	for configKey := range config.Present {
 		err := configKey.Validate()
 		if err != nil {
@@ -92,6 +94,11 @@ func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) e
 		if superordinateDoguName != configKey.DoguName {
 			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, superordinateDoguName))
 		}
+	}
+
+	absentDuplicates := util.GetDuplicates(config.Absent)
+	if len(absentDuplicates) > 0 {
+		errs = append(errs, fmt.Errorf("absent dogu config should not contain duplicate keys: %v", absentDuplicates))
 	}
 
 	return errors.Join(errs...)
@@ -127,6 +134,11 @@ func (config SensitiveDoguConfig) validate(doguName common.SimpleDoguName) error
 		if doguName != configKey.DoguName {
 			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, doguName))
 		}
+	}
+
+	absentDuplicates := util.GetDuplicates(config.Absent)
+	if len(absentDuplicates) > 0 {
+		errs = append(errs, fmt.Errorf("absent dogu config should not contain duplicate keys: %v", absentDuplicates))
 	}
 
 	return errors.Join(errs...)
