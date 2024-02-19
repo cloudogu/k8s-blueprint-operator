@@ -52,7 +52,18 @@ func Test_validate_multipleErrors(t *testing.T) {
 		{Version: compVersion3212},
 		{Name: testComponentName, Version: compVersion3212},
 	}
-	blueprint := Blueprint{Dogus: dogus, Components: components}
+	blueprint := Blueprint{
+		Dogus:      dogus,
+		Components: components,
+		Config: Config{
+			Global: GlobalConfig{
+				Present: nil,
+				Absent: []common.GlobalConfigKey{
+					"",
+				},
+			},
+		},
+	}
 
 	err := blueprint.Validate()
 
@@ -64,6 +75,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 	assert.ErrorContains(t, err, "dogu target state is invalid")
 	assert.ErrorContains(t, err, "component name must not be empty")
 	assert.ErrorContains(t, err, `namespace of component "" must not be empty`)
+	assert.ErrorContains(t, err, `key for absent global config should not be empty`)
 }
 
 func Test_validateDogus_ok(t *testing.T) {

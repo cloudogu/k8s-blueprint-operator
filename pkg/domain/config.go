@@ -60,10 +60,10 @@ func (config CombinedDoguConfig) validate() error {
 		errs = append(errs, fmt.Errorf("sensitive config for dogu %q invalid: %w", config.DoguName, err))
 	}
 
-	return nil
+	return errors.Join(errs...)
 }
 
-func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) error {
+func (config DoguConfig) validate(referencedDoguName common.SimpleDoguName) error {
 	var errs []error
 
 	for configKey := range config.Present {
@@ -73,8 +73,8 @@ func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) e
 		}
 
 		// validate that all keys are of the same dogu
-		if superordinateDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, superordinateDoguName))
+		if referencedDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, referencedDoguName))
 		}
 	}
 
@@ -91,8 +91,8 @@ func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) e
 		}
 
 		// validate that all keys are of the same dogu
-		if superordinateDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, superordinateDoguName))
+		if referencedDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, referencedDoguName))
 		}
 	}
 
@@ -104,7 +104,7 @@ func (config DoguConfig) validate(superordinateDoguName common.SimpleDoguName) e
 	return errors.Join(errs...)
 }
 
-func (config SensitiveDoguConfig) validate(doguName common.SimpleDoguName) error {
+func (config SensitiveDoguConfig) validate(referencedDoguName common.SimpleDoguName) error {
 	var errs []error
 	for configKey := range config.Present {
 		err := configKey.Validate()
@@ -113,8 +113,8 @@ func (config SensitiveDoguConfig) validate(doguName common.SimpleDoguName) error
 		}
 
 		// validate that all keys are of the same dogu
-		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, doguName))
+		if referencedDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, referencedDoguName))
 		}
 	}
 
@@ -131,8 +131,8 @@ func (config SensitiveDoguConfig) validate(doguName common.SimpleDoguName) error
 		}
 
 		// validate that all keys are of the same dogu
-		if doguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, doguName))
+		if referencedDoguName != configKey.DoguName {
+			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, referencedDoguName))
 		}
 	}
 
@@ -166,6 +166,11 @@ func (config GlobalConfig) validate() error {
 		if isPresent {
 			errs = append(errs, fmt.Errorf("global config key %q cannot be present and absent at the same time", configKey))
 		}
+	}
+
+	absentDuplicates := util.GetDuplicates(config.Absent)
+	if len(absentDuplicates) > 0 {
+		errs = append(errs, fmt.Errorf("absent global config should not contain duplicate keys: %v", absentDuplicates))
 	}
 
 	return errors.Join(errs...)

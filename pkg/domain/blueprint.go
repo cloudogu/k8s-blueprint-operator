@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
-	"golang.org/x/exp/maps"
 )
 
 // Blueprint describes an abstraction of CES components that should be absent or present within one or more CES
@@ -32,10 +31,8 @@ func (blueprint *Blueprint) Validate() error {
 		blueprint.validateDoguUniqueness(),
 		blueprint.validateComponents(),
 		blueprint.validateComponentUniqueness(),
-		blueprint.Config.Global.validate(),
+		blueprint.Config.validate(),
 	}
-	doguConfigErrors := util.Map(maps.Values(blueprint.Config.Dogus), CombinedDoguConfig.validate)
-	errorList = append(errorList, doguConfigErrors...)
 
 	err := errors.Join(errorList...)
 	if err != nil {
