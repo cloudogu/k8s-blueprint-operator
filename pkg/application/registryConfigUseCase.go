@@ -144,10 +144,7 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 	for _, diff := range diffs {
 		switch diff.Action {
 		case domain.ConfigActionSet:
-			entry := &ecosystem.DoguConfigEntry{
-				Key:   common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
-				Value: common.DoguConfigValue(diff.Expected.Value),
-			}
+			entry := getDoguConfigEntry(doguName, diff.Key.Key, diff.Expected.Value)
 			errs = append(errs, useCase.doguConfigRepository.Save(ctx, entry))
 		case domain.ConfigActionRemove:
 			errs = append(errs, useCase.doguConfigRepository.Delete(ctx, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}))
@@ -172,8 +169,10 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 				Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
 				Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
 			}
-			// TODO: Check if dogu is installed
 			errs = append(errs, useCase.doguSensitiveConfigRepository.Save(ctx, entry))
+		case domain.ConfigActionSetToEncrypt:
+			entry := getDoguConfigEntry(doguName, diff.Key.Key, diff.Expected.Value)
+			errs = append(errs, useCase.doguSensitiveConfigRepository.SaveForNotInstalledDogu(ctx, entry))
 		case domain.ConfigActionRemove:
 			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}}))
 		case domain.ConfigActionNone:
@@ -184,6 +183,13 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 	}
 
 	return errors.Join(errs...)
+}
+
+func getDoguConfigEntry(doguName common.SimpleDoguName, key, value string) *ecosystem.DoguConfigEntry {
+	return &ecosystem.DoguConfigEntry{
+		Key:   common.DoguConfigKey{DoguName: doguName, Key: key},
+		Value: common.DoguConfigValue(value),
+	}
 }
 
 func doguUnknownConfigActionError(action domain.ConfigAction, key string, doguName common.SimpleDoguName) error {

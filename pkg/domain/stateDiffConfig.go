@@ -44,9 +44,10 @@ type ConfigValueState struct {
 type ConfigAction string
 
 const (
-	ConfigActionNone   ConfigAction = "none"
-	ConfigActionSet    ConfigAction = "set"
-	ConfigActionRemove ConfigAction = "remove"
+	ConfigActionNone         ConfigAction = "none"
+	ConfigActionSet          ConfigAction = "set"
+	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
+	ConfigActionRemove       ConfigAction = "remove"
 )
 
 func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) ConfigAction {

@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	etcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -20,7 +20,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
@@ -32,24 +31,7 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	RemoteDoguRegistry             domainservice.RemoteDoguRegistry
-	DoguInstallationRepository     domainservice.DoguInstallationRepository
-	BlueprintSpecRepository        domainservice.BlueprintSpecRepository
-	BlueprintSpecDomainUseCase     *domainservice.ValidateDependenciesDomainUseCase
-	DoguInstallationUseCase        *application.DoguInstallationUseCase
-	EcosystemHealthUseCase         *application.EcosystemHealthUseCase
-	ApplyBlueprintSpecUseCase      *application.ApplyBlueprintSpecUseCase
-	BlueprintSpecChangeUseCase     *application.BlueprintSpecChangeUseCase
-	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
-	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
-	StateDiffUseCase               *application.StateDiffUseCase
-	BlueprintSerializer            serializer.BlueprintSerializer
-	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
-	Reconciler                     *reconciler.BlueprintReconciler
-	configEncryptionAdapter        domainservice.ConfigEncryptionAdapter
-	doguConfigAdapter              domainservice.DoguConfigEntryRepository
-	sensitiveDoguConfigAdapter     domainservice.SensitiveDoguConfigEntryRepository
-	globalConfigAdapter            domainservice.GlobalConfigEntryRepository
+	Reconciler *reconciler.BlueprintReconciler
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -100,11 +82,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
-	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
+	doguConfigAdapter := adapterconfig.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := adapterconfig.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	secretSensitiveDoguConfigAdapter := adapterconfig.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	combinedSensitiveDoguConfigAdapter := adapterconfig.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
+
+	globalConfigAdapter := adapterconfig.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
@@ -114,24 +98,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
-		RemoteDoguRegistry:             remoteDoguRegistry,
-		DoguInstallationRepository:     doguInstallationRepo,
-		BlueprintSpecRepository:        blueprintSpecRepository,
-		BlueprintSpecDomainUseCase:     blueprintSpecDomainUseCase,
-		EcosystemHealthUseCase:         ecosystemHealthUseCase,
-		ApplyBlueprintSpecUseCase:      applyBlueprintSpecUseCase,
-		BlueprintSpecChangeUseCase:     blueprintChangeUseCase,
-		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
-		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
-		StateDiffUseCase:               stateDiffUseCase,
-		DoguInstallationUseCase:        doguInstallationUseCase,
-		BlueprintSerializer:            blueprintSerializer,
-		BlueprintMaskSerializer:        blueprintMaskSerializer,
-		Reconciler:                     blueprintReconciler,
-		configEncryptionAdapter:        configEncryptionAdapter,
-		doguConfigAdapter:              doguConfigAdapter,
-		sensitiveDoguConfigAdapter:     sensitiveDoguConfigAdapter,
-		globalConfigAdapter:            globalConfigAdapter,
+		Reconciler: blueprintReconciler,
 	}, nil
 }
 

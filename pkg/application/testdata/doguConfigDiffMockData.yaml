@@ -1,3 +1,25 @@
+notinstalleddogu:
+  sensitivedoguconfigdiff:
+    - key:
+        doguname: notinstalleddogu
+        key: "key_persist_encrypted/example/path"
+      actual:
+        value: ""
+        exists: false
+      expected:
+        value: "value"
+        exists: false
+      action: setToEncrypt
+    - key:
+        doguname: notinstalleddogu
+        key: "key_persist_encrypted/example/another_path"
+      actual:
+        value: ""
+        exists: false
+      expected:
+        value: "value"
+        exists: false
+      action: setToEncrypt
 postgresql:
   doguconfigdiff:
     - key:
@@ -21,6 +43,16 @@ postgresql:
         exists: false
       action: remove
   sensitivedoguconfigdiff:
+    - key:
+        doguname: postgresql
+        key: "encrypt/example"
+      actual:
+        value: ""
+        exists: false
+      expected:
+        value: "value"
+        exists: false
+      action: setToEncrypt
     - key:
         doguname: postgresql
         key: "key_persist_encrypted"

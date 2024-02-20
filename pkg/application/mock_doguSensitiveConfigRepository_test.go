@@ -209,6 +209,49 @@ func (_c *mockDoguSensitiveConfigRepository_SaveAll_Call) RunAndReturn(run func(
 	return _c
 }
 
+// SaveForNotInstalledDogu provides a mock function with given fields: ctx, entry
+func (_m *mockDoguSensitiveConfigRepository) SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.DoguConfigEntry) error {
+	ret := _m.Called(ctx, entry)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *ecosystem.DoguConfigEntry) error); ok {
+		r0 = rf(ctx, entry)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveForNotInstalledDogu'
+type mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call struct {
+	*mock.Call
+}
+
+// SaveForNotInstalledDogu is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entry *ecosystem.DoguConfigEntry
+func (_e *mockDoguSensitiveConfigRepository_Expecter) SaveForNotInstalledDogu(ctx interface{}, entry interface{}) *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call {
+	return &mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call{Call: _e.mock.On("SaveForNotInstalledDogu", ctx, entry)}
+}
+
+func (_c *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call) Run(run func(ctx context.Context, entry *ecosystem.DoguConfigEntry)) *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*ecosystem.DoguConfigEntry))
+	})
+	return _c
+}
+
+func (_c *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call) Return(_a0 error) *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call) RunAndReturn(run func(context.Context, *ecosystem.DoguConfigEntry) error) *mockDoguSensitiveConfigRepository_SaveForNotInstalledDogu_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 type mockConstructorTestingTnewMockDoguSensitiveConfigRepository interface {
 	mock.TestingT
 	Cleanup(func())
