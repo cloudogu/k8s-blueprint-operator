@@ -5,7 +5,7 @@
   expected:
     value: value
     exists: false
-  action: set
+  neededaction: set
 - key: "global_delete"
   actual:
     value: ""
@@ -13,4 +13,4 @@
   expected:
     value: ""
     exists: false
-  action: remove
+  neededaction: remove

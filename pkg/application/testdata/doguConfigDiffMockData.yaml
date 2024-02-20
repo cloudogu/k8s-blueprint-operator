@@ -9,7 +9,7 @@ notinstalleddogu:
       expected:
         value: "value"
         exists: false
-      action: setToEncrypt
+      neededaction: setToEncrypt
     - key:
         doguname: notinstalleddogu
         key: "key_persist_encrypted/example/another_path"
@@ -19,7 +19,7 @@ notinstalleddogu:
       expected:
         value: "value"
         exists: false
-      action: setToEncrypt
+      neededaction: setToEncrypt
 postgresql:
   doguconfigdiff:
     - key:
@@ -31,7 +31,7 @@ postgresql:
       expected:
         value: "value"
         exists: false
-      action: set
+      neededaction: set
     - key:
         doguname: postgresql
         key: "example_key_to_remove"
@@ -41,7 +41,7 @@ postgresql:
       expected:
         value: ""
         exists: false
-      action: remove
+      neededaction: remove
   sensitivedoguconfigdiff:
     - key:
         doguname: postgresql
@@ -52,7 +52,7 @@ postgresql:
       expected:
         value: "value"
         exists: false
-      action: setToEncrypt
+      neededaction: setToEncrypt
     - key:
         doguname: postgresql
         key: "key_persist_encrypted"
@@ -62,7 +62,7 @@ postgresql:
       expected:
         value: "value"
         exists: false
-      action: set
+      neededaction: set
     - key:
         doguname: postgresql
         key: "example_key_to_remove_encrypted"
@@ -72,7 +72,7 @@ postgresql:
       expected:
         value: ""
         exists: false
-      action: remove
+      neededaction: remove
 redmine:
   doguconfigdiff:
     - key:
@@ -84,7 +84,7 @@ redmine:
       expected:
         value: value
         exists: false
-      action: set
+      neededaction: set
   sensitivedoguconfigdiff:
     - key:
         doguname: redmine
@@ -95,4 +95,4 @@ redmine:
       expected:
         value: value
         exists: false
-      action: set
+      neededaction: set
