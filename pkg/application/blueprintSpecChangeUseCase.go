@@ -11,12 +11,12 @@ import (
 )
 
 type BlueprintSpecChangeUseCase struct {
-	repo               blueprintSpecRepository
-	validation         blueprintSpecValidationUseCase
-	effectiveBlueprint effectiveBlueprintUseCase
-	stateDiff          stateDiffUseCase
-	applyUseCase       applyBlueprintSpecUseCase
-	doguConfigUseCase  doguConfigUseCase
+	repo                  blueprintSpecRepository
+	validation            blueprintSpecValidationUseCase
+	effectiveBlueprint    effectiveBlueprintUseCase
+	stateDiff             stateDiffUseCase
+	applyUseCase          applyBlueprintSpecUseCase
+	registryConfigUseCase registryConfigUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -25,15 +25,15 @@ func NewBlueprintSpecChangeUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
-	doguConfigUseCase doguConfigUseCase,
+	doguConfigUseCase registryConfigUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
-		repo:               repo,
-		validation:         validation,
-		effectiveBlueprint: effectiveBlueprint,
-		stateDiff:          stateDiff,
-		applyUseCase:       applyUseCase,
-		doguConfigUseCase:  doguConfigUseCase,
+		repo:                  repo,
+		validation:            validation,
+		effectiveBlueprint:    effectiveBlueprint,
+		stateDiff:             stateDiff,
+		applyUseCase:          applyUseCase,
+		registryConfigUseCase: doguConfigUseCase,
 	}
 }
 
@@ -77,7 +77,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
-		return useCase.applyDoguConfig(ctx, blueprintId)
+		return useCase.applyRegistryConfig(ctx, blueprintId)
 	case domain.StatusPhaseRegistryConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
@@ -181,8 +181,8 @@ func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx co
 	return useCase.HandleChange(ctx, blueprintId)
 }
 
-func (useCase *BlueprintSpecChangeUseCase) applyDoguConfig(ctx context.Context, blueprintId string) error {
-	err := useCase.doguConfigUseCase.ApplyConfig(ctx, blueprintId)
+func (useCase *BlueprintSpecChangeUseCase) applyRegistryConfig(ctx context.Context, blueprintId string) error {
+	err := useCase.registryConfigUseCase.ApplyConfig(ctx, blueprintId)
 	if err != nil {
 		return err
 	}
