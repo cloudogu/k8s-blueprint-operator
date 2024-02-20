@@ -692,6 +692,121 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 	})
 }
 
+func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
+	// given
+	spec := &BlueprintSpec{
+		Blueprint: Blueprint{
+			Config: Config{
+				Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+					"ldap": {
+						DoguName: "ldap",
+						Config: DoguConfig{
+							Present: map[common.DoguConfigKey]common.DoguConfigValue{
+								common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}:                        "ERROR",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}: "no-reply@itzbund.de",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_name"}:    "no-reply@Passwortaktualisierungsbenachrichtigung.de",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_subject"}:        "<%=scope.lookupvar('profile_itz_baseline3::service_name') -%>: Ihr Passwort wurde aktualisiert",
+							},
+						},
+						SensitiveConfig: SensitiveDoguConfig{
+							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}}:                        "ERROR",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}}: "no-reply@itzbund.de",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_name"}}:    "no-reply@Passwortaktualisierungsbenachrichtigung.de",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_subject"}}:        "<%=scope.lookupvar('profile_itz_baseline3::service_name') -%>: Ihr Passwort wurde aktualisiert",
+							},
+						},
+					},
+				},
+				Global: GlobalConfig{
+					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+						"block_warpmenu_support_category":                "true",
+						"password-policy/min_length":                     "14",
+						"password-policy/must_contain_capital_letter":    "true",
+						"password-policy/must_contain_digit":             "true",
+						"password-policy/must_contain_lower_case_letter": "true",
+						"password-policy/must_contain_special_character": "true",
+					},
+				},
+			},
+		},
+		EffectiveBlueprint: EffectiveBlueprint{
+			Config: Config{
+				Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+					"ldap": {
+						DoguName: "ldap",
+						Config: DoguConfig{
+							Present: map[common.DoguConfigKey]common.DoguConfigValue{
+								common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}:                        "ERROR",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}: "no-reply@itzbund.de",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_name"}:    "no-reply@Passwortaktualisierungsbenachrichtigung.de",
+								common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_subject"}:        "<%=scope.lookupvar('profile_itz_baseline3::service_name') -%>: Ihr Passwort wurde aktualisiert",
+							},
+						},
+						SensitiveConfig: SensitiveDoguConfig{
+							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}}:                        "ERROR",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}}: "no-reply@itzbund.de",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_name"}}:    "no-reply@Passwortaktualisierungsbenachrichtigung.de",
+								common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_subject"}}:        "<%=scope.lookupvar('profile_itz_baseline3::service_name') -%>: Ihr Passwort wurde aktualisiert",
+							},
+						},
+					},
+				},
+				Global: GlobalConfig{
+					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+						"block_warpmenu_support_category":                "true",
+						"password-policy/min_length":                     "14",
+						"password-policy/must_contain_capital_letter":    "true",
+						"password-policy/must_contain_digit":             "true",
+						"password-policy/must_contain_lower_case_letter": "true",
+						"password-policy/must_contain_special_character": "true",
+					},
+				},
+			},
+		},
+		StateDiff: StateDiff{
+			DoguConfigDiff: map[common.SimpleDoguName]CombinedDoguConfigDiff{
+				"test": {SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
+					{
+						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+							DoguName: "TestDogu",
+							Key:      "Yeah!",
+						}},
+						Actual: EncryptedDoguConfigValueState{
+							Value:  "Test1",
+							Exists: false,
+						},
+						Expected: EncryptedDoguConfigValueState{
+							Value:  "Test2",
+							Exists: true,
+						},
+						Action: "Update",
+					},
+					{
+						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+							DoguName: "TestDogu2",
+							Key:      "Yeah!",
+						}},
+						Expected: EncryptedDoguConfigValueState{
+							Value:  "Test4",
+							Exists: true,
+						},
+						Action: "Install",
+					},
+				}},
+			},
+		},
+	}
+	// when
+	spec.CensorSensitiveData()
+	// then
+	assert.Equal(t, spec, &BlueprintSpec{
+		Status: StatusPhaseBlueprintApplied,
+		Events: []Event{BlueprintAppliedEvent{}},
+	})
+}
+
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
 		// given
