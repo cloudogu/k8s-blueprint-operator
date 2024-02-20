@@ -463,7 +463,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		require.Equal(t, 0, len(spec.Events))
 	})
 
-	t.Run("should return error with not allowed component distribution namespace switch action", func(t *testing.T) {
+	t.Run("should return error with not allowed component namespace switch action", func(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
@@ -492,7 +492,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"component distribution namespace switch\" is not allowed")
+		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
 	})
 }
 

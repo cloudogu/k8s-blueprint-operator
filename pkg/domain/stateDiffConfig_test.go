@@ -210,7 +210,6 @@ func Test_determineConfigDiff(t *testing.T) {
 			Action: ConfigActionNone,
 		})
 	})
-
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
 		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{
@@ -307,7 +306,6 @@ func Test_determineConfigDiff(t *testing.T) {
 			Action: ConfigActionNone,
 		})
 	})
-
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
 		//given ecosystem config
 		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{}
@@ -358,7 +356,6 @@ func Test_determineConfigDiff(t *testing.T) {
 }
 
 func Test_getNeededConfigAction(t *testing.T) {
-
 	tests := []struct {
 		name     string
 		expected ConfigValueState

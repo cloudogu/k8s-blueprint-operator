@@ -315,7 +315,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 
 		componentDiff := domain.ComponentDiff{
 			Name:         componentName1,
-			NeededAction: domain.ActionSwitchComponentDistributionNamespace,
+			NeededAction: domain.ActionSwitchComponentNamespace,
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{

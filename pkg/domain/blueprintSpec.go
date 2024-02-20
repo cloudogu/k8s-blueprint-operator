@@ -369,7 +369,7 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	}
 }
 
-var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
+var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 
 // ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
