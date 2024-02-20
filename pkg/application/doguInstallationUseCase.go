@@ -126,13 +126,13 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	case domain.ActionInstall:
 		logger.Info("install dogu")
 		newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
-			Namespace: doguDiff.Expected.Namespace,
-			Name:      doguDiff.DoguName,
+			Namespace:  doguDiff.Expected.Namespace,
+			SimpleName: doguDiff.DoguName,
 		}, doguDiff.Expected.Version)
 		return useCase.doguRepo.Create(ctx, newDogu)
 	case domain.ActionUninstall:
 		logger.Info("uninstall dogu")
-		return useCase.doguRepo.Delete(ctx, doguInstallation.Name.Name)
+		return useCase.doguRepo.Delete(ctx, doguInstallation.Name.SimpleName)
 	case domain.ActionUpgrade:
 		logger.Info("upgrade dogu")
 		doguInstallation.Upgrade(doguDiff.Expected.Version)

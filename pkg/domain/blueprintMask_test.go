@@ -11,9 +11,9 @@ var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
 
 var (
 	officialNamespace = common.DoguNamespace("official")
-	officialDogu1     = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("dogu1")}
-	officialDogu2     = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("dogu2")}
-	officialDogu3     = common.QualifiedDoguName{Namespace: officialNamespace, Name: common.SimpleDoguName("dogu3")}
+	officialDogu1     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu1")}
+	officialDogu2     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu2")}
+	officialDogu3     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu3")}
 )
 
 func Test_Validate(t *testing.T) {

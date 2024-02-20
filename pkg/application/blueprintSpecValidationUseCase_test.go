@@ -14,8 +14,8 @@ import (
 )
 
 var redmineQualifiedDoguName = common.QualifiedDoguName{
-	Namespace: "official",
-	Name:      "redmine",
+	Namespace:  "official",
+	SimpleName: "redmine",
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {

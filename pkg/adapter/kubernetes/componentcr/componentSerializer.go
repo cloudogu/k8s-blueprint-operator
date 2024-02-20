@@ -44,15 +44,15 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) *compV1.Component {
 	return &compV1.Component{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: string(componentInstallation.Name.Name),
+			Name: string(componentInstallation.Name.SimpleName),
 			Labels: map[string]string{
-				ComponentNameLabelKey:    string(componentInstallation.Name.Name),
+				ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
 				ComponentVersionLabelKey: componentInstallation.Version.String(),
 			},
 		},
 		Spec: compV1.ComponentSpec{
 			Namespace: string(componentInstallation.Name.Namespace),
-			Name:      string(componentInstallation.Name.Name),
+			Name:      string(componentInstallation.Name.SimpleName),
 			Version:   componentInstallation.Version.String(),
 			// TODO
 			DeployNamespace: "",
@@ -76,7 +76,7 @@ func toComponentCRPatch(component *ecosystem.ComponentInstallation) *componentCR
 	return &componentCRPatch{
 		Spec: componentSpecPatch{
 			Namespace: string(component.Name.Namespace),
-			Name:      string(component.Name.Name),
+			Name:      string(component.Name.SimpleName),
 			Version:   component.Version.String(),
 		},
 	}

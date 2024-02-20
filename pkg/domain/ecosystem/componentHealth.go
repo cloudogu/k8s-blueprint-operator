@@ -53,7 +53,7 @@ func CalculateComponentHealthResult(installedComponents map[common.SimpleCompone
 		}
 	}
 	for _, component := range installedComponents {
-		result.ComponentsByStatus[component.Health] = append(result.ComponentsByStatus[component.Health], component.Name.Name)
+		result.ComponentsByStatus[component.Health] = append(result.ComponentsByStatus[component.Health], component.Name.SimpleName)
 	}
 	return result
 }

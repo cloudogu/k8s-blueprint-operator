@@ -35,7 +35,7 @@ func CalculateDoguHealthResult(dogus []*DoguInstallation) DoguHealthResult {
 		DogusByStatus: map[HealthStatus][]common.SimpleDoguName{},
 	}
 	for _, dogu := range dogus {
-		result.DogusByStatus[dogu.Health] = append(result.DogusByStatus[dogu.Health], dogu.Name.Name)
+		result.DogusByStatus[dogu.Health] = append(result.DogusByStatus[dogu.Health], dogu.Name.SimpleName)
 	}
 	return result
 }

@@ -63,7 +63,7 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 			errs = append(errs, err)
 			continue
 		}
-		doguInstallations[doguInstallation.Name.Name] = doguInstallation
+		doguInstallations[doguInstallation.Name.SimpleName] = doguInstallation
 	}
 
 	err = errors.Join(errs...)
@@ -99,7 +99,7 @@ func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.Do
 		}
 	}
 	logger.Info("patch dogu CR", "doguName", dogu.Name, "doguPatch", string(patch))
-	_, err = repo.doguClient.Patch(ctx, string(dogu.Name.Name), types.MergePatchType, patch, metav1.PatchOptions{})
+	_, err = repo.doguClient.Patch(ctx, string(dogu.Name.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{})
 	if err != nil {
 		return &domainservice.InternalError{
 			WrappedError: err,

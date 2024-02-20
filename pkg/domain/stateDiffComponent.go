@@ -86,16 +86,16 @@ func (diff *ComponentDiffState) getSafeVersionString() string {
 func determineComponentDiffs(blueprintComponents []Component, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) ([]ComponentDiff, error) {
 	var componentDiffs = map[common.SimpleComponentName]ComponentDiff{}
 	for _, blueprintComponent := range blueprintComponents {
-		installedComponent := installedComponents[blueprintComponent.Name.Name]
+		installedComponent := installedComponents[blueprintComponent.Name.SimpleName]
 		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
 		if err != nil {
 			return nil, err
 		}
-		componentDiffs[blueprintComponent.Name.Name] = compDiff
+		componentDiffs[blueprintComponent.Name.SimpleName] = compDiff
 	}
 
 	for _, installedComponent := range installedComponents {
-		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name.Name)
+		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name.SimpleName)
 
 		if !found {
 			var notFoundInBlueprint *Component = nil
@@ -103,7 +103,7 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 			if err != nil {
 				return nil, err
 			}
-			componentDiffs[installedComponent.Name.Name] = compDiff
+			componentDiffs[installedComponent.Name.SimpleName] = compDiff
 			continue
 		}
 
@@ -111,7 +111,7 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 		if err != nil {
 			return nil, err
 		}
-		componentDiffs[installedComponent.Name.Name] = compDiff
+		componentDiffs[installedComponent.Name.SimpleName] = compDiff
 	}
 	return maps.Values(componentDiffs), nil
 }
@@ -128,7 +128,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 			InstallationState: TargetStateAbsent,
 		}
 	} else {
-		componentName = installedComponent.Name.Name
+		componentName = installedComponent.Name.SimpleName
 		actualState = ComponentDiffState{
 			Namespace:         installedComponent.Name.Namespace,
 			Version:           installedComponent.Version,
@@ -139,7 +139,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 	if blueprintComponent == nil {
 		expectedState = actualState
 	} else {
-		componentName = blueprintComponent.Name.Name
+		componentName = blueprintComponent.Name.SimpleName
 		expectedState = ComponentDiffState{
 			Namespace:         blueprintComponent.Name.Namespace,
 			Version:           blueprintComponent.Version,
@@ -162,7 +162,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 
 func findComponentByName(components []Component, name common.SimpleComponentName) (Component, bool) {
 	for _, component := range components {
-		if component.Name.Name == name {
+		if component.Name.SimpleName == name {
 			return component, true
 		}
 	}
