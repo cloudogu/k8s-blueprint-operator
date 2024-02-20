@@ -23,7 +23,7 @@ func (e EtcdGlobalConfigRepository) Get(_ context.Context, key common.GlobalConf
 	if registry.IsKeyNotFoundError(err) {
 		return nil, domainservice.NewNotFoundError(err, "could not find key %q from global config in etcd", key)
 	} else if err != nil {
-		return nil, domainservice.NewInternalError(err, "failed to get %q from global config in etcd", key)
+		return nil, domainservice.NewInternalError(err, "failed to get value for key %q from global config in etcd", key)
 	}
 
 	return &ecosystem.GlobalConfigEntry{
