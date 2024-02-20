@@ -19,7 +19,7 @@ func NewEtcdDoguConfigRepository(etcdStore etcdStore) *EtcdDoguConfigRepository 
 
 func (e EtcdDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error) {
 	var errs []error
-	var entriesByDogu map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry
+	entriesByDogu := make(map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry)
 	for _, key := range keys {
 		entryRaw, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
 		if registry.IsKeyNotFoundError(err) {
@@ -44,7 +44,7 @@ func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguC
 	strValue := string(entry.Value)
 	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set %s with value %q", entry.Key, strValue)
+		return domainservice.NewInternalError(err, "failed to set %s with value %q in etcd", entry.Key, strValue)
 	}
 
 	return nil

@@ -19,7 +19,7 @@ func NewEtcdSensitiveDoguConfigRepository(etcdStore etcdStore) *EtcdSensitiveDog
 
 func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error) {
 	var errs []error
-	var entriesByDogu map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry
+	entriesByDogu := make(map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry)
 	for _, key := range keys {
 		entryRaw, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
 		if registry.IsKeyNotFoundError(err) {
@@ -44,7 +44,7 @@ func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosys
 	strValue := string(entry.Value)
 	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set encrypted %s with value %q", entry.Key, strValue)
+		return domainservice.NewInternalError(err, "failed to set encrypted %s with value %q in etcd", entry.Key, strValue)
 	}
 
 	return nil
@@ -69,7 +69,7 @@ func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.
 	strDoguName := string(key.DoguName)
 	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
-		return domainservice.NewInternalError(err, "failed to delete encrypted %s from etcd", key.Key)
+		return domainservice.NewInternalError(err, "failed to delete encrypted %s from etcd", key)
 	}
 
 	return nil
