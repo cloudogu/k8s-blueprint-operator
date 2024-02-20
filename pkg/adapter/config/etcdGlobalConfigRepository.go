@@ -18,6 +18,20 @@ func NewEtcdGlobalConfigRepository(configStore globalConfigStore) *EtcdGlobalCon
 	return &EtcdGlobalConfigRepository{configStore: configStore}
 }
 
+func (e EtcdGlobalConfigRepository) Get(_ context.Context, key common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error) {
+	entry, err := e.configStore.Get(string(key))
+	if registry.IsKeyNotFoundError(err) {
+		return nil, domainservice.NewNotFoundError(err, "could not find key %q from global config in etcd", key)
+	} else if err != nil {
+		return nil, domainservice.NewInternalError(err, "failed to get %q from global config in etcd", key)
+	}
+
+	return &ecosystem.GlobalConfigEntry{
+		Key:   key,
+		Value: common.GlobalConfigValue(entry),
+	}, nil
+}
+
 func (e EtcdGlobalConfigRepository) GetAll(_ context.Context) ([]*ecosystem.GlobalConfigEntry, error) {
 	globalConfigEntriesRaw, err := e.configStore.GetAll()
 	if registry.IsKeyNotFoundError(err) {

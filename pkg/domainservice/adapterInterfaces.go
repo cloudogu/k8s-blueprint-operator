@@ -122,7 +122,7 @@ type GlobalConfigEntryRepository interface {
 	// It can throw the following errors:
 	// 	- NotFoundError if the key is not found.
 	// 	- InternalError if any other error happens.
-	Get(context.Context, common.GlobalConfigKey) ([]*ecosystem.GlobalConfigEntry, error)
+	Get(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)
 	// GetAll retrieves all keys from the global config.
 	// It can throw the following errors:
 	// 	- NotFoundError if there is no global config.
