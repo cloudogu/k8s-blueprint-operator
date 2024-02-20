@@ -36,13 +36,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := &ecosystem.DoguConfigEntry{
-			Key: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
-				Key:      "key/path",
-			},
-			Value: common.DoguConfigValue("value"),
-		}
+		entry := getSensitiveDoguConfigEntry()
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -71,13 +65,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := &ecosystem.DoguConfigEntry{
-			Key: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
-				Key:      "key/path",
-			},
-			Value: common.DoguConfigValue("value"),
-		}
+		entry := getSensitiveDoguConfigEntry()
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -99,13 +87,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := &ecosystem.DoguConfigEntry{
-			Key: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
-				Key:      "key/path",
-			},
-			Value: common.DoguConfigValue("value"),
-		}
+		entry := getSensitiveDoguConfigEntry()
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -124,13 +106,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := &ecosystem.DoguConfigEntry{
-			Key: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
-				Key:      "key/path",
-			},
-			Value: common.DoguConfigValue("value"),
-		}
+		entry := getSensitiveDoguConfigEntry()
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -151,13 +127,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := &ecosystem.DoguConfigEntry{
-			Key: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
-				Key:      "key/path",
-			},
-			Value: common.DoguConfigValue("value"),
-		}
+		entry := getSensitiveDoguConfigEntry()
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -167,6 +137,18 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "failed to get dogu secret \"redmine-secrets\"")
 	})
+}
+
+func getSensitiveDoguConfigEntry() *ecosystem.SensitiveDoguConfigEntry {
+	return &ecosystem.SensitiveDoguConfigEntry{
+		Key: common.SensitiveDoguConfigKey{
+			DoguConfigKey: common.DoguConfigKey{
+				DoguName: testSimpleDoguNameRedmine,
+				Key:      "key/path",
+			},
+		},
+		Value: "value",
+	}
 }
 
 func TestNewSecretSensitiveDoguConfigRepository(t *testing.T) {

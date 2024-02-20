@@ -26,7 +26,7 @@ func NewSecretSensitiveDoguConfigRepository(secretClient secretInterface) *Secre
 
 // SaveForNotInstalledDogu create or update a secret for the dogu containing the config entry.
 // In further processing the dogu-operator uses the secret to encrypt configuration for the dogu.
-func (repo *SecretSensitiveDoguConfigRepository) SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.DoguConfigEntry) error {
+func (repo *SecretSensitiveDoguConfigRepository) SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
 	secretName := getDoguSecretName(string(entry.Key.DoguName))
 	_, err := repo.client.Get(ctx, secretName, metav1.GetOptions{})
 	if err != nil {
@@ -70,7 +70,7 @@ func (repo *SecretSensitiveDoguConfigRepository) createDoguSecret(ctx context.Co
 	return nil
 }
 
-func createKeyValueEntry(entry *ecosystem.DoguConfigEntry) (key string, value string) {
+func createKeyValueEntry(entry *ecosystem.SensitiveDoguConfigEntry) (key string, value string) {
 	key = strings.ReplaceAll(entry.Key.Key, "/", ".")
 	value = string(entry.Value)
 	return
