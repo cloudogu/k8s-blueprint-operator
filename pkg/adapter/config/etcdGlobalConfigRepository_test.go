@@ -75,7 +75,7 @@ func TestEtcdGlobalConfigRepository_GetAll(t *testing.T) {
 		_, err := sut.GetAll(testCtx)
 
 		// then
-		assert.ErrorAs(t, err, &etcdNotFoundError)
+		assert.ErrorIs(t, err, etcdNotFoundError)
 		assert.ErrorAs(t, err, &notFoundErr)
 		assert.ErrorContains(t, err, "could not find global config in etcd")
 	})
@@ -244,7 +244,7 @@ func TestEtcdGlobalConfigRepository_Get(t *testing.T) {
 		_, err := sut.Get(testCtx, "key_provider")
 
 		// then
-		assert.ErrorAs(t, err, &etcdNotFoundError)
+		assert.ErrorIs(t, err, etcdNotFoundError)
 		assert.ErrorAs(t, err, &notFoundErr)
 		assert.ErrorContains(t, err, "could not find key \"key_provider\" from global config in etcd")
 	})
