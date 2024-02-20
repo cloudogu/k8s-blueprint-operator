@@ -20,7 +20,7 @@ const (
 	ConfigActionRemove       ConfigAction = "remove"
 )
 
-func determineConfigDiff(
+func determineConfigDiffs(
 	blueprintConfig Config,
 	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,

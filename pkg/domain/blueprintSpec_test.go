@@ -349,7 +349,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 
 		// then
-		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiff: map[common.SimpleDoguName]CombinedDoguConfigDiff{}}
+		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiff{}}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
 		require.Equal(t, 2, len(spec.Events))

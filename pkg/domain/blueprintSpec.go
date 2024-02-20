@@ -255,11 +255,11 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogusByName)
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, installedComponents)
 	if err != nil {
-		//FIXME: a proper state and event should be set, so that this error don't lead to a endless retry.
+		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
 		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
-	doguConfigDiffs, globalConfigDiff := determineConfigDiff(
+	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		actualGlobalConfig,
 		actualDogusConfig,
@@ -268,10 +268,10 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:        doguDiffs,
-		ComponentDiffs:   compDiffs,
-		DoguConfigDiff:   doguConfigDiffs,
-		GlobalConfigDiff: globalConfigDiff,
+		DoguDiffs:         doguDiffs,
+		ComponentDiffs:    compDiffs,
+		DoguConfigDiffs:   doguConfigDiffs,
+		GlobalConfigDiffs: globalConfigDiffs,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))

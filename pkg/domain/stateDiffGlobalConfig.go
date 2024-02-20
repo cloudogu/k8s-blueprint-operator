@@ -6,6 +6,15 @@ import (
 )
 
 type GlobalConfigDiffs []GlobalConfigEntryDiff
+
+func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
+	countByAction := map[ConfigAction]int{}
+	for _, diff := range diffs {
+		countByAction[diff.Action]++
+	}
+	return countByAction
+}
+
 type GlobalConfigValueState ConfigValueState
 type GlobalConfigEntryDiff struct {
 	Key      common.GlobalConfigKey

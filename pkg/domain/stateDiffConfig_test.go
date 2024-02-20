@@ -22,7 +22,7 @@ var (
 func Test_determineConfigDiff(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		config := Config{}
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiff(
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
 			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
 			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
@@ -56,7 +56,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiff(
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
 			actualGlobalConfig,
 			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
@@ -145,7 +145,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiff(
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
 			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
 			actualDoguConfig,
@@ -241,7 +241,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiff(
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
 			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
 			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
@@ -328,7 +328,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, _ := determineConfigDiff(
+		dogusConfigDiffs, _ := determineConfigDiffs(
 			config,
 			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
 			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
