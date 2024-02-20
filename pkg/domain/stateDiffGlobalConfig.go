@@ -7,20 +7,20 @@ import (
 
 type GlobalConfigDiffs []GlobalConfigEntryDiff
 
+type GlobalConfigValueState ConfigValueState
+type GlobalConfigEntryDiff struct {
+	Key          common.GlobalConfigKey
+	Actual       GlobalConfigValueState
+	Expected     GlobalConfigValueState
+	NeededAction ConfigAction
+}
+
 func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, diff := range diffs {
-		countByAction[diff.Action]++
+		countByAction[diff.NeededAction]++
 	}
 	return countByAction
-}
-
-type GlobalConfigValueState ConfigValueState
-type GlobalConfigEntryDiff struct {
-	Key      common.GlobalConfigKey
-	Actual   GlobalConfigValueState
-	Expected GlobalConfigValueState
-	Action   ConfigAction
 }
 
 func newGlobalConfigEntryDiff(
@@ -39,10 +39,10 @@ func newGlobalConfigEntryDiff(
 		Exists: expectedExists,
 	}
 	return GlobalConfigEntryDiff{
-		Key:      key,
-		Actual:   actual,
-		Expected: expected,
-		Action:   getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
+		Key:          key,
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }
 

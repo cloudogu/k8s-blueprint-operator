@@ -13,10 +13,10 @@ type ConfigValueState struct {
 	Exists bool
 }
 type DoguConfigEntryDiff struct {
-	Key      common.DoguConfigKey
-	Actual   DoguConfigValueState
-	Expected DoguConfigValueState
-	Action   ConfigAction
+	Key          common.DoguConfigKey
+	Actual       DoguConfigValueState
+	Expected     DoguConfigValueState
+	NeededAction ConfigAction
 }
 
 func newDoguConfigEntryDiff(key common.DoguConfigKey, actualValue common.DoguConfigValue, actualExists bool, expectedValue common.DoguConfigValue, expectedExists bool) DoguConfigEntryDiff {
@@ -29,10 +29,10 @@ func newDoguConfigEntryDiff(key common.DoguConfigKey, actualValue common.DoguCon
 		Exists: expectedExists,
 	}
 	return DoguConfigEntryDiff{
-		Key:      key,
-		Actual:   actual,
-		Expected: expected,
-		Action:   getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
+		Key:          key,
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }
 

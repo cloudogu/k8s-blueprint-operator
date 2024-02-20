@@ -349,12 +349,14 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 
 		// then
-		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiff{}}
+		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{}}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
-		require.Equal(t, 2, len(spec.Events))
+		require.Equal(t, 4, len(spec.Events))
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
 		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
+		assert.Equal(t, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs(nil)}, spec.Events[2])
+		assert.Equal(t, DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{}}, spec.Events[3])
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
 

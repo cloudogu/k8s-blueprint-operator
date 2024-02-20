@@ -6,7 +6,7 @@ import (
 	"slices"
 )
 
-type CombinedDoguConfigDiff struct {
+type CombinedDoguConfigDiffs struct {
 	DoguConfigDiff          DoguConfigDiffs
 	SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
 }
@@ -20,13 +20,26 @@ const (
 	ConfigActionRemove       ConfigAction = "remove"
 )
 
+func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs) map[ConfigAction]int {
+	countByAction := map[ConfigAction]int{}
+	for _, doguDiffs := range combinedDogusConfigDiffs {
+		for _, diff := range doguDiffs.DoguConfigDiff {
+			countByAction[diff.NeededAction]++
+		}
+		for _, diff := range doguDiffs.SensitiveDoguConfigDiff {
+			countByAction[diff.NeededAction]++
+		}
+	}
+	return countByAction
+}
+
 func determineConfigDiffs(
 	blueprintConfig Config,
 	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
 	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
 	alreadyInstalledDogus []common.SimpleDoguName,
-) (map[common.SimpleDoguName]CombinedDoguConfigDiff, GlobalConfigDiffs) {
+) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, actualDoguConfig, actualSensitiveDoguConfig, alreadyInstalledDogus),
 		determineGlobalConfigDiffs(blueprintConfig.Global, actualGlobalConfig)
 }
@@ -36,10 +49,10 @@ func determineDogusConfigDiffs(
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
 	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
 	installedDogus []common.SimpleDoguName,
-) map[common.SimpleDoguName]CombinedDoguConfigDiff {
-	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiff{}
+) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
+	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
-		diffsPerDogu[doguName] = CombinedDoguConfigDiff{
+		diffsPerDogu[doguName] = CombinedDoguConfigDiffs{
 			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, actualDoguConfig),
 			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, actualSensitiveDoguConfig, slices.Contains(installedDogus, doguName)),
 		}

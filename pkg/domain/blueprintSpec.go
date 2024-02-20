@@ -276,6 +276,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
+	spec.Events = append(spec.Events, DoguConfigDiffDeterminedEvent{spec.StateDiff.DoguConfigDiffs})
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {

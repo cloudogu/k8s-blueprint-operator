@@ -7,7 +7,7 @@ import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 type StateDiff struct {
 	DoguDiffs         DoguDiffs
 	ComponentDiffs    ComponentDiffs
-	DoguConfigDiffs   map[common.SimpleDoguName]CombinedDoguConfigDiff
+	DoguConfigDiffs   map[common.SimpleDoguName]CombinedDoguConfigDiffs
 	GlobalConfigDiffs GlobalConfigDiffs
 }
 

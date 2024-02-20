@@ -30,7 +30,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			[]common.SimpleDoguName{},
 		)
 
-		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiff{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
@@ -65,7 +65,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 
 		//then
-		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiff{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
 		assert.Equal(t, 4, len(globalConfigDiff))
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key1",
@@ -77,7 +77,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value1",
 				Exists: true,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key2",
@@ -89,7 +89,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value2.2",
 				Exists: true,
 			},
-			Action: ConfigActionSet,
+			NeededAction: ConfigActionSet,
 		})
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key3",
@@ -101,7 +101,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionRemove,
+			NeededAction: ConfigActionRemove,
 		})
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key4",
@@ -113,7 +113,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 	})
 	t.Run("all actions normal dogu config", func(t *testing.T) {
@@ -167,7 +167,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value",
 				Exists: true,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
 			Key: dogu1Key2,
@@ -179,7 +179,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "updatedValue",
 				Exists: true,
 			},
-			Action: ConfigActionSet,
+			NeededAction: ConfigActionSet,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
 			Key: dogu1Key3,
@@ -191,12 +191,12 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionRemove,
+			NeededAction: ConfigActionRemove,
 		})
 		//domain.DoguConfigEntryDiff{Key:common.DoguConfigKey{DoguName:"dogu1", Key:"key3"},
 		//Actual:domain.DoguConfigValueState{Value:"value", Exists:true},
 		//Expected:domain.DoguConfigValueState{Value:"", Exists:false},
-		//Action:"set"}
+		//NeededAction:"set"}
 		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
 			Key: dogu1Key4,
 			Actual: DoguConfigValueState{
@@ -207,7 +207,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 	})
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
@@ -264,7 +264,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value",
 				Exists: true,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key2,
@@ -277,7 +277,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "updated value",
 				Exists: true,
 			},
-			Action: ConfigActionSet,
+			NeededAction: ConfigActionSet,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key3,
@@ -290,7 +290,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionRemove,
+			NeededAction: ConfigActionRemove,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key4,
@@ -303,7 +303,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "",
 				Exists: false,
 			},
-			Action: ConfigActionNone,
+			NeededAction: ConfigActionNone,
 		})
 	})
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
@@ -349,7 +349,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value",
 				Exists: true,
 			},
-			Action: ConfigActionSetToEncrypt,
+			NeededAction: ConfigActionSetToEncrypt,
 		})
 
 	})
