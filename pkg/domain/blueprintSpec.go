@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"golang.org/x/exp/maps"
 )
 
 type BlueprintSpec struct {
@@ -232,7 +233,13 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(
+	installedDogusByName map[common.SimpleDoguName]*ecosystem.DoguInstallation,
+	installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation,
+	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
+	actualDogusConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
+	actualSensitiveDogusConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+) error {
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough
@@ -245,16 +252,26 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDo
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}
 
-	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus)
+	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogusByName)
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, installedComponents)
 	if err != nil {
+		//FIXME: a proper state and event should be set, so that this error don't lead to a endless retry.
+		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
+	doguConfigDiffs, globalConfigDiff := determineConfigDiff(
+		spec.EffectiveBlueprint.Config,
+		actualGlobalConfig,
+		actualDogusConfig,
+		actualSensitiveDogusConfig,
+		maps.Keys(installedDogusByName),
+	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: compDiffs,
-		// there will be more diffs, e.g. registry keys
+		DoguDiffs:        doguDiffs,
+		ComponentDiffs:   compDiffs,
+		DoguConfigDiff:   doguConfigDiffs,
+		GlobalConfigDiff: globalConfigDiff,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))

@@ -6,22 +6,19 @@ import (
 )
 
 func determineDoguConfigDiffs(
-	config map[common.SimpleDoguName]CombinedDoguConfig,
+	config DoguConfig,
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
 ) DoguConfigDiff {
 	var doguConfigDiff []DoguConfigEntryDiff
-
-	for _, doguConfig := range config {
-		// present entries
-		for key, expectedValue := range doguConfig.Config.Present {
-			actualEntry, actualExists := actualDoguConfig[key]
-			doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(expectedValue), true))
-		}
-		// absent entries
-		for _, key := range doguConfig.Config.Absent {
-			actualEntry, actualExists := actualDoguConfig[key]
-			doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(actualEntry.Value), false))
-		}
+	// present entries
+	for key, expectedValue := range config.Present {
+		actualEntry, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(expectedValue), true))
+	}
+	// absent entries
+	for _, key := range config.Absent {
+		actualEntry, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, "", false))
 	}
 	return doguConfigDiff
 }
@@ -39,6 +36,6 @@ func determineDoguConfigDiff(key common.DoguConfigKey, actualValue string, actua
 		Key:      key,
 		Actual:   actual,
 		Expected: expected,
-		Action:   getNeededConfigAction(ConfigValueState(actual), ConfigValueState(expected)),
+		Action:   getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }

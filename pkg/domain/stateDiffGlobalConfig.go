@@ -19,7 +19,7 @@ func determineGlobalConfigDiffs(
 	// absent entries
 	for _, key := range config.Absent {
 		actualEntry, actualExists := actualDoguConfig[key]
-		configDiffs = append(configDiffs, determineGlobalConfigDiff(key, string(actualEntry.Value), actualExists, string(actualEntry.Value), false))
+		configDiffs = append(configDiffs, determineGlobalConfigDiff(key, string(actualEntry.Value), actualExists, "", false))
 	}
 	return configDiffs
 }
@@ -37,6 +37,6 @@ func determineGlobalConfigDiff(key common.GlobalConfigKey, actualValue string, a
 		Key:      key,
 		Actual:   actual,
 		Expected: expected,
-		Action:   getNeededConfigAction(ConfigValueState(actual), ConfigValueState(expected)),
+		Action:   getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }

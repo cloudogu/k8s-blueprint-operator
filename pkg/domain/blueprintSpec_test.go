@@ -346,10 +346,10 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents)
+		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 
 		// then
-		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}}
+		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiff: map[common.SimpleDoguName]CombinedDoguConfigDiff{}}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
 		require.Equal(t, 2, len(spec.Events))
@@ -386,7 +386,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents)
+		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 
 		// then
 		require.NoError(t, err)
@@ -421,7 +421,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents)
+		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 
 		// then
 		require.Error(t, err)
@@ -438,7 +438,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			}
 			installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
 			// when
-			err := spec.DetermineStateDiff(installedDogus, nil)
+			err := spec.DetermineStateDiff(installedDogus, nil, nil, nil, nil)
 
 			// then
 			assert.Error(t, err)
@@ -455,7 +455,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
 		// when
-		err := spec.DetermineStateDiff(installedDogus, nil)
+		err := spec.DetermineStateDiff(installedDogus, nil, nil, nil, nil)
 
 		// then
 		assert.NoError(t, err)
@@ -487,7 +487,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(nil, installedComponents)
+		err := spec.DetermineStateDiff(nil, installedComponents, nil, nil, nil)
 
 		// then
 		require.Error(t, err)

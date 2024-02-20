@@ -3,12 +3,15 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"slices"
 )
 
 type CombinedDoguConfigDiff struct {
 	DoguConfigDiff          DoguConfigDiff
 	SensitiveDoguConfigDiff SensitiveDoguConfigDiff
 }
+
+// TODO: use plural forms, e.g. DoguConfigDiffs
 
 type DoguConfigDiff []DoguConfigEntryDiff
 type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
@@ -26,10 +29,11 @@ type DoguConfigEntryDiff struct {
 }
 
 type SensitiveDoguConfigEntryDiff struct {
-	Key      common.SensitiveDoguConfigKey
-	Actual   EncryptedDoguConfigValueState
-	Expected EncryptedDoguConfigValueState
-	Action   ConfigAction
+	Key        common.SensitiveDoguConfigKey
+	Actual     DoguConfigValueState
+	Expected   DoguConfigValueState
+	doguExists bool
+	Action     ConfigAction
 }
 
 type GlobalConfigEntryDiff struct {
@@ -47,9 +51,10 @@ type ConfigValueState struct {
 type ConfigAction string
 
 const (
-	ConfigActionNone   ConfigAction = "none"
-	ConfigActionSet    ConfigAction = "set"
-	ConfigActionRemove ConfigAction = "remove"
+	ConfigActionNone         ConfigAction = "none"
+	ConfigActionSet          ConfigAction = "set"
+	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
+	ConfigActionRemove       ConfigAction = "remove"
 )
 
 func determineConfigDiff(
@@ -57,13 +62,26 @@ func determineConfigDiff(
 	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
 	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
-) (CombinedDoguConfigDiff, GlobalConfigDiff, error) {
-	return CombinedDoguConfigDiff{
-			DoguConfigDiff:          determineDoguConfigDiffs(blueprintConfig.Dogus, actualDoguConfig),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(blueprintConfig.Dogus, actualSensitiveDoguConfig),
-		},
-		determineGlobalConfigDiffs(blueprintConfig.Global, actualGlobalConfig),
-		nil
+	alreadyInstalledDogus []common.SimpleDoguName,
+) (map[common.SimpleDoguName]CombinedDoguConfigDiff, GlobalConfigDiff) {
+	return determineDogusConfigDiffs(blueprintConfig.Dogus, actualDoguConfig, actualSensitiveDoguConfig, alreadyInstalledDogus),
+		determineGlobalConfigDiffs(blueprintConfig.Global, actualGlobalConfig)
+}
+
+func determineDogusConfigDiffs(
+	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
+	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
+	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+	installedDogus []common.SimpleDoguName,
+) map[common.SimpleDoguName]CombinedDoguConfigDiff {
+	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiff{}
+	for doguName, combinedDoguConfig := range combinedDoguConfigs {
+		diffsPerDogu[doguName] = CombinedDoguConfigDiff{
+			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, actualDoguConfig),
+			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, actualSensitiveDoguConfig, slices.Contains(installedDogus, doguName)),
+		}
+	}
+	return diffsPerDogu
 }
 
 func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) ConfigAction {
@@ -71,8 +89,11 @@ func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) C
 		return ConfigActionNone
 	}
 	if !expected.Exists {
-		return ConfigActionRemove
+		if actual.Exists {
+			return ConfigActionRemove
+		} else {
+			return ConfigActionNone
+		}
 	}
-
 	return ConfigActionSet
 }
