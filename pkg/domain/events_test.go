@@ -112,6 +112,36 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
 		},
 		{
+			name: "global config diff determined",
+			event: GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs{
+				{NeededAction: ConfigActionNone},
+				{NeededAction: ConfigActionNone},
+				{NeededAction: ConfigActionSet},
+				{NeededAction: ConfigActionRemove},
+			}},
+			expectedName:    "GlobalConfigDiffDetermined",
+			expectedMessage: "global config diff determined: 4 actions (\"none\": 2, \"remove\": 1, \"set\": 1)",
+		},
+		{
+			name: "dogu config diff determined",
+			event: DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{
+				"dogu1": {
+					DoguConfigDiff: []DoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSet},
+						{NeededAction: ConfigActionRemove},
+					},
+					SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSetToEncrypt},
+						{NeededAction: ConfigActionRemove},
+					},
+				},
+			}},
+			expectedName:    "DoguConfigDiffDetermined",
+			expectedMessage: "dogu config diff determined: 6 actions (\"none\": 2, \"remove\": 2, \"set\": 1, \"setToEncrypt\": 1)",
+		},
+		{
 			name:            "blueprint application pre-processed",
 			event:           BlueprintApplicationPreProcessedEvent{},
 			expectedName:    "BlueprintApplicationPreProcessed",

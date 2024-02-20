@@ -181,7 +181,7 @@ func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) 
 	switch expected.InstallationState {
 	case TargetStatePresent:
 		if expected.Namespace != actual.Namespace {
-			return ActionSwitchComponentDistributionNamespace, nil
+			return ActionSwitchComponentNamespace, nil
 		}
 
 		if expected.Version.GreaterThan(actual.Version) {

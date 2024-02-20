@@ -56,8 +56,8 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot get installed components to determine state diff: %w", err)
 	}
 
-	// for now, state diff only takes dogus and components, but there will be registry keys as well
-	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus, installedComponents)
+	//TODO: load config values and give them in this command
+	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
