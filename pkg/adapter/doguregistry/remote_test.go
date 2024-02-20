@@ -11,8 +11,8 @@ import (
 )
 
 var myQualifiedTestDoguName = common.QualifiedDoguName{
-	Namespace: "testing",
-	Name:      "my-dogu",
+	Namespace:  "testing",
+	SimpleName: "my-dogu",
 }
 
 func TestNewRemote(t *testing.T) {
@@ -95,23 +95,23 @@ func TestRemote_GetDogus(t *testing.T) {
 		sut := &Remote{regMock}
 		dogusToLoad := []domainservice.DoguToLoad{
 			{DoguName: common.QualifiedDoguName{
-				Namespace: "testing",
-				Name:      "good-dogu",
+				Namespace:  "testing",
+				SimpleName: "good-dogu",
 			}, Version: "0.1.2"},
 			{DoguName: common.QualifiedDoguName{
-				Namespace: "testing",
-				Name:      "not-found",
+				Namespace:  "testing",
+				SimpleName: "not-found",
 			}, Version: "1.2.3"},
 			{DoguName: common.QualifiedDoguName{
-				Namespace: "testing",
-				Name:      "other-error",
+				Namespace:  "testing",
+				SimpleName: "other-error",
 			}, Version: "2.3.4"},
 		}
 
 		expectedDogus := map[common.QualifiedDoguName]*core.Dogu{
-			common.QualifiedDoguName{Namespace: "testing", Name: "good-dogu"}:   &expectedDogu,
-			common.QualifiedDoguName{Namespace: "testing", Name: "not-found"}:   nil,
-			common.QualifiedDoguName{Namespace: "testing", Name: "other-error"}: nil,
+			common.QualifiedDoguName{Namespace: "testing", SimpleName: "good-dogu"}:   &expectedDogu,
+			common.QualifiedDoguName{Namespace: "testing", SimpleName: "not-found"}:   nil,
+			common.QualifiedDoguName{Namespace: "testing", SimpleName: "other-error"}: nil,
 		}
 
 		// when

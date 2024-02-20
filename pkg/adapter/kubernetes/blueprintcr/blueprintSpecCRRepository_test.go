@@ -63,10 +63,6 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				AllowDoguNamespaceSwitch: true,
 				DryRun:                   true,
 			},
-			EffectiveBlueprint: domain.EffectiveBlueprint{
-				RegistryConfig:          domain.RegistryConfig{},
-				RegistryConfigEncrypted: domain.RegistryConfig{},
-			},
 			StateDiff:          domain.StateDiff{DoguDiffs: make(domain.DoguDiffs, 0), ComponentDiffs: make(domain.ComponentDiffs, 0)},
 			PersistenceContext: persistenceContext,
 		}, spec)
@@ -159,11 +155,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: v1.EffectiveBlueprint{
-					Dogus:                   []serializer.TargetDogu{},
-					Components:              []serializer.TargetComponent{},
-					RegistryConfig:          map[string]string{},
-					RegistryConfigAbsent:    []string{},
-					RegistryConfigEncrypted: map[string]string{},
+					Dogus:      []serializer.TargetDogu{},
+					Components: []serializer.TargetComponent{},
+					Config:     v1.Config{},
 				},
 				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},
@@ -243,11 +237,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: v1.EffectiveBlueprint{
-					Dogus:                   []serializer.TargetDogu{},
-					Components:              []serializer.TargetComponent{},
-					RegistryConfig:          map[string]string{},
-					RegistryConfigAbsent:    []string{},
-					RegistryConfigEncrypted: map[string]string{},
+					Dogus:      []serializer.TargetDogu{},
+					Components: []serializer.TargetComponent{},
+					Config:     v1.Config{},
 				},
 				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},
@@ -296,11 +288,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Status: v1.BlueprintStatus{
 				Phase: domain.StatusPhaseValidated,
 				EffectiveBlueprint: v1.EffectiveBlueprint{
-					Dogus:                   []serializer.TargetDogu{},
-					Components:              []serializer.TargetComponent{},
-					RegistryConfig:          map[string]string{},
-					RegistryConfigAbsent:    []string{},
-					RegistryConfigEncrypted: map[string]string{},
+					Dogus:      []serializer.TargetDogu{},
+					Components: []serializer.TargetComponent{},
+					Config:     v1.Config{},
 				},
 				StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 			},

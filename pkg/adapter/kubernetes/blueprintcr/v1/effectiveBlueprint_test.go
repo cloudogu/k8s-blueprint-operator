@@ -1,7 +1,6 @@
 package v1
 
 import (
-	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
@@ -27,31 +26,43 @@ var (
 func TestConvertToEffectiveBlueprint(t *testing.T) {
 	//given
 	dogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Name: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Name: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Name: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Name: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
+		{Name: common.QualifiedComponentName{SimpleName: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{SimpleName: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
 	}
 	blueprint := domain.EffectiveBlueprint{
 		Dogus:      dogus,
 		Components: components,
-		RegistryConfig: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: domain.Config{
+			Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+				"my-dogu": {
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+							{
+								DoguName: "my-dogu",
+								Key:      "config",
+							}: "42",
+						},
+					},
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+							{DoguConfigKey: common.DoguConfigKey{
+								DoguName: "my-dogu",
+								Key:      "config-encrypted",
+							}}: "42",
+						},
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
-			},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}
 
@@ -77,12 +88,24 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	assert.Equal(t, EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		RegistryConfig: map[string]string{
-			"dogu/config": "42",
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: map[string]string{
-			"dogu/config": "42",
+		Config: Config{
+			Dogus: map[string]CombinedDoguConfig{
+				"my-dogu": {
+					Config: DoguConfig{
+						Present: map[string]string{
+							"config": "42",
+						},
+					},
+					SensitiveConfig: SensitiveDoguConfig{
+						Present: map[string]string{
+							"config-encrypted": "42",
+						},
+					},
+				},
+			},
+			Global: GlobalConfig{
+				Absent: []string{"test/key"},
+			},
 		},
 	}, blueprintV2)
 }
@@ -106,12 +129,22 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	dto := EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		RegistryConfig: map[string]string{
-			"dogu/config": "42",
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: map[string]string{
-			"dogu/config": "42",
+		Config: Config{
+			Dogus: map[string]CombinedDoguConfig{
+				"my-dogu": {
+					Config: DoguConfig{
+						Present: map[string]string{
+							"config": "42",
+						},
+					},
+					SensitiveConfig: SensitiveDoguConfig{
+						Present: map[string]string{
+							"config-encrypted": "42",
+						},
+					},
+				},
+			},
+			Global: GlobalConfig{Absent: []string{"test/key"}},
 		},
 	}
 	//when
@@ -119,94 +152,49 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 
 	//then
 	dogus := []domain.Dogu{
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "official", Name: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "premium", Name: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
 	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", Name: "component2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", Name: "component4"}, Version: compVersion1233},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
 	}
 	expected := domain.EffectiveBlueprint{
 		Dogus:      dogus,
 		Components: components,
-		RegistryConfig: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
+		Config: domain.Config{
+			Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+				"my-dogu": {
+					DoguName: "my-dogu",
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+							{
+								DoguName: "my-dogu",
+								Key:      "config",
+							}: "42",
+						},
+					},
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+							{DoguConfigKey: common.DoguConfigKey{
+								DoguName: "my-dogu",
+								Key:      "config-encrypted",
+							}}: "42",
+						},
+					},
+				},
 			},
-		},
-		RegistryConfigAbsent: []string{"_global/test/key"},
-		RegistryConfigEncrypted: domain.RegistryConfig{
-			"dogu": map[string]interface{}{
-				"config": "42",
-			},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}
 
 	require.NoError(t, err)
 	assert.Equal(t, expected, blueprint)
-}
-
-func Test_widenMap(t *testing.T) {
-}
-
-func Test_convertToRegistryConfig(t *testing.T) {
-	tests := []struct {
-		name    string
-		dto     map[string]string
-		want    domain.RegistryConfig
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name:    "nil",
-			dto:     nil,
-			want:    domain.RegistryConfig{},
-			wantErr: assert.NoError,
-		},
-		{
-			name:    "no keys",
-			dto:     map[string]string{},
-			want:    domain.RegistryConfig{},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "depth 1",
-			dto: map[string]string{
-				"key1": "val1",
-			},
-			want:    domain.RegistryConfig{},
-			wantErr: assert.Error,
-		},
-		{
-			name: "multiple deep keys",
-			dto: map[string]string{
-				"key1/key2/key3.1": "val1",
-				"key1/key2/key3.2": "val2",
-			},
-			want: domain.RegistryConfig{
-				"key1": {
-					"key2": map[string]interface{}{
-						"key3.1": "val1",
-						"key3.2": "val2",
-					},
-				},
-			},
-			wantErr: assert.NoError,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := convertToRegistryConfig(tt.dto)
-			if !tt.wantErr(t, err, fmt.Sprintf("convertToRegistryConfig(%v)", tt.dto)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "convertToRegistryConfig(%v)", tt.dto)
-		})
-	}
 }
 
 func Test_setKey(t *testing.T) {

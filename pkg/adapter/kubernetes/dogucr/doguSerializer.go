@@ -48,10 +48,10 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 	return &v1.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: string(dogu.Name.Name),
+			Name: string(dogu.Name.SimpleName),
 			Labels: map[string]string{
 				"app":       "ces",
-				"dogu.name": string(dogu.Name.Name),
+				"dogu.name": string(dogu.Name.SimpleName),
 			},
 		},
 		Spec: v1.DoguSpec{

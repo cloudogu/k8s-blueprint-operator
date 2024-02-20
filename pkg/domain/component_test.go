@@ -43,7 +43,7 @@ func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
 }
 
 func Test_validateComponents_errorOnEmptyComponentNamespace(t *testing.T) {
-	component := Component{Name: common.QualifiedComponentName{Namespace: "", Name: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
+	component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
 	err := component.Validate()
 
 	require.Error(t, err)

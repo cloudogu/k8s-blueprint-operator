@@ -40,7 +40,7 @@ func (dogu Dogu) validate() error {
 
 func FindDoguByName(dogus []Dogu, name common.SimpleDoguName) (Dogu, error) {
 	for _, dogu := range dogus {
-		if dogu.Name.Name == name {
+		if dogu.Name.SimpleName == name {
 			return dogu, nil
 		}
 	}
