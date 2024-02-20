@@ -23,10 +23,10 @@ func (e EtcdDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.D
 	for _, key := range keys {
 		entryRaw, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
 		if registry.IsKeyNotFoundError(err) {
-			errs = append(errs, domainservice.NewNotFoundError(err, "could not find %q in etcd", key))
+			errs = append(errs, domainservice.NewNotFoundError(err, "could not find %s in etcd", key))
 			continue
 		} else if err != nil {
-			errs = append(errs, domainservice.NewInternalError(err, "failed to get %q from etcd", key))
+			errs = append(errs, domainservice.NewInternalError(err, "failed to get %s from etcd", key))
 			continue
 		}
 
@@ -41,11 +41,10 @@ func (e EtcdDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.D
 
 func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
-	strKey := entry.Key.Key
 	strValue := string(entry.Value)
-	err := setEtcdKey(strKey, strValue, e.etcdStore.DoguConfig(strDoguName))
+	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set config key %q with value %q for dogu %q", strKey, strValue, strDoguName)
+		return domainservice.NewInternalError(err, "failed to set %s with value %q", entry.Key, strValue)
 	}
 
 	return nil
@@ -68,10 +67,9 @@ func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosys
 
 func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfigKey) error {
 	strDoguName := string(key.DoguName)
-	strKey := key.Key
-	err := deleteEtcdKey(strKey, e.etcdStore.DoguConfig(strDoguName))
+	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
-		return domainservice.NewInternalError(err, "failed to delete config key %q for dogu %q", strKey, strDoguName)
+		return domainservice.NewInternalError(err, "failed to delete %s from etcd", key)
 	}
 
 	return nil
