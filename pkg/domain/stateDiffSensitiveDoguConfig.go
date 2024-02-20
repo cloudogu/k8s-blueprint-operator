@@ -14,18 +14,25 @@ type SensitiveDoguConfigEntryDiff struct {
 	NeededAction         ConfigAction
 }
 
+func NewDoguConfigValueStateFromSensitiveEntry(actualEntry *ecosystem.SensitiveDoguConfigEntry) DoguConfigValueState {
+	actualValue := common.SensitiveDoguConfigValue("")
+	if actualEntry != nil {
+		actualValue = common.SensitiveDoguConfigValue(actualEntry.Value)
+	}
+	return DoguConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualEntry != nil,
+	}
+}
+
 func newSensitiveDoguConfigEntryDiff(
 	key common.SensitiveDoguConfigKey,
-	actualValue common.EncryptedDoguConfigValue,
-	actualExists bool,
+	actualEntry *ecosystem.SensitiveDoguConfigEntry,
 	expectedValue common.SensitiveDoguConfigValue,
 	expectedExists bool,
 	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigEntryDiff {
-	actual := DoguConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualExists,
-	}
+	actual := NewDoguConfigValueStateFromSensitiveEntry(actualEntry)
 	expected := DoguConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
@@ -41,19 +48,19 @@ func newSensitiveDoguConfigEntryDiff(
 
 func determineSensitiveDoguConfigDiffs(
 	config SensitiveDoguConfig,
-	actualDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+	actualDoguConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
 	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigDiffs {
 	var doguConfigDiff []SensitiveDoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry.Value, actualExists, expectedValue, true, doguAlreadyInstalled))
+		actualEntry := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, expectedValue, true, doguAlreadyInstalled))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry.Value, actualExists, "", false, doguAlreadyInstalled))
+		actualEntry := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, "", false, doguAlreadyInstalled))
 	}
 	return doguConfigDiff
 }

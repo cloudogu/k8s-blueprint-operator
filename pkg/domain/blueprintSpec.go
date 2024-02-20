@@ -236,9 +236,9 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 func (spec *BlueprintSpec) DetermineStateDiff(
 	installedDogusByName map[common.SimpleDoguName]*ecosystem.DoguInstallation,
 	installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation,
-	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
-	actualDogusConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-	actualSensitiveDogusConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+	actualGlobalConfig map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry,
+	actualDogusConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
+	actualSensitiveDogusConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
 ) error {
 	switch spec.Status {
 	case StatusPhaseNew:

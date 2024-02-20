@@ -35,9 +35,9 @@ func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDo
 
 func determineConfigDiffs(
 	blueprintConfig Config,
-	actualGlobalConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
-	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+	actualGlobalConfig map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry,
+	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
+	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
 	alreadyInstalledDogus []common.SimpleDoguName,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, actualDoguConfig, actualSensitiveDoguConfig, alreadyInstalledDogus),
@@ -46,8 +46,8 @@ func determineConfigDiffs(
 
 func determineDogusConfigDiffs(
 	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
+	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
+	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
 	installedDogus []common.SimpleDoguName,
 ) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
 	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}

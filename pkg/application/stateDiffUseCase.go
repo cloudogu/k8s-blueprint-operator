@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -15,17 +17,26 @@ type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
+	globalConfigRepo          GlobalConfigEntryRepository
+	doguConfigRepo            DoguConfigEntryRepository
+	sensitiveDoguConfigRepo   SensitiveDoguConfigEntryRepository
 }
 
 func NewStateDiffUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguInstallationRepo domainservice.DoguInstallationRepository,
 	componentInstallationRepo domainservice.ComponentInstallationRepository,
+	globalConfigRepo domainservice.GlobalConfigEntryRepository,
+	doguConfigRepo domainservice.DoguConfigEntryRepository,
+	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
 		doguInstallationRepo:      doguInstallationRepo,
 		componentInstallationRepo: componentInstallationRepo,
+		globalConfigRepo:          globalConfigRepo,
+		doguConfigRepo:            doguConfigRepo,
+		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
 	}
 }
 
@@ -45,6 +56,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot load blueprint spec %q to determine state diff: %w", blueprintId, err)
 	}
 
+	//load current dogus and components
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
 	installedDogus, err := useCase.doguInstallationRepo.GetAll(ctx)
 	if err != nil {
@@ -56,8 +68,24 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot get installed components to determine state diff: %w", err)
 	}
 
-	//TODO: load config values and give them in this command
-	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
+	// load current config
+	actualGlobalConfig, err := useCase.globalConfigRepo.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("cannot get global config to determine state diff: %w", err)
+	}
+	globalConfigByKey := util.ToMap(actualGlobalConfig, func(entry *ecosystem.GlobalConfigEntry) common.GlobalConfigKey { return entry.Key })
+
+	actualDoguConfig, err := useCase.doguConfigRepo.GetAllByKey2(ctx, blueprintSpec.EffectiveBlueprint.Config.GetDoguConfigKeys())
+	if err != nil {
+		return fmt.Errorf("cannot get dogu config to determine state diff: %w", err)
+	}
+	actualSensitiveDoguConfig, err := useCase.sensitiveDoguConfigRepo.GetAllByKey2(ctx, blueprintSpec.EffectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
+	if err != nil {
+		return fmt.Errorf("cannot get sensitive dogu config to determine state diff: %w", err)
+	}
+
+	//determine state diff
+	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus, installedComponents, globalConfigByKey, actualDoguConfig, actualSensitiveDoguConfig)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.

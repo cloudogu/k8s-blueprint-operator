@@ -145,6 +145,7 @@ type DoguConfigEntryRepository interface {
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
 	GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
+	GetAllByKey2(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error)
 	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -167,6 +168,7 @@ type SensitiveDoguConfigEntryRepository interface {
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
 	GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
+	GetAllByKey2(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error)
 	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.

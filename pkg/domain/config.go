@@ -33,6 +33,28 @@ type GlobalConfig struct {
 	Absent  []common.GlobalConfigKey
 }
 
+func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
+	var keys []common.DoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		for key, _ := range doguConfig.Config.Present {
+			keys = append(keys, key)
+		}
+		keys = append(keys, doguConfig.Config.Absent...)
+	}
+	return keys
+}
+
+func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKey {
+	var keys []common.SensitiveDoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		for key, _ := range doguConfig.SensitiveConfig.Present {
+			keys = append(keys, key)
+		}
+		keys = append(keys, doguConfig.SensitiveConfig.Absent...)
+	}
+	return keys
+}
+
 func (config Config) validate() error {
 	var errs []error
 	for doguName, doguConfig := range config.Dogus {

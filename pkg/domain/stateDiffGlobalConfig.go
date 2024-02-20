@@ -15,6 +15,17 @@ type GlobalConfigEntryDiff struct {
 	NeededAction ConfigAction
 }
 
+func NewGlobalConfigValueStateFromEntry(actualEntry *ecosystem.GlobalConfigEntry) GlobalConfigValueState {
+	actualValue := common.GlobalConfigValue("")
+	if actualEntry != nil {
+		actualValue = actualEntry.Value
+	}
+	return GlobalConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualEntry != nil,
+	}
+}
+
 func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, diff := range diffs {
@@ -25,15 +36,11 @@ func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 
 func newGlobalConfigEntryDiff(
 	key common.GlobalConfigKey,
-	actualValue common.GlobalConfigValue,
-	actualExists bool,
+	actualEntry *ecosystem.GlobalConfigEntry,
 	expectedValue common.GlobalConfigValue,
 	expectedExists bool,
 ) GlobalConfigEntryDiff {
-	actual := GlobalConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualExists,
-	}
+	actual := NewGlobalConfigValueStateFromEntry(actualEntry)
 	expected := GlobalConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
@@ -48,19 +55,19 @@ func newGlobalConfigEntryDiff(
 
 func determineGlobalConfigDiffs(
 	config GlobalConfig,
-	actualDoguConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
+	actualDoguConfig map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualDoguConfig[key]
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry.Value, actualExists, expectedValue, true))
+		actualEntry := actualDoguConfig[key]
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, expectedValue, true))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry, actualExists := actualDoguConfig[key]
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry.Value, actualExists, "", false))
+		actualEntry := actualDoguConfig[key]
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, "", false))
 	}
 	return configDiffs
 }

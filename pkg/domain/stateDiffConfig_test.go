@@ -24,9 +24,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		config := Config{}
 		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
-			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
-			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
-			map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{},
+			map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
+			map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
+			map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 			[]common.SimpleDoguName{},
 		)
 
@@ -35,7 +35,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions global config", func(t *testing.T) {
 		//given ecosystem config
-		actualGlobalConfig := map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{
+		actualGlobalConfig := map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{
 			"key1": {Key: "key1", Value: "value1"}, // for action none
 			"key2": {Key: "key2", Value: "value2"}, // for action set
 			"key3": {Key: "key3", Value: "value3"}, // for action delete
@@ -59,8 +59,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
 			actualGlobalConfig,
-			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
-			map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{},
+			map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
+			map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 			[]common.SimpleDoguName{},
 		)
 
@@ -118,7 +118,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions normal dogu config", func(t *testing.T) {
 		//given ecosystem config
-		actualDoguConfig := map[common.DoguConfigKey]ecosystem.DoguConfigEntry{
+		actualDoguConfig := map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{
 			dogu1Key1: {Key: dogu1Key1, Value: "value"}, //action none
 			dogu1Key2: {Key: dogu1Key2, Value: "value"}, //action set
 			dogu1Key3: {Key: dogu1Key3, Value: "value"}, //action delete
@@ -147,9 +147,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		//when
 		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
-			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
+			map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
 			actualDoguConfig,
-			map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{},
+			map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 			installedDogus,
 		)
 		//then
@@ -212,7 +212,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
-		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{
+		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 			sensitiveDogu1Key1: {Key: sensitiveDogu1Key1, Value: "value"}, //action none
 			sensitiveDogu1Key2: {Key: sensitiveDogu1Key2, Value: "value"}, //action set
 			sensitiveDogu1Key3: {Key: sensitiveDogu1Key3, Value: "value"}, //action delete
@@ -243,8 +243,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		//when
 		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			config,
-			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
-			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
+			map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
+			map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
 			actualSensitiveConfig,
 			installedDogus,
 		)
@@ -308,7 +308,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
 		//given ecosystem config
-		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry{}
+		actualSensitiveConfig := map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}
 		//dogu1Key4 -> absent, so action none
 		var installedDogus []common.SimpleDoguName
 
@@ -330,8 +330,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		//when
 		dogusConfigDiffs, _ := determineConfigDiffs(
 			config,
-			map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry{},
-			map[common.DoguConfigKey]ecosystem.DoguConfigEntry{},
+			map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
+			map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
 			actualSensitiveConfig,
 			installedDogus,
 		)
