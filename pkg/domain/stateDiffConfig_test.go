@@ -254,8 +254,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].DoguConfigDiff)
 		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:        sensitiveDogu1Key1,
-			doguExists: true,
+			Key:                  sensitiveDogu1Key1,
+			doguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -267,8 +267,8 @@ func Test_determineConfigDiff(t *testing.T) {
 			Action: ConfigActionNone,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:        sensitiveDogu1Key2,
-			doguExists: true,
+			Key:                  sensitiveDogu1Key2,
+			doguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -280,8 +280,8 @@ func Test_determineConfigDiff(t *testing.T) {
 			Action: ConfigActionSet,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:        sensitiveDogu1Key3,
-			doguExists: true,
+			Key:                  sensitiveDogu1Key3,
+			doguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -293,8 +293,8 @@ func Test_determineConfigDiff(t *testing.T) {
 			Action: ConfigActionRemove,
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:        sensitiveDogu1Key4,
-			doguExists: true,
+			Key:                  sensitiveDogu1Key4,
+			doguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "",
 				Exists: false,
@@ -339,8 +339,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		require.Equal(t, 1, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
 		assert.Equal(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff[0], SensitiveDoguConfigEntryDiff{
-			Key:        sensitiveDogu1Key1,
-			doguExists: false,
+			Key:                  sensitiveDogu1Key1,
+			doguAlreadyInstalled: false,
 			Actual: DoguConfigValueState{
 				Value:  "",
 				Exists: false,

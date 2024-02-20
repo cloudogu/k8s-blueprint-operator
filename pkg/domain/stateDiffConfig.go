@@ -11,41 +11,6 @@ type CombinedDoguConfigDiff struct {
 	SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
 }
 
-type DoguConfigDiffs []DoguConfigEntryDiff
-type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
-type GlobalConfigDiffs []GlobalConfigEntryDiff
-
-type DoguConfigValueState ConfigValueState
-type EncryptedDoguConfigValueState ConfigValueState
-type GlobalConfigValueState ConfigValueState
-
-type DoguConfigEntryDiff struct {
-	Key      common.DoguConfigKey
-	Actual   DoguConfigValueState
-	Expected DoguConfigValueState
-	Action   ConfigAction
-}
-
-type SensitiveDoguConfigEntryDiff struct {
-	Key        common.SensitiveDoguConfigKey
-	Actual     DoguConfigValueState
-	Expected   DoguConfigValueState
-	doguExists bool
-	Action     ConfigAction
-}
-
-type GlobalConfigEntryDiff struct {
-	Key      common.GlobalConfigKey
-	Actual   GlobalConfigValueState
-	Expected GlobalConfigValueState
-	Action   ConfigAction
-}
-
-type ConfigValueState struct {
-	Value  string
-	Exists bool
-}
-
 type ConfigAction string
 
 const (

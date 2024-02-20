@@ -5,31 +5,27 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
-func determineDoguConfigDiffs(
-	config DoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-) DoguConfigDiffs {
-	var doguConfigDiff []DoguConfigEntryDiff
-	// present entries
-	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, string(expectedValue), true))
-	}
-	// absent entries
-	for _, key := range config.Absent {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, determineDoguConfigDiff(key, string(actualEntry.Value), actualExists, "", false))
-	}
-	return doguConfigDiff
+type DoguConfigDiffs []DoguConfigEntryDiff
+type DoguConfigValueState ConfigValueState
+
+type ConfigValueState struct {
+	Value  string
+	Exists bool
+}
+type DoguConfigEntryDiff struct {
+	Key      common.DoguConfigKey
+	Actual   DoguConfigValueState
+	Expected DoguConfigValueState
+	Action   ConfigAction
 }
 
-func determineDoguConfigDiff(key common.DoguConfigKey, actualValue string, actualExists bool, expectedValue string, expectedExists bool) DoguConfigEntryDiff {
+func newDoguConfigEntryDiff(key common.DoguConfigKey, actualValue common.DoguConfigValue, actualExists bool, expectedValue common.DoguConfigValue, expectedExists bool) DoguConfigEntryDiff {
 	actual := DoguConfigValueState{
-		Value:  actualValue,
+		Value:  string(actualValue),
 		Exists: actualExists,
 	}
 	expected := DoguConfigValueState{
-		Value:  expectedValue,
+		Value:  string(expectedValue),
 		Exists: expectedExists,
 	}
 	return DoguConfigEntryDiff{
@@ -38,4 +34,22 @@ func determineDoguConfigDiff(key common.DoguConfigKey, actualValue string, actua
 		Expected: expected,
 		Action:   getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
+}
+
+func determineDoguConfigDiffs(
+	config DoguConfig,
+	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
+) DoguConfigDiffs {
+	var doguConfigDiff []DoguConfigEntryDiff
+	// present entries
+	for key, expectedValue := range config.Present {
+		actualEntry, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry.Value, actualExists, expectedValue, true))
+	}
+	// absent entries
+	for _, key := range config.Absent {
+		actualEntry, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry.Value, actualExists, "", false))
+	}
+	return doguConfigDiff
 }
