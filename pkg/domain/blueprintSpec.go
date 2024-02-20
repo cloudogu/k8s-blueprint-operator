@@ -59,10 +59,13 @@ const (
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
-	StatusPhaseCompleted                 StatusPhase = "completed"
-	StatusPhaseApplyRegistryConfig       StatusPhase = "applyRegistryConfig"
+	StatusPhaseCompleted StatusPhase = "completed"
+	// StatusPhaseApplyRegistryConfig indicates that the apply registry config phase is active.
+	StatusPhaseApplyRegistryConfig StatusPhase = "applyRegistryConfig"
+	// StatusPhaseApplyRegistryConfigFailed indicates that the phase to apply registry config phase failed.
 	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
-	StatusPhaseRegistryConfigApplied     StatusPhase = "registryConfigApplied"
+	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
+	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
 )
 
 type BlueprintConfiguration struct {

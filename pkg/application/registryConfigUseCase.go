@@ -34,6 +34,7 @@ func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, do
 	}
 }
 
+// ApplyConfig fetches the dogu and global config statediff of the blueprint and applies these keys to the repositories.
 func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("EcosystemRegistryUseCase.ApplyConfig").
 		WithValues("blueprintId", blueprintId)
