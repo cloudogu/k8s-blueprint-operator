@@ -14,7 +14,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
 		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
-		key := common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(nil)
 
@@ -30,7 +30,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
 		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
-		key := common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(etcdNotFoundError)
 
@@ -46,7 +46,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
 		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
-		key := common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(assert.AnError)
 
@@ -71,7 +71,7 @@ func TestEtcdSensitiveDoguConfigRepository_Save(t *testing.T) {
 		configurationContextMock := newMockConfigurationContext(t)
 		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
 		entry := &ecosystem.SensitiveDoguConfigEntry{
-			Key:   common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine},
+			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}},
 			Value: "value",
 		}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
@@ -91,7 +91,7 @@ func TestEtcdSensitiveDoguConfigRepository_Save(t *testing.T) {
 		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entry := &ecosystem.SensitiveDoguConfigEntry{
-			Key:                common.SensitiveDoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine},
+			Key:                common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}},
 			Value:              "value",
 			PersistenceContext: nil,
 		}

@@ -168,13 +168,13 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		switch diff.Action {
 		case domain.ConfigActionSet:
 			entry := &ecosystem.SensitiveDoguConfigEntry{
-				Key:   common.SensitiveDoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
+				Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
 				Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
 			}
 			// TODO: Check if dogu is installed
 			errs = append(errs, useCase.doguSensitiveConfigRepository.Save(ctx, entry))
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguName: doguName, Key: diff.Key.Key}))
+			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}}))
 		case domain.ConfigActionNone:
 			continue
 		default:

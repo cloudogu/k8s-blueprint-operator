@@ -366,7 +366,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					{
 						Name: common.QualifiedDoguName{
 							Namespace:  "namespace-change",
-							Name: "name",
+							SimpleName: "name",
 						},
 					},
 				},
