@@ -24,14 +24,12 @@ type Blueprint struct {
 	Config Config
 }
 
-func (config *Config) censorValues() error {
+func (config *Config) censorValues() {
 	for _, doguConfig := range config.Dogus {
 		for k := range doguConfig.SensitiveConfig.Present {
 			doguConfig.SensitiveConfig.Present[k] = censorValue
 		}
 	}
-
-	return nil
 }
 
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems

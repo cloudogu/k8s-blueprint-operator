@@ -203,3 +203,44 @@ func Test_validateComponentUniqueness(t *testing.T) {
 	assert.Contains(t, err.Error(), "component1")
 	assert.Contains(t, err.Error(), "component2")
 }
+
+func Test_censorConfigValues(t *testing.T) {
+	//given
+	ldapLoggingKey := common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}
+	ldapPasswordChangeKey := common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}
+	config := Config{
+		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			"ldap": {
+				DoguName: "ldap",
+				Config: DoguConfig{
+					Present: map[common.DoguConfigKey]common.DoguConfigValue{
+						ldapLoggingKey:        "ERROR",
+						ldapPasswordChangeKey: "no-reply@itzbund.de",
+					},
+				},
+				SensitiveConfig: SensitiveDoguConfig{
+					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+						common.SensitiveDoguConfigKey{DoguConfigKey: ldapLoggingKey}:        "ERROR",
+						common.SensitiveDoguConfigKey{DoguConfigKey: ldapPasswordChangeKey}: "no-reply@itzbund.de",
+					},
+				},
+			},
+		},
+		Global: GlobalConfig{
+			Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+				"block_warpmenu_support_category": "true",
+				"password-policy/min_length":      "14",
+			},
+		},
+	}
+
+	// when
+	config.censorValues()
+
+	assert.Equal(t, "ERROR", string(config.Dogus["ldap"].Config.Present[ldapLoggingKey]))
+	assert.Equal(t, "no-reply@itzbund.de", string(config.Dogus["ldap"].Config.Present[ldapPasswordChangeKey]))
+	assert.Equal(t, censorValue, string(config.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapLoggingKey}]))
+	assert.Equal(t, censorValue, string(config.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapPasswordChangeKey}]))
+	assert.Equal(t, "true", string(config.Global.Present["block_warpmenu_support_category"]))
+	assert.Equal(t, "14", string(config.Global.Present["password-policy/min_length"]))
+}

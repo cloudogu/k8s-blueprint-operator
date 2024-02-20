@@ -10,7 +10,7 @@ type CombinedDoguConfigDiff struct {
 type DoguConfigDiff []DoguConfigEntryDiff
 type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
 
-func (combinedDiff *CombinedDoguConfigDiff) CensorValues() {
+func (combinedDiff *CombinedDoguConfigDiff) censorValues() {
 	for i, entry := range combinedDiff.SensitiveDoguConfigDiff {
 		if len(entry.Actual.Value) > 0 {
 			combinedDiff.SensitiveDoguConfigDiff[i].Actual.Value = censorValue

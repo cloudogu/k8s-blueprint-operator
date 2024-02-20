@@ -337,17 +337,13 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 }
 
 func (spec *BlueprintSpec) CensorSensitiveData() {
-	err := spec.Blueprint.Config.censorValues()
-	if err != nil {
-		return
-	}
-	err = spec.EffectiveBlueprint.Config.censorValues()
-	if err != nil {
-		return
-	}
+	spec.Blueprint.Config.censorValues()
+	spec.EffectiveBlueprint.Config.censorValues()
 	for _, v := range spec.StateDiff.DoguConfigDiff {
-		v.CensorValues()
+		v.censorValues()
 	}
+
+	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
 }
 
 // CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
