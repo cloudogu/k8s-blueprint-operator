@@ -7,15 +7,13 @@ import (
 )
 
 type CombinedDoguConfigDiff struct {
-	DoguConfigDiff          DoguConfigDiff
-	SensitiveDoguConfigDiff SensitiveDoguConfigDiff
+	DoguConfigDiff          DoguConfigDiffs
+	SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
 }
 
-// TODO: use plural forms, e.g. DoguConfigDiffs
-
-type DoguConfigDiff []DoguConfigEntryDiff
-type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
-type GlobalConfigDiff []GlobalConfigEntryDiff
+type DoguConfigDiffs []DoguConfigEntryDiff
+type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
+type GlobalConfigDiffs []GlobalConfigEntryDiff
 
 type DoguConfigValueState ConfigValueState
 type EncryptedDoguConfigValueState ConfigValueState
@@ -63,7 +61,7 @@ func determineConfigDiff(
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
 	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
 	alreadyInstalledDogus []common.SimpleDoguName,
-) (map[common.SimpleDoguName]CombinedDoguConfigDiff, GlobalConfigDiff) {
+) (map[common.SimpleDoguName]CombinedDoguConfigDiff, GlobalConfigDiffs) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, actualDoguConfig, actualSensitiveDoguConfig, alreadyInstalledDogus),
 		determineGlobalConfigDiffs(blueprintConfig.Global, actualGlobalConfig)
 }

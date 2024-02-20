@@ -31,7 +31,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 
 		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiff{}, dogusConfigDiffs)
-		assert.Equal(t, GlobalConfigDiff(nil), globalConfigDiff)
+		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
 		//given ecosystem config
@@ -153,9 +153,9 @@ func Test_determineConfigDiff(t *testing.T) {
 			installedDogus,
 		)
 		//then
-		assert.Equal(t, GlobalConfigDiff(nil), globalConfigDiff)
+		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
-		assert.Equal(t, SensitiveDoguConfigDiff(nil), dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff)
+		assert.Equal(t, SensitiveDoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff)
 		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].DoguConfigDiff))
 		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
 			Key: dogu1Key1,
@@ -249,9 +249,9 @@ func Test_determineConfigDiff(t *testing.T) {
 			installedDogus,
 		)
 		//then
-		assert.Equal(t, GlobalConfigDiff(nil), globalConfigDiff)
+		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
-		assert.Equal(t, DoguConfigDiff(nil), dogusConfigDiffs["dogu1"].DoguConfigDiff)
+		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].DoguConfigDiff)
 		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:        sensitiveDogu1Key1,

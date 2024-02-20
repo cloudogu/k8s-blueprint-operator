@@ -9,7 +9,7 @@ func determineSensitiveDoguConfigDiffs(
 	config SensitiveDoguConfig,
 	actualDoguConfig map[common.SensitiveDoguConfigKey]ecosystem.SensitiveDoguConfigEntry,
 	doguAlreadyInstalled bool,
-) SensitiveDoguConfigDiff {
+) SensitiveDoguConfigDiffs {
 	var doguConfigDiff []SensitiveDoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range config.Present {

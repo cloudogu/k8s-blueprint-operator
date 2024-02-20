@@ -8,7 +8,7 @@ import (
 func determineGlobalConfigDiffs(
 	config GlobalConfig,
 	actualDoguConfig map[common.GlobalConfigKey]ecosystem.GlobalConfigEntry,
-) GlobalConfigDiff {
+) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
 	// present entries

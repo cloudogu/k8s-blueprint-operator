@@ -8,7 +8,7 @@ import (
 func determineDoguConfigDiffs(
 	config DoguConfig,
 	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
-) DoguConfigDiff {
+) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range config.Present {

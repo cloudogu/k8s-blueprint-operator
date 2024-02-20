@@ -8,7 +8,7 @@ type StateDiff struct {
 	DoguDiffs        DoguDiffs
 	ComponentDiffs   ComponentDiffs
 	DoguConfigDiff   map[common.SimpleDoguName]CombinedDoguConfigDiff
-	GlobalConfigDiff GlobalConfigDiff
+	GlobalConfigDiff GlobalConfigDiffs
 }
 
 // Action represents a needed Action for a dogu to reach the expected state.
