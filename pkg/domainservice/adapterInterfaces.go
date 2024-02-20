@@ -118,11 +118,16 @@ type ConfigEncryptionAdapter interface {
 }
 
 type GlobalConfigEntryRepository interface {
+	// Get retrieves a key from the global config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the key is not found.
+	// 	- InternalError if any other error happens.
+	Get(context.Context, common.GlobalConfigKey) ([]*ecosystem.GlobalConfigEntry, error)
 	// GetAll retrieves all keys from the global config.
 	// It can throw the following errors:
 	// 	- NotFoundError if there is no global config.
 	// 	- InternalError if any other error happens.
-	GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error)
+	GetAll(context.Context) ([]*ecosystem.GlobalConfigEntry, error)
 	// Save persists the global config.
 	// It can throw the following errors:
 	//  - ConflictError if there were concurrent write accesses.
@@ -136,7 +141,7 @@ type GlobalConfigEntryRepository interface {
 	// Delete deletes a global config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent, no error will be returned.
-	Delete(context.Context, *common.GlobalConfigKey) error
+	Delete(context.Context, common.GlobalConfigKey) error
 }
 
 type DoguConfigEntryRepository interface {
