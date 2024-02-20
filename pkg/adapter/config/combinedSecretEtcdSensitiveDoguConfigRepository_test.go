@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/k8s"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -9,8 +11,8 @@ import (
 func TestNewCombinedSecretEtcdSensitiveDoguConfigRepository(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
-		secretRepo := &SecretSensitiveDoguConfigRepository{}
-		etcdRepo := &EtcdSensitiveDoguConfigRepository{}
+		secretRepo := &k8s.SecretSensitiveDoguConfigRepository{}
+		etcdRepo := &etcd.EtcdSensitiveDoguConfigRepository{}
 
 		// when
 		combinedRepo := NewCombinedSecretEtcdSensitiveDoguConfigRepository(etcdRepo, secretRepo)

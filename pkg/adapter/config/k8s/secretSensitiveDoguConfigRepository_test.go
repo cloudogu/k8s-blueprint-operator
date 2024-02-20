@@ -1,6 +1,7 @@
-package config
+package k8s
 
 import (
+	"context"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,12 @@ import (
 	"testing"
 )
 
-var notFoundErr = apierrors.NewNotFound(schema.GroupResource{}, "")
+var (
+	testCtx     = context.Background()
+	notFoundErr = apierrors.NewNotFound(schema.GroupResource{}, "")
+)
+
+const testSimpleDoguNameRedmine = common.SimpleDoguName("redmine")
 
 func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.T) {
 	t.Run("should update secret if it does not exist", func(t *testing.T) {

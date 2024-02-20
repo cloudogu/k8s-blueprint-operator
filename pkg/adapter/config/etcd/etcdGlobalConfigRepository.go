@@ -1,4 +1,4 @@
-package config
+package etcd
 
 import (
 	"context"

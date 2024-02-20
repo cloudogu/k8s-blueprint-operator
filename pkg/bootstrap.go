@@ -3,6 +3,8 @@ package pkg
 import (
 	"fmt"
 	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
+	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/k8s"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -82,12 +84,11 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	doguConfigAdapter := adapterconfig.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := adapterconfig.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	secretSensitiveDoguConfigAdapter := adapterconfig.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	doguConfigAdapter := adapterconfigetcd.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := adapterconfigetcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	secretSensitiveDoguConfigAdapter := adapterconfigk8s.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	combinedSensitiveDoguConfigAdapter := adapterconfig.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
-
-	globalConfigAdapter := adapterconfig.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	globalConfigAdapter := adapterconfigetcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
