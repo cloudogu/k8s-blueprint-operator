@@ -1,4 +1,4 @@
-package k8s
+package config
 
 import (
 	"context"
@@ -12,7 +12,11 @@ import (
 	"strings"
 )
 
-const doguSecretFormat = "%s-secrets"
+const (
+	doguSecretFormat       = "%s-secrets"
+	etcdKeyDelimiter       = "/"
+	doguSecretKeyDelimiter = "."
+)
 
 type SecretSensitiveDoguConfigRepository struct {
 	client secretInterface
@@ -71,7 +75,7 @@ func (repo *SecretSensitiveDoguConfigRepository) createDoguSecret(ctx context.Co
 }
 
 func createKeyValueEntry(entry *ecosystem.SensitiveDoguConfigEntry) (key string, value string) {
-	key = strings.ReplaceAll(entry.Key.Key, "/", ".")
+	key = strings.ReplaceAll(entry.Key.Key, etcdKeyDelimiter, doguSecretKeyDelimiter)
 	value = string(entry.Value)
 	return
 }
