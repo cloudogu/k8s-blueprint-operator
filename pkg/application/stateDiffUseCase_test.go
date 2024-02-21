@@ -61,11 +61,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -90,11 +90,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -119,11 +119,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, assert.AnError)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, assert.AnError)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -148,11 +148,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, assert.AnError)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, assert.AnError)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -177,11 +177,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, assert.AnError)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, assert.AnError)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -206,11 +206,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -234,11 +234,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
@@ -295,11 +295,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := NewMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAll(testCtx).Return([]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := NewMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := NewMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey2(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when

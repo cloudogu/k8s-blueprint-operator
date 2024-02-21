@@ -7,7 +7,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -86,17 +85,15 @@ func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effect
 	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
 	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
-	globalConfig, globalConfigErr := useCase.globalConfigRepo.GetAll(ctx)
-	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey2(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
-	sensitiveDoguConfig, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllByKey2(ctx, effectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
+	globalConfig, globalConfigErr := useCase.globalConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.Global.GetGlobalConfigKeys())
+	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
+	sensitiveDoguConfig, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 
 	if joinedError != nil {
 		return ecosystem.ClusterState{}, fmt.Errorf("could not collect cluster state: %w", joinedError)
 	}
-
-	globalConfigByKey := util.ToMap(globalConfig, func(entry *ecosystem.GlobalConfigEntry) common.GlobalConfigKey { return entry.Key })
 
 	decryptedConfig, err := useCase.decryptSensitiveDoguConfig(ctx, sensitiveDoguConfig)
 	if err != nil {
@@ -106,7 +103,7 @@ func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effect
 	return ecosystem.ClusterState{
 		InstalledDogus:               installedDogus,
 		InstalledComponents:          installedComponents,
-		GlobalConfig:                 globalConfigByKey,
+		GlobalConfig:                 globalConfig,
 		DoguConfig:                   doguConfig,
 		EncryptedDoguConfig:          sensitiveDoguConfig,
 		DecryptedSensitiveDoguConfig: decryptedConfig,

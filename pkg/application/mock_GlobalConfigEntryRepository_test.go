@@ -25,13 +25,13 @@ func (_m *MockGlobalConfigEntryRepository) EXPECT() *MockGlobalConfigEntryReposi
 	return &MockGlobalConfigEntryRepository_Expecter{mock: &_m.Mock}
 }
 
-// Delete provides a mock function with given fields: ctx, key
-func (_m *MockGlobalConfigEntryRepository) Delete(ctx context.Context, key common.SimpleDoguName) error {
-	ret := _m.Called(ctx, key)
+// Delete provides a mock function with given fields: _a0, _a1
+func (_m *MockGlobalConfigEntryRepository) Delete(_a0 context.Context, _a1 common.GlobalConfigKey) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName) error); ok {
-		r0 = rf(ctx, key)
+	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -45,15 +45,15 @@ type MockGlobalConfigEntryRepository_Delete_Call struct {
 }
 
 // Delete is a helper method to define mock.On call
-//   - ctx context.Context
-//   - key common.SimpleDoguName
-func (_e *MockGlobalConfigEntryRepository_Expecter) Delete(ctx interface{}, key interface{}) *MockGlobalConfigEntryRepository_Delete_Call {
-	return &MockGlobalConfigEntryRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, key)}
+//   - _a0 context.Context
+//   - _a1 common.GlobalConfigKey
+func (_e *MockGlobalConfigEntryRepository_Expecter) Delete(_a0 interface{}, _a1 interface{}) *MockGlobalConfigEntryRepository_Delete_Call {
+	return &MockGlobalConfigEntryRepository_Delete_Call{Call: _e.mock.On("Delete", _a0, _a1)}
 }
 
-func (_c *MockGlobalConfigEntryRepository_Delete_Call) Run(run func(ctx context.Context, key common.SimpleDoguName)) *MockGlobalConfigEntryRepository_Delete_Call {
+func (_c *MockGlobalConfigEntryRepository_Delete_Call) Run(run func(_a0 context.Context, _a1 common.GlobalConfigKey)) *MockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(common.GlobalConfigKey))
 	})
 	return _c
 }
@@ -63,30 +63,30 @@ func (_c *MockGlobalConfigEntryRepository_Delete_Call) Return(_a0 error) *MockGl
 	return _c
 }
 
-func (_c *MockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName) error) *MockGlobalConfigEntryRepository_Delete_Call {
+func (_c *MockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, common.GlobalConfigKey) error) *MockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetAll provides a mock function with given fields: ctx
-func (_m *MockGlobalConfigEntryRepository) GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error) {
-	ret := _m.Called(ctx)
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *MockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error) {
+	ret := _m.Called(_a0, _a1)
 
-	var r0 []*ecosystem.GlobalConfigEntry
+	var r0 *ecosystem.GlobalConfigEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) ([]*ecosystem.GlobalConfigEntry, error)); ok {
-		return rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)); ok {
+		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) []*ecosystem.GlobalConfigEntry); ok {
-		r0 = rf(ctx)
+	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) *ecosystem.GlobalConfigEntry); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*ecosystem.GlobalConfigEntry)
+			r0 = ret.Get(0).(*ecosystem.GlobalConfigEntry)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
+	if rf, ok := ret.Get(1).(func(context.Context, common.GlobalConfigKey) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -94,30 +94,86 @@ func (_m *MockGlobalConfigEntryRepository) GetAll(ctx context.Context) ([]*ecosy
 	return r0, r1
 }
 
-// MockGlobalConfigEntryRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
-type MockGlobalConfigEntryRepository_GetAll_Call struct {
+// MockGlobalConfigEntryRepository_Get_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Get'
+type MockGlobalConfigEntryRepository_Get_Call struct {
 	*mock.Call
 }
 
-// GetAll is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *MockGlobalConfigEntryRepository_Expecter) GetAll(ctx interface{}) *MockGlobalConfigEntryRepository_GetAll_Call {
-	return &MockGlobalConfigEntryRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx)}
+// Get is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 common.GlobalConfigKey
+func (_e *MockGlobalConfigEntryRepository_Expecter) Get(_a0 interface{}, _a1 interface{}) *MockGlobalConfigEntryRepository_Get_Call {
+	return &MockGlobalConfigEntryRepository_Get_Call{Call: _e.mock.On("Get", _a0, _a1)}
 }
 
-func (_c *MockGlobalConfigEntryRepository_GetAll_Call) Run(run func(ctx context.Context)) *MockGlobalConfigEntryRepository_GetAll_Call {
+func (_c *MockGlobalConfigEntryRepository_Get_Call) Run(run func(_a0 context.Context, _a1 common.GlobalConfigKey)) *MockGlobalConfigEntryRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(common.GlobalConfigKey))
 	})
 	return _c
 }
 
-func (_c *MockGlobalConfigEntryRepository_GetAll_Call) Return(_a0 []*ecosystem.GlobalConfigEntry, _a1 error) *MockGlobalConfigEntryRepository_GetAll_Call {
+func (_c *MockGlobalConfigEntryRepository_Get_Call) Return(_a0 *ecosystem.GlobalConfigEntry, _a1 error) *MockGlobalConfigEntryRepository_Get_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockGlobalConfigEntryRepository_GetAll_Call) RunAndReturn(run func(context.Context) ([]*ecosystem.GlobalConfigEntry, error)) *MockGlobalConfigEntryRepository_GetAll_Call {
+func (_c *MockGlobalConfigEntryRepository_Get_Call) RunAndReturn(run func(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)) *MockGlobalConfigEntryRepository_Get_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetAllByKey provides a mock function with given fields: _a0, _a1
+func (_m *MockGlobalConfigEntryRepository) GetAllByKey(_a0 context.Context, _a1 []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []common.GlobalConfigKey) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockGlobalConfigEntryRepository_GetAllByKey_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllByKey'
+type MockGlobalConfigEntryRepository_GetAllByKey_Call struct {
+	*mock.Call
+}
+
+// GetAllByKey is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []common.GlobalConfigKey
+func (_e *MockGlobalConfigEntryRepository_Expecter) GetAllByKey(_a0 interface{}, _a1 interface{}) *MockGlobalConfigEntryRepository_GetAllByKey_Call {
+	return &MockGlobalConfigEntryRepository_GetAllByKey_Call{Call: _e.mock.On("GetAllByKey", _a0, _a1)}
+}
+
+func (_c *MockGlobalConfigEntryRepository_GetAllByKey_Call) Run(run func(_a0 context.Context, _a1 []common.GlobalConfigKey)) *MockGlobalConfigEntryRepository_GetAllByKey_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]common.GlobalConfigKey))
+	})
+	return _c
+}
+
+func (_c *MockGlobalConfigEntryRepository_GetAllByKey_Call) Return(_a0 map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, _a1 error) *MockGlobalConfigEntryRepository_GetAllByKey_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockGlobalConfigEntryRepository_GetAllByKey_Call) RunAndReturn(run func(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)) *MockGlobalConfigEntryRepository_GetAllByKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -165,13 +221,13 @@ func (_c *MockGlobalConfigEntryRepository_Save_Call) RunAndReturn(run func(conte
 	return _c
 }
 
-// SaveAll provides a mock function with given fields: ctx, keys
-func (_m *MockGlobalConfigEntryRepository) SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigEntry) error {
-	ret := _m.Called(ctx, keys)
+// SaveAll provides a mock function with given fields: _a0, _a1
+func (_m *MockGlobalConfigEntryRepository) SaveAll(_a0 context.Context, _a1 []*ecosystem.GlobalConfigEntry) error {
+	ret := _m.Called(_a0, _a1)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(context.Context, []*ecosystem.GlobalConfigEntry) error); ok {
-		r0 = rf(ctx, keys)
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -185,13 +241,13 @@ type MockGlobalConfigEntryRepository_SaveAll_Call struct {
 }
 
 // SaveAll is a helper method to define mock.On call
-//   - ctx context.Context
-//   - keys []*ecosystem.GlobalConfigEntry
-func (_e *MockGlobalConfigEntryRepository_Expecter) SaveAll(ctx interface{}, keys interface{}) *MockGlobalConfigEntryRepository_SaveAll_Call {
-	return &MockGlobalConfigEntryRepository_SaveAll_Call{Call: _e.mock.On("SaveAll", ctx, keys)}
+//   - _a0 context.Context
+//   - _a1 []*ecosystem.GlobalConfigEntry
+func (_e *MockGlobalConfigEntryRepository_Expecter) SaveAll(_a0 interface{}, _a1 interface{}) *MockGlobalConfigEntryRepository_SaveAll_Call {
+	return &MockGlobalConfigEntryRepository_SaveAll_Call{Call: _e.mock.On("SaveAll", _a0, _a1)}
 }
 
-func (_c *MockGlobalConfigEntryRepository_SaveAll_Call) Run(run func(ctx context.Context, keys []*ecosystem.GlobalConfigEntry)) *MockGlobalConfigEntryRepository_SaveAll_Call {
+func (_c *MockGlobalConfigEntryRepository_SaveAll_Call) Run(run func(_a0 context.Context, _a1 []*ecosystem.GlobalConfigEntry)) *MockGlobalConfigEntryRepository_SaveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].([]*ecosystem.GlobalConfigEntry))
 	})

@@ -34,6 +34,13 @@ type GlobalConfig struct {
 	Absent  []common.GlobalConfigKey
 }
 
+func (config GlobalConfig) GetGlobalConfigKeys() []common.GlobalConfigKey {
+	var keys []common.GlobalConfigKey
+	keys = append(keys, maps.Keys(config.Present)...)
+	keys = append(keys, config.Absent...)
+	return keys
+}
+
 func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
 	var keys []common.DoguConfigKey
 	for _, doguConfig := range config.Dogus {
