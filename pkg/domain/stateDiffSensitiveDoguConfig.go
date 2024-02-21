@@ -2,7 +2,6 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
@@ -14,25 +13,25 @@ type SensitiveDoguConfigEntryDiff struct {
 	NeededAction         ConfigAction
 }
 
-func NewDoguConfigValueStateFromSensitiveEntry(actualEntry *ecosystem.SensitiveDoguConfigEntry) DoguConfigValueState {
-	actualValue := common.SensitiveDoguConfigValue("")
-	if actualEntry != nil {
-		actualValue = common.SensitiveDoguConfigValue(actualEntry.Value)
+func NewDoguConfigValueStateFromSensitiveValue(actualValue common.SensitiveDoguConfigValue, actualExists bool) DoguConfigValueState {
+	if !actualExists {
+		actualValue = ""
 	}
 	return DoguConfigValueState{
 		Value:  string(actualValue),
-		Exists: actualEntry != nil,
+		Exists: actualExists,
 	}
 }
 
 func newSensitiveDoguConfigEntryDiff(
 	key common.SensitiveDoguConfigKey,
-	actualEntry *ecosystem.SensitiveDoguConfigEntry,
+	actualValue common.SensitiveDoguConfigValue,
+	actualExists bool,
 	expectedValue common.SensitiveDoguConfigValue,
 	expectedExists bool,
 	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigEntryDiff {
-	actual := NewDoguConfigValueStateFromSensitiveEntry(actualEntry)
+	actual := NewDoguConfigValueStateFromSensitiveValue(actualValue, actualExists)
 	expected := DoguConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
@@ -48,19 +47,19 @@ func newSensitiveDoguConfigEntryDiff(
 
 func determineSensitiveDoguConfigDiffs(
 	config SensitiveDoguConfig,
-	actualDoguConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
+	actualDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigDiffs {
 	var doguConfigDiff []SensitiveDoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, expectedValue, true, doguAlreadyInstalled))
+		actualValue, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, expectedValue, true, doguAlreadyInstalled))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, "", false, doguAlreadyInstalled))
+		actualValue, actualExists := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, "", false, doguAlreadyInstalled))
 	}
 	return doguConfigDiff
 }
