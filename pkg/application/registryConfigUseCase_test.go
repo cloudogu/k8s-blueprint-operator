@@ -20,13 +20,13 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					testSimpleDoguNameRedmine: {
 						DoguConfigDiff: []domain.DoguConfigEntryDiff{
 							getSetDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine),
@@ -48,7 +48,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 						},
 					},
 				},
-				GlobalConfigDiff: domain.GlobalConfigDiff{
+				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 					getRemoveGlobalConfigEntryDiff("key"),
 				},
@@ -98,8 +98,8 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiff:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{},
-				GlobalConfigDiff: domain.GlobalConfigDiff{},
+				DoguConfigDiffs:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 			},
 		}
 
@@ -121,8 +121,8 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{},
-				GlobalConfigDiff: domain.GlobalConfigDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
 			},
@@ -145,13 +145,13 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 	t.Run("should join repo errors", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					testSimpleDoguNameRedmine: {
 						DoguConfigDiff: []domain.DoguConfigEntryDiff{
 							getSetDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine),
@@ -169,7 +169,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 						},
 					},
 				},
-				GlobalConfigDiff: domain.GlobalConfigDiff{
+				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
 			},
@@ -199,11 +199,11 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("should save diffs to with action set", func(t *testing.T) {
 		// given
-		doguConfigMock := newMockDoguConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, doguConfigMock, nil, nil)
 		diff1 := getSetDoguConfigEntryDiff("/key", "value", testSimpleDoguNameRedmine)
 		diff2 := getSetDoguConfigEntryDiff("/key1", "value1", testSimpleDoguNameRedmine)
-		diffs := domain.DoguConfigDiff{diff1, diff2}
+		diffs := domain.DoguConfigDiffs{diff1, diff2}
 
 		expectedEntry1 := &ecosystem.DoguConfigEntry{
 			Key:   common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key},
@@ -225,11 +225,11 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
-		doguConfigMock := newMockDoguConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, doguConfigMock, nil, nil)
 		diff1 := getRemoveDoguConfigEntryDiff("/key", testSimpleDoguNameRedmine)
 		diff2 := getRemoveDoguConfigEntryDiff("/key1", testSimpleDoguNameRedmine)
-		diffs := domain.DoguConfigDiff{diff1, diff2}
+		diffs := domain.DoguConfigDiffs{diff1, diff2}
 
 		expectedKey1 := common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key}
 		expectedKey2 := common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff2.Key.Key}
@@ -245,13 +245,13 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should return nil on action none", func(t *testing.T) {
 		// given
-		doguConfigMock := newMockDoguConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, doguConfigMock, nil, nil)
 		diff1 := domain.DoguConfigEntryDiff{
-			Action: domain.ConfigActionNone,
+			NeededAction: domain.ConfigActionNone,
 		}
 
-		diffs := domain.DoguConfigDiff{diff1}
+		diffs := domain.DoguConfigDiffs{diff1}
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
@@ -264,11 +264,11 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 		// given
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
 		diff1 := domain.DoguConfigEntryDiff{
-			Key:    common.DoguConfigKey{Key: "key"},
-			Action: "unknown",
+			Key:          common.DoguConfigKey{Key: "key"},
+			NeededAction: "unknown",
 		}
 
-		diffs := domain.DoguConfigDiff{diff1}
+		diffs := domain.DoguConfigDiffs{diff1}
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
@@ -282,11 +282,11 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("should save diffs to with action set", func(t *testing.T) {
 		// given
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, globalConfigMock)
 		diff1 := getSetGlobalConfigEntryDiff("/key", "value")
 		diff2 := getSetGlobalConfigEntryDiff("/key1", "value1")
-		diffs := domain.GlobalConfigDiff{diff1, diff2}
+		diffs := domain.GlobalConfigDiffs{diff1, diff2}
 
 		expectedEntry1 := &ecosystem.GlobalConfigEntry{
 			Key:   diff1.Key,
@@ -308,11 +308,11 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, globalConfigMock)
 		diff1 := getRemoveGlobalConfigEntryDiff("/key")
 		diff2 := getRemoveGlobalConfigEntryDiff("/key1")
-		diffs := domain.GlobalConfigDiff{diff1, diff2}
+		diffs := domain.GlobalConfigDiffs{diff1, diff2}
 
 		globalConfigMock.EXPECT().DeleteAllByKeys(testCtx, []common.GlobalConfigKey{diff1.Key, diff2.Key}).Return(nil).Times(1)
 
@@ -327,10 +327,10 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 		// given
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
 		diff1 := domain.GlobalConfigEntryDiff{
-			Action: domain.ConfigActionNone,
+			NeededAction: domain.ConfigActionNone,
 		}
 
-		diffs := domain.GlobalConfigDiff{diff1}
+		diffs := domain.GlobalConfigDiffs{diff1}
 
 		// when
 		err := sut.applyGlobalConfigDiffs(testCtx, diffs)
@@ -341,14 +341,14 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 	t.Run("should return error on unknown action", func(t *testing.T) {
 		// given
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, globalConfigMock)
 		diff1 := domain.GlobalConfigEntryDiff{
-			Key:    "key",
-			Action: "unknown",
+			Key:          "key",
+			NeededAction: "unknown",
 		}
 
-		diffs := domain.GlobalConfigDiff{diff1}
+		diffs := domain.GlobalConfigDiffs{diff1}
 
 		// when
 		err := sut.applyGlobalConfigDiffs(testCtx, diffs)
@@ -362,11 +362,11 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 	t.Run("should save diffs to with action set", func(t *testing.T) {
 		// given
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
 		diff1 := getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine)
 		diff2 := getSetSensitiveDoguConfigEntryDiff("key1", "value1", testSimpleDoguNameRedmine)
-		diffs := domain.SensitiveDoguConfigDiff{diff1, diff2}
+		diffs := domain.SensitiveDoguConfigDiffs{diff1, diff2}
 
 		expectedEntry1 := &ecosystem.SensitiveDoguConfigEntry{
 			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key}},
@@ -388,11 +388,11 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
 		diff1 := getRemoveSensitiveDoguConfigEntryDiff("key", testSimpleDoguNameRedmine)
 		diff2 := getRemoveSensitiveDoguConfigEntryDiff("key", testSimpleDoguNameRedmine)
-		diffs := domain.SensitiveDoguConfigDiff{diff1, diff2}
+		diffs := domain.SensitiveDoguConfigDiffs{diff1, diff2}
 
 		expectedKey1 := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key}}
 		expectedKey2 := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff2.Key.Key}}
@@ -410,10 +410,10 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 		// given
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
 		diff1 := domain.SensitiveDoguConfigEntryDiff{
-			Action: domain.ConfigActionNone,
+			NeededAction: domain.ConfigActionNone,
 		}
 
-		diffs := domain.SensitiveDoguConfigDiff{diff1}
+		diffs := domain.SensitiveDoguConfigDiffs{diff1}
 
 		// when
 		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
@@ -424,14 +424,14 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should return error on unknown action", func(t *testing.T) {
 		// given
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
 		diff1 := domain.SensitiveDoguConfigEntryDiff{
-			Key:    common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key"}},
-			Action: "unknown",
+			Key:          common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key"}},
+			NeededAction: "unknown",
 		}
 
-		diffs := domain.SensitiveDoguConfigDiff{diff1}
+		diffs := domain.SensitiveDoguConfigDiffs{diff1}
 
 		// when
 		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
@@ -568,9 +568,9 @@ func TestNewEcosystemRegistryUseCase(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
-		globalConfigMock := newMockGlobalConfigRepository(t)
+		doguConfigMock := newMockDoguConfigEntryRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
+		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 
 		// when
 		useCase := NewEcosystemRegistryUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock)
@@ -592,7 +592,7 @@ func getSetDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName
 		Expected: domain.DoguConfigValueState{
 			Value: value,
 		},
-		Action: domain.ConfigActionSet,
+		NeededAction: domain.ConfigActionSet,
 	}
 }
 
@@ -602,7 +602,7 @@ func getRemoveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) do
 			Key:      key,
 			DoguName: doguName,
 		},
-		Action: domain.ConfigActionRemove,
+		NeededAction: domain.ConfigActionRemove,
 	}
 }
 
@@ -614,10 +614,10 @@ func getSetSensitiveDoguConfigEntryDiff(key, value string, doguName common.Simpl
 				DoguName: doguName,
 			},
 		},
-		Expected: domain.EncryptedDoguConfigValueState{
+		Expected: domain.DoguConfigValueState{
 			Value: value,
 		},
-		Action: domain.ConfigActionSet,
+		NeededAction: domain.ConfigActionSet,
 	}
 }
 
@@ -629,7 +629,7 @@ func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName common.SimpleDog
 				DoguName: doguName,
 			},
 		},
-		Action: domain.ConfigActionRemove,
+		NeededAction: domain.ConfigActionRemove,
 	}
 }
 
@@ -639,13 +639,13 @@ func getSetGlobalConfigEntryDiff(key, value string) domain.GlobalConfigEntryDiff
 		Expected: domain.GlobalConfigValueState{
 			Value: value,
 		},
-		Action: domain.ConfigActionSet,
+		NeededAction: domain.ConfigActionSet,
 	}
 }
 
 func getRemoveGlobalConfigEntryDiff(key string) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
-		Key:    common.GlobalConfigKey(key),
-		Action: domain.ConfigActionRemove,
+		Key:          common.GlobalConfigKey(key),
+		NeededAction: domain.ConfigActionRemove,
 	}
 }

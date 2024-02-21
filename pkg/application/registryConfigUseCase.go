@@ -20,12 +20,12 @@ var globalConfigDiffMockDataBytes []byte
 
 type EcosystemRegistryUseCase struct {
 	blueprintRepository           blueprintSpecRepository
-	doguConfigRepository          doguConfigRepository
-	doguSensitiveConfigRepository doguSensitiveConfigRepository
-	globalConfigRepository        globalConfigRepository
+	doguConfigRepository          doguConfigEntryRepository
+	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
+	globalConfigRepository        globalConfigEntryRepository
 }
 
-func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigRepository, doguSensitiveConfigRepository doguSensitiveConfigRepository, globalConfigRepository globalConfigRepository) *EcosystemRegistryUseCase {
+func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository) *EcosystemRegistryUseCase {
 	return &EcosystemRegistryUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
@@ -51,19 +51,19 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	// 	data := parseDoguConfigDiffMockData()
 	// 	logger.Info("dogu config diffs:")
 	// 	logger.Info(fmt.Sprintf("%+v", data))
-	// 	blueprintSpec.StateDiff.DoguConfigDiff = data
+	// 	blueprintSpec.StateDiff.DoguConfigDiffs = data
 	// 	logger.Info("dogu config diffs in statediff:")
 	// 	logger.Info(fmt.Sprintf("%+v", blueprintSpec.StateDiff.DoguConfigDiff))
-	// 	blueprintSpec.StateDiff.GlobalConfigDiff = parseGlobalConfigDiffMockData()
+	// 	blueprintSpec.StateDiff.GlobalConfigDiffs = parseGlobalConfigDiffMockData()
 	// }
 
-	doguConfigDiffs := blueprintSpec.StateDiff.DoguConfigDiff
+	doguConfigDiffs := blueprintSpec.StateDiff.DoguConfigDiffs
 	isEmptyDoguDiff := len(doguConfigDiffs) == 0
 	if isEmptyDoguDiff {
 		logger.Info("dogu config diffs are empty...")
 	}
 
-	globalConfigDiffs := blueprintSpec.StateDiff.GlobalConfigDiff
+	globalConfigDiffs := blueprintSpec.StateDiff.GlobalConfigDiffs
 	isEmptyGlobalDiff := len(globalConfigDiffs) == 0
 	if isEmptyGlobalDiff {
 		logger.Info("global config diffs are empty...")
@@ -95,8 +95,8 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	return useCase.markConfigApplied(ctx, blueprintSpec)
 }
 
-func parseGlobalConfigDiffMockData() domain.GlobalConfigDiff {
-	object := &domain.GlobalConfigDiff{}
+func parseGlobalConfigDiffMockData() domain.GlobalConfigDiffs {
+	object := &domain.GlobalConfigDiffs{}
 	err := yaml.Unmarshal(globalConfigDiffMockDataBytes, object)
 	if err != nil {
 		panic(fmt.Errorf("error during mock data deserialization"))
@@ -105,8 +105,8 @@ func parseGlobalConfigDiffMockData() domain.GlobalConfigDiff {
 	return *object
 }
 
-func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDoguConfigDiff {
-	object := &map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{}
+func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs {
+	object := &map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
 	err := yaml.Unmarshal(doguConfigDiffMockDataBytes, object)
 	if err != nil {
 		panic(fmt.Errorf("error during mock data deserialization"))
@@ -115,13 +115,13 @@ func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDogu
 	return *object
 }
 
-func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiff) error {
+func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {
 	var errs []error
 	var entriesToSet []*ecosystem.GlobalConfigEntry
 	var keysToDelete []common.GlobalConfigKey
 
 	for _, diff := range diffs {
-		switch diff.Action {
+		switch diff.NeededAction {
 		case domain.ConfigActionSet:
 			entry := &ecosystem.GlobalConfigEntry{
 				Key:   diff.Key,
@@ -133,7 +133,7 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 		case domain.ConfigActionNone:
 			continue
 		default:
-			errs = append(errs, fmt.Errorf("cannot perform unknown action %q for global config with key %q", diff.Action, diff.Key))
+			errs = append(errs, fmt.Errorf("cannot perform unknown action %q for global config with key %q", diff.NeededAction, diff.Key))
 		}
 	}
 
@@ -147,13 +147,13 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiff) error {
+func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiffs) error {
 	var errs []error
 	var entriesToSet []*ecosystem.DoguConfigEntry
 	var keysToDelete []common.DoguConfigKey
 
 	for _, diff := range diffs {
-		switch diff.Action {
+		switch diff.NeededAction {
 		case domain.ConfigActionSet:
 			entry := &ecosystem.DoguConfigEntry{
 				Key:   common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
@@ -165,7 +165,7 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 		case domain.ConfigActionNone:
 			continue
 		default:
-			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
+			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
 		}
 	}
 
@@ -180,14 +180,14 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 }
 
 // Values of sensitiveConfig from existing Dogus are already encrypted???
-func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiff) error {
+func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
 	var entriesToSet []*ecosystem.SensitiveDoguConfigEntry
 	var keysToDelete []common.SensitiveDoguConfigKey
 
 	for _, diff := range diffs {
-		switch diff.Action {
+		switch diff.NeededAction {
 		case domain.ConfigActionSet:
 			entry := &ecosystem.SensitiveDoguConfigEntry{
 				Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
@@ -200,7 +200,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		case domain.ConfigActionNone:
 			continue
 		default:
-			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
+			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
 		}
 	}
 

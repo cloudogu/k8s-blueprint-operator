@@ -88,10 +88,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
+	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
@@ -105,10 +105,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(

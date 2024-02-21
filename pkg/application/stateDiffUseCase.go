@@ -16,9 +16,9 @@ type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
-	globalConfigRepo          GlobalConfigEntryRepository
-	doguConfigRepo            DoguConfigEntryRepository
-	sensitiveDoguConfigRepo   SensitiveDoguConfigEntryRepository
+	globalConfigRepo          globalConfigEntryRepository
+	doguConfigRepo            doguConfigEntryRepository
+	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
 }
 
 func NewStateDiffUseCase(
@@ -61,7 +61,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	//determine state diff
+	// determine state diff
 	stateDiffError := blueprintSpec.DetermineStateDiff(clusterState)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
@@ -80,8 +80,8 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 }
 
 func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) (ecosystem.ClusterState, error) {
-	//TODO: collect cluster state in parallel (like for ecosystem health)
-	//load current dogus and components
+	// TODO: collect cluster state in parallel (like for ecosystem health)
+	// load current dogus and components
 	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
 	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
@@ -118,7 +118,7 @@ func (useCase *StateDiffUseCase) decryptSensitiveDoguConfig(
 	logger.Info("decrypt sensitive dogu config")
 	decryptedDoguConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
 	for key, entry := range encryptedConfig {
-		//TODO: decrypt sensitive config
+		// TODO: decrypt sensitive config
 		decryptedDoguConfig[key] = common.SensitiveDoguConfigValue(entry.Value)
 	}
 	return decryptedDoguConfig, nil
