@@ -20,7 +20,9 @@ General:
 - [#15] Check component health
 - [#17] add health checks before and after applying the blueprint
 - [#22] Add `dryRun` option. If `dryRun` is active the blueprint procedure stops before applying resources to the cluster and remains in the actual state. One can set the option to false and continue at this state.
-- [#45] Set ecosystem registry configuration for encrypted values.
+- [#36] Set registry configuration for dogu and global config.
+- [#45] Set registry configuration for encrypted values.
+
 
 Dogu-specific:
 - [#4] introduce flag `allowDoguNamespaceSwitch` for dogu namespace switch
