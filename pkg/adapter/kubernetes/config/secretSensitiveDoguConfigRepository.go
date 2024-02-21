@@ -2,12 +2,14 @@ package config
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"strings"
 )
@@ -28,37 +30,76 @@ func NewSecretSensitiveDoguConfigRepository(secretClient secretInterface) *Secre
 	}
 }
 
-// SaveForNotInstalledDogu create or update a secret for the dogu containing the config entry.
+// SaveAllForNotInstalledDogus creates or updates a secret for given sensitive dogu entries
+// These entries can belong to different dogus.
+func (repo *SecretSensitiveDoguConfigRepository) SaveAllForNotInstalledDogus(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
+	groupByName := util.GroupBy(entries, func(entry *ecosystem.SensitiveDoguConfigEntry) common.SimpleDoguName {
+		return entry.Key.DoguName
+	})
+
+	var errs []error
+	for doguName, doguEntries := range groupByName {
+		errs = append(errs, repo.SaveAllForNotInstalledDogu(ctx, doguName, doguEntries))
+	}
+
+	return errors.Join(errs...)
+}
+
+// SaveForNotInstalledDogu creates or updates a secret for the dogu containing the config entry.
 // In further processing the dogu-operator uses the secret to encrypt configuration for the dogu.
 func (repo *SecretSensitiveDoguConfigRepository) SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
-	secretName := getDoguSecretName(string(entry.Key.DoguName))
-	_, err := repo.client.Get(ctx, secretName, metav1.GetOptions{})
+	return repo.SaveAllForNotInstalledDogu(ctx, entry.Key.DoguName, []*ecosystem.SensitiveDoguConfigEntry{entry})
+}
+
+func (repo *SecretSensitiveDoguConfigRepository) SaveAllForNotInstalledDogu(ctx context.Context, doguName common.SimpleDoguName, entries []*ecosystem.SensitiveDoguConfigEntry) error {
+	secretName, err := repo.checkAndCreateDoguSecret(ctx, doguName)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			createErr := repo.createDoguSecret(ctx, entry.Key.DoguName)
-			if createErr != nil {
-				return createErr
-			}
-		} else {
-			return getGetError(secretName, err)
-		}
+		return err
 	}
-	// update config map
+
+	return repo.updateSecretWithEntries(ctx, secretName, entries)
+}
+
+func (repo *SecretSensitiveDoguConfigRepository) updateSecretWithEntries(ctx context.Context, secretName string, entries []*ecosystem.SensitiveDoguConfigEntry) error {
+	if len(entries) == 0 {
+		return nil
+	}
+
 	return retry.OnConflict(func() error {
 		doguSecret, getErr := repo.client.Get(ctx, secretName, metav1.GetOptions{})
 		if getErr != nil {
 			return getGetError(secretName, getErr)
 		}
 
-		key, value := createKeyValueEntry(entry)
 		if doguSecret.StringData == nil {
 			doguSecret.StringData = map[string]string{}
 		}
-		doguSecret.StringData[key] = value
+
+		for _, entry := range entries {
+			key, value := createKeyValueEntry(entry)
+			doguSecret.StringData[key] = value
+		}
 
 		_, updateErr := repo.client.Update(ctx, doguSecret, metav1.UpdateOptions{})
 		return updateErr
 	})
+}
+
+func (repo *SecretSensitiveDoguConfigRepository) checkAndCreateDoguSecret(ctx context.Context, doguName common.SimpleDoguName) (string, error) {
+	secretName := getDoguSecretName(string(doguName))
+	_, err := repo.client.Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			createErr := repo.createDoguSecret(ctx, doguName)
+			if createErr != nil {
+				return "", createErr
+			}
+		} else {
+			return "", getGetError(secretName, err)
+		}
+	}
+
+	return secretName, nil
 }
 
 func (repo *SecretSensitiveDoguConfigRepository) createDoguSecret(ctx context.Context, doguName common.SimpleDoguName) error {

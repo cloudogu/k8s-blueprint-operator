@@ -16,7 +16,10 @@ var (
 	notFoundErr = apierrors.NewNotFound(schema.GroupResource{}, "")
 )
 
-const testSimpleDoguNameRedmine = common.SimpleDoguName("redmine")
+const (
+	testSimpleDoguNameRedmine = common.SimpleDoguName("redmine")
+	testSimpleDoguNamePostfix = common.SimpleDoguName("postfix")
+)
 
 func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.T) {
 	t.Run("should update secret if it does not exist", func(t *testing.T) {
@@ -40,7 +43,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := getSensitiveDoguConfigEntry()
+		entry := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -69,7 +72,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := getSensitiveDoguConfigEntry()
+		entry := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -91,7 +94,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := getSensitiveDoguConfigEntry()
+		entry := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -110,7 +113,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := getSensitiveDoguConfigEntry()
+		entry := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -131,7 +134,7 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 			client: secretMock,
 		}
 
-		entry := getSensitiveDoguConfigEntry()
+		entry := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
 
 		// when
 		err := sut.SaveForNotInstalledDogu(testCtx, entry)
@@ -143,11 +146,11 @@ func TestSecretSensitiveDoguConfigRepository_SaveForNotInstalledDogu(t *testing.
 	})
 }
 
-func getSensitiveDoguConfigEntry() *ecosystem.SensitiveDoguConfigEntry {
+func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName) *ecosystem.SensitiveDoguConfigEntry {
 	return &ecosystem.SensitiveDoguConfigEntry{
 		Key: common.SensitiveDoguConfigKey{
 			DoguConfigKey: common.DoguConfigKey{
-				DoguName: testSimpleDoguNameRedmine,
+				DoguName: doguName,
 				Key:      "key/path",
 			},
 		},
@@ -167,4 +170,49 @@ func TestNewSecretSensitiveDoguConfigRepository(t *testing.T) {
 		require.NotNil(t, repository)
 		assert.Equal(t, secretMock, repository.client)
 	})
+}
+
+func TestSecretSensitiveDoguConfigRepository_SaveAllForNotInstalledDogus(t *testing.T) {
+	t.Run("should update different secrets for dogus", func(t *testing.T) {
+		// given
+		secretMock := newMockSecretInterface(t)
+		expectedEmptySecretRedmine := getEmptyDoguSecret(testSimpleDoguNameRedmine)
+		secretMock.EXPECT().Get(testCtx, expectedEmptySecretRedmine.Name, metav1.GetOptions{}).Return(expectedEmptySecretRedmine, nil).Times(2)
+		expectedEmptySecretPostfix := getEmptyDoguSecret(testSimpleDoguNamePostfix)
+		secretMock.EXPECT().Get(testCtx, expectedEmptySecretPostfix.Name, metav1.GetOptions{}).Return(expectedEmptySecretPostfix, nil).Times(2)
+
+		expectedUpdateSecretRedmine := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: expectedEmptySecretRedmine.Name,
+			},
+			StringData: map[string]string{"key.path": "value"},
+		}
+		secretMock.EXPECT().Update(testCtx, expectedUpdateSecretRedmine, metav1.UpdateOptions{}).Return(nil, nil)
+		expectedUpdateSecretPostfix := &v1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: expectedEmptySecretPostfix.Name,
+			},
+			StringData: map[string]string{"key.path": "value"},
+		}
+		secretMock.EXPECT().Update(testCtx, expectedUpdateSecretPostfix, metav1.UpdateOptions{}).Return(nil, nil)
+
+		sut := &SecretSensitiveDoguConfigRepository{
+			client: secretMock,
+		}
+
+		entryRedmine := getSensitiveDoguConfigEntry(testSimpleDoguNameRedmine)
+		entryPostfix := getSensitiveDoguConfigEntry(testSimpleDoguNamePostfix)
+
+		// when
+		err := sut.SaveAllForNotInstalledDogus(testCtx, []*ecosystem.SensitiveDoguConfigEntry{entryRedmine, entryPostfix})
+
+		// then
+		require.NoError(t, err)
+	})
+}
+
+func getEmptyDoguSecret(doguName common.SimpleDoguName) *v1.Secret {
+	return &v1.Secret{ObjectMeta: metav1.ObjectMeta{
+		Name: string(doguName + "-secrets"),
+	}}
 }

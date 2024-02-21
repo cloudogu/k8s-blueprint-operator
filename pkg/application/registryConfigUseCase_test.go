@@ -388,7 +388,7 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should save diffs with action setToEncrypt", func(t *testing.T) {
 		// given
-		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
 		diff1 := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSetToEncrypt)
 		diff2 := getSensitiveDoguConfigEntryDiffForAction("key1", "value1", testSimpleDoguNameRedmine, domain.ConfigActionSetToEncrypt)
@@ -403,8 +403,7 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 			Value: common.EncryptedDoguConfigValue(diff2.Expected.Value),
 		}
 
-		sensitiveDoguConfigMock.EXPECT().SaveForNotInstalledDogu(testCtx, expectedEntry1).Return(nil).Times(1)
-		sensitiveDoguConfigMock.EXPECT().SaveForNotInstalledDogu(testCtx, expectedEntry2).Return(nil).Times(1)
+		sensitiveDoguConfigMock.EXPECT().SaveAllForNotInstalledDogu(testCtx, testSimpleDoguNameRedmine, []*ecosystem.SensitiveDoguConfigEntry{expectedEntry1, expectedEntry2}).Return(nil).Times(1)
 
 		// when
 		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)

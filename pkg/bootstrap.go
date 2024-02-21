@@ -71,10 +71,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	doguConfigAdapter := adapterconfigetcd.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := adapterconfigetcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := adapterconfigetcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 	secretSensitiveDoguConfigAdapter := config2.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	combinedSensitiveDoguConfigAdapter := adapter.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
 
@@ -85,12 +84,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, combinedSensitiveDoguConfigAdapter)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
+	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,

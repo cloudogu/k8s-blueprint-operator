@@ -195,10 +195,12 @@ type SensitiveDoguConfigEntryRepository interface {
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
 	Save(context.Context, *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveForNotInstalledDogu persists the config for the given dogu. In contrast to Save or SaveAll this method takes
-	// a regular ecosystem.DoguConfigEntry as parameter because the dogu is not already installed and no public key exists.
-	// However, the value should be encrypted and the repository must decide how.
+	// SaveForNotInstalledDogu persists the config for the given dogu. In contrast to Save or SaveAll the dogu is not
+	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
 	SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error
+	// SaveAllForNotInstalledDogu persists all given configs for the given dogu. In contrast to Save or SaveAll the dogu is not
+	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
+	SaveAllForNotInstalledDogu(context.Context, common.SimpleDoguName, []*ecosystem.SensitiveDoguConfigEntry) error
 	// SaveAll persists all given sensitive config keys. sensitive configs can be set even if the dogus are not installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.

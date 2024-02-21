@@ -185,6 +185,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 
 	var entriesToSet []*ecosystem.SensitiveDoguConfigEntry
 	var keysToDelete []common.SensitiveDoguConfigKey
+	var entriesToEncrypt []*ecosystem.SensitiveDoguConfigEntry
 
 	for _, diff := range diffs {
 		switch diff.NeededAction {
@@ -193,7 +194,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionSetToEncrypt:
 			entry := getSensitiveDoguConfigEntry(doguName, diff)
-			errs = append(errs, useCase.doguSensitiveConfigRepository.SaveForNotInstalledDogu(ctx, entry))
+			entriesToEncrypt = append(entriesToEncrypt, entry)
 		case domain.ConfigActionRemove:
 			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
 		case domain.ConfigActionNone:
@@ -208,6 +209,9 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 	}
 	if len(keysToDelete) > 0 {
 		errs = append(errs, useCase.doguSensitiveConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
+	}
+	if len(entriesToEncrypt) > 0 {
+		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogu(ctx, doguName, entriesToEncrypt))
 	}
 
 	return errors.Join(errs...)
