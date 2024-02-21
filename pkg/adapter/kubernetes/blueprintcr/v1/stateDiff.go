@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
@@ -68,8 +69,18 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff DTO to domain model: %w", err)
 	}
 
+	var doguConfigDiffs map[common.SimpleDoguName]domain.CombinedDoguConfigDiff
+	if len(dto.DoguConfigDiffs) != 0 {
+		doguConfigDiffs = make(map[common.SimpleDoguName]domain.CombinedDoguConfigDiff)
+		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
+			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToCombinedDoguConfigDiffDomain(doguName, doguConfigDiff)
+		}
+	}
+
 	return domain.StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: componentDiffs,
+		DoguDiffs:        doguDiffs,
+		ComponentDiffs:   componentDiffs,
+		DoguConfigDiff:   doguConfigDiffs,
+		GlobalConfigDiff: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
 	}, nil
 }
