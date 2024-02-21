@@ -115,7 +115,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should return on mark start error", func(t *testing.T) {
+	t.Run("should return on mark  apply config start error", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
@@ -197,7 +197,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, doguConfigMock, nil, nil)
@@ -280,7 +280,7 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, globalConfigMock)
@@ -360,7 +360,7 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
