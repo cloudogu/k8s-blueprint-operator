@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
@@ -238,7 +237,9 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(
+	clusterState ecosystem.ClusterState,
+) error {
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough
@@ -251,20 +252,29 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDo
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}
 
-	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus)
-	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, installedComponents)
+	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, clusterState.InstalledDogus)
+	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, clusterState.InstalledComponents)
 	if err != nil {
+		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
+		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
+	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
+		spec.EffectiveBlueprint.Config,
+		clusterState,
+	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: compDiffs,
-		// there will be more diffs, e.g. registry keys
+		DoguDiffs:         doguDiffs,
+		ComponentDiffs:    compDiffs,
+		DoguConfigDiffs:   doguConfigDiffs,
+		GlobalConfigDiffs: globalConfigDiffs,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
+	spec.Events = append(spec.Events, DoguConfigDiffDeterminedEvent{spec.StateDiff.DoguConfigDiffs})
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
@@ -358,7 +368,7 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	}
 }
 
-var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
+var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 
 // ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
