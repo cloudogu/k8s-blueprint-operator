@@ -32,23 +32,20 @@ func (e EtcdGlobalConfigRepository) Get(_ context.Context, key common.GlobalConf
 	}, nil
 }
 
-func (e EtcdGlobalConfigRepository) GetAll(_ context.Context) ([]*ecosystem.GlobalConfigEntry, error) {
-	globalConfigEntriesRaw, err := e.configStore.GetAll()
-	if registry.IsKeyNotFoundError(err) {
-		return nil, domainservice.NewNotFoundError(err, "could not find global config in etcd")
-	} else if err != nil {
-		return nil, domainservice.NewInternalError(err, "failed to get global config from etcd")
+func (e EtcdGlobalConfigRepository) GetAllByKey(ctx context.Context, keys []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
+	var errs []error
+	entries := make(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry)
+	for _, key := range keys {
+		entry, err := e.Get(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		entries[key] = entry
 	}
 
-	var globalConfigEntries []*ecosystem.GlobalConfigEntry
-	for key, value := range globalConfigEntriesRaw {
-		globalConfigEntries = append(globalConfigEntries, &ecosystem.GlobalConfigEntry{
-			Key:   common.GlobalConfigKey(key),
-			Value: common.GlobalConfigValue(value),
-		})
-	}
-
-	return globalConfigEntries, nil
+	return entries, errors.Join(errs...)
 }
 
 func (e EtcdGlobalConfigRepository) Save(_ context.Context, entry *ecosystem.GlobalConfigEntry) error {

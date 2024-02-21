@@ -62,47 +62,6 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 }
 
 func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
-	t.Run("should not find key", func(t *testing.T) {
-		// given
-		configurationContextMock := newMockConfigurationContext(t)
-		configurationContextMock.EXPECT().Get("container_config/memory_limit").Return("", etcdNotFoundError)
-		etcdMock := newMockEtcdStore(t)
-		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
-
-		keys := []common.SensitiveDoguConfigKey{{common.DoguConfigKey{
-			DoguName: "ldap",
-			Key:      "container_config/memory_limit",
-		}}}
-
-		// when
-		_, err := sut.GetAllByKey(testCtx, keys)
-
-		// then
-		assert.ErrorIs(t, err, etcdNotFoundError)
-		assert.ErrorAs(t, err, &notFoundErr)
-		assert.ErrorContains(t, err, "could not find key \"container_config/memory_limit\" of dogu \"ldap\" in etcd")
-	})
-	t.Run("should fail to get value for key", func(t *testing.T) {
-		// given
-		configurationContextMock := newMockConfigurationContext(t)
-		configurationContextMock.EXPECT().Get("container_config/swap_limit").Return("", assert.AnError)
-		etcdMock := newMockEtcdStore(t)
-		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
-
-		keys := []common.SensitiveDoguConfigKey{{common.DoguConfigKey{
-			DoguName: "ldap",
-			Key:      "container_config/swap_limit",
-		}}}
-
-		// when
-		_, err := sut.GetAllByKey(testCtx, keys)
-
-		// then
-		assert.ErrorAs(t, err, &internalErr)
-		assert.ErrorContains(t, err, "failed to get key \"container_config/swap_limit\" of dogu \"ldap\" from etcd")
-	})
 	t.Run("should fail with multiple keys", func(t *testing.T) {
 		// given
 		ldapConfigMock := newMockConfigurationContext(t)
@@ -131,10 +90,9 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 		// then
 		assert.ErrorIs(t, err, etcdNotFoundError)
 		assert.ErrorAs(t, err, &notFoundErr)
-		assert.ErrorContains(t, err, "could not find key \"container_config/memory_limit\" of dogu \"ldap\" in etcd")
 
+		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorAs(t, err, &internalErr)
-		assert.ErrorContains(t, err, "failed to get key \"container_config/swap_limit\" of dogu \"postfix\" from etcd")
 	})
 	t.Run("should succeed with multiple keys", func(t *testing.T) {
 		// given
@@ -163,21 +121,27 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 
 		// then
 		assert.NoError(t, err)
-		expectedEntries := map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry{
-			"ldap": {{
+		expectedEntries := map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
+			{DoguConfigKey: common.DoguConfigKey{
+				DoguName: "ldap",
+				Key:      "container_config/memory_limit",
+			}}: {
 				Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 					DoguName: "ldap",
 					Key:      "container_config/memory_limit",
 				}},
 				Value: "1024m",
-			}},
-			"postfix": {{
+			},
+			{DoguConfigKey: common.DoguConfigKey{
+				DoguName: "postfix",
+				Key:      "container_config/swap_limit",
+			}}: {
 				Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 					DoguName: "postfix",
 					Key:      "container_config/swap_limit",
 				}},
 				Value: "512m",
-			}},
+			},
 		}
 		assert.Equal(t, expectedEntries, actualEntries)
 	})
@@ -214,23 +178,28 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 		// then
 		assert.ErrorIs(t, err, etcdNotFoundError)
 		assert.ErrorAs(t, err, &notFoundErr)
-		assert.ErrorContains(t, err, "could not find key \"password_change/notification_enabled\" of dogu \"ldap\" in etcd")
 
-		expectedEntries := map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry{
-			"ldap": {{
+		expectedEntries := map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
+			{DoguConfigKey: common.DoguConfigKey{
+				DoguName: "ldap",
+				Key:      "container_config/memory_limit",
+			}}: {
 				Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 					DoguName: "ldap",
 					Key:      "container_config/memory_limit",
 				}},
 				Value: "1024m",
-			}},
-			"postfix": {{
+			},
+			{DoguConfigKey: common.DoguConfigKey{
+				DoguName: "postfix",
+				Key:      "container_config/swap_limit",
+			}}: {
 				Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 					DoguName: "postfix",
 					Key:      "container_config/swap_limit",
 				}},
 				Value: "512m",
-			}},
+			},
 		}
 		assert.Equal(t, expectedEntries, actualEntries)
 	})
@@ -366,5 +335,75 @@ func TestNewEtcdSensitiveDoguConfigRepository(t *testing.T) {
 
 		// then
 		assert.Equal(t, etcdMock, repository.etcdStore)
+	})
+}
+
+func TestEtcdSensitiveDoguConfigRepository_Get(t *testing.T) {
+	t.Run("should not find key", func(t *testing.T) {
+		// given
+		configurationContextMock := newMockConfigurationContext(t)
+		configurationContextMock.EXPECT().Get("container_config/memory_limit").Return("", etcdNotFoundError)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
+		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+			DoguName: "ldap",
+			Key:      "container_config/memory_limit",
+		}}
+
+		// when
+		_, err := sut.Get(testCtx, key)
+
+		// then
+		assert.ErrorIs(t, err, etcdNotFoundError)
+		assert.ErrorAs(t, err, &notFoundErr)
+		assert.ErrorContains(t, err, "could not find sensitive key \"container_config/memory_limit\" of dogu \"ldap\" in etcd")
+	})
+	t.Run("should fail to get value for key", func(t *testing.T) {
+		// given
+		configurationContextMock := newMockConfigurationContext(t)
+		configurationContextMock.EXPECT().Get("container_config/swap_limit").Return("", assert.AnError)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
+		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+			DoguName: "ldap",
+			Key:      "container_config/swap_limit",
+		}}
+
+		// when
+		_, err := sut.Get(testCtx, key)
+
+		// then
+		assert.ErrorAs(t, err, &internalErr)
+		assert.ErrorContains(t, err, "failed to get sensitive key \"container_config/swap_limit\" of dogu \"ldap\" from etcd")
+	})
+	t.Run("should succeed to get value for key", func(t *testing.T) {
+		// given
+		configurationContextMock := newMockConfigurationContext(t)
+		configurationContextMock.EXPECT().Get("container_config/swap_limit").Return("512m", nil)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
+		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+
+		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+			DoguName: "ldap",
+			Key:      "container_config/swap_limit",
+		}}
+
+		// when
+		actualEntry, err := sut.Get(testCtx, key)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, &ecosystem.SensitiveDoguConfigEntry{
+			Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+				DoguName: "ldap",
+				Key:      "container_config/swap_limit",
+			}},
+			Value: "512m",
+		}, actualEntry)
 	})
 }

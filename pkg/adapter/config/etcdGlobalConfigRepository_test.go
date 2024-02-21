@@ -63,67 +63,6 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 	})
 }
 
-func TestEtcdGlobalConfigRepository_GetAll(t *testing.T) {
-	t.Run("should not find global config", func(t *testing.T) {
-		// given
-		globalConfigMock := newMockGlobalConfigStore(t)
-		globalConfigMock.EXPECT().GetAll().Return(nil, etcdNotFoundError)
-
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
-
-		// when
-		_, err := sut.GetAll(testCtx)
-
-		// then
-		assert.ErrorIs(t, err, etcdNotFoundError)
-		assert.ErrorAs(t, err, &notFoundErr)
-		assert.ErrorContains(t, err, "could not find global config in etcd")
-	})
-	t.Run("should fail to get global config", func(t *testing.T) {
-		// given
-		globalConfigMock := newMockGlobalConfigStore(t)
-		globalConfigMock.EXPECT().GetAll().Return(nil, assert.AnError)
-
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
-
-		// when
-		_, err := sut.GetAll(testCtx)
-
-		// then
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorAs(t, err, &internalErr)
-		assert.ErrorContains(t, err, "failed to get global config from etcd")
-	})
-	t.Run("should get global config", func(t *testing.T) {
-		// given
-		globalConfigMock := newMockGlobalConfigStore(t)
-		config := map[string]string{
-			"key_provider": "pkcs1v15",
-			"fqdn":         "ces.example.com",
-		}
-		globalConfigMock.EXPECT().GetAll().Return(config, nil)
-
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
-
-		// when
-		actualConfig, err := sut.GetAll(testCtx)
-
-		// then
-		assert.NoError(t, err)
-		expectedConfig := []*ecosystem.GlobalConfigEntry{
-			{
-				Key:   "key_provider",
-				Value: "pkcs1v15",
-			},
-			{
-				Key:   "fqdn",
-				Value: "ces.example.com",
-			},
-		}
-		assert.Equal(t, expectedConfig, actualConfig)
-	})
-}
-
 func TestEtcdGlobalConfigRepository_Save(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
@@ -279,5 +218,78 @@ func TestEtcdGlobalConfigRepository_Get(t *testing.T) {
 			Key:   "key_provider",
 			Value: "pkcs1v15",
 		}, actualValue)
+	})
+}
+
+func TestEtcdGlobalConfigRepository_GetAllByKey(t *testing.T) {
+	t.Run("should fail with multiple errors", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockGlobalConfigStore(t)
+		globalConfigMock.EXPECT().Get("key_provider").Return("", etcdNotFoundError)
+		globalConfigMock.EXPECT().Get("fqdn").Return("", assert.AnError)
+
+		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+
+		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
+
+		// when
+		_, err := sut.GetAllByKey(testCtx, keysToRetrieve)
+
+		// then
+		assert.ErrorIs(t, err, etcdNotFoundError)
+		assert.ErrorAs(t, err, &notFoundErr)
+
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorAs(t, err, &internalErr)
+	})
+	t.Run("should return entries on error", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockGlobalConfigStore(t)
+		globalConfigMock.EXPECT().Get("key_provider").Return("", etcdNotFoundError)
+		globalConfigMock.EXPECT().Get("fqdn").Return("ces.example.com", nil)
+
+		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+
+		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
+
+		// when
+		actualEntries, err := sut.GetAllByKey(testCtx, keysToRetrieve)
+
+		// then
+		assert.ErrorIs(t, err, etcdNotFoundError)
+		assert.ErrorAs(t, err, &notFoundErr)
+
+		assert.Equal(t, map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{
+			"fqdn": {
+				Key:   "fqdn",
+				Value: "ces.example.com",
+			},
+		}, actualEntries)
+	})
+	t.Run("should succeed", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockGlobalConfigStore(t)
+		globalConfigMock.EXPECT().Get("key_provider").Return("pkcs1v15", nil)
+		globalConfigMock.EXPECT().Get("fqdn").Return("ces.example.com", nil)
+
+		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+
+		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
+
+		// when
+		actualEntries, err := sut.GetAllByKey(testCtx, keysToRetrieve)
+
+		// then
+		assert.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{
+			"fqdn": {
+				Key:   "fqdn",
+				Value: "ces.example.com",
+			},
+			"key_provider": {
+				Key:   "key_provider",
+				Value: "pkcs1v15",
+			},
+		}, actualEntries)
 	})
 }

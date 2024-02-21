@@ -17,26 +17,34 @@ func NewEtcdDoguConfigRepository(etcdStore etcdStore) *EtcdDoguConfigRepository 
 	return &EtcdDoguConfigRepository{etcdStore: etcdStore}
 }
 
-func (e EtcdDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error) {
+func (e EtcdDoguConfigRepository) Get(_ context.Context, key common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error) {
+	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
+	if registry.IsKeyNotFoundError(err) {
+		return nil, domainservice.NewNotFoundError(err, "could not find %s in etcd", key)
+	} else if err != nil {
+		return nil, domainservice.NewInternalError(err, "failed to get %s from etcd", key)
+	}
+
+	return &ecosystem.DoguConfigEntry{
+		Key:   key,
+		Value: common.DoguConfigValue(entry),
+	}, nil
+}
+
+func (e EtcdDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
 	var errs []error
-	entriesByDogu := make(map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry)
+	entries := make(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry)
 	for _, key := range keys {
-		entryRaw, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
-		if registry.IsKeyNotFoundError(err) {
-			errs = append(errs, domainservice.NewNotFoundError(err, "could not find %s in etcd", key))
-			continue
-		} else if err != nil {
-			errs = append(errs, domainservice.NewInternalError(err, "failed to get %s from etcd", key))
+		entry, err := e.Get(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
 
-		entriesByDogu[key.DoguName] = append(entriesByDogu[key.DoguName], &ecosystem.DoguConfigEntry{
-			Key:   common.DoguConfigKey{DoguName: key.DoguName, Key: key.Key},
-			Value: common.DoguConfigValue(entryRaw),
-		})
+		entries[key] = entry
 	}
 
-	return entriesByDogu, errors.Join(errs...)
+	return entries, errors.Join(errs...)
 }
 
 func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {

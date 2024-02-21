@@ -17,26 +17,34 @@ func NewEtcdSensitiveDoguConfigRepository(etcdStore etcdStore) *EtcdSensitiveDog
 	return &EtcdSensitiveDoguConfigRepository{etcdStore: etcdStore}
 }
 
-func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(_ context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error) {
+func (e EtcdSensitiveDoguConfigRepository) Get(_ context.Context, key common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error) {
+	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
+	if registry.IsKeyNotFoundError(err) {
+		return nil, domainservice.NewNotFoundError(err, "could not find sensitive %s in etcd", key)
+	} else if err != nil {
+		return nil, domainservice.NewInternalError(err, "failed to get sensitive %s from etcd", key)
+	}
+
+	return &ecosystem.SensitiveDoguConfigEntry{
+		Key:   key,
+		Value: common.EncryptedDoguConfigValue(entry),
+	}, nil
+}
+
+func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
 	var errs []error
-	entriesByDogu := make(map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry)
+	entries := make(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry)
 	for _, key := range keys {
-		entryRaw, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
-		if registry.IsKeyNotFoundError(err) {
-			errs = append(errs, domainservice.NewNotFoundError(err, "could not find %s in etcd", key))
-			continue
-		} else if err != nil {
-			errs = append(errs, domainservice.NewInternalError(err, "failed to get %s from etcd", key))
+		entry, err := e.Get(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
 			continue
 		}
 
-		entriesByDogu[key.DoguName] = append(entriesByDogu[key.DoguName], &ecosystem.SensitiveDoguConfigEntry{
-			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: key.DoguName, Key: key.Key}},
-			Value: common.EncryptedDoguConfigValue(entryRaw),
-		})
+		entries[key] = entry
 	}
 
-	return entriesByDogu, errors.Join(errs...)
+	return entries, errors.Join(errs...)
 }
 
 func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {

@@ -120,14 +120,14 @@ type ConfigEncryptionAdapter interface {
 type GlobalConfigEntryRepository interface {
 	// Get retrieves a key from the global config.
 	// It can throw the following errors:
-	// 	- NotFoundError if the key is not found.
+	// 	- NotFoundError if the key or the global config is not found.
 	// 	- InternalError if any other error happens.
 	Get(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)
-	// GetAll retrieves all keys from the global config.
+	// GetAllByKey retrieves entries for the given keys from the global config.
 	// It can throw the following errors:
-	// 	- NotFoundError if there is no global config.
+	// 	- NotFoundError if a key or the global config is not found.
 	// 	- InternalError if any other error happens.
-	GetAll(context.Context) ([]*ecosystem.GlobalConfigEntry, error)
+	GetAllByKey(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)
 	// Save persists the global config.
 	// It can throw the following errors:
 	//  - ConflictError if there were concurrent write accesses.
@@ -145,11 +145,16 @@ type GlobalConfigEntryRepository interface {
 }
 
 type DoguConfigEntryRepository interface {
+	// Get retrieves a key from the dogu's config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the key is not found.
+	// 	- InternalError if any other error happens.
+	Get(context.Context, common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error)
 	// GetAllByKey retrieves all ecosystem.DoguConfigEntry's for the given ecosystem.DoguConfigKey's config.
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error)
 	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -167,11 +172,16 @@ type DoguConfigEntryRepository interface {
 }
 
 type SensitiveDoguConfigEntryRepository interface {
+	// Get retrieves a key from the dogu's sensitive config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the key is not found.
+	// 	- InternalError if any other error happens.
+	Get(context.Context, common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error)
 	// GetAllByKey retrieves a dogu's sensitive config for the given keys.
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error)
 	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
