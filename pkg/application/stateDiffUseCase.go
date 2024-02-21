@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
@@ -15,17 +16,26 @@ type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
+	globalConfigRepo          globalConfigEntryRepository
+	doguConfigRepo            doguConfigEntryRepository
+	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
 }
 
 func NewStateDiffUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguInstallationRepo domainservice.DoguInstallationRepository,
 	componentInstallationRepo domainservice.ComponentInstallationRepository,
+	globalConfigRepo domainservice.GlobalConfigEntryRepository,
+	doguConfigRepo domainservice.DoguConfigEntryRepository,
+	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
 		doguInstallationRepo:      doguInstallationRepo,
 		componentInstallationRepo: componentInstallationRepo,
+		globalConfigRepo:          globalConfigRepo,
+		doguConfigRepo:            doguConfigRepo,
+		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
 	}
 }
 
@@ -46,18 +56,13 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	}
 
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
-	installedDogus, err := useCase.doguInstallationRepo.GetAll(ctx)
+	clusterState, err := useCase.collectClusterState(ctx, blueprintSpec.EffectiveBlueprint)
 	if err != nil {
-		return fmt.Errorf("cannot get installed dogus to determine state diff: %w", err)
+		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	installedComponents, err := useCase.componentInstallationRepo.GetAll(ctx)
-	if err != nil {
-		return fmt.Errorf("cannot get installed components to determine state diff: %w", err)
-	}
-
-	//TODO: load config values and give them in this command
-	stateDiffError := blueprintSpec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
+	// determine state diff
+	stateDiffError := blueprintSpec.DetermineStateDiff(clusterState)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
@@ -72,4 +77,49 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	// return this error back here to persist the blueprint status and events first.
 	// return it to signal that a repeated call to this function will not result in any progress.
 	return stateDiffError
+}
+
+func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) (ecosystem.ClusterState, error) {
+	// TODO: collect cluster state in parallel (like for ecosystem health)
+	// load current dogus and components
+	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
+	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
+	// load current config
+	globalConfig, globalConfigErr := useCase.globalConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.Global.GetGlobalConfigKeys())
+	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
+	sensitiveDoguConfig, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
+
+	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
+
+	if joinedError != nil {
+		return ecosystem.ClusterState{}, fmt.Errorf("could not collect cluster state: %w", joinedError)
+	}
+
+	decryptedConfig, err := useCase.decryptSensitiveDoguConfig(ctx, sensitiveDoguConfig)
+	if err != nil {
+		return ecosystem.ClusterState{}, fmt.Errorf("could not decyrpt sensitive dogu config: %w", err)
+	}
+
+	return ecosystem.ClusterState{
+		InstalledDogus:               installedDogus,
+		InstalledComponents:          installedComponents,
+		GlobalConfig:                 globalConfig,
+		DoguConfig:                   doguConfig,
+		EncryptedDoguConfig:          sensitiveDoguConfig,
+		DecryptedSensitiveDoguConfig: decryptedConfig,
+	}, nil
+}
+
+func (useCase *StateDiffUseCase) decryptSensitiveDoguConfig(
+	ctx context.Context,
+	encryptedConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
+) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
+	logger := log.FromContext(ctx).WithName("StateDiffUseCase.decryptSensitiveDoguConfig")
+	logger.Info("decrypt sensitive dogu config")
+	decryptedDoguConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+	for key, entry := range encryptedConfig {
+		// TODO: decrypt sensitive config
+		decryptedDoguConfig[key] = common.SensitiveDoguConfigValue(entry.Value)
+	}
+	return decryptedDoguConfig, nil
 }

@@ -20,12 +20,12 @@ var globalConfigDiffMockDataBytes []byte
 
 type EcosystemRegistryUseCase struct {
 	blueprintRepository           blueprintSpecRepository
-	doguConfigRepository          doguConfigRepository
-	doguSensitiveConfigRepository doguSensitiveConfigRepository
-	globalConfigRepository        globalConfigRepository
+	doguConfigRepository          doguConfigEntryRepository
+	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
+	globalConfigRepository        globalConfigEntryRepository
 }
 
-func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigRepository, doguSensitiveConfigRepository doguSensitiveConfigRepository, globalConfigRepository globalConfigRepository) *EcosystemRegistryUseCase {
+func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository) *EcosystemRegistryUseCase {
 	return &EcosystemRegistryUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
@@ -117,6 +117,8 @@ func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDogu
 
 func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {
 	var errs []error
+	var entriesToSet []*ecosystem.GlobalConfigEntry
+	var keysToDelete []common.GlobalConfigKey
 
 	for _, diff := range diffs {
 		switch diff.NeededAction {
@@ -125,9 +127,9 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 				Key:   diff.Key,
 				Value: common.GlobalConfigValue(diff.Expected.Value),
 			}
-			errs = append(errs, useCase.globalConfigRepository.Save(ctx, entry))
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.globalConfigRepository.Delete(ctx, diff.Key))
+			keysToDelete = append(keysToDelete, diff.Key)
 		case domain.ConfigActionNone:
 			continue
 		default:
@@ -135,24 +137,43 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 		}
 	}
 
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.globalConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.globalConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
+	}
+
 	return errors.Join(errs...)
 }
 
 func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiffs) error {
 	var errs []error
+	var entriesToSet []*ecosystem.DoguConfigEntry
+	var keysToDelete []common.DoguConfigKey
 
 	for _, diff := range diffs {
 		switch diff.NeededAction {
 		case domain.ConfigActionSet:
-			entry := getDoguConfigEntry(doguName, diff.Key.Key, diff.Expected.Value)
-			errs = append(errs, useCase.doguConfigRepository.Save(ctx, entry))
+			entry := &ecosystem.DoguConfigEntry{
+				Key:   common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
+				Value: common.DoguConfigValue(diff.Expected.Value),
+			}
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.doguConfigRepository.Delete(ctx, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}))
+			keysToDelete = append(keysToDelete, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key})
 		case domain.ConfigActionNone:
 			continue
 		default:
 			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
 		}
+	}
+
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.doguConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.doguConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
 	}
 
 	return errors.Join(errs...)
@@ -162,21 +183,31 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
+	var entriesToSet []*ecosystem.SensitiveDoguConfigEntry
+	var keysToDelete []common.SensitiveDoguConfigKey
+
 	for _, diff := range diffs {
 		switch diff.NeededAction {
 		case domain.ConfigActionSet:
 			entry := getSensitiveDoguConfigEntry(doguName, diff)
-			errs = append(errs, useCase.doguSensitiveConfigRepository.Save(ctx, entry))
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionSetToEncrypt:
 			entry := getSensitiveDoguConfigEntry(doguName, diff)
 			errs = append(errs, useCase.doguSensitiveConfigRepository.SaveForNotInstalledDogu(ctx, entry))
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}}))
+			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
 		case domain.ConfigActionNone:
 			continue
 		default:
 			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
 		}
+	}
+
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.doguSensitiveConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
 	}
 
 	return errors.Join(errs...)

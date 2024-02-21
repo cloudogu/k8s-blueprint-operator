@@ -19,11 +19,24 @@ type DoguConfigEntryDiff struct {
 	NeededAction ConfigAction
 }
 
-func newDoguConfigEntryDiff(key common.DoguConfigKey, actualValue common.DoguConfigValue, actualExists bool, expectedValue common.DoguConfigValue, expectedExists bool) DoguConfigEntryDiff {
-	actual := DoguConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualExists,
+func NewDoguConfigValueStateFromEntry(actualEntry *ecosystem.DoguConfigEntry) DoguConfigValueState {
+	actualValue := common.DoguConfigValue("")
+	if actualEntry != nil {
+		actualValue = actualEntry.Value
 	}
+	return DoguConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualEntry != nil,
+	}
+}
+
+func newDoguConfigEntryDiff(
+	key common.DoguConfigKey,
+	actualEntry *ecosystem.DoguConfigEntry,
+	expectedValue common.DoguConfigValue,
+	expectedExists bool,
+) DoguConfigEntryDiff {
+	actual := NewDoguConfigValueStateFromEntry(actualEntry)
 	expected := DoguConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
@@ -38,18 +51,18 @@ func newDoguConfigEntryDiff(key common.DoguConfigKey, actualValue common.DoguCon
 
 func determineDoguConfigDiffs(
 	config DoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]ecosystem.DoguConfigEntry,
+	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
 ) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry.Value, actualExists, expectedValue, true))
+		actualEntry := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, expectedValue, true))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry.Value, actualExists, "", false))
+		actualEntry := actualDoguConfig[key]
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, "", false))
 	}
 	return doguConfigDiff
 }

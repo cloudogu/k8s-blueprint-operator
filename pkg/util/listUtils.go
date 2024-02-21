@@ -50,3 +50,12 @@ func GroupBy[K comparable, V any](elements []V, keySelector func(V) K) map[K][]V
 	}
 	return counts
 }
+
+func ToMap[K comparable, V any](elements []V, keySelector func(V) K) map[K]V {
+	counts := map[K]V{}
+	for _, element := range elements {
+		key := keySelector(element)
+		counts[key] = element
+	}
+	return counts
+}

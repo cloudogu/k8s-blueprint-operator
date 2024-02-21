@@ -91,14 +91,14 @@ type maintenanceMode interface {
 	domainservice.MaintenanceMode
 }
 
-type doguConfigRepository interface {
+type doguConfigEntryRepository interface {
 	domainservice.DoguConfigEntryRepository
 }
 
-type doguSensitiveConfigRepository interface {
+type sensitiveDoguConfigEntryRepository interface {
 	domainservice.SensitiveDoguConfigEntryRepository
 }
 
-type globalConfigRepository interface {
+type globalConfigEntryRepository interface {
 	domainservice.GlobalConfigEntryRepository
 }

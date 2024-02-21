@@ -342,11 +342,13 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
-		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
+		clusterState := ecosystem.ClusterState{
+			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+		}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
+		err := spec.DetermineStateDiff(clusterState)
 
 		// then
 		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{}}
@@ -379,16 +381,18 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
-			"name": {Name: common.QualifiedDoguName{
-				Namespace:  "namespace",
-				SimpleName: "name",
-			}},
+		clusterState := ecosystem.ClusterState{
+			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+				"name": {Name: common.QualifiedDoguName{
+					Namespace:  "namespace",
+					SimpleName: "name",
+				}},
+			},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
-		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
+		err := spec.DetermineStateDiff(clusterState)
 
 		// then
 		require.NoError(t, err)
@@ -414,16 +418,18 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
-			"name": {Name: common.QualifiedDoguName{
-				Namespace:  "namespace",
-				SimpleName: "name",
-			}},
+		clusterState := ecosystem.ClusterState{
+			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+				"name": {Name: common.QualifiedDoguName{
+					Namespace:  "namespace",
+					SimpleName: "name",
+				}},
+			},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
-		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 
 		// when
-		err := spec.DetermineStateDiff(installedDogus, installedComponents, nil, nil, nil)
+		err := spec.DetermineStateDiff(clusterState)
 
 		// then
 		require.Error(t, err)
@@ -438,9 +444,12 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			spec := BlueprintSpec{
 				Status: initialStatus,
 			}
-			installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
+			clusterState := ecosystem.ClusterState{
+				InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+			}
 			// when
-			err := spec.DetermineStateDiff(installedDogus, nil, nil, nil, nil)
+			err := spec.DetermineStateDiff(clusterState)
 
 			// then
 			assert.Error(t, err)
@@ -455,9 +464,12 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		spec := BlueprintSpec{
 			Status: initialStatus,
 		}
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{}
+		clusterState := ecosystem.ClusterState{
+			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+		}
 		// when
-		err := spec.DetermineStateDiff(installedDogus, nil, nil, nil, nil)
+		err := spec.DetermineStateDiff(clusterState)
 
 		// then
 		assert.NoError(t, err)
@@ -481,15 +493,18 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			},
 			Status: StatusPhaseValidated,
 		}
-		installedComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-			testComponentName.SimpleName: {
-				Name:    testComponentName,
-				Version: compVersion3211,
+		clusterState := ecosystem.ClusterState{
+			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+				testComponentName.SimpleName: {
+					Name:    testComponentName,
+					Version: compVersion3211,
+				},
 			},
 		}
 
 		// when
-		err := spec.DetermineStateDiff(nil, installedComponents, nil, nil, nil)
+		err := spec.DetermineStateDiff(clusterState)
 
 		// then
 		require.Error(t, err)

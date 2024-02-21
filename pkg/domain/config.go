@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"golang.org/x/exp/maps"
 )
 
 type Config struct {
@@ -31,6 +32,31 @@ type SensitiveDoguConfig struct {
 type GlobalConfig struct {
 	Present map[common.GlobalConfigKey]common.GlobalConfigValue
 	Absent  []common.GlobalConfigKey
+}
+
+func (config GlobalConfig) GetGlobalConfigKeys() []common.GlobalConfigKey {
+	var keys []common.GlobalConfigKey
+	keys = append(keys, maps.Keys(config.Present)...)
+	keys = append(keys, config.Absent...)
+	return keys
+}
+
+func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
+	var keys []common.DoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		keys = append(keys, maps.Keys(doguConfig.Config.Present)...)
+		keys = append(keys, doguConfig.Config.Absent...)
+	}
+	return keys
+}
+
+func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKey {
+	var keys []common.SensitiveDoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		keys = append(keys, maps.Keys(doguConfig.SensitiveConfig.Present)...)
+		keys = append(keys, doguConfig.SensitiveConfig.Absent...)
+	}
+	return keys
 }
 
 func (config Config) validate() error {
