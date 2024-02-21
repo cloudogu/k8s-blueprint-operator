@@ -30,10 +30,19 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 		componentDiffsV1[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
 	}
 
+	var doguConfigDiffs map[string]CombinedDoguConfigDiff
+	if len(domainModel.DoguConfigDiff) != 0 {
+		doguConfigDiffs = make(map[string]CombinedDoguConfigDiff)
+		for doguName, doguConfigDiff := range domainModel.DoguConfigDiff {
+			doguConfigDiffs[string(doguName)] = convertToCombinedDoguConfigDiffDTO(doguConfigDiff)
+		}
+	}
+
 	return StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: componentDiffsV1,
-		// in the future, this will also contain registry diffs
+		DoguDiffs:        doguDiffs,
+		ComponentDiffs:   componentDiffsV1,
+		DoguConfigDiffs:  doguConfigDiffs,
+		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiff),
 	}
 }
 

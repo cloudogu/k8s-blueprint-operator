@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -146,6 +147,54 @@ func TestConvertToDTO(t *testing.T) {
 						NeededAction: "uninstall",
 					},
 				}},
+		}, {
+			name: "should convert multiple dogu config diffs",
+			domainModel: domain.StateDiff{
+				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			want: StateDiff{
+				DoguDiffs:      map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{},
+				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+		}, {
+			name: "should convert global config diff",
+			domainModel: domain.StateDiff{
+				GlobalConfigDiff: []domain.GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: domain.GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: domain.GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					Action: domain.ConfigActionSet,
+				}},
+			},
+			want: StateDiff{
+				DoguDiffs:      map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{},
+				GlobalConfigDiff: []GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: ConfigActionSet,
+				}},
+			},
 		},
 	}
 	for _, tt := range tests {
