@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"errors"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -31,43 +30,12 @@ func (e EtcdDoguConfigRepository) Get(_ context.Context, key common.DoguConfigKe
 	}, nil
 }
 
-func (e EtcdDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
-	var errs []error
-	entries := make(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry)
-	for _, key := range keys {
-		entry, err := e.Get(ctx, key)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		entries[key] = entry
-	}
-
-	return entries, errors.Join(errs...)
-}
-
 func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
 	strValue := string(entry.Value)
 	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
 		return domainservice.NewInternalError(err, "failed to set %s with value %q in etcd", entry.Key, strValue)
-	}
-
-	return nil
-}
-
-func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.DoguConfigEntry) error {
-	var errs []error
-	for _, entry := range entries {
-		err := e.Save(ctx, entry)
-		errs = append(errs, err)
-	}
-
-	err := errors.Join(errs...)
-	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set given dogu config entries in etcd")
 	}
 
 	return nil
@@ -81,4 +49,16 @@ func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfi
 	}
 
 	return nil
+}
+
+func (e EtcdDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
+	return getAllByKey(ctx, keys, e.Get)
+}
+
+func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.DoguConfigEntry) error {
+	return saveOrDeleteAllByRegistryKeys(ctx, entries, e.Save, "failed to set given dogu config entries in etcd")
+}
+
+func (e EtcdDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.DoguConfigKey) error {
+	return saveOrDeleteAllByRegistryKeys(ctx, keys, e.Delete, "failed to delete given dogu config keys in etcd")
 }

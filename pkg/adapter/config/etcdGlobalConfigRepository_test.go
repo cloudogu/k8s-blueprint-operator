@@ -293,3 +293,40 @@ func TestEtcdGlobalConfigRepository_GetAllByKey(t *testing.T) {
 		}, actualEntries)
 	})
 }
+
+func TestEtcdGlobalConfigRepository_DeleteAllByKeys(t *testing.T) {
+	t.Run("success with multiple keys", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockConfigurationContext(t)
+		globalConfigMock.EXPECT().Delete("fqdn").Return(nil)
+		globalConfigMock.EXPECT().Delete("certificate").Return(nil)
+
+		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+
+		entries := []common.GlobalConfigKey{"fqdn", "certificate"}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, entries)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error on delete error", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockConfigurationContext(t)
+		globalConfigMock.EXPECT().Delete("fqdn").Return(nil)
+		globalConfigMock.EXPECT().Delete("certificate").Return(assert.AnError)
+
+		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+
+		entries := []common.GlobalConfigKey{"fqdn", "certificate"}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, entries)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to delete given global config keys in etcd")
+	})
+}

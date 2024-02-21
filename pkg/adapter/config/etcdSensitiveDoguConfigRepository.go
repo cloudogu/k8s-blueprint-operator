@@ -31,22 +31,6 @@ func (e EtcdSensitiveDoguConfigRepository) Get(_ context.Context, key common.Sen
 	}, nil
 }
 
-func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
-	var errs []error
-	entries := make(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry)
-	for _, key := range keys {
-		entry, err := e.Get(ctx, key)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		entries[key] = entry
-	}
-
-	return entries, errors.Join(errs...)
-}
-
 func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
 	strValue := string(entry.Value)
@@ -58,26 +42,62 @@ func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosys
 	return nil
 }
 
-func (e EtcdSensitiveDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
-	var errs []error
-	for _, entry := range entries {
-		err := e.Save(ctx, entry)
-		errs = append(errs, err)
-	}
-
-	err := errors.Join(errs...)
-	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set given sensitive dogu config entries in etcd")
-	}
-
-	return nil
-}
-
 func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.SensitiveDoguConfigKey) error {
 	strDoguName := string(key.DoguName)
 	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
 		return domainservice.NewInternalError(err, "failed to delete encrypted %s from etcd", key)
+	}
+
+	return nil
+}
+
+func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
+	return getAllByKey(ctx, keys, e.Get)
+}
+
+func (e EtcdSensitiveDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
+	return saveOrDeleteAllByRegistryKeys(ctx, entries, e.Save, "failed to set given sensitive dogu config entries in etcd")
+}
+
+func (e EtcdSensitiveDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.SensitiveDoguConfigKey) error {
+	return saveOrDeleteAllByRegistryKeys(ctx, keys, e.Delete, "failed to delete given sensitive dogu config keys in etcd")
+}
+
+type registryKey interface {
+	common.SensitiveDoguConfigKey | common.GlobalConfigKey | common.DoguConfigKey
+}
+
+type registryEntry interface {
+	*ecosystem.DoguConfigEntry | *ecosystem.GlobalConfigEntry | *ecosystem.SensitiveDoguConfigEntry
+}
+
+func getAllByKey[T registryKey, K registryEntry](ctx context.Context, keys []T, getFn func(context.Context, T) (K, error)) (map[T]K, error) {
+	var errs []error
+	entries := make(map[T]K)
+	for _, key := range keys {
+		entry, err := getFn(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		entries[key] = entry
+	}
+
+	return entries, errors.Join(errs...)
+}
+
+func saveOrDeleteAllByRegistryKeys[T registryKey | registryEntry](ctx context.Context, keys []T, saveOrDeleteFn func(context.Context, T) error, errorMsg string) error {
+	var errs []error
+	for _, key := range keys {
+		err := saveOrDeleteFn(ctx, key)
+		errs = append(errs, err)
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		return domainservice.NewInternalError(err, errorMsg)
 	}
 
 	return nil
