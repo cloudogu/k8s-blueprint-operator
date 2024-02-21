@@ -70,7 +70,6 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	}
 
 	if isEmptyDoguDiff && isEmptyGlobalDiff {
-		// TODO Correct Status or create new for no Action needed?
 		return useCase.markConfigApplied(ctx, blueprintSpec)
 	}
 
@@ -179,7 +178,6 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 	return errors.Join(errs...)
 }
 
-// Values of sensitiveConfig from existing Dogus are already encrypted???
 func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 

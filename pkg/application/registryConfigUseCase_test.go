@@ -113,6 +113,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseRegistryConfigApplied, spec.Status)
 	})
 
 	t.Run("should return on mark  apply config start error", func(t *testing.T) {

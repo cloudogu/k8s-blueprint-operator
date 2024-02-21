@@ -14,7 +14,7 @@ type EtcdSensitiveDoguConfigRepository struct {
 }
 
 func (e EtcdSensitiveDoguConfigRepository) GetAllByKey2(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -58,15 +58,15 @@ func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.
 }
 
 func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
-	return getAllByKey(ctx, keys, e.Get)
+	return getAllByKeyOrEntry(ctx, keys, e.Get)
 }
 
 func (e EtcdSensitiveDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, entries, e.Save, "failed to set given sensitive dogu config entries in etcd")
+	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given sensitive dogu config entries in etcd")
 }
 
 func (e EtcdSensitiveDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.SensitiveDoguConfigKey) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, keys, e.Delete, "failed to delete given sensitive dogu config keys in etcd")
+	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given sensitive dogu config keys in etcd")
 }
 
 type registryKey interface {
@@ -77,7 +77,7 @@ type registryEntry interface {
 	*ecosystem.DoguConfigEntry | *ecosystem.GlobalConfigEntry | *ecosystem.SensitiveDoguConfigEntry
 }
 
-func getAllByKey[T registryKey, K registryEntry](ctx context.Context, keys []T, getFn func(context.Context, T) (K, error)) (map[T]K, error) {
+func getAllByKeyOrEntry[T registryKey, K registryEntry](ctx context.Context, keys []T, getFn func(context.Context, T) (K, error)) (map[T]K, error) {
 	var errs []error
 	entries := make(map[T]K)
 	for _, key := range keys {
@@ -93,7 +93,7 @@ func getAllByKey[T registryKey, K registryEntry](ctx context.Context, keys []T, 
 	return entries, errors.Join(errs...)
 }
 
-func saveOrDeleteAllByRegistryKeys[T registryKey | registryEntry](ctx context.Context, keys []T, saveOrDeleteFn func(context.Context, T) error, errorMsg string) error {
+func mapKeyOrEntry[T registryKey | registryEntry](ctx context.Context, keys []T, saveOrDeleteFn func(context.Context, T) error, errorMsg string) error {
 	var errs []error
 	for _, key := range keys {
 		err := saveOrDeleteFn(ctx, key)

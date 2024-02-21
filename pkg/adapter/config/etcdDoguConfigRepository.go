@@ -13,7 +13,7 @@ type EtcdDoguConfigRepository struct {
 }
 
 func (e EtcdDoguConfigRepository) GetAllByKey2(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
-	//TODO implement me
+	// TODO implement me
 	panic("implement me")
 }
 
@@ -57,13 +57,13 @@ func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfi
 }
 
 func (e EtcdDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
-	return getAllByKey(ctx, keys, e.Get)
+	return getAllByKeyOrEntry(ctx, keys, e.Get)
 }
 
 func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.DoguConfigEntry) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, entries, e.Save, "failed to set given dogu config entries in etcd")
+	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given dogu config entries in etcd")
 }
 
 func (e EtcdDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.DoguConfigKey) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, keys, e.Delete, "failed to delete given dogu config keys in etcd")
+	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given dogu config keys in etcd")
 }
