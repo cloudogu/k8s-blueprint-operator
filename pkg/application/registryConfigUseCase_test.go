@@ -33,7 +33,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 							getRemoveDoguConfigEntryDiff("key", testSimpleDoguNameRedmine),
 						},
 						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine),
+							getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSet),
 							getRemoveSensitiveDoguConfigEntryDiff("key", testSimpleDoguNameRedmine),
 						},
 					},
@@ -43,7 +43,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 							getRemoveDoguConfigEntryDiff("key", testSimpleDoguNameCas),
 						},
 						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameCas),
+							getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameCas, domain.ConfigActionSet),
 							getRemoveSensitiveDoguConfigEntryDiff("key", testSimpleDoguNameCas),
 						},
 					},
@@ -157,7 +157,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 							getSetDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine),
 						},
 						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine),
+							getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSet),
 						},
 					},
 					testSimpleDoguNameCas: {
@@ -165,7 +165,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 							getSetDoguConfigEntryDiff("key", "value", testSimpleDoguNameCas),
 						},
 						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameCas),
+							getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameCas, domain.ConfigActionSet),
 						},
 					},
 				},
@@ -364,12 +364,12 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
-		diff1 := getSetSensitiveDoguConfigEntryDiff("key", "value", testSimpleDoguNameRedmine)
-		diff2 := getSetSensitiveDoguConfigEntryDiff("key1", "value1", testSimpleDoguNameRedmine)
+		diff1 := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSet)
+		diff2 := getSensitiveDoguConfigEntryDiffForAction("key1", "value1", testSimpleDoguNameRedmine, domain.ConfigActionSet)
 		diffs := domain.SensitiveDoguConfigDiffs{diff1, diff2}
 
 		expectedEntry1 := &ecosystem.SensitiveDoguConfigEntry{
@@ -383,6 +383,33 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 		sensitiveDoguConfigMock.EXPECT().Save(testCtx, expectedEntry1).Return(nil).Times(1)
 		sensitiveDoguConfigMock.EXPECT().Save(testCtx, expectedEntry2).Return(nil).Times(1)
+
+		// when
+		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should save diffs with action setToEncrypt", func(t *testing.T) {
+		// given
+		sensitiveDoguConfigMock := newMockDoguSensitiveConfigRepository(t)
+		sut := NewEcosystemRegistryUseCase(nil, nil, sensitiveDoguConfigMock, nil)
+		diff1 := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSetToEncrypt)
+		diff2 := getSensitiveDoguConfigEntryDiffForAction("key1", "value1", testSimpleDoguNameRedmine, domain.ConfigActionSetToEncrypt)
+		diffs := domain.SensitiveDoguConfigDiffs{diff1, diff2}
+
+		expectedEntry1 := &ecosystem.SensitiveDoguConfigEntry{
+			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key}},
+			Value: common.EncryptedDoguConfigValue(diff1.Expected.Value),
+		}
+		expectedEntry2 := &ecosystem.SensitiveDoguConfigEntry{
+			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff2.Key.Key}},
+			Value: common.EncryptedDoguConfigValue(diff2.Expected.Value),
+		}
+
+		sensitiveDoguConfigMock.EXPECT().SaveForNotInstalledDogu(testCtx, expectedEntry1).Return(nil).Times(1)
+		sensitiveDoguConfigMock.EXPECT().SaveForNotInstalledDogu(testCtx, expectedEntry2).Return(nil).Times(1)
 
 		// when
 		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)
@@ -612,7 +639,7 @@ func getRemoveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) do
 	}
 }
 
-func getSetSensitiveDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName) domain.SensitiveDoguConfigEntryDiff {
+func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName common.SimpleDoguName, action domain.ConfigAction) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
 			DoguConfigKey: common.DoguConfigKey{
@@ -623,7 +650,7 @@ func getSetSensitiveDoguConfigEntryDiff(key, value string, doguName common.Simpl
 		Expected: domain.DoguConfigValueState{
 			Value: value,
 		},
-		NeededAction: domain.ConfigActionSet,
+		NeededAction: action,
 	}
 }
 

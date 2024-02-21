@@ -51,10 +51,10 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	// 	data := parseDoguConfigDiffMockData()
 	// 	logger.Info("dogu config diffs:")
 	// 	logger.Info(fmt.Sprintf("%+v", data))
-	// 	blueprintSpec.StateDiff.DoguConfigDiff = data
+	// 	blueprintSpec.StateDiff.DoguConfigDiffs = data
 	// 	logger.Info("dogu config diffs in statediff:")
-	// 	logger.Info(fmt.Sprintf("%+v", blueprintSpec.StateDiff.DoguConfigDiff))
-	// 	blueprintSpec.StateDiff.GlobalConfigDiff = parseGlobalConfigDiffMockData()
+	// 	logger.Info(fmt.Sprintf("%+v", blueprintSpec.StateDiff.DoguConfigDiffs))
+	// 	blueprintSpec.StateDiff.GlobalConfigDiffs = parseGlobalConfigDiffMockData()
 	// }
 
 	doguConfigDiffs := blueprintSpec.StateDiff.DoguConfigDiffs
