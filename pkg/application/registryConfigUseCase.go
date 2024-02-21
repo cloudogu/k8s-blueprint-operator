@@ -117,6 +117,8 @@ func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDogu
 
 func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiff) error {
 	var errs []error
+	var entriesToSet []*ecosystem.GlobalConfigEntry
+	var keysToDelete []common.GlobalConfigKey
 
 	for _, diff := range diffs {
 		switch diff.Action {
@@ -125,9 +127,9 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 				Key:   diff.Key,
 				Value: common.GlobalConfigValue(diff.Expected.Value),
 			}
-			errs = append(errs, useCase.globalConfigRepository.Save(ctx, entry))
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.globalConfigRepository.Delete(ctx, diff.Key))
+			keysToDelete = append(keysToDelete, diff.Key)
 		case domain.ConfigActionNone:
 			continue
 		default:
@@ -135,11 +137,20 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 		}
 	}
 
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.globalConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.globalConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
+	}
+
 	return errors.Join(errs...)
 }
 
 func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiff) error {
 	var errs []error
+	var entriesToSet []*ecosystem.DoguConfigEntry
+	var keysToDelete []common.DoguConfigKey
 
 	for _, diff := range diffs {
 		switch diff.Action {
@@ -148,14 +159,21 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 				Key:   common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
 				Value: common.DoguConfigValue(diff.Expected.Value),
 			}
-			errs = append(errs, useCase.doguConfigRepository.Save(ctx, entry))
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.doguConfigRepository.Delete(ctx, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}))
+			keysToDelete = append(keysToDelete, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key})
 		case domain.ConfigActionNone:
 			continue
 		default:
 			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
 		}
+	}
+
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.doguConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.doguConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
 	}
 
 	return errors.Join(errs...)
@@ -165,6 +183,9 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiff) error {
 	var errs []error
 
+	var entriesToSet []*ecosystem.SensitiveDoguConfigEntry
+	var keysToDelete []common.SensitiveDoguConfigKey
+
 	for _, diff := range diffs {
 		switch diff.Action {
 		case domain.ConfigActionSet:
@@ -173,14 +194,21 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 				Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
 			}
 			// TODO: Check if dogu is installed
-			errs = append(errs, useCase.doguSensitiveConfigRepository.Save(ctx, entry))
+			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
-			errs = append(errs, useCase.doguSensitiveConfigRepository.Delete(ctx, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}}))
+			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
 		case domain.ConfigActionNone:
 			continue
 		default:
 			errs = append(errs, doguUnknownConfigActionError(diff.Action, diff.Key.Key, doguName))
 		}
+	}
+
+	if len(entriesToSet) > 0 {
+		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAll(ctx, entriesToSet))
+	}
+	if len(keysToDelete) > 0 {
+		errs = append(errs, useCase.doguSensitiveConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
 	}
 
 	return errors.Join(errs...)
