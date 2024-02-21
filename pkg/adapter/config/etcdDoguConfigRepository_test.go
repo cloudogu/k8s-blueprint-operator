@@ -433,7 +433,7 @@ func TestEtcdDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
 
 		sut := &EtcdDoguConfigRepository{etcdStore: etcdMock}
 
-		entries := []common.DoguConfigKey{
+		keys := []common.DoguConfigKey{
 			{
 				DoguName: "ldap",
 				Key:      "container_config/memory_limit",
@@ -445,7 +445,7 @@ func TestEtcdDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
 		}
 
 		// when
-		err := sut.DeleteAllByKeys(testCtx, entries)
+		err := sut.DeleteAllByKeys(testCtx, keys)
 
 		// then
 		assert.NoError(t, err)
