@@ -2,10 +2,10 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
 type EtcdDoguConfigRepository struct {
@@ -27,7 +27,7 @@ func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguC
 	strValue := string(entry.Value)
 	err := setEtcdKey(strKey, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return fmt.Errorf("failed to set config key %q with value %q for dogu %q: %w", strKey, strValue, strDoguName, err)
+		return domainservice.NewInternalError(err, "failed to set config key %q with value %q for dogu %q", strKey, strValue, strDoguName)
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfi
 	strKey := key.Key
 	err := deleteEtcdKey(strKey, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
-		return fmt.Errorf("failed to delete config key %q for dogu %q: %w", strKey, strDoguName, err)
+		return domainservice.NewInternalError(err, "failed to delete config key %q for dogu %q", strKey, strDoguName)
 	}
 
 	return nil

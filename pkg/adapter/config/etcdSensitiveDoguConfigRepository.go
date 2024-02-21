@@ -2,10 +2,10 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
 type EtcdSensitiveDoguConfigRepository struct {
@@ -27,7 +27,7 @@ func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosys
 	strValue := string(entry.Value)
 	err := setEtcdKey(strKey, strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
-		return fmt.Errorf("failed to set encrypted config key %q with value %q for dogu %q: %w", strKey, strValue, strDoguName, err)
+		return domainservice.NewInternalError(err, "failed to set encrypted config key %q with value %q for dogu %q", strKey, strValue, strDoguName)
 	}
 
 	return nil
@@ -43,7 +43,7 @@ func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.
 	strKey := key.Key
 	err := deleteEtcdKey(strKey, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
-		return fmt.Errorf("failed to delete encrypted config key %q for dogu %q: %w", strKey, strDoguName, err)
+		return domainservice.NewInternalError(err, "failed to delete encrypted config key %q for dogu %q", strKey, strDoguName)
 	}
 
 	return nil
