@@ -10,3 +10,7 @@ type etcdStore interface {
 type globalConfigStore interface {
 	registry.ConfigurationContext
 }
+
+type configurationContext interface {
+	registry.ConfigurationContext
+}
