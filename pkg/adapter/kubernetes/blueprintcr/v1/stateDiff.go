@@ -11,8 +11,12 @@ import (
 type StateDiff struct {
 	// DoguDiffs maps simple dogu names to the determined diff.
 	DoguDiffs map[string]DoguDiff `json:"doguDiffs,omitempty"`
-	// DoguDiffs maps simple dogu names to the determined diff.
+	// ComponentDiffs maps simple component names to the determined diff.
 	ComponentDiffs map[string]ComponentDiff `json:"componentDiffs,omitempty"`
+	// DoguConfigDiffs maps simple dogu names to the determined config diff.
+	DoguConfigDiffs map[string]CombinedDoguConfigDiff `json:"doguConfigDiffs,omitempty"`
+	// GlobalConfigDiff is the difference between the GlobalConfig in the EffectiveBlueprint and the cluster state.
+	GlobalConfigDiff GlobalConfigDiff `json:"globalConfigDiff,omitempty"`
 }
 
 func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
