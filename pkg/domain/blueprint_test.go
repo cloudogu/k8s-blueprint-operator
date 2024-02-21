@@ -235,12 +235,12 @@ func Test_censorConfigValues(t *testing.T) {
 	}
 
 	// when
-	config.censorValues()
+	result := config.censorValues()
 
-	assert.Equal(t, "ERROR", string(config.Dogus["ldap"].Config.Present[ldapLoggingKey]))
-	assert.Equal(t, "no-reply@itzbund.de", string(config.Dogus["ldap"].Config.Present[ldapPasswordChangeKey]))
-	assert.Equal(t, censorValue, string(config.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapLoggingKey}]))
-	assert.Equal(t, censorValue, string(config.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapPasswordChangeKey}]))
-	assert.Equal(t, "true", string(config.Global.Present["block_warpmenu_support_category"]))
-	assert.Equal(t, "14", string(config.Global.Present["password-policy/min_length"]))
+	assert.Equal(t, "ERROR", string(result.Dogus["ldap"].Config.Present[ldapLoggingKey]))
+	assert.Equal(t, "no-reply@itzbund.de", string(result.Dogus["ldap"].Config.Present[ldapPasswordChangeKey]))
+	assert.Equal(t, censorValue, string(result.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapLoggingKey}]))
+	assert.Equal(t, censorValue, string(result.Dogus["ldap"].SensitiveConfig.Present[common.SensitiveDoguConfigKey{DoguConfigKey: ldapPasswordChangeKey}]))
+	assert.Equal(t, "true", string(result.Global.Present["block_warpmenu_support_category"]))
+	assert.Equal(t, "14", string(result.Global.Present["password-policy/min_length"]))
 }

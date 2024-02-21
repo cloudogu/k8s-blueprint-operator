@@ -10,7 +10,8 @@ type CombinedDoguConfigDiff struct {
 type DoguConfigDiff []DoguConfigEntryDiff
 type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
 
-func (combinedDiff *CombinedDoguConfigDiff) censorValues() {
+// censorValues censors all sensitive configuration data to make them unrecognisable.
+func (combinedDiff CombinedDoguConfigDiff) censorValues() CombinedDoguConfigDiff {
 	for i, entry := range combinedDiff.SensitiveDoguConfigDiff {
 		if len(entry.Actual.Value) > 0 {
 			combinedDiff.SensitiveDoguConfigDiff[i].Actual.Value = censorValue
@@ -19,6 +20,7 @@ func (combinedDiff *CombinedDoguConfigDiff) censorValues() {
 			combinedDiff.SensitiveDoguConfigDiff[i].Expected.Value = censorValue
 		}
 	}
+	return combinedDiff
 }
 
 type GlobalConfigDiff []GlobalConfigEntryDiff

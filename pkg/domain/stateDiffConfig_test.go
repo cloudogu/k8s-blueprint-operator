@@ -31,17 +31,17 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		}
 
 		//when
-		configDiff.censorValues()
+		result := configDiff.censorValues()
 
-		require.Len(t, configDiff.DoguConfigDiff, 1)
+		require.Len(t, result.DoguConfigDiff, 1)
 
-		assert.Equal(t, "ldap", string(configDiff.DoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", configDiff.DoguConfigDiff[0].Key.Key)
-		assert.Equal(t, "ERROR", configDiff.DoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, false, configDiff.DoguConfigDiff[0].Actual.Exists)
-		assert.Equal(t, "DEBUG", configDiff.DoguConfigDiff[0].Expected.Value)
-		assert.Equal(t, false, configDiff.DoguConfigDiff[0].Expected.Exists)
-		assert.Equal(t, "Update", string(configDiff.DoguConfigDiff[0].Action))
+		assert.Equal(t, "ldap", string(result.DoguConfigDiff[0].Key.DoguName))
+		assert.Equal(t, "logging/root", result.DoguConfigDiff[0].Key.Key)
+		assert.Equal(t, "ERROR", result.DoguConfigDiff[0].Actual.Value)
+		assert.Equal(t, false, result.DoguConfigDiff[0].Actual.Exists)
+		assert.Equal(t, "DEBUG", result.DoguConfigDiff[0].Expected.Value)
+		assert.Equal(t, false, result.DoguConfigDiff[0].Expected.Exists)
+		assert.Equal(t, "Update", string(result.DoguConfigDiff[0].Action))
 	})
 
 	t.Run("Censoring sensitive dogu config", func(t *testing.T) {
@@ -67,17 +67,17 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		}
 
 		//when
-		configDiff.censorValues()
+		result := configDiff.censorValues()
 
-		require.Len(t, configDiff.SensitiveDoguConfigDiff, 1)
+		require.Len(t, result.SensitiveDoguConfigDiff, 1)
 
-		assert.Equal(t, "ldap", string(configDiff.SensitiveDoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", configDiff.SensitiveDoguConfigDiff[0].Key.Key)
-		assert.Equal(t, censorValue, configDiff.SensitiveDoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, false, configDiff.SensitiveDoguConfigDiff[0].Actual.Exists)
-		assert.Equal(t, censorValue, configDiff.SensitiveDoguConfigDiff[0].Expected.Value)
-		assert.Equal(t, false, configDiff.SensitiveDoguConfigDiff[0].Expected.Exists)
-		assert.Equal(t, "Update", string(configDiff.SensitiveDoguConfigDiff[0].Action))
+		assert.Equal(t, "ldap", string(result.SensitiveDoguConfigDiff[0].Key.DoguName))
+		assert.Equal(t, "logging/root", result.SensitiveDoguConfigDiff[0].Key.Key)
+		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Actual.Value)
+		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Actual.Exists)
+		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Expected.Value)
+		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Expected.Exists)
+		assert.Equal(t, "Update", string(result.SensitiveDoguConfigDiff[0].Action))
 	})
 
 	t.Run("Not censoring sensitive, but empty dogu config", func(t *testing.T) {
@@ -96,11 +96,11 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		}
 
 		//when
-		configDiff.censorValues()
+		result := configDiff.censorValues()
 
-		require.Len(t, configDiff.SensitiveDoguConfigDiff, 1)
+		require.Len(t, result.SensitiveDoguConfigDiff, 1)
 
-		assert.Equal(t, "", configDiff.SensitiveDoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, "", configDiff.SensitiveDoguConfigDiff[0].Expected.Value)
+		assert.Equal(t, "", result.SensitiveDoguConfigDiff[0].Actual.Value)
+		assert.Equal(t, "", result.SensitiveDoguConfigDiff[0].Expected.Value)
 	})
 }
