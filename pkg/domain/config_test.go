@@ -270,8 +270,7 @@ func TestConfig_validate(t *testing.T) {
 
 		// then
 		assert.ErrorContains(t, err, "dogu name \"some-name\" in map and dogu name \"another-name\" in value are not equal")
-		assert.ErrorContains(t, err, "config for dogu \"another-name\" invalid")
-		assert.ErrorContains(t, err, "sensitive config for dogu \"another-name\" invalid")
+		assert.ErrorContains(t, err, "config for dogu \"another-name\" is invalid")
 		assert.ErrorContains(t, err, "key for absent global config should not be empty")
 	})
 }
@@ -377,4 +376,33 @@ func TestConfig_GetSensitiveDoguConfigKeys(t *testing.T) {
 	keys := config.GetSensitiveDoguConfigKeys()
 
 	assert.ElementsMatch(t, keys, []common.SensitiveDoguConfigKey{nginxKey1, nginxKey2, postfixKey1, postfixKey2})
+}
+
+func TestCombinedDoguConfig_validate(t *testing.T) {
+	normalConfig := DoguConfig{
+		Present: map[common.DoguConfigKey]common.DoguConfigValue{
+			common.DoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: "value1",
+		},
+		Absent: []common.DoguConfigKey{
+			{DoguName: "dogu1", Key: "my/key2"},
+		},
+	}
+	sensitiveConfig := SensitiveDoguConfig{
+		Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+			common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "dogu1", Key: "my/key1"}}: "value1",
+		},
+		Absent: []common.SensitiveDoguConfigKey{
+			{DoguConfigKey: common.DoguConfigKey{DoguName: "dogu1", Key: "my/key2"}},
+		},
+	}
+
+	config := CombinedDoguConfig{
+		DoguName:        "dogu1",
+		Config:          normalConfig,
+		SensitiveConfig: sensitiveConfig,
+	}
+
+	err := config.validate()
+
+	assert.ErrorContains(t, err, "dogu config key key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
 }
