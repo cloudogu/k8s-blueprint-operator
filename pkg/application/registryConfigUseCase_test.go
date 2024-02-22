@@ -404,7 +404,7 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 			Value: common.EncryptedDoguConfigValue(diff2.Expected.Value),
 		}
 
-		sensitiveDoguConfigMock.EXPECT().SaveAllForNotInstalledDogu(testCtx, testSimpleDoguNameRedmine, []*ecosystem.SensitiveDoguConfigEntry{expectedEntry1, expectedEntry2}).Return(nil).Times(1)
+		sensitiveDoguConfigMock.EXPECT().SaveAllForNotInstalledDogus(testCtx, []*ecosystem.SensitiveDoguConfigEntry{expectedEntry1, expectedEntry2}).Return(nil).Times(1)
 
 		// when
 		err := sut.applySensitiveDoguConfigDiffs(testCtx, testSimpleDoguNameRedmine, diffs)

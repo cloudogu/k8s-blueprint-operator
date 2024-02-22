@@ -216,3 +216,16 @@ func getEmptyDoguSecret(doguName common.SimpleDoguName) *v1.Secret {
 		Name: string(doguName + "-secrets"),
 	}}
 }
+
+func TestSecretSensitiveDoguConfigRepository_updateSecretWithEntries(t *testing.T) {
+	t.Run("should return nil and not do anything if entries are empty", func(t *testing.T) {
+		// given
+		sut := SecretSensitiveDoguConfigRepository{}
+
+		// when
+		err := sut.updateSecretWithEntries(testCtx, "secret", nil)
+
+		// then
+		require.NoError(t, err)
+	})
+}

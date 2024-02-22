@@ -351,6 +351,49 @@ func (_c *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogu_Call
 	return _c
 }
 
+// SaveAllForNotInstalledDogus provides a mock function with given fields: _a0, _a1
+func (_m *mockSensitiveDoguConfigEntryRepository) SaveAllForNotInstalledDogus(_a0 context.Context, _a1 []*ecosystem.SensitiveDoguConfigEntry) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveAllForNotInstalledDogus'
+type mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call struct {
+	*mock.Call
+}
+
+// SaveAllForNotInstalledDogus is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []*ecosystem.SensitiveDoguConfigEntry
+func (_e *mockSensitiveDoguConfigEntryRepository_Expecter) SaveAllForNotInstalledDogus(_a0 interface{}, _a1 interface{}) *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call {
+	return &mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call{Call: _e.mock.On("SaveAllForNotInstalledDogus", _a0, _a1)}
+}
+
+func (_c *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call) Run(run func(_a0 context.Context, _a1 []*ecosystem.SensitiveDoguConfigEntry)) *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]*ecosystem.SensitiveDoguConfigEntry))
+	})
+	return _c
+}
+
+func (_c *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call) Return(_a0 error) *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call) RunAndReturn(run func(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error) *mockSensitiveDoguConfigEntryRepository_SaveAllForNotInstalledDogus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveForNotInstalledDogu provides a mock function with given fields: ctx, entry
 func (_m *mockSensitiveDoguConfigEntryRepository) SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
 	ret := _m.Called(ctx, entry)

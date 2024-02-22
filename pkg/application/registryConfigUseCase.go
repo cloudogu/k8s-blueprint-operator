@@ -195,6 +195,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 	}
 
 	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguSensitiveConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, entriesToEncrypt, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogus))
 	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
@@ -212,13 +213,6 @@ func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName, diff domain.Sen
 	return &ecosystem.SensitiveDoguConfigEntry{
 		Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
 		Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
-	}
-}
-
-func getDoguConfigEntry(doguName common.SimpleDoguName, key, value string) *ecosystem.DoguConfigEntry {
-	return &ecosystem.DoguConfigEntry{
-		Key:   common.DoguConfigKey{DoguName: doguName, Key: key},
-		Value: common.DoguConfigValue(value),
 	}
 }
 

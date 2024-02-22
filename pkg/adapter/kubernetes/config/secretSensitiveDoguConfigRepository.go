@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	corev1 "k8s.io/api/core/v1"
@@ -54,10 +55,15 @@ func (repo *SecretSensitiveDoguConfigRepository) SaveForNotInstalledDogu(ctx con
 func (repo *SecretSensitiveDoguConfigRepository) SaveAllForNotInstalledDogu(ctx context.Context, doguName common.SimpleDoguName, entries []*ecosystem.SensitiveDoguConfigEntry) error {
 	secretName, err := repo.checkAndCreateDoguSecret(ctx, doguName)
 	if err != nil {
-		return err
+		return domainservice.NewInternalError(err, "failed to get or create dogu secret %q", secretName)
 	}
 
-	return repo.updateSecretWithEntries(ctx, secretName, entries)
+	err = repo.updateSecretWithEntries(ctx, secretName, entries)
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to update dogu secret %q", secretName)
+	}
+
+	return nil
 }
 
 func (repo *SecretSensitiveDoguConfigRepository) updateSecretWithEntries(ctx context.Context, secretName string, entries []*ecosystem.SensitiveDoguConfigEntry) error {
