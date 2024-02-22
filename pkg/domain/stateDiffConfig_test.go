@@ -13,10 +13,12 @@ var (
 	dogu1Key2          = common.DoguConfigKey{DoguName: "dogu1", Key: "key2"}
 	dogu1Key3          = common.DoguConfigKey{DoguName: "dogu1", Key: "key3"}
 	dogu1Key4          = common.DoguConfigKey{DoguName: "dogu1", Key: "key4"}
+	dogu2Key1          = common.DoguConfigKey{DoguName: "dogu2", Key: "key1"}
 	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key1}
 	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key2}
 	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key3}
 	sensitiveDogu1Key4 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key4}
+	sensitiveDogu2Key1 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu2Key1}
 )
 
 func Test_determineConfigDiff(t *testing.T) {
@@ -209,14 +211,16 @@ func Test_determineConfigDiff(t *testing.T) {
 			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				sensitiveDogu1Key1: {Key: sensitiveDogu1Key1, Value: "value"}, //action none
 				sensitiveDogu1Key2: {Key: sensitiveDogu1Key2, Value: "value"}, //action set
-				sensitiveDogu1Key3: {Key: sensitiveDogu1Key3, Value: "value"}, //action delete
-				//sensitiveDogu1Key4 absent, so action none
+				sensitiveDogu1Key3: {Key: sensitiveDogu1Key3, Value: "value"}, //action setEncrypted
+				//sensitiveDogu1Key4 absent, action none
+				//sensitiveDogu2Key1 absent, action setToEncrypt
 			},
 			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				sensitiveDogu1Key1: "value", //action none
-				sensitiveDogu1Key2: "value", //action set
-				sensitiveDogu1Key3: "value", //action delete
-				//sensitiveDogu1Key4 absent, so action none
+				sensitiveDogu1Key1: "value",
+				sensitiveDogu1Key2: "value",
+				sensitiveDogu1Key3: "value",
+				//sensitiveDogu1Key4 absent
+				//sensitiveDogu2Key1 absent, action setToEncrypt
 			},
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
 		}
@@ -237,6 +241,13 @@ func Test_determineConfigDiff(t *testing.T) {
 						},
 					},
 				},
+				"dogu2": {
+					SensitiveConfig: SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+							sensitiveDogu2Key1: "value",
+						},
+					},
+				},
 			},
 		}
 
@@ -247,58 +258,79 @@ func Test_determineConfigDiff(t *testing.T) {
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].DoguConfigDiff)
 		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
-		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:                  sensitiveDogu1Key1,
-			DoguAlreadyInstalled: true,
-			Actual: DoguConfigValueState{
-				Value:  "value",
-				Exists: true,
+		assert.Equal(t, 1, len(dogusConfigDiffs["dogu2"].SensitiveDoguConfigDiff))
+
+		entriesDogu1 := []SensitiveDoguConfigEntryDiff{
+			{
+				Key:                  sensitiveDogu1Key1,
+				DoguAlreadyInstalled: true,
+				Actual: DoguConfigValueState{
+					Value:  "value",
+					Exists: true,
+				},
+				Expected: DoguConfigValueState{
+					Value:  "value",
+					Exists: true,
+				},
+				NeededAction: ConfigActionNone,
 			},
-			Expected: DoguConfigValueState{
-				Value:  "value",
-				Exists: true,
+			{
+				Key:                  sensitiveDogu1Key2,
+				DoguAlreadyInstalled: true,
+				Actual: DoguConfigValueState{
+					Value:  "value",
+					Exists: true,
+				},
+				Expected: DoguConfigValueState{
+					Value:  "updated value",
+					Exists: true,
+				},
+				NeededAction: ConfigActionSetEncrypted,
 			},
-			NeededAction: ConfigActionNone,
-		})
-		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:                  sensitiveDogu1Key2,
-			DoguAlreadyInstalled: true,
-			Actual: DoguConfigValueState{
-				Value:  "value",
-				Exists: true,
+			{
+				Key:                  sensitiveDogu1Key3,
+				DoguAlreadyInstalled: true,
+				Actual: DoguConfigValueState{
+					Value:  "value",
+					Exists: true,
+				},
+				Expected: DoguConfigValueState{
+					Value:  "",
+					Exists: false,
+				},
+				NeededAction: ConfigActionRemove,
 			},
-			Expected: DoguConfigValueState{
-				Value:  "updated value",
-				Exists: true,
+			{
+				Key:                  sensitiveDogu1Key4,
+				DoguAlreadyInstalled: true,
+				Actual: DoguConfigValueState{
+					Value:  "",
+					Exists: false,
+				},
+				Expected: DoguConfigValueState{
+					Value:  "",
+					Exists: false,
+				},
+				NeededAction: ConfigActionNone,
 			},
-			NeededAction: ConfigActionSet,
-		})
-		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:                  sensitiveDogu1Key3,
-			DoguAlreadyInstalled: true,
-			Actual: DoguConfigValueState{
-				Value:  "value",
-				Exists: true,
+		}
+		entriesDogu2 := []SensitiveDoguConfigEntryDiff{
+			{
+				Key:                  sensitiveDogu2Key1,
+				DoguAlreadyInstalled: false,
+				Actual: DoguConfigValueState{
+					Value:  "",
+					Exists: false,
+				},
+				Expected: DoguConfigValueState{
+					Value:  "value",
+					Exists: true,
+				},
+				NeededAction: ConfigActionSetToEncrypt,
 			},
-			Expected: DoguConfigValueState{
-				Value:  "",
-				Exists: false,
-			},
-			NeededAction: ConfigActionRemove,
-		})
-		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
-			Key:                  sensitiveDogu1Key4,
-			DoguAlreadyInstalled: true,
-			Actual: DoguConfigValueState{
-				Value:  "",
-				Exists: false,
-			},
-			Expected: DoguConfigValueState{
-				Value:  "",
-				Exists: false,
-			},
-			NeededAction: ConfigActionNone,
-		})
+		}
+		assert.ElementsMatch(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, entriesDogu1)
+		assert.ElementsMatch(t, dogusConfigDiffs["dogu2"].SensitiveDoguConfigDiff, entriesDogu2)
 	})
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
 		//given ecosystem config

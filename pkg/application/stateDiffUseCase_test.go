@@ -630,7 +630,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						Key:                  nginxStaticSensitiveConfigKeyNginxKey1,
 						Actual:               domain.DoguConfigValueState{Value: "val1", Exists: true},
 						Expected:             domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction:         domain.ConfigActionSetEncrypted,
 						DoguAlreadyInstalled: true,
 					},
 					{
