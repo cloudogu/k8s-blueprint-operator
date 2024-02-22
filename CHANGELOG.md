@@ -35,3 +35,4 @@ Component-specific:
 
 Config-specific:
 - [#42] Implement config repositories
+- [#48] Save config diff in cluster
