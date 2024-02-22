@@ -738,11 +738,11 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectClusterState(testCtx, effectiveBlueprint)
+		clusterState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, ecosystem.ClusterState{
+		assert.Equal(t, ecosystem.EcosystemState{
 			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
 			DoguConfig:   map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
 			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
@@ -822,12 +822,12 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectClusterState(testCtx, effectiveBlueprint)
+		clusterState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorIs(t, err, globalConfigNotFoundError)
 		assert.ErrorIs(t, err, doguConfigNotFoundError)
-		assert.Equal(t, ecosystem.ClusterState{}, clusterState)
+		assert.Equal(t, ecosystem.EcosystemState{}, clusterState)
 	})
 }

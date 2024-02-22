@@ -25,7 +25,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		config := Config{}
 
-		clusterState := ecosystem.ClusterState{}
+		clusterState := ecosystem.EcosystemState{}
 		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(config, clusterState)
 
 		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
@@ -33,7 +33,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions global config", func(t *testing.T) {
 		//given ecosystem config
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{
 				"key1": {Key: "key1", Value: "value1"}, // for action none
 				"key2": {Key: "key2", Value: "value2"}, // for action set
@@ -114,7 +114,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions normal dogu config", func(t *testing.T) {
 		//given ecosystem config
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
 			DoguConfig: map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{
 				dogu1Key1: {Key: dogu1Key1, Value: "value"}, //action none
@@ -207,7 +207,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				sensitiveDogu1Key1: {Key: sensitiveDogu1Key1, Value: "value"}, //action none
 				sensitiveDogu1Key2: {Key: sensitiveDogu1Key2, Value: "value"}, //action set
@@ -334,7 +334,7 @@ func Test_determineConfigDiff(t *testing.T) {
 	})
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
 		//given ecosystem config
-		clusterState := ecosystem.ClusterState{}
+		clusterState := ecosystem.EcosystemState{}
 
 		//given blueprint config
 		config := Config{

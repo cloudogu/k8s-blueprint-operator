@@ -232,7 +232,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(
-	clusterState ecosystem.ClusterState,
+	ecosystemState ecosystem.EcosystemState,
 ) error {
 	switch spec.Status {
 	case StatusPhaseNew:
@@ -246,8 +246,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}
 
-	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, clusterState.InstalledDogus)
-	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, clusterState.InstalledComponents)
+	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
+	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
 		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
 		// we need to analyze first, what kind of error this is. Why do we need one?
@@ -255,7 +255,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	}
 	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
-		clusterState,
+		ecosystemState,
 	)
 
 	spec.StateDiff = StateDiff{
