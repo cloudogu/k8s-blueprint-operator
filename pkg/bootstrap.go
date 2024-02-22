@@ -107,7 +107,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
-	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
+	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter(ecosystemClientSet.CoreV1().Secrets(namespace), configRegistry, namespace)
 	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
