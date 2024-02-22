@@ -113,9 +113,10 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+		assert.Equal(t, domain.StatusPhaseRegistryConfigApplied, spec.Status)
 	})
 
-	t.Run("should return on mark start error", func(t *testing.T) {
+	t.Run("should return on mark  apply config start error", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
@@ -197,7 +198,7 @@ func TestEcosystemRegistryUseCase_ApplyConfig(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, doguConfigMock, nil, nil)
@@ -262,7 +263,7 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should return error on unknown action", func(t *testing.T) {
 		// given
-		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
+		sut := NewEcosystemRegistryUseCase(nil, newMockDoguConfigEntryRepository(t), nil, nil)
 		diff1 := domain.DoguConfigEntryDiff{
 			Key:          common.DoguConfigKey{Key: "key"},
 			NeededAction: "unknown",
@@ -280,7 +281,7 @@ func TestEcosystemRegistryUseCase_applyDoguConfigDiffs(t *testing.T) {
 }
 
 func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
-	t.Run("should save diffs to with action set", func(t *testing.T) {
+	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigEntryRepository(t)
 		sut := NewEcosystemRegistryUseCase(nil, nil, nil, globalConfigMock)
@@ -325,7 +326,7 @@ func TestEcosystemRegistryUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 	t.Run("should return nil on action none", func(t *testing.T) {
 		// given
-		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
+		sut := NewEcosystemRegistryUseCase(nil, nil, nil, newMockGlobalConfigEntryRepository(t))
 		diff1 := domain.GlobalConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}
@@ -434,7 +435,7 @@ func TestEcosystemRegistryUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 	t.Run("should return nil on action none", func(t *testing.T) {
 		// given
-		sut := NewEcosystemRegistryUseCase(nil, nil, nil, nil)
+		sut := NewEcosystemRegistryUseCase(nil, nil, newMockSensitiveDoguConfigEntryRepository(t), nil)
 		diff1 := domain.SensitiveDoguConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}

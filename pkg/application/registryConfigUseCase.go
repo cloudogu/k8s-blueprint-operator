@@ -70,7 +70,6 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	}
 
 	if isEmptyDoguDiff && isEmptyGlobalDiff {
-		// TODO Correct Status or create new for no Action needed?
 		return useCase.markConfigApplied(ctx, blueprintSpec)
 	}
 
@@ -137,12 +136,8 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.globalConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.globalConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.globalConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
 }
@@ -169,17 +164,12 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.doguConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.doguConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
 }
 
-// Values of sensitiveConfig from existing Dogus are already encrypted???
 func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
@@ -204,17 +194,18 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.doguSensitiveConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
-	if len(entriesToEncrypt) > 0 {
-		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogu(ctx, doguName, entriesToEncrypt))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguSensitiveConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
+}
+
+func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
+	if len(collection) > 0 {
+		return fn(ctx, collection)
+	}
+
+	return nil
 }
 
 func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff) *ecosystem.SensitiveDoguConfigEntry {

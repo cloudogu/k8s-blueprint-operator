@@ -52,13 +52,13 @@ func (e EtcdGlobalConfigRepository) Delete(_ context.Context, key common.GlobalC
 }
 
 func (e EtcdGlobalConfigRepository) GetAllByKey(ctx context.Context, keys []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
-	return getAllByKey(ctx, keys, e.Get)
+	return getAllByKeyOrEntry(ctx, keys, e.Get)
 }
 
 func (e EtcdGlobalConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.GlobalConfigEntry) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, entries, e.Save, "failed to set given global config entries in etcd")
+	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given global config entries in etcd")
 }
 
 func (e EtcdGlobalConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.GlobalConfigKey) error {
-	return saveOrDeleteAllByRegistryKeys(ctx, keys, e.Delete, "failed to delete given global config keys in etcd")
+	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given global config keys in etcd")
 }
