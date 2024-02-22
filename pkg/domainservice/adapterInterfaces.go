@@ -17,7 +17,6 @@ type DoguInstallationRepository interface {
 	// an InternalError if there is any other error.
 	GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
-	// a NotFoundError if any dogu is not installed or
 	// an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
@@ -42,7 +41,6 @@ type ComponentInstallationRepository interface {
 	// an InternalError if there is any other error.
 	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
 	// GetAll returns the installation info of all installed components or
-	// a NotFoundError if any component is not installed or
 	// an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
 	// Delete deletes the component by name from the ecosystem.

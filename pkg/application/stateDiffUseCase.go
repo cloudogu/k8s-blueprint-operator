@@ -91,7 +91,8 @@ func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effect
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 
-	if joinedError != nil {
+	var internalErrorType *domainservice.InternalError
+	if errors.As(joinedError, &internalErrorType) {
 		return ecosystem.ClusterState{}, fmt.Errorf("could not collect cluster state: %w", joinedError)
 	}
 
