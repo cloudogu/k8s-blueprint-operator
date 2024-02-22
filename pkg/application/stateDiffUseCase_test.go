@@ -86,7 +86,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get installed components", func(t *testing.T) {
 		// given
@@ -116,7 +116,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get global config", func(t *testing.T) {
 		// given
@@ -150,7 +150,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get dogu config", func(t *testing.T) {
 		// given
@@ -184,7 +184,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get sensitive dogu config", func(t *testing.T) {
 		// given
@@ -218,7 +218,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
@@ -653,7 +653,7 @@ func mustParseVersion(t *testing.T, raw string) core.Version {
 	return version
 }
 
-func TestStateDiffUseCase_collectClusterState(t *testing.T) {
+func TestStateDiffUseCase_collectecosystemState(t *testing.T) {
 	t.Run("ignore not found errors", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
@@ -738,7 +738,7 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
+		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.NoError(t, err)
@@ -751,7 +751,7 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 				nginxStaticSensitiveConfigKeyNginxKey1: "val1",
 			},
-		}, clusterState)
+		}, ecosystemState)
 	})
 	t.Run("fail with internalError and notFoundError", func(t *testing.T) {
 		// given
@@ -822,12 +822,12 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
+		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorIs(t, err, globalConfigNotFoundError)
 		assert.ErrorIs(t, err, doguConfigNotFoundError)
-		assert.Equal(t, ecosystem.EcosystemState{}, clusterState)
+		assert.Equal(t, ecosystem.EcosystemState{}, ecosystemState)
 	})
 }
