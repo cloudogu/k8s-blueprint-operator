@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-dogu-operator/controllers/resource"
@@ -33,7 +32,7 @@ func (p PublicKeyConfigEncryptionAdapter) Encrypt(
 	}
 	encryptedValue, err := pubkey.Encrypt(string(value))
 	if err != nil {
-		return "", fmt.Errorf("could not encrypt value: %v", err)
+		return "", domainservice.NewInternalError(err, "could not encrypt value")
 	}
 	return common.EncryptedDoguConfigValue(encryptedValue), nil
 }
@@ -52,13 +51,13 @@ func (p PublicKeyConfigEncryptionAdapter) Decrypt(
 	encryptedValue common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error) {
 	privateKeySecret, err := p.secrets.Get(ctx, string(name)+"-private", metav1.GetOptions{})
 	if err != nil {
-		return "", domainservice.NewInternalError(err, "could not get private key")
+		return "", domainservice.NewNotFoundError(err, "could not get private key")
 	}
 	privateKey := privateKeySecret.Data["private.pem"]
 
 	keyProvider, err := resource.GetKeyProvider(p.registry)
 	if err != nil {
-		return "", domainservice.NewInternalError(err, "could not get key provider")
+		return "", domainservice.NewNotFoundError(err, "could not get key provider")
 	}
 	keyPair, err := keyProvider.FromPrivateKey(privateKey)
 	if err != nil {
