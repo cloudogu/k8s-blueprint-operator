@@ -178,12 +178,11 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 
 	for _, diff := range diffs {
 		switch diff.NeededAction {
-		case domain.ConfigActionSet:
+		case domain.ConfigActionSetEncrypted:
 			entry := &ecosystem.SensitiveDoguConfigEntry{
 				Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
 				Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
 			}
-			// TODO: Check if dogu is installed
 			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionRemove:
 			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
