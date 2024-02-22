@@ -136,12 +136,8 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.globalConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.globalConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.globalConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
 }
@@ -168,12 +164,8 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.doguConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.doguConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
 }
@@ -202,14 +194,18 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		}
 	}
 
-	if len(entriesToSet) > 0 {
-		errs = append(errs, useCase.doguSensitiveConfigRepository.SaveAll(ctx, entriesToSet))
-	}
-	if len(keysToDelete) > 0 {
-		errs = append(errs, useCase.doguSensitiveConfigRepository.DeleteAllByKeys(ctx, keysToDelete))
-	}
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguSensitiveConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
+}
+
+func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
+	if collection != nil && len(collection) > 0 {
+		return fn(ctx, collection)
+	}
+
+	return nil
 }
 
 func doguUnknownConfigActionError(action domain.ConfigAction, key string, doguName common.SimpleDoguName) error {

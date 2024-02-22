@@ -64,15 +64,7 @@ func (e EtcdSensitiveDoguConfigRepository) DeleteAllByKeys(ctx context.Context, 
 	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given sensitive dogu config keys in etcd")
 }
 
-type registryKey interface {
-	common.SensitiveDoguConfigKey | common.GlobalConfigKey | common.DoguConfigKey
-}
-
-type registryEntry interface {
-	*ecosystem.DoguConfigEntry | *ecosystem.GlobalConfigEntry | *ecosystem.SensitiveDoguConfigEntry
-}
-
-func getAllByKeyOrEntry[T registryKey, K registryEntry](ctx context.Context, collection []T, fn func(context.Context, T) (K, error)) (map[T]K, error) {
+func getAllByKeyOrEntry[T common.RegistryConfigKey, K ecosystem.RegistryConfigEntry](ctx context.Context, collection []T, fn func(context.Context, T) (K, error)) (map[T]K, error) {
 	var errs []error
 	entries := make(map[T]K)
 	for _, key := range collection {
@@ -88,7 +80,7 @@ func getAllByKeyOrEntry[T registryKey, K registryEntry](ctx context.Context, col
 	return entries, errors.Join(errs...)
 }
 
-func mapKeyOrEntry[T registryKey | registryEntry](ctx context.Context, collection []T, fn func(context.Context, T) error, errorMsg string) error {
+func mapKeyOrEntry[T common.RegistryConfigKey | ecosystem.RegistryConfigEntry](ctx context.Context, collection []T, fn func(context.Context, T) error, errorMsg string) error {
 	var errs []error
 	for _, key := range collection {
 		err := fn(ctx, key)

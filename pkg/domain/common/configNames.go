@@ -5,6 +5,10 @@ import (
 	"fmt"
 )
 
+type RegistryConfigKey interface {
+	GlobalConfigKey | DoguConfigKey | SensitiveDoguConfigKey
+}
+
 type GlobalConfigKey string
 
 type DoguConfigKey struct {
