@@ -78,6 +78,9 @@ func (p PublicKeyConfigEncryptionAdapter) Decrypt(
 	}
 	privateKey := privateKeySecret.Data["private.pem"]
 	keyPair, err := getKeyPairFromPrivateKey(privateKey, p.registry)
+	if err != nil {
+		return "", domainservice.NewInternalError(err, "could not get key pair for dogu %v", string(name))
+	}
 	decryptedValue, err := keyPair.Private().Decrypt(string(encryptedValue))
 	if err != nil {
 		return "", domainservice.NewInternalError(err, "could not decrypt encrypted value")
