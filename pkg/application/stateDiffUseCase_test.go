@@ -11,23 +11,23 @@ import (
 )
 
 var postfixQualifiedDoguName = common.QualifiedDoguName{
-	Namespace: "official",
-	Name:      "postfix",
+	Namespace:  "official",
+	SimpleName: "postfix",
 }
 
 var ldapQualifiedDoguName = common.QualifiedDoguName{
-	Namespace: "official",
-	Name:      "ldap",
+	Namespace:  "official",
+	SimpleName: "ldap",
 }
 
 var nginxIngressQualifiedDoguName = common.QualifiedDoguName{
-	Namespace: "k8s",
-	Name:      "nginx-ingress",
+	Namespace:  "k8s",
+	SimpleName: "nginx-ingress",
 }
 
 var nginxStaticQualifiedDoguName = common.QualifiedDoguName{
-	Namespace: "k8s",
-	Name:      "nginx-static",
+	Namespace:  "k8s",
+	SimpleName: "nginx-static",
 }
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {

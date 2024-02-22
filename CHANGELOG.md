@@ -31,3 +31,7 @@ Dogu-specific:
 Component-specific:
 - [#19] Create component differences between effective blueprint and cluster state
 - [#14] Apply new component states based on blueprint.
+
+Config-specific:
+- [#42] Implement config repositories
+- [#48] Save config diff in cluster

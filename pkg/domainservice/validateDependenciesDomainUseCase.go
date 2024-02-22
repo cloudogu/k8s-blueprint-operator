@@ -115,7 +115,7 @@ func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
 
 func isDoguInSlice(dogus []domain.Dogu, name common.SimpleDoguName) bool {
 	for _, dogu := range dogus {
-		if dogu.Name.Name == name {
+		if dogu.Name.SimpleName == name {
 			return true
 		}
 	}

@@ -197,8 +197,8 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			},
 			"ldap": {
 				Name: common.QualifiedDoguName{
-					Namespace: "official",
-					Name:      "ldap",
+					Namespace:  "official",
+					SimpleName: "ldap",
 				},
 				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},

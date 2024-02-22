@@ -18,8 +18,8 @@ var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 
 var postgresqlQualifiedName = common.QualifiedDoguName{
-	Namespace: "official",
-	Name:      "postgresql",
+	Namespace:  "official",
+	SimpleName: "postgresql",
 }
 
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {

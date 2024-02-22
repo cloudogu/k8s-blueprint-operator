@@ -134,11 +134,16 @@ type ConfigEncryptionAdapter interface {
 }
 
 type GlobalConfigEntryRepository interface {
-	// GetAll retrieves all keys from the global config.
+	// Get retrieves a key from the global config.
 	// It can throw the following errors:
-	// 	- NotFoundError if there is no global config.
+	// 	- NotFoundError if the key or the global config is not found.
 	// 	- InternalError if any other error happens.
-	GetAll(ctx context.Context) ([]*ecosystem.GlobalConfigEntry, error)
+	Get(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)
+	// GetAllByKey retrieves entries for the given keys from the global config.
+	// It can throw the following errors:
+	// 	- NotFoundError if a key or the global config is not found.
+	// 	- InternalError if any other error happens.
+	GetAllByKey(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)
 	// Save persists the global config.
 	// It can throw the following errors:
 	//  - ConflictError if there were concurrent write accesses.
@@ -148,19 +153,24 @@ type GlobalConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.GlobalConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.GlobalConfigEntry) error
 	// Delete deletes a global config key.
 	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.SimpleDoguName) error
+	// If the key is not existent, no error will be returned.
+	Delete(context.Context, common.GlobalConfigKey) error
 }
 
 type DoguConfigEntryRepository interface {
+	// Get retrieves a key from the dogu's config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the key is not found.
+	// 	- InternalError if any other error happens.
+	Get(context.Context, common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error)
 	// GetAllByKey retrieves all ecosystem.DoguConfigEntry's for the given ecosystem.DoguConfigKey's config.
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.DoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error)
 	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -170,19 +180,24 @@ type DoguConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.DoguConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.DoguConfigEntry) error
 	// Delete deletes a dogu config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.DoguConfigKey) error
+	Delete(context.Context, common.DoguConfigKey) error
 }
 
 type SensitiveDoguConfigEntryRepository interface {
+	// Get retrieves a key from the dogu's sensitive config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the key is not found.
+	// 	- InternalError if any other error happens.
+	Get(context.Context, common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error)
 	// GetAllByKey retrieves a dogu's sensitive config for the given keys.
 	// It can trow the following errors:
 	// 	- NotFoundError if there is no config for the dogu.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SimpleDoguName][]*ecosystem.SensitiveDoguConfigEntry, error)
+	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error)
 	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
@@ -192,11 +207,17 @@ type SensitiveDoguConfigEntryRepository interface {
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
-	SaveAll(ctx context.Context, keys []*ecosystem.SensitiveDoguConfigEntry) error
+	SaveAll(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
 	// Delete deletes a sensitive dogu config key.
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
-	Delete(ctx context.Context, key common.SensitiveDoguConfigKey) error
+	Delete(context.Context, common.SensitiveDoguConfigKey) error
+}
+
+// NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
+// omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
+func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {
+	return &NotFoundError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
 // NotFoundError is a common error indicating that sth. was requested but not found on the other side.
@@ -220,7 +241,7 @@ func (e *NotFoundError) Unwrap() error {
 
 // NewInternalError creates an InternalError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by InternalError.Error().
-func NewInternalError(wrappedError error, message string, msgArgs ...interface{}) *InternalError {
+func NewInternalError(wrappedError error, message string, msgArgs ...any) *InternalError {
 	return &InternalError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 

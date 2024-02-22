@@ -7,10 +7,10 @@ import (
 )
 
 var (
-	k8sK8sBlueprintOperator = common.QualifiedComponentName{Namespace: "k8s", Name: "k8s-blueprint-operator"}
-	k8sK8sDoguOperator      = common.QualifiedComponentName{Namespace: "k8s", Name: "k8s-dogu-operator"}
-	k8sK8sLonghorn          = common.QualifiedComponentName{Namespace: "k8s", Name: "k8s-longhorn"}
-	k8sK8sVelero            = common.QualifiedComponentName{Namespace: "k8s", Name: "k8s-velero"}
+	k8sK8sBlueprintOperator = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-blueprint-operator"}
+	k8sK8sDoguOperator      = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-dogu-operator"}
+	k8sK8sLonghorn          = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-longhorn"}
+	k8sK8sVelero            = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-velero"}
 )
 
 func TestComponentHealthResult_String(t *testing.T) {
