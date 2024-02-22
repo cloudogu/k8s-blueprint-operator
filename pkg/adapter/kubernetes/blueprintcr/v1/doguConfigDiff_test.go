@@ -151,3 +151,148 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 		})
 	}
 }
+
+func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
+	tests := []struct {
+		name string
+		dto  CombinedDoguConfigDiff
+		want domain.CombinedDoguConfigDiff
+	}{
+		{
+			name: "should exit early if slices are empty",
+			dto:  CombinedDoguConfigDiff{},
+			want: domain.CombinedDoguConfigDiff{},
+		},
+		{
+			name: "should convert multiple dogu config diffs",
+			dto: CombinedDoguConfigDiff{
+				DoguConfigDiff: DoguConfigDiff{
+					{
+						Key: "container_config/memory_limit",
+						Actual: DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Expected: DoguConfigValueState{
+							Value:  "1024m",
+							Exists: true,
+						},
+						NeededAction: ConfigActionSet,
+					},
+					{
+						Key: "container_config/swap_limit",
+						Actual: DoguConfigValueState{
+							Exists: false,
+						},
+						Expected: DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						NeededAction: ConfigActionSet,
+					},
+				},
+			},
+			want: domain.CombinedDoguConfigDiff{
+				DoguConfigDiff: []domain.DoguConfigEntryDiff{
+					{
+						Key: common.DoguConfigKey{
+							DoguName: "ldap",
+							Key:      "container_config/memory_limit",
+						},
+						Actual: domain.DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Expected: domain.DoguConfigValueState{
+							Value:  "1024m",
+							Exists: true,
+						},
+						Action: domain.ConfigActionSet,
+					},
+					{
+						Key: common.DoguConfigKey{
+							DoguName: "ldap",
+							Key:      "container_config/swap_limit",
+						},
+						Actual: domain.DoguConfigValueState{
+							Exists: false,
+						},
+						Expected: domain.DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Action: domain.ConfigActionSet,
+					},
+				},
+			},
+		},
+		{
+			name: "should convert multiple sensitive dogu config diffs",
+			dto: CombinedDoguConfigDiff{
+				SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{
+					{
+						Key: "container_config/memory_limit",
+						Actual: DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Expected: DoguConfigValueState{
+							Value:  "1024m",
+							Exists: true,
+						},
+						NeededAction: ConfigActionSet,
+					},
+					{
+						Key: "container_config/swap_limit",
+						Actual: DoguConfigValueState{
+							Exists: false,
+						},
+						Expected: DoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						NeededAction: ConfigActionSet,
+					},
+				},
+			},
+			want: domain.CombinedDoguConfigDiff{
+				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
+					{
+						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+							DoguName: "ldap",
+							Key:      "container_config/memory_limit",
+						}},
+						Actual: domain.EncryptedDoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Expected: domain.EncryptedDoguConfigValueState{
+							Value:  "1024m",
+							Exists: true,
+						},
+						Action: domain.ConfigActionSet,
+					},
+					{
+						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+							DoguName: "ldap",
+							Key:      "container_config/swap_limit",
+						}},
+						Actual: domain.EncryptedDoguConfigValueState{
+							Exists: false,
+						},
+						Expected: domain.EncryptedDoguConfigValueState{
+							Value:  "512m",
+							Exists: true,
+						},
+						Action: domain.ConfigActionSet,
+					},
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, convertToCombinedDoguConfigDiffDomain("ldap", tt.dto), "convertToCombinedDoguConfigDiffDomain(%v, %v)", "ldap", tt.dto)
+		})
+	}
+}

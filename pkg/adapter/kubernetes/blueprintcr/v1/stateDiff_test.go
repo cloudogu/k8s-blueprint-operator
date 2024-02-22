@@ -492,6 +492,60 @@ func TestConvertToDomainModel(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
+		},
+		{
+			name: "succeed for multiple dogu config diffs",
+			dto: StateDiff{
+				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			want: domain.StateDiff{
+				DoguDiffs:      []domain.DoguDiff{},
+				ComponentDiffs: []domain.ComponentDiff{},
+				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		},
+		{
+			name: "succeed for global config diffs",
+			dto: StateDiff{
+				GlobalConfigDiff: GlobalConfigDiff{{
+					Key: "fqdn",
+					Actual: GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: ConfigActionSet,
+				}},
+			},
+			want: domain.StateDiff{
+				GlobalConfigDiff: []domain.GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: domain.GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: domain.GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					Action: domain.ConfigActionSet,
+				}},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
 		}, {
 			name: "succeed for multiple component diffs",
 			dto: StateDiff{
