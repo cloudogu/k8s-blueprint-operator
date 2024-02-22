@@ -201,7 +201,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 }
 
 func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
-	if collection != nil && len(collection) > 0 {
+	if len(collection) > 0 {
 		return fn(ctx, collection)
 	}
 
