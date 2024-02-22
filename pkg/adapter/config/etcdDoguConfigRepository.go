@@ -12,11 +12,6 @@ type EtcdDoguConfigRepository struct {
 	etcdStore etcdStore
 }
 
-func (e EtcdDoguConfigRepository) GetAllByKey2(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
-	// TODO implement me
-	panic("implement me")
-}
-
 func NewEtcdDoguConfigRepository(etcdStore etcdStore) *EtcdDoguConfigRepository {
 	return &EtcdDoguConfigRepository{etcdStore: etcdStore}
 }
