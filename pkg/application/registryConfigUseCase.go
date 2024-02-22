@@ -19,6 +19,8 @@ var doguConfigDiffMockDataBytes []byte
 //go:embed testdata/globalConfigDiffMockData.yaml
 var globalConfigDiffMockDataBytes []byte
 
+var sensitiveDoguConfigEntryError = fmt.Errorf("sensitive dogu config error")
+
 type EcosystemRegistryUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
@@ -193,10 +195,10 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 				errs = append(errs, createEncryptedEntryErr)
 				continue
 			}
-			encryptedEntriesToSet = append(encryptedEntriesToSet, entry)
+			entriesToEncrypt = append(entriesToEncrypt, entry)
 		case domain.ConfigActionSetToEncrypt:
 			entry := getSensitiveDoguConfigEntry(doguName, diff)
-			entriesToEncrypt = append(entriesToEncrypt, entry)
+			encryptedEntriesToSet = append(encryptedEntriesToSet, entry)
 		case domain.ConfigActionRemove:
 			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
 		case domain.ConfigActionNone:
@@ -206,8 +208,8 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 		}
 	}
 
-	errs = append(errs, callIfNotEmpty(ctx, encryptedEntriesToSet, useCase.doguSensitiveConfigRepository.SaveAll))
-	errs = append(errs, callIfNotEmpty(ctx, entriesToEncrypt, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogus))
+	errs = append(errs, callIfNotEmpty(ctx, entriesToEncrypt, useCase.doguSensitiveConfigRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, encryptedEntriesToSet, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogus))
 	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
@@ -240,9 +242,12 @@ func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](
 
 func getSensitiveDoguConfigEntryWithEncryption(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff, encryptedEntryValues map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (*ecosystem.SensitiveDoguConfigEntry, error) {
 	entry := getSensitiveDoguConfigEntry(doguName, diff)
+	if encryptedEntryValues == nil {
+		return nil, domainservice.NewInternalError(sensitiveDoguConfigEntryError, "encrypted entry value map is nil")
+	}
 	value, ok := encryptedEntryValues[entry.Key]
 	if !ok {
-		return nil, domainservice.NewNotFoundError(fmt.Errorf("sensitive dogu config error"), "did not find encrypted value for key %s", entry.Key.Key)
+		return nil, domainservice.NewNotFoundError(sensitiveDoguConfigEntryError, "did not find encrypted value for key %s", entry.Key.Key)
 	}
 	entry.Value = value
 
