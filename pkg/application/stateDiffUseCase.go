@@ -16,9 +16,10 @@ type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
-	globalConfigRepo          GlobalConfigEntryRepository
-	doguConfigRepo            DoguConfigEntryRepository
-	sensitiveDoguConfigRepo   SensitiveDoguConfigEntryRepository
+	globalConfigRepo          globalConfigEntryRepository
+	doguConfigRepo            doguConfigEntryRepository
+	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
+	encryptionAdapter         configEncryptionAdapter
 }
 
 func NewStateDiffUseCase(
@@ -28,6 +29,7 @@ func NewStateDiffUseCase(
 	globalConfigRepo domainservice.GlobalConfigEntryRepository,
 	doguConfigRepo domainservice.DoguConfigEntryRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
+	encryptionAdapter configEncryptionAdapter,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -36,6 +38,7 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
+		encryptionAdapter:         encryptionAdapter,
 	}
 }
 
