@@ -249,7 +249,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key1,
-			doguAlreadyInstalled: true,
+			DoguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -262,7 +262,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key2,
-			doguAlreadyInstalled: true,
+			DoguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -275,7 +275,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key3,
-			doguAlreadyInstalled: true,
+			DoguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "value",
 				Exists: true,
@@ -288,7 +288,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		})
 		assert.Contains(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key4,
-			doguAlreadyInstalled: true,
+			DoguAlreadyInstalled: true,
 			Actual: DoguConfigValueState{
 				Value:  "",
 				Exists: false,
@@ -326,7 +326,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		require.Equal(t, 1, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
 		assert.Equal(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff[0], SensitiveDoguConfigEntryDiff{
 			Key:                  sensitiveDogu1Key1,
-			doguAlreadyInstalled: false,
+			DoguAlreadyInstalled: false,
 			Actual: DoguConfigValueState{
 				Value:  "",
 				Exists: false,

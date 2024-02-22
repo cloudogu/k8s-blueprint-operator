@@ -179,7 +179,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 
 	for _, diff := range diffs {
 		switch diff.NeededAction {
-		case domain.ConfigActionSet:
+		case domain.ConfigActionSetEncrypted:
 			entry := getSensitiveDoguConfigEntry(doguName, diff)
 			entriesToSet = append(entriesToSet, entry)
 		case domain.ConfigActionSetToEncrypt:
