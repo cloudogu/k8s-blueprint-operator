@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -110,22 +109,34 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
+	blueprintJson, err := repo.blueprintSerializer.Serialize(spec.Blueprint)
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to serialize blueprint json")
+	}
+
+	blueprintMaskJson, err := repo.blueprintMaskSerializer.Serialize(spec.BlueprintMask)
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to serialize blueprint mask json")
+	}
+
 	updatedBlueprint := v1.Blueprint{
-		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              spec.Id,
 			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
-		Status: v1.BlueprintStatus{
-			Phase:              spec.Status,
-			EffectiveBlueprint: effectiveBlueprint,
-			StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
+		Spec: v1.BlueprintSpec{
+			Blueprint:                blueprintJson,
+			BlueprintMask:            blueprintMaskJson,
+			IgnoreDoguHealth:         spec.Config.IgnoreDoguHealth,
+			IgnoreComponentHealth:    spec.Config.IgnoreComponentHealth,
+			AllowDoguNamespaceSwitch: spec.Config.AllowDoguNamespaceSwitch,
+			DryRun:                   spec.Config.DryRun,
 		},
 	}
 
 	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
-	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, &updatedBlueprint, metav1.UpdateOptions{})
+	CRAfterUpdate, err := repo.blueprintClient.Update(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
 			return &domainservice.ConflictError{
@@ -133,7 +144,24 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 				Message:      fmt.Sprintf("cannot update blueprint CR %q as it was modified in the meantime", spec.Id),
 			}
 		}
-		return &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("cannot update blueprint CR %q", spec.Id)}
+		return domainservice.NewInternalError(err, "cannot update blueprint CR %q", spec.Id)
+	}
+
+	blueprintStatus := v1.BlueprintStatus{
+		Phase:              spec.Status,
+		EffectiveBlueprint: effectiveBlueprint,
+		StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
+	}
+	CRAfterUpdate.Status = blueprintStatus
+	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
+	if err != nil {
+		if k8sErrors.IsConflict(err) {
+			return &domainservice.ConflictError{
+				WrappedError: err,
+				Message:      fmt.Sprintf("cannot update blueprint CR status %q as it was modified in the meantime", spec.Id),
+			}
+		}
+		return domainservice.NewInternalError(err, "cannot update blueprint CR status %q", spec.Id)
 	}
 
 	setPersistenceContext(CRAfterUpdate, spec)
