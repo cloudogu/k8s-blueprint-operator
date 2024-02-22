@@ -13,11 +13,6 @@ type EtcdSensitiveDoguConfigRepository struct {
 	etcdStore etcdStore
 }
 
-func (e EtcdSensitiveDoguConfigRepository) GetAllByKey2(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func NewEtcdSensitiveDoguConfigRepository(etcdStore etcdStore) *EtcdSensitiveDoguConfigRepository {
 	return &EtcdSensitiveDoguConfigRepository{etcdStore: etcdStore}
 }

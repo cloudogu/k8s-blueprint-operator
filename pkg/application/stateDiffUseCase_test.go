@@ -280,6 +280,36 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot save blueprint spec \"testBlueprint1\" after determining the state diff to the ecosystem")
 	})
+	t.Run("should fail to decrypt config", func(t *testing.T) {
+		// given
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
+
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+
+		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := newMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		globalConfigRepoMock := newMockGlobalConfigEntryRepository(t)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
+		doguConfigRepoMock := newMockDoguConfigEntryRepository(t)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
+		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, internalTestError)
+
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+
+		// when
+		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, internalTestError)
+		assert.ErrorContains(t, err, "could not decrypt sensitive dogu config")
+	})
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{

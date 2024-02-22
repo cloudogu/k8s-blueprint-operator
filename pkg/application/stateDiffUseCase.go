@@ -132,20 +132,3 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		DecryptedSensitiveDoguConfig: decryptedConfig,
 	}, nil
 }
-
-func (useCase *StateDiffUseCase) decryptSensitiveDoguConfig(
-	ctx context.Context,
-	encryptedConfig map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue,
-) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
-	logger := log.FromContext(ctx).WithName("StateDiffUseCase.decryptSensitiveDoguConfig")
-	logger.Info("decrypt sensitive dogu config")
-	decryptedConfig, err := useCase.encryptionAdapter.DecryptAll(ctx, encryptedConfig)
-	if err != nil {
-		// we cannot ignore any error type here:
-		// - InternalError -> there could be a network error -> retry by reconciliation
-		// - NotFoundError -> we only have encrypted values to decrypt, therefore the encryption key pair should be present
-		//                    if the key pair is not present, we could have a serious problem or there is config for a not installed dogu
-		return nil, err
-	}
-	return decryptedConfig, nil
-}
