@@ -23,8 +23,25 @@ func (p PublicKeyConfigEncryptionAdapter) Encrypt(
 
 func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
 	ctx context.Context,
-	entries map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+	m map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 ) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p PublicKeyConfigEncryptionAdapter) Decrypt(
+	ctx context.Context,
+	name common.SimpleDoguName,
+	value common.EncryptedDoguConfigValue,
+) (common.SensitiveDoguConfigValue, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (p PublicKeyConfigEncryptionAdapter) DecryptAll(
+	ctx context.Context,
+	m map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue,
+) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	//TODO implement me
 	panic("implement me")
 }

@@ -37,7 +37,6 @@ type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
 	PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error
 	PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error
-	// TODO refactor in apply components and dogus
 	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
 }
 
@@ -90,6 +89,9 @@ type remoteDoguRegistry interface {
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
 }
+type globalConfigEntryRepository interface {
+	domainservice.GlobalConfigEntryRepository
+}
 
 type doguConfigEntryRepository interface {
 	domainservice.DoguConfigEntryRepository
@@ -99,6 +101,6 @@ type sensitiveDoguConfigEntryRepository interface {
 	domainservice.SensitiveDoguConfigEntryRepository
 }
 
-type globalConfigEntryRepository interface {
-	domainservice.GlobalConfigEntryRepository
+type configEncryptionAdapter interface {
+	domainservice.ConfigEncryptionAdapter
 }

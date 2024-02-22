@@ -9,7 +9,7 @@ type SensitiveDoguConfigEntryDiff struct {
 	Key                  common.SensitiveDoguConfigKey
 	Actual               DoguConfigValueState
 	Expected             DoguConfigValueState
-	doguAlreadyInstalled bool
+	DoguAlreadyInstalled bool
 	NeededAction         ConfigAction
 }
 
@@ -40,7 +40,7 @@ func newSensitiveDoguConfigEntryDiff(
 		Key:                  key,
 		Actual:               actual,
 		Expected:             expected,
-		doguAlreadyInstalled: doguAlreadyInstalled,
+		DoguAlreadyInstalled: doguAlreadyInstalled,
 		NeededAction:         getNeededSensitiveConfigAction(ConfigValueState(expected), ConfigValueState(actual), doguAlreadyInstalled),
 	}
 }

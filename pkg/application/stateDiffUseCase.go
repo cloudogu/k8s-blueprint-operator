@@ -19,6 +19,7 @@ type StateDiffUseCase struct {
 	globalConfigRepo          globalConfigEntryRepository
 	doguConfigRepo            doguConfigEntryRepository
 	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
+	encryptionAdapter         configEncryptionAdapter
 }
 
 func NewStateDiffUseCase(
@@ -28,6 +29,7 @@ func NewStateDiffUseCase(
 	globalConfigRepo domainservice.GlobalConfigEntryRepository,
 	doguConfigRepo domainservice.DoguConfigEntryRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
+	encryptionAdapter configEncryptionAdapter,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -36,6 +38,7 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
+		encryptionAdapter:         encryptionAdapter,
 	}
 }
 
@@ -91,13 +94,18 @@ func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effect
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 
-	if joinedError != nil {
+	var internalErrorType *domainservice.InternalError
+	if errors.As(joinedError, &internalErrorType) {
 		return ecosystem.ClusterState{}, fmt.Errorf("could not collect cluster state: %w", joinedError)
 	}
 
-	decryptedConfig, err := useCase.decryptSensitiveDoguConfig(ctx, sensitiveDoguConfig)
+	encryptedConfig := map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}
+	for key, entry := range sensitiveDoguConfig {
+		encryptedConfig[key] = entry.Value
+	}
+	decryptedConfig, err := useCase.decryptSensitiveDoguConfig(ctx, encryptedConfig)
 	if err != nil {
-		return ecosystem.ClusterState{}, fmt.Errorf("could not decyrpt sensitive dogu config: %w", err)
+		return ecosystem.ClusterState{}, fmt.Errorf("could not decrypt sensitive dogu config: %w", err)
 	}
 
 	return ecosystem.ClusterState{
@@ -112,14 +120,13 @@ func (useCase *StateDiffUseCase) collectClusterState(ctx context.Context, effect
 
 func (useCase *StateDiffUseCase) decryptSensitiveDoguConfig(
 	ctx context.Context,
-	encryptedConfig map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry,
+	encryptedConfig map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue,
 ) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.decryptSensitiveDoguConfig")
 	logger.Info("decrypt sensitive dogu config")
-	decryptedDoguConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-	for key, entry := range encryptedConfig {
-		// TODO: decrypt sensitive config
-		decryptedDoguConfig[key] = common.SensitiveDoguConfigValue(entry.Value)
+	decryptedConfig, err := useCase.encryptionAdapter.DecryptAll(ctx, encryptedConfig)
+	if err != nil {
+		return nil, err
 	}
-	return decryptedDoguConfig, nil
+	return decryptedConfig, nil
 }
