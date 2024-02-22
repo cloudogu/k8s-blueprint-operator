@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
-	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
@@ -150,7 +150,7 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
-				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -166,7 +166,7 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert global config diff",
 			domainModel: domain.StateDiff{
-				GlobalConfigDiff: []domain.GlobalConfigEntryDiff{{
+				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
 					Key: "fqdn",
 					Actual: domain.GlobalConfigValueState{
 						Value:  "ces1.example.com",
@@ -176,7 +176,7 @@ func TestConvertToDTO(t *testing.T) {
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
-					Action: domain.ConfigActionSet,
+					NeededAction: domain.ConfigActionSet,
 				}},
 			},
 			want: StateDiff{
@@ -504,7 +504,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{
 				DoguDiffs:      []domain.DoguDiff{},
 				ComponentDiffs: []domain.ComponentDiff{},
-				DoguConfigDiff: map[common.SimpleDoguName]domain.CombinedDoguConfigDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -530,7 +530,7 @@ func TestConvertToDomainModel(t *testing.T) {
 				}},
 			},
 			want: domain.StateDiff{
-				GlobalConfigDiff: []domain.GlobalConfigEntryDiff{{
+				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
 					Key: "fqdn",
 					Actual: domain.GlobalConfigValueState{
 						Value:  "ces1.example.com",
@@ -540,7 +540,7 @@ func TestConvertToDomainModel(t *testing.T) {
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
-					Action: domain.ConfigActionSet,
+					NeededAction: domain.ConfigActionSet,
 				}},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
