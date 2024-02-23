@@ -105,6 +105,8 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 
 	var internalErrorType *domainservice.InternalError
 	if errors.As(joinedError, &internalErrorType) {
+		// we ignore NotFoundErrors as there is a high chance to have a config key in the blueprint which is not yet present in the ecosystem.
+		// the config repos give us all present keys even if there is a NotFoundError for others.
 		return ecosystem.EcosystemState{}, fmt.Errorf("could not collect ecosystem state: %w", joinedError)
 	}
 
