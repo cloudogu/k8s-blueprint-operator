@@ -19,7 +19,7 @@ var doguConfigDiffMockDataBytes []byte
 //go:embed testdata/globalConfigDiffMockData.yaml
 var globalConfigDiffMockDataBytes []byte
 
-var sensitiveDoguConfigEntryError = fmt.Errorf("sensitive dogu config error")
+var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
 type EcosystemRegistryUseCase struct {
 	blueprintRepository           blueprintSpecRepository
@@ -243,11 +243,11 @@ func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](
 func getSensitiveDoguConfigEntryWithEncryption(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff, encryptedEntryValues map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (*ecosystem.SensitiveDoguConfigEntry, error) {
 	entry := getSensitiveDoguConfigEntry(doguName, diff)
 	if encryptedEntryValues == nil {
-		return nil, domainservice.NewInternalError(sensitiveDoguConfigEntryError, "encrypted entry value map is nil")
+		return nil, domainservice.NewInternalError(errSensitiveDoguConfigEntry, "encrypted entry value map is nil")
 	}
 	value, ok := encryptedEntryValues[entry.Key]
 	if !ok {
-		return nil, domainservice.NewNotFoundError(sensitiveDoguConfigEntryError, "did not find encrypted value for key %s", entry.Key.Key)
+		return nil, domainservice.NewNotFoundError(errSensitiveDoguConfigEntry, "did not find encrypted value for key %s", entry.Key.Key)
 	}
 	entry.Value = value
 
