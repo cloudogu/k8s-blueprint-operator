@@ -192,7 +192,7 @@ func TestConvertToDTO(t *testing.T) {
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
-					NeededAction: ConfigActionSet,
+					NeededAction: "set",
 				}},
 			},
 		},
@@ -526,7 +526,7 @@ func TestConvertToDomainModel(t *testing.T) {
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
-					NeededAction: ConfigActionSet,
+					NeededAction: "set",
 				}},
 			},
 			want: domain.StateDiff{
