@@ -32,7 +32,14 @@ type SensitiveDoguConfigKey struct {
 	DoguConfigKey
 }
 
+// GlobalConfigValue is a single global config value
 type GlobalConfigValue string
+
+// DoguConfigValue  is a single dogu config value, which is no sensitive configuration
 type DoguConfigValue string
+
+// SensitiveDoguConfigValue is a single unencrypted sensitive dogu config value
 type SensitiveDoguConfigValue string
+
+// EncryptedDoguConfigValue is a single encrypted sensitive dogu config value
 type EncryptedDoguConfigValue string

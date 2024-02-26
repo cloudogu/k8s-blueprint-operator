@@ -156,7 +156,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		// TODO apply valuesYamlOverwrite
 		componentInstallation.Upgrade(componentDiff.Expected.Version)
 		return useCase.componentRepo.Update(ctx, componentInstallation)
-	case domain.ActionSwitchComponentDistributionNamespace:
+	case domain.ActionSwitchComponentNamespace:
 		logger.Info("switch distribution namespace")
 		return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
 	case domain.ActionDowngrade:

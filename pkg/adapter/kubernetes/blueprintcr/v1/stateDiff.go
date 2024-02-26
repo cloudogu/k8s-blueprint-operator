@@ -32,9 +32,9 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 	}
 
 	var doguConfigDiffs map[string]CombinedDoguConfigDiff
-	if len(domainModel.DoguConfigDiff) != 0 {
+	if len(domainModel.DoguConfigDiffs) != 0 {
 		doguConfigDiffs = make(map[string]CombinedDoguConfigDiff)
-		for doguName, doguConfigDiff := range domainModel.DoguConfigDiff {
+		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
 			doguConfigDiffs[string(doguName)] = convertToCombinedDoguConfigDiffDTO(doguConfigDiff)
 		}
 	}
@@ -43,7 +43,7 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 		DoguDiffs:        doguDiffs,
 		ComponentDiffs:   componentDiffsV1,
 		DoguConfigDiffs:  doguConfigDiffs,
-		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiff),
+		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiffs),
 	}
 }
 
@@ -69,18 +69,18 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff DTO to domain model: %w", err)
 	}
 
-	var doguConfigDiffs map[common.SimpleDoguName]domain.CombinedDoguConfigDiff
+	var doguConfigDiffs map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs
 	if len(dto.DoguConfigDiffs) != 0 {
-		doguConfigDiffs = make(map[common.SimpleDoguName]domain.CombinedDoguConfigDiff)
+		doguConfigDiffs = make(map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs)
 		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
 			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToCombinedDoguConfigDiffDomain(doguName, doguConfigDiff)
 		}
 	}
 
 	return domain.StateDiff{
-		DoguDiffs:        doguDiffs,
-		ComponentDiffs:   componentDiffs,
-		DoguConfigDiff:   doguConfigDiffs,
-		GlobalConfigDiff: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
+		DoguDiffs:         doguDiffs,
+		ComponentDiffs:    componentDiffs,
+		DoguConfigDiffs:   doguConfigDiffs,
+		GlobalConfigDiffs: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
 	}, nil
 }

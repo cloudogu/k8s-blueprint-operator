@@ -2,7 +2,10 @@ package domain
 
 import (
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"slices"
+	"strings"
 )
 
 type Event interface {
@@ -68,6 +71,44 @@ type StateDiffDeterminedEvent struct {
 	ToUninstall int
 	// OtherActions contains the number of actions that do not fall into the other three category, f. i. the number of dogus being ignored
 	OtherActions int
+}
+
+type GlobalConfigDiffDeterminedEvent struct {
+	GlobalConfigDiffs GlobalConfigDiffs
+}
+
+func (e GlobalConfigDiffDeterminedEvent) Name() string {
+	return "GlobalConfigDiffDetermined"
+}
+
+func (e GlobalConfigDiffDeterminedEvent) Message() string {
+	var stringPerAction []string
+	var actionsCounter int
+	for action, amount := range e.GlobalConfigDiffs.countByAction() {
+		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
+		actionsCounter += amount
+	}
+	slices.Sort(stringPerAction)
+	return fmt.Sprintf("global config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+}
+
+type DoguConfigDiffDeterminedEvent struct {
+	CombinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs
+}
+
+func (e DoguConfigDiffDeterminedEvent) Name() string {
+	return "DoguConfigDiffDetermined"
+}
+
+func (e DoguConfigDiffDeterminedEvent) Message() string {
+	var stringPerAction []string
+	var actionsCounter int
+	for action, amount := range countByAction(e.CombinedDogusConfigDiffs) {
+		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
+		actionsCounter += amount
+	}
+	slices.Sort(stringPerAction)
+	return fmt.Sprintf("dogu config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 func (s StateDiffDeterminedEvent) buildMessage() string {

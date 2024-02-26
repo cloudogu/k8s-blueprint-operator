@@ -15,12 +15,12 @@ type GlobalConfigEntryDiff struct {
 	NeededAction ConfigAction           `json:"neededAction,omitempty"`
 }
 
-func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDiff {
+func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDiffs {
 	if len(dto) == 0 {
 		return nil
 	}
 
-	globalConfigDiff := make(domain.GlobalConfigDiff, len(dto))
+	globalConfigDiff := make(domain.GlobalConfigDiffs, len(dto))
 	for i, entryDiff := range dto {
 		globalConfigDiff[i] = convertToGlobalConfigEntryDiffDomain(entryDiff)
 	}
@@ -38,11 +38,11 @@ func convertToGlobalConfigEntryDiffDomain(dto GlobalConfigEntryDiff) domain.Glob
 			Value:  dto.Expected.Value,
 			Exists: dto.Expected.Exists,
 		},
-		Action: domain.ConfigAction(dto.NeededAction),
+		NeededAction: domain.ConfigAction(dto.NeededAction),
 	}
 }
 
-func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiff) GlobalConfigDiff {
+func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) GlobalConfigDiff {
 	if len(domainModel) == 0 {
 		return nil
 	}
@@ -65,6 +65,6 @@ func convertToGlobalConfigEntryDiffDTO(domainModel domain.GlobalConfigEntryDiff)
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},
-		NeededAction: ConfigAction(domainModel.Action),
+		NeededAction: ConfigAction(domainModel.NeededAction),
 	}
 }

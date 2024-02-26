@@ -85,3 +85,18 @@ type remoteDoguRegistry interface {
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
 }
+type globalConfigEntryRepository interface {
+	domainservice.GlobalConfigEntryRepository
+}
+
+type doguConfigEntryRepository interface {
+	domainservice.DoguConfigEntryRepository
+}
+
+type sensitiveDoguConfigEntryRepository interface {
+	domainservice.SensitiveDoguConfigEntryRepository
+}
+
+type configEncryptionAdapter interface {
+	domainservice.ConfigEncryptionAdapter
+}

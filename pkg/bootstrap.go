@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	config3 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	configAdapter "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -88,6 +88,11 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
+	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter()
+	doguConfigAdapter := configAdapter.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := configAdapter.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := configAdapter.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := config2.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
@@ -95,7 +100,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter, configEncryptionAdapter)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
@@ -106,11 +111,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		applyBlueprintSpecUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
-
-	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := config3.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := config3.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := config3.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 
 	return &ApplicationContext{
 		RemoteDoguRegistry:             remoteDoguRegistry,

@@ -108,3 +108,36 @@ type testStruct struct {
 	name   string
 	status int
 }
+
+func TestToMap(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		result := ToMap([]testStruct{}, func(s testStruct) string {
+			return s.name
+		})
+		assert.Equal(t, map[string]testStruct{}, result)
+	})
+	t.Run("ok", func(t *testing.T) {
+		test1 := testStruct{name: "test1", status: 1}
+		test2 := testStruct{name: "test2", status: 2}
+		result := ToMap([]testStruct{test1, test2}, func(s testStruct) string {
+			return s.name
+		})
+
+		assert.Equal(t, map[string]testStruct{
+			"test1": test1,
+			"test2": test2,
+		}, result)
+	})
+	t.Run("duplicate keys", func(t *testing.T) {
+		test1 := testStruct{name: "test", status: 1}
+		test2 := testStruct{name: "test", status: 2}
+		result := ToMap([]testStruct{test1, test2}, func(s testStruct) string {
+			return s.name
+		})
+
+		//last wins
+		assert.Equal(t, map[string]testStruct{
+			"test": test2,
+		}, result)
+	})
+}
