@@ -115,6 +115,7 @@ func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
 
 		// then
 		require.Error(t, err)
+		assert.Contains(t, err.Error(), "could not get key pair for dogu "+doguname)
 		assert.Equal(t, common.SensitiveDoguConfigValue(""), decryptedValue)
 	})
 }
