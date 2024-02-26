@@ -2,8 +2,6 @@ package config
 
 import (
 	"context"
-	"errors"
-
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -32,43 +30,12 @@ func (e EtcdGlobalConfigRepository) Get(_ context.Context, key common.GlobalConf
 	}, nil
 }
 
-func (e EtcdGlobalConfigRepository) GetAllByKey(ctx context.Context, keys []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
-	var errs []error
-	entries := make(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry)
-	for _, key := range keys {
-		entry, err := e.Get(ctx, key)
-		if err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		entries[key] = entry
-	}
-
-	return entries, errors.Join(errs...)
-}
-
 func (e EtcdGlobalConfigRepository) Save(_ context.Context, entry *ecosystem.GlobalConfigEntry) error {
 	strKey := string(entry.Key)
 	strValue := string(entry.Value)
 	err := e.configStore.Set(strKey, strValue)
 	if err != nil {
 		return domainservice.NewInternalError(err, "failed to set global config key %q with value %q in etcd", strKey, strValue)
-	}
-
-	return nil
-}
-
-func (e EtcdGlobalConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.GlobalConfigEntry) error {
-	var errs []error
-	for _, entry := range entries {
-		err := e.Save(ctx, entry)
-		errs = append(errs, err)
-	}
-
-	err := errors.Join(errs...)
-	if err != nil {
-		return domainservice.NewInternalError(err, "failed to set given global config entries in etcd")
 	}
 
 	return nil
@@ -82,4 +49,16 @@ func (e EtcdGlobalConfigRepository) Delete(_ context.Context, key common.GlobalC
 	}
 
 	return nil
+}
+
+func (e EtcdGlobalConfigRepository) GetAllByKey(ctx context.Context, keys []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
+	return getAllByKeyOrEntry(ctx, keys, e.Get)
+}
+
+func (e EtcdGlobalConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.GlobalConfigEntry) error {
+	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given global config entries in etcd")
+}
+
+func (e EtcdGlobalConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.GlobalConfigKey) error {
+	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given global config keys in etcd")
 }

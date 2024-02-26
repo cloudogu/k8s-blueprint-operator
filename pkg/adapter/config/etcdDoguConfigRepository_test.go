@@ -419,3 +419,66 @@ func TestEtcdDoguConfigRepository_Get(t *testing.T) {
 		}, actualEntry)
 	})
 }
+
+func TestEtcdDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
+	t.Run("success with multiple keys", func(t *testing.T) {
+		// given
+		ldapConfigMock := newMockConfigurationContext(t)
+		ldapConfigMock.EXPECT().Delete("container_config/memory_limit").Return(nil)
+		postfixConfigMock := newMockConfigurationContext(t)
+		postfixConfigMock.EXPECT().Delete("container_config/swap_limit").Return(nil)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
+		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
+
+		sut := &EtcdDoguConfigRepository{etcdStore: etcdMock}
+
+		keys := []common.DoguConfigKey{
+			{
+				DoguName: "ldap",
+				Key:      "container_config/memory_limit",
+			},
+			{
+				DoguName: "postfix",
+				Key:      "container_config/swap_limit",
+			},
+		}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, keys)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should return error on delete error", func(t *testing.T) {
+		// given
+		ldapConfigMock := newMockConfigurationContext(t)
+		ldapConfigMock.EXPECT().Delete("container_config/memory_limit").Return(nil)
+		postfixConfigMock := newMockConfigurationContext(t)
+		postfixConfigMock.EXPECT().Delete("container_config/swap_limit").Return(assert.AnError)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
+		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
+
+		sut := &EtcdDoguConfigRepository{etcdStore: etcdMock}
+
+		entries := []common.DoguConfigKey{
+			{
+				DoguName: "ldap",
+				Key:      "container_config/memory_limit",
+			},
+			{
+				DoguName: "postfix",
+				Key:      "container_config/swap_limit",
+			},
+		}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, entries)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to delete given dogu config keys in etcd")
+	})
+}

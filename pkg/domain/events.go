@@ -281,3 +281,35 @@ func (e CompletedEvent) Name() string {
 func (e CompletedEvent) Message() string {
 	return "maintenance mode deactivated"
 }
+
+type ApplyRegistryConfigEvent struct{}
+
+func (e ApplyRegistryConfigEvent) Name() string {
+	return "ApplyRegistryConfig"
+}
+
+func (e ApplyRegistryConfigEvent) Message() string {
+	return "apply registry config"
+}
+
+type ApplyRegistryConfigFailedEvent struct {
+	err error
+}
+
+func (e ApplyRegistryConfigFailedEvent) Name() string {
+	return "ApplyDoguConfigFailed"
+}
+
+func (e ApplyRegistryConfigFailedEvent) Message() string {
+	return e.err.Error()
+}
+
+type RegistryConfigAppliedEvent struct{}
+
+func (e RegistryConfigAppliedEvent) Name() string {
+	return "RegistryConfigApplied"
+}
+
+func (e RegistryConfigAppliedEvent) Message() string {
+	return "registry config applied"
+}

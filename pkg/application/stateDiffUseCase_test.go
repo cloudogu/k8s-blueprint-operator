@@ -338,6 +338,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				},
 			},
 			Status: domain.StatusPhaseValidated,
+			// TODO: add config to test
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)

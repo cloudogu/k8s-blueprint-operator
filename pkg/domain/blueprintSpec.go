@@ -59,6 +59,12 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
+	// StatusPhaseApplyRegistryConfig indicates that the apply registry config phase is active.
+	StatusPhaseApplyRegistryConfig StatusPhase = "applyRegistryConfig"
+	// StatusPhaseApplyRegistryConfigFailed indicates that the phase to apply registry config phase failed.
+	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
+	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
+	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
 )
 
 type BlueprintConfiguration struct {
@@ -401,6 +407,21 @@ func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, inv
 	}
 
 	return invalidBlueprintErrors
+}
+
+func (spec *BlueprintSpec) StartApplyRegistryConfig() {
+	spec.Status = StatusPhaseApplyRegistryConfig
+	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
+}
+
+func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyRegistryConfigFailed
+	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
+	spec.Status = StatusPhaseRegistryConfigApplied
+	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

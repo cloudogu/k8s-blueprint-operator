@@ -11,11 +11,12 @@ import (
 )
 
 type BlueprintSpecChangeUseCase struct {
-	repo               blueprintSpecRepository
-	validation         blueprintSpecValidationUseCase
-	effectiveBlueprint effectiveBlueprintUseCase
-	stateDiff          stateDiffUseCase
-	applyUseCase       applyBlueprintSpecUseCase
+	repo                  blueprintSpecRepository
+	validation            blueprintSpecValidationUseCase
+	effectiveBlueprint    effectiveBlueprintUseCase
+	stateDiff             stateDiffUseCase
+	applyUseCase          applyBlueprintSpecUseCase
+	registryConfigUseCase registryConfigUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -24,13 +25,15 @@ func NewBlueprintSpecChangeUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
+	doguConfigUseCase registryConfigUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
-		repo:               repo,
-		validation:         validation,
-		effectiveBlueprint: effectiveBlueprint,
-		stateDiff:          stateDiff,
-		applyUseCase:       applyUseCase,
+		repo:                  repo,
+		validation:            validation,
+		effectiveBlueprint:    effectiveBlueprint,
+		stateDiff:             stateDiff,
+		applyUseCase:          applyUseCase,
+		registryConfigUseCase: doguConfigUseCase,
 	}
 }
 
@@ -74,6 +77,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
+		return useCase.applyRegistryConfig(ctx, blueprintId)
+	case domain.StatusPhaseRegistryConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
@@ -169,6 +174,15 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Contex
 
 func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
 	err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) applyRegistryConfig(ctx context.Context, blueprintId string) error {
+	err := useCase.registryConfigUseCase.ApplyConfig(ctx, blueprintId)
 	if err != nil {
 		return err
 	}

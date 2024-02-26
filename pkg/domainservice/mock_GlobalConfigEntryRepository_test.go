@@ -68,6 +68,49 @@ func (_c *MockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(con
 	return _c
 }
 
+// DeleteAllByKeys provides a mock function with given fields: _a0, _a1
+func (_m *MockGlobalConfigEntryRepository) DeleteAllByKeys(_a0 context.Context, _a1 []common.GlobalConfigKey) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockGlobalConfigEntryRepository_DeleteAllByKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllByKeys'
+type MockGlobalConfigEntryRepository_DeleteAllByKeys_Call struct {
+	*mock.Call
+}
+
+// DeleteAllByKeys is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []common.GlobalConfigKey
+func (_e *MockGlobalConfigEntryRepository_Expecter) DeleteAllByKeys(_a0 interface{}, _a1 interface{}) *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+	return &MockGlobalConfigEntryRepository_DeleteAllByKeys_Call{Call: _e.mock.On("DeleteAllByKeys", _a0, _a1)}
+}
+
+func (_c *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call) Run(run func(_a0 context.Context, _a1 []common.GlobalConfigKey)) *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]common.GlobalConfigKey))
+	})
+	return _c
+}
+
+func (_c *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call) Return(_a0 error) *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call) RunAndReturn(run func(context.Context, []common.GlobalConfigKey) error) *MockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function with given fields: _a0, _a1
 func (_m *MockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error) {
 	ret := _m.Called(_a0, _a1)

@@ -4,7 +4,7 @@ import (
 	"cmp"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
-	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"

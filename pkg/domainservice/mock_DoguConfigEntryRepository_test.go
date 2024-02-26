@@ -68,6 +68,49 @@ func (_c *MockDoguConfigEntryRepository_Delete_Call) RunAndReturn(run func(conte
 	return _c
 }
 
+// DeleteAllByKeys provides a mock function with given fields: _a0, _a1
+func (_m *MockDoguConfigEntryRepository) DeleteAllByKeys(_a0 context.Context, _a1 []common.DoguConfigKey) error {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []common.DoguConfigKey) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockDoguConfigEntryRepository_DeleteAllByKeys_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllByKeys'
+type MockDoguConfigEntryRepository_DeleteAllByKeys_Call struct {
+	*mock.Call
+}
+
+// DeleteAllByKeys is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 []common.DoguConfigKey
+func (_e *MockDoguConfigEntryRepository_Expecter) DeleteAllByKeys(_a0 interface{}, _a1 interface{}) *MockDoguConfigEntryRepository_DeleteAllByKeys_Call {
+	return &MockDoguConfigEntryRepository_DeleteAllByKeys_Call{Call: _e.mock.On("DeleteAllByKeys", _a0, _a1)}
+}
+
+func (_c *MockDoguConfigEntryRepository_DeleteAllByKeys_Call) Run(run func(_a0 context.Context, _a1 []common.DoguConfigKey)) *MockDoguConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]common.DoguConfigKey))
+	})
+	return _c
+}
+
+func (_c *MockDoguConfigEntryRepository_DeleteAllByKeys_Call) Return(_a0 error) *MockDoguConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockDoguConfigEntryRepository_DeleteAllByKeys_Call) RunAndReturn(run func(context.Context, []common.DoguConfigKey) error) *MockDoguConfigEntryRepository_DeleteAllByKeys_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function with given fields: _a0, _a1
 func (_m *MockDoguConfigEntryRepository) Get(_a0 context.Context, _a1 common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error) {
 	ret := _m.Called(_a0, _a1)
