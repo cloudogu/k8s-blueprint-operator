@@ -345,7 +345,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						InstallationState: TargetStatePresent,
 						Namespace:         testChangeDistributionNamespace,
 					},
-					NeededAction: ActionSwitchComponentDistributionNamespace,
+					NeededAction: ActionSwitchComponentNamespace,
 				},
 			},
 		},

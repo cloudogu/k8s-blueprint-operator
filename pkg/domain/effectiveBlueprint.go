@@ -32,6 +32,7 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 	return wantedDogus
 }
 
+// validateOnlyConfigForDogusInBlueprint checks that there is only config for dogus to install in the blueprint
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
 	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) common.SimpleDoguName {
 		return dogu.Name.SimpleName
