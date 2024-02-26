@@ -5,9 +5,6 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.13.0
   name: blueprints.k8s.cloudogu.com
-  labels:
-    app: ces
-    app.kubernetes.io/name: k8s-blueprint-operator
 spec:
   group: k8s.cloudogu.com
   names:
@@ -17,303 +14,361 @@ spec:
     singular: blueprint
   scope: Namespaced
   versions:
-    - name: v1
-      schema:
-        openAPIV3Schema:
-          description: Blueprint is the Schema for the blueprints API
-          properties:
-            apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-              type: string
-            kind:
-              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-              type: string
-            metadata:
-              type: object
-            spec:
-              description: Spec defines the desired state of the Blueprint.
-              properties:
-                allowDoguNamespaceSwitch:
-                  description: AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask in comparison to the blueprint.
-                  type: boolean
-                blueprint:
-                  description: Blueprint json with the desired state of the ecosystem.
-                  type: string
-                blueprintMask:
-                  description: BlueprintMask json can further restrict the desired state from the blueprint.
-                  type: string
-                dryRun:
-                  description: DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
-                  type: boolean
-                ignoreComponentHealth:
-                  description: IgnoreComponentHealth lets the user execute the blueprint even if components are unhealthy at the moment.
-                  type: boolean
-                ignoreDoguHealth:
-                  description: IgnoreDoguHealth lets the user execute the blueprint even if dogus are unhealthy at the moment.
-                  type: boolean
-              required:
-                - blueprint
-              type: object
-            status:
-              description: Status defines the observed state of the Blueprint.
-              properties:
-                effectiveBlueprint:
-                  description: EffectiveBlueprint is the blueprint after applying the blueprint mask.
-                  properties:
-                    components:
-                      description: Components contains a set of exact component versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
-                      items:
-                        properties:
-                          deployNamespace:
-                            description: DeployNamespace defines the namespace where the component should be installed to. Actually this is only used for the component `k8s-longhorn` because it requires the `longhorn-system` namespace.
-                            type: string
-                          name:
-                            description: Name defines the name of the component including its distribution namespace, f. i. "k8s/k8s-dogu-operator". Must not be empty.
-                            type: string
-                          targetState:
-                            description: TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
-                            type: string
-                          version:
-                            description: Version defines the version of the component that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
-                            type: string
-                        required:
-                          - deployNamespace
-                          - name
-                          - targetState
-                          - version
-                        type: object
-                      type: array
-                    config:
-                      description: Config is used for ecosystem configuration to be applied. Optional.
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: Blueprint is the Schema for the blueprints API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: Spec defines the desired state of the Blueprint.
+            properties:
+              allowDoguNamespaceSwitch:
+                description: AllowDoguNamespaceSwitch lets the user switch the namespace
+                  of dogus in the blueprint mask in comparison to the blueprint.
+                type: boolean
+              blueprint:
+                description: Blueprint json with the desired state of the ecosystem.
+                type: string
+              blueprintMask:
+                description: BlueprintMask json can further restrict the desired state
+                  from the blueprint.
+                type: string
+              dryRun:
+                description: DryRun lets the user test a blueprint run to check if
+                  all attributes of the blueprint are correct and avoid a result with
+                  a failure state.
+                type: boolean
+              ignoreComponentHealth:
+                description: IgnoreComponentHealth lets the user execute the blueprint
+                  even if components are unhealthy at the moment.
+                type: boolean
+              ignoreDoguHealth:
+                description: IgnoreDoguHealth lets the user execute the blueprint
+                  even if dogus are unhealthy at the moment.
+                type: boolean
+            required:
+            - blueprint
+            type: object
+          status:
+            description: Status defines the observed state of the Blueprint.
+            properties:
+              effectiveBlueprint:
+                description: EffectiveBlueprint is the blueprint after applying the
+                  blueprint mask.
+                properties:
+                  components:
+                    description: Components contains a set of exact component versions
+                      which should be present or absent in the CES instance after
+                      which this blueprint was applied. Optional.
+                    items:
                       properties:
-                        dogus:
-                          additionalProperties:
-                            properties:
-                              config:
-                                properties:
-                                  absent:
-                                    items:
-                                      type: string
-                                    type: array
-                                  present:
-                                    additionalProperties:
-                                      type: string
-                                    type: object
-                                type: object
-                              sensitiveConfig:
-                                properties:
-                                  absent:
-                                    items:
-                                      type: string
-                                    type: array
-                                  present:
-                                    additionalProperties:
-                                      type: string
-                                    type: object
-                                type: object
-                            type: object
-                          type: object
-                        global:
+                        deployNamespace:
+                          description: DeployNamespace defines the namespace where
+                            the component should be installed to. Actually this is
+                            only used for the component `k8s-longhorn` because it
+                            requires the `longhorn-system` namespace.
+                          type: string
+                        name:
+                          description: Name defines the name of the component including
+                            its distribution namespace, f. i. "k8s/k8s-dogu-operator".
+                            Must not be empty.
+                          type: string
+                        targetState:
+                          description: TargetState defines a state of installation
+                            of this component. Optional field, but defaults to "TargetStatePresent"
+                          type: string
+                        version:
+                          description: Version defines the version of the component
+                            that is to be installed. Must not be empty if the targetState
+                            is "present"; otherwise it is optional and is not going
+                            to be interpreted.
+                          type: string
+                      required:
+                      - deployNamespace
+                      - name
+                      - targetState
+                      - version
+                      type: object
+                    type: array
+                  config:
+                    description: Config is used for ecosystem configuration to be
+                      applied. Optional.
+                    properties:
+                      dogus:
+                        additionalProperties:
                           properties:
-                            absent:
-                              items:
-                                type: string
-                              type: array
-                            present:
-                              additionalProperties:
-                                type: string
+                            config:
+                              properties:
+                                absent:
+                                  items:
+                                    type: string
+                                  type: array
+                                present:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
+                              type: object
+                            sensitiveConfig:
+                              properties:
+                                absent:
+                                  items:
+                                    type: string
+                                  type: array
+                                present:
+                                  additionalProperties:
+                                    type: string
+                                  type: object
                               type: object
                           type: object
-                      type: object
-                    dogus:
-                      description: Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
-                      items:
-                        description: TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint was applied.
-                        properties:
-                          name:
-                            description: Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty.
-                            type: string
-                          targetState:
-                            description: TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-                            type: string
-                          version:
-                            description: Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
-                            type: string
-                        required:
-                          - name
-                          - targetState
-                          - version
                         type: object
-                      type: array
-                  type: object
-                phase:
-                  description: Phase represents the processing state of the blueprint
-                  type: string
-                stateDiff:
-                  description: StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state. It describes what operations need to be done to achieve the desired state of the blueprint.
-                  properties:
-                    componentDiffs:
-                      additionalProperties:
-                        description: ComponentDiff is the comparison of a Component's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                      global:
                         properties:
-                          actual:
-                            description: Actual contains the component's state in the current system.
-                            properties:
-                              distributionNamespace:
-                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
-                                type: string
-                              installationState:
-                                description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
-                                type: string
-                              version:
-                                description: Version contains the component's version.
-                                type: string
-                            required:
-                              - installationState
-                            type: object
-                          expected:
-                            description: Expected contains the desired component's target state.
-                            properties:
-                              distributionNamespace:
-                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
-                                type: string
-                              installationState:
-                                description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
-                                type: string
-                              version:
-                                description: Version contains the component's version.
-                                type: string
-                            required:
-                              - installationState
-                            type: object
-                          neededAction:
-                            description: NeededAction contains the refined action as decided by the application's state determination automaton.
-                            type: string
-                        required:
-                          - actual
-                          - expected
-                          - neededAction
-                        type: object
-                      description: ComponentDiffs maps simple component names to the determined diff.
-                      type: object
-                    doguConfigDiffs:
-                      additionalProperties:
-                        properties:
-                          doguConfigDiff:
+                          absent:
                             items:
-                              properties:
-                                actual:
-                                  properties:
-                                    exists:
-                                      type: boolean
-                                    value:
-                                      type: string
-                                  type: object
-                                expected:
-                                  properties:
-                                    exists:
-                                      type: boolean
-                                    value:
-                                      type: string
-                                  type: object
-                                key:
-                                  type: string
-                                neededAction:
-                                  type: string
-                              type: object
+                              type: string
                             type: array
-                          sensitiveDoguConfigDiff:
-                            items:
-                              properties:
-                                actual:
-                                  properties:
-                                    exists:
-                                      type: boolean
-                                    value:
-                                      type: string
-                                  type: object
-                                expected:
-                                  properties:
-                                    exists:
-                                      type: boolean
-                                    value:
-                                      type: string
-                                  type: object
-                                key:
-                                  type: string
-                                neededAction:
-                                  type: string
-                              type: object
-                            type: array
+                          present:
+                            additionalProperties:
+                              type: string
+                            type: object
                         type: object
-                      description: DoguConfigDiffs maps simple dogu names to the determined config diff.
+                    type: object
+                  dogus:
+                    description: Dogus contains a set of exact dogu versions which
+                      should be present or absent in the CES instance after which
+                      this blueprint was applied. Optional.
+                    items:
+                      description: TargetDogu defines a Dogu, its version, and the
+                        installation state in which it is supposed to be after a blueprint
+                        was applied.
+                      properties:
+                        name:
+                          description: Name defines the name of the dogu including
+                            its namespace, f. i. "official/nginx". Must not be empty.
+                          type: string
+                        targetState:
+                          description: TargetState defines a state of installation
+                            of this dogu. Optional field, but defaults to "TargetStatePresent"
+                          type: string
+                        version:
+                          description: Version defines the version of the dogu that
+                            is to be installed. Must not be empty if the targetState
+                            is "present"; otherwise it is optional and is not going
+                            to be interpreted.
+                          type: string
+                      required:
+                      - name
+                      - targetState
+                      - version
                       type: object
-                    doguDiffs:
-                      additionalProperties:
-                        description: DoguDiff is the comparison of a Dogu's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
-                        properties:
-                          actual:
-                            description: DoguDiffState is either the actual or desired state of a dogu in the cluster.
-                            properties:
-                              installationState:
-                                type: string
-                              namespace:
-                                type: string
-                              version:
-                                type: string
-                            required:
-                              - installationState
-                            type: object
-                          expected:
-                            description: DoguDiffState is either the actual or desired state of a dogu in the cluster.
-                            properties:
-                              installationState:
-                                type: string
-                              namespace:
-                                type: string
-                              version:
-                                type: string
-                            required:
-                              - installationState
-                            type: object
-                          neededAction:
-                            description: DoguAction is the action that needs to be done for a dogu to achieve the desired state in the cluster.
-                            type: string
-                        required:
-                          - actual
-                          - expected
-                          - neededAction
-                        type: object
-                      description: DoguDiffs maps simple dogu names to the determined diff.
+                    type: array
+                type: object
+              phase:
+                description: Phase represents the processing state of the blueprint
+                type: string
+              stateDiff:
+                description: StateDiff is the result of comparing the EffectiveBlueprint
+                  to the current cluster state. It describes what operations need
+                  to be done to achieve the desired state of the blueprint.
+                properties:
+                  componentDiffs:
+                    additionalProperties:
+                      description: ComponentDiff is the comparison of a Component's
+                        desired state vs. its cluster state. It contains the operation
+                        that needs to be done to achieve this desired state.
+                      properties:
+                        actual:
+                          description: Actual contains the component's state in the
+                            current system.
+                          properties:
+                            distributionNamespace:
+                              description: Namespace is part of the address under
+                                which the component will be obtained. This namespace
+                                must NOT to be confused with the K8s cluster namespace.
+                              type: string
+                            installationState:
+                              description: "InstallationState contains the component's
+                                installation state. Such a state correlate with the
+                                domain Actions: \n - domain.ActionInstall - domain.ActionUninstall
+                                - and so on"
+                              type: string
+                            version:
+                              description: Version contains the component's version.
+                              type: string
+                          required:
+                          - installationState
+                          type: object
+                        expected:
+                          description: Expected contains the desired component's target
+                            state.
+                          properties:
+                            distributionNamespace:
+                              description: Namespace is part of the address under
+                                which the component will be obtained. This namespace
+                                must NOT to be confused with the K8s cluster namespace.
+                              type: string
+                            installationState:
+                              description: "InstallationState contains the component's
+                                installation state. Such a state correlate with the
+                                domain Actions: \n - domain.ActionInstall - domain.ActionUninstall
+                                - and so on"
+                              type: string
+                            version:
+                              description: Version contains the component's version.
+                              type: string
+                          required:
+                          - installationState
+                          type: object
+                        neededAction:
+                          description: NeededAction contains the refined action as
+                            decided by the application's state determination automaton.
+                          type: string
+                      required:
+                      - actual
+                      - expected
+                      - neededAction
                       type: object
-                    globalConfigDiff:
-                      description: GlobalConfigDiff is the difference between the GlobalConfig in the EffectiveBlueprint and the cluster state.
-                      items:
-                        properties:
-                          actual:
+                    description: ComponentDiffs maps simple component names to the
+                      determined diff.
+                    type: object
+                  doguConfigDiffs:
+                    additionalProperties:
+                      properties:
+                        doguConfigDiff:
+                          items:
                             properties:
-                              exists:
-                                type: boolean
-                              value:
+                              actual:
+                                properties:
+                                  exists:
+                                    type: boolean
+                                  value:
+                                    type: string
+                                type: object
+                              expected:
+                                properties:
+                                  exists:
+                                    type: boolean
+                                  value:
+                                    type: string
+                                type: object
+                              key:
+                                type: string
+                              neededAction:
                                 type: string
                             type: object
-                          expected:
+                          type: array
+                        sensitiveDoguConfigDiff:
+                          items:
                             properties:
-                              exists:
-                                type: boolean
-                              value:
+                              actual:
+                                properties:
+                                  exists:
+                                    type: boolean
+                                  value:
+                                    type: string
+                                type: object
+                              expected:
+                                properties:
+                                  exists:
+                                    type: boolean
+                                  value:
+                                    type: string
+                                type: object
+                              key:
+                                type: string
+                              neededAction:
                                 type: string
                             type: object
-                          key:
-                            type: string
-                          neededAction:
-                            type: string
-                        type: object
-                      type: array
-                  type: object
-              type: object
-          type: object
-      served: true
-      storage: true
-      subresources:
-        status: {}
+                          type: array
+                      type: object
+                    description: DoguConfigDiffs maps simple dogu names to the determined
+                      config diff.
+                    type: object
+                  doguDiffs:
+                    additionalProperties:
+                      description: DoguDiff is the comparison of a Dogu's desired
+                        state vs. its cluster state. It contains the operation that
+                        needs to be done to achieve this desired state.
+                      properties:
+                        actual:
+                          description: DoguDiffState is either the actual or desired
+                            state of a dogu in the cluster.
+                          properties:
+                            installationState:
+                              type: string
+                            namespace:
+                              type: string
+                            version:
+                              type: string
+                          required:
+                          - installationState
+                          type: object
+                        expected:
+                          description: DoguDiffState is either the actual or desired
+                            state of a dogu in the cluster.
+                          properties:
+                            installationState:
+                              type: string
+                            namespace:
+                              type: string
+                            version:
+                              type: string
+                          required:
+                          - installationState
+                          type: object
+                        neededAction:
+                          description: DoguAction is the action that needs to be done
+                            for a dogu to achieve the desired state in the cluster.
+                          type: string
+                      required:
+                      - actual
+                      - expected
+                      - neededAction
+                      type: object
+                    description: DoguDiffs maps simple dogu names to the determined
+                      diff.
+                    type: object
+                  globalConfigDiff:
+                    description: GlobalConfigDiff is the difference between the GlobalConfig
+                      in the EffectiveBlueprint and the cluster state.
+                    items:
+                      properties:
+                        actual:
+                          properties:
+                            exists:
+                              type: boolean
+                            value:
+                              type: string
+                          type: object
+                        expected:
+                          properties:
+                            exists:
+                              type: boolean
+                            value:
+                              type: string
+                          type: object
+                        key:
+                          type: string
+                        neededAction:
+                          type: string
+                      type: object
+                    type: array
+                type: object
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
