@@ -27,10 +27,7 @@ func (p PublicKeyConfigEncryptionAdapter) Encrypt(
 ) (common.EncryptedDoguConfigValue, error) {
 	pubkey, err := resource.GetPublicKey(p.registry, string(name))
 	if err != nil {
-		return "", &domainservice.NotFoundError{
-			WrappedError: err,
-			Message:      "could not get public key",
-		}
+		return "", domainservice.NewNotFoundError(err, "could not get public key")
 	}
 	encryptedValue, err := pubkey.Encrypt(string(value))
 	if err != nil {
