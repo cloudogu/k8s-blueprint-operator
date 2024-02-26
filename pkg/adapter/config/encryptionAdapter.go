@@ -68,7 +68,8 @@ func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
 func (p PublicKeyConfigEncryptionAdapter) Decrypt(
 	ctx context.Context,
 	name common.SimpleDoguName,
-	encryptedValue common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error) {
+	encryptedValue common.EncryptedDoguConfigValue,
+) (common.SensitiveDoguConfigValue, error) {
 	privateKeySecret, err := p.secrets.Get(ctx, string(name)+"-private", metav1.GetOptions{})
 	if err != nil {
 		return "", domainservice.NewNotFoundError(err, "could not get private key")
