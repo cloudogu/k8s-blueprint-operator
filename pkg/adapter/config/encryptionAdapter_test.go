@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -86,6 +87,35 @@ func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, common.SensitiveDoguConfigValue(testValue), decryptedValue)
+	})
+
+	t.Run("can not decrypt", func(t *testing.T) {
+		// given
+		doguname := "testdogu"
+		namespace := "testingnamespace"
+		encryptedTestValue := common.EncryptedDoguConfigValue("Z5MYdP80b6GPWVlnDTkbfVWJqHl+2W8imHW+3482cUubMNAA5O5nEwGTDy4VwMMsJ0iqCLIizZGhw9i8n05ehb2A9b2dPvQD4W1um4lmJbeefEFBZNnb6XOFCLk0xgt5c7W+sSQAGtmEdFyz8qcp8Mvz4IoiD9VsdFqv4f5/Xtl7jbF2QIauiNqhFSOvrR351CjJaY6p3W+P8R/btYr/t/Y0Irl6/X4vTB3CN1g9ygnywHA0nkVE89td4QAOCHc0JuX++CLhFZuWxcPLeD/ch3+CjDlF6HAk6t54180nyQ3P0kWpii9f6MoFHvJRfBUTqAQclDdCZ0vLweNYwE6voA==")
+		mockSecret := newMockSecret(t)
+		testContext := context.Background()
+		mockRegistry := newMockRegistry(t)
+		mockGlobalConfig := newMockGlobalConfigStore(t)
+		mockGlobalConfig.EXPECT().Get("key_provider").Return("", fmt.Errorf("nope"))
+		mockRegistry.EXPECT().GlobalConfig().Return(mockGlobalConfig)
+		encryptionAdapter := NewPublicKeyConfigEncryptionAdapter(mockSecret, mockRegistry, namespace)
+		mockSecret.EXPECT().Get(testContext, doguname+"-private", metav1.GetOptions{}).Return(&corev1.Secret{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{},
+			Immutable:  nil,
+			Data:       map[string][]byte{"private.pem": []byte(testPrivateKey1)},
+			StringData: nil,
+			Type:       "",
+		}, nil)
+
+		// when
+		decryptedValue, err := encryptionAdapter.Decrypt(testContext, common.SimpleDoguName(doguname), encryptedTestValue)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, common.SensitiveDoguConfigValue(""), decryptedValue)
 	})
 }
 
