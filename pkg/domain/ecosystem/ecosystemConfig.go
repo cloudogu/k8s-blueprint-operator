@@ -2,6 +2,10 @@ package ecosystem
 
 import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
+type RegistryConfigEntry interface {
+	*GlobalConfigEntry | *DoguConfigEntry | *SensitiveDoguConfigEntry
+}
+
 type GlobalConfigEntry struct {
 	Key   common.GlobalConfigKey
 	Value common.GlobalConfigValue

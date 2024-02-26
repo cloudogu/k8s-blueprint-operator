@@ -407,3 +407,74 @@ func TestEtcdSensitiveDoguConfigRepository_Get(t *testing.T) {
 		}, actualEntry)
 	})
 }
+
+func TestEtcdSensitiveDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
+	t.Run("success with multiple keys", func(t *testing.T) {
+		// given
+		ldapConfigMock := newMockConfigurationContext(t)
+		ldapConfigMock.EXPECT().Delete("container_config/memory_limit").Return(nil)
+		postfixConfigMock := newMockConfigurationContext(t)
+		postfixConfigMock.EXPECT().Delete("container_config/swap_limit").Return(nil)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
+		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
+
+		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+
+		entries := []common.SensitiveDoguConfigKey{
+			{
+				DoguConfigKey: common.DoguConfigKey{
+					DoguName: "ldap",
+					Key:      "container_config/memory_limit",
+				},
+			},
+			{
+				DoguConfigKey: common.DoguConfigKey{
+					DoguName: "postfix",
+					Key:      "container_config/swap_limit",
+				},
+			},
+		}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, entries)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on delete error", func(t *testing.T) {
+		// given
+		ldapConfigMock := newMockConfigurationContext(t)
+		ldapConfigMock.EXPECT().Delete("container_config/memory_limit").Return(nil)
+		postfixConfigMock := newMockConfigurationContext(t)
+		postfixConfigMock.EXPECT().Delete("container_config/swap_limit").Return(assert.AnError)
+		etcdMock := newMockEtcdStore(t)
+		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
+		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
+
+		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+
+		entries := []common.SensitiveDoguConfigKey{
+			{
+				DoguConfigKey: common.DoguConfigKey{
+					DoguName: "ldap",
+					Key:      "container_config/memory_limit",
+				},
+			},
+			{
+				DoguConfigKey: common.DoguConfigKey{
+					DoguName: "postfix",
+					Key:      "container_config/swap_limit",
+				},
+			},
+		}
+
+		// when
+		err := sut.DeleteAllByKeys(testCtx, entries)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to delete given sensitive dogu config keys in etcd")
+	})
+}

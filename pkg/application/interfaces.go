@@ -45,6 +45,10 @@ type ecosystemHealthUseCase interface {
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 
+type registryConfigUseCase interface {
+	ApplyConfig(ctx context.Context, blueprintId string) error
+}
+
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }

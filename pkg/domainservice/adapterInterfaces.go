@@ -156,6 +156,10 @@ type GlobalConfigEntryRepository interface {
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent, no error will be returned.
 	Delete(context.Context, common.GlobalConfigKey) error
+	// DeleteAllByKeys deletes all given global config keys.
+	// It can throw an InternalError if any error happens.
+	// If any key is not existent, no error will be returned for that case.
+	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
 }
 
 type DoguConfigEntryRepository interface {
@@ -183,6 +187,10 @@ type DoguConfigEntryRepository interface {
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
 	Delete(context.Context, common.DoguConfigKey) error
+	// DeleteAllByKeys deletes all given dogu config keys.
+	// It can throw an InternalError if any error happens.
+	// If any key is not existent, no error will be returned for that case.
+	DeleteAllByKeys(context.Context, []common.DoguConfigKey) error
 }
 
 type SensitiveDoguConfigEntryRepository interface {
@@ -210,6 +218,10 @@ type SensitiveDoguConfigEntryRepository interface {
 	// It can throw an InternalError if any error happens.
 	// If the key is not existent no error will be returned.
 	Delete(context.Context, common.SensitiveDoguConfigKey) error
+	// DeleteAllByKeys deletes all given sensitive dogu config keys.
+	// It can throw an InternalError if any error happens.
+	// If any key is not existent, no error will be returned for that case.
+	DeleteAllByKeys(context.Context, []common.SensitiveDoguConfigKey) error
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
