@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"golang.org/x/exp/maps"
+	"slices"
 )
 
 type Config struct {
@@ -65,28 +66,48 @@ func (config Config) validate() error {
 		if doguName != doguConfig.DoguName {
 			errs = append(errs, fmt.Errorf("dogu name %q in map and dogu name %q in value are not equal", doguName, doguConfig.DoguName))
 		}
-
 		errs = append(errs, doguConfig.validate())
 	}
-
 	errs = append(errs, config.Global.validate())
 
 	return errors.Join(errs...)
 }
 
 func (config CombinedDoguConfig) validate() error {
-	var errs []error
-	err := config.Config.validate(config.DoguName)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("config for dogu %q invalid: %w", config.DoguName, err))
-	}
+	err := errors.Join(
+		config.Config.validate(config.DoguName),
+		config.SensitiveConfig.validate(config.DoguName),
+		config.validateConflictingConfigKeys(),
+	)
 
-	err = config.SensitiveConfig.validate(config.DoguName)
 	if err != nil {
-		errs = append(errs, fmt.Errorf("sensitive config for dogu %q invalid: %w", config.DoguName, err))
+		return fmt.Errorf("config for dogu %q is invalid: %w", config.DoguName, err)
 	}
+	return nil
+}
 
-	return errors.Join(errs...)
+// validateConflictingConfigKeys checks that there are no conflicting keys in normal config and sensitive config.
+// This is a problem as both config types are loaded via the same API in dogus at the moment.
+func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
+	var normalKeys []common.DoguConfigKey
+	normalKeys = append(normalKeys, maps.Keys(config.Config.Present)...)
+	normalKeys = append(normalKeys, config.Config.Absent...)
+	var sensitiveKeys []common.SensitiveDoguConfigKey
+	sensitiveKeys = append(sensitiveKeys, maps.Keys(config.SensitiveConfig.Present)...)
+	sensitiveKeys = append(sensitiveKeys, config.SensitiveConfig.Absent...)
+
+	var errorList []error
+
+	for _, sensitiveKey := range sensitiveKeys {
+		keyToSearch := common.DoguConfigKey{
+			DoguName: sensitiveKey.DoguName,
+			Key:      sensitiveKey.Key,
+		}
+		if slices.Contains(normalKeys, keyToSearch) {
+			errorList = append(errorList, fmt.Errorf("dogu config key %s cannot be in normal and sensitive configuration at the same time", keyToSearch))
+		}
+	}
+	return errors.Join(errorList...)
 }
 
 func (config DoguConfig) validate(referencedDoguName common.SimpleDoguName) error {

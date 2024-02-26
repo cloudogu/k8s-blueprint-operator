@@ -14,6 +14,7 @@ type DoguConfigValueState ConfigValueState
 
 type DoguConfigDiff []DoguConfigEntryDiff
 type DoguConfigEntryDiff struct {
+	//TODO: add DoguInstalled bool
 	Key          string               `json:"key,omitempty"`
 	Actual       DoguConfigValueState `json:"actual,omitempty"`
 	Expected     DoguConfigValueState `json:"expected,omitempty"`

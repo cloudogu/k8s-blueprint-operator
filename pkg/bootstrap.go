@@ -2,7 +2,7 @@ package pkg
 
 import (
 	"fmt"
-	etcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	configAdapter "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -88,10 +88,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := etcd.NewPublicKeyConfigEncryptionAdapter()
-	doguConfigAdapter := etcd.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := etcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := etcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter()
+	doguConfigAdapter := configAdapter.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := configAdapter.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := configAdapter.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))

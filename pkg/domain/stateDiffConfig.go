@@ -42,7 +42,7 @@ func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDo
 
 func determineConfigDiffs(
 	blueprintConfig Config,
-	clusterState ecosystem.ClusterState,
+	clusterState ecosystem.EcosystemState,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, clusterState.DecryptedSensitiveDoguConfig, clusterState.GetInstalledDoguNames()),
 		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)

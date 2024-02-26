@@ -6,7 +6,8 @@ const (
 	ConfigActionNone         ConfigAction = "none"
 	ConfigActionSet          ConfigAction = "set"
 	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
-	ConfigActionRemove       ConfigAction = "remove"
+	//TODO: add new actions
+	ConfigActionRemove ConfigAction = "remove"
 )
 
 type ConfigValueState struct {
