@@ -132,7 +132,7 @@ func (p PublicKeyConfigEncryptionAdapter) DecryptAll(ctx context.Context, entrie
 func getKeyPairsFromMap(ctx context.Context, entries map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, secrets secret, registry etcdRegistry) (map[string]*keys.KeyPair, error) {
 	var getKeyPairErrors []error
 	keypairs := map[string]*keys.KeyPair{}
-	for configKey, _ := range entries {
+	for configKey := range entries {
 		doguname := string(configKey.DoguName)
 		_, privateKnown := keypairs[doguname]
 		if !privateKnown {
