@@ -55,6 +55,28 @@ func TestPublicKeyConfigEncryptionAdapter_Encrypt(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, common.SensitiveDoguConfigValue(testValue), decryptedValue)
 	})
+
+	t.Run("can not get pub key", func(t *testing.T) {
+		// given
+		doguname := "testdogu"
+		namespace := "testingnamespace"
+		testValue := "value"
+		mockSecret := newMockSecret(t)
+		testContext := context.Background()
+		mockRegistry := newMockRegistry(t)
+		mockGlobalConfig := newMockGlobalConfigStore(t)
+		mockGlobalConfig.EXPECT().Get("key_provider").Return("", fmt.Errorf("nope"))
+		mockRegistry.EXPECT().GlobalConfig().Return(mockGlobalConfig)
+		encryptionAdapter := NewPublicKeyConfigEncryptionAdapter(mockSecret, mockRegistry, namespace)
+
+		// when
+		encryptedValue, err := encryptionAdapter.Encrypt(testContext, common.SimpleDoguName(doguname), common.SensitiveDoguConfigValue(testValue))
+
+		// then
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "could not get public key")
+		assert.Equal(t, common.EncryptedDoguConfigValue(""), encryptedValue)
+	})
 }
 
 func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
@@ -89,7 +111,7 @@ func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
 		assert.Equal(t, common.SensitiveDoguConfigValue(testValue), decryptedValue)
 	})
 
-	t.Run("can not decrypt", func(t *testing.T) {
+	t.Run("can not get key pair", func(t *testing.T) {
 		// given
 		doguname := "testdogu"
 		namespace := "testingnamespace"
