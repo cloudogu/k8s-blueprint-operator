@@ -48,7 +48,7 @@ func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
 	}
 	for configKey, configValue := range entries {
 		doguname := string(configKey.DoguName)
-		pubkey, _ := pubkeys[doguname]
+		pubkey := pubkeys[doguname]
 		encryptedValue, err := pubkey.Encrypt(string(configValue))
 		if err != nil {
 			encryptionErrors = append(encryptionErrors, domainservice.NewInternalError(err, "could not encrypt value for dogu %v", doguname))
@@ -61,7 +61,7 @@ func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
 func loadPubKeysFromMap(registry etcdRegistry, entries map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[string]*keys.PublicKey, error) {
 	pubkeys := map[string]*keys.PublicKey{}
 	var getPubKeyErrors []error
-	for configKey, _ := range entries {
+	for configKey := range entries {
 		doguname := string(configKey.DoguName)
 		_, pubkeyKnown := pubkeys[doguname]
 		if !pubkeyKnown {
@@ -119,7 +119,7 @@ func (p PublicKeyConfigEncryptionAdapter) DecryptAll(ctx context.Context, entrie
 	}
 	for configKey, configValue := range entries {
 		doguname := string(configKey.DoguName)
-		keyPair, _ := keypairs[doguname]
+		keyPair := keypairs[doguname]
 		decryptedValue, err := keyPair.Private().Decrypt(string(configValue))
 		if err != nil {
 			decryptionErrors = append(decryptionErrors, domainservice.NewInternalError(err, "could not decrypt encrypted value for dogu %v", doguname))
