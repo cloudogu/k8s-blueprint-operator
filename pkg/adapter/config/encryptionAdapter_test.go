@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -65,7 +64,7 @@ func TestPublicKeyConfigEncryptionAdapter_Encrypt(t *testing.T) {
 		testContext := context.Background()
 		mockRegistry := newMockRegistry(t)
 		mockGlobalConfig := newMockGlobalConfigStore(t)
-		mockGlobalConfig.EXPECT().Get("key_provider").Return("", fmt.Errorf("nope"))
+		mockGlobalConfig.EXPECT().Get("key_provider").Return("", assert.AnError)
 		mockRegistry.EXPECT().GlobalConfig().Return(mockGlobalConfig)
 		encryptionAdapter := NewPublicKeyConfigEncryptionAdapter(mockSecret, mockRegistry, namespace)
 
@@ -74,6 +73,7 @@ func TestPublicKeyConfigEncryptionAdapter_Encrypt(t *testing.T) {
 
 		// then
 		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
 		assert.Contains(t, err.Error(), "could not get public key")
 		assert.Equal(t, common.EncryptedDoguConfigValue(""), encryptedValue)
 	})
@@ -120,7 +120,7 @@ func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
 		testContext := context.Background()
 		mockRegistry := newMockRegistry(t)
 		mockGlobalConfig := newMockGlobalConfigStore(t)
-		mockGlobalConfig.EXPECT().Get("key_provider").Return("", fmt.Errorf("nope"))
+		mockGlobalConfig.EXPECT().Get("key_provider").Return("", assert.AnError)
 		mockRegistry.EXPECT().GlobalConfig().Return(mockGlobalConfig)
 		encryptionAdapter := NewPublicKeyConfigEncryptionAdapter(mockSecret, mockRegistry, namespace)
 		mockSecret.EXPECT().Get(testContext, doguname+"-private", metav1.GetOptions{}).Return(&corev1.Secret{
@@ -137,7 +137,8 @@ func TestPublicKeyConfigEncryptionAdapter_Decrypt(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "could not get key pair for dogu "+doguname)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.Contains(t, err.Error(), "could not get key pair for dogu \"testdogu\"")
 		assert.Equal(t, common.SensitiveDoguConfigValue(""), decryptedValue)
 	})
 }

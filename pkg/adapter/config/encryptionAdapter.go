@@ -3,11 +3,17 @@ package config
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/cloudogu/cesapp-lib/keys"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-dogu-operator/controllers/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	privateKey                  = "private.pem"
+	fmtDoguPrivateKeySecretName = "%s-private"
 )
 
 type PublicKeyConfigEncryptionAdapter struct {
@@ -21,7 +27,7 @@ func NewPublicKeyConfigEncryptionAdapter(secretClient secret, registry etcdRegis
 }
 
 func (p PublicKeyConfigEncryptionAdapter) Encrypt(
-	ctx context.Context,
+	_ context.Context,
 	name common.SimpleDoguName,
 	value common.SensitiveDoguConfigValue,
 ) (common.EncryptedDoguConfigValue, error) {
@@ -37,7 +43,7 @@ func (p PublicKeyConfigEncryptionAdapter) Encrypt(
 }
 
 func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
-	ctx context.Context,
+	_ context.Context,
 	entries map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 ) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
 	encryptedEntries := map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}
@@ -51,7 +57,8 @@ func (p PublicKeyConfigEncryptionAdapter) EncryptAll(
 		pubkey := pubkeys[doguname]
 		encryptedValue, err := pubkey.Encrypt(string(configValue))
 		if err != nil {
-			encryptionErrors = append(encryptionErrors, domainservice.NewInternalError(err, "could not encrypt value for dogu %v", doguname))
+			encryptionErrors = append(encryptionErrors, domainservice.NewInternalError(err, "could not encrypt value for dogu %q", doguname))
+			continue
 		}
 		encryptedEntries[configKey] = common.EncryptedDoguConfigValue(encryptedValue)
 	}
@@ -67,7 +74,7 @@ func loadPubKeysFromMap(registry etcdRegistry, entries map[common.SensitiveDoguC
 		if !pubkeyKnown {
 			pubkeyFromRegistry, err := resource.GetPublicKey(registry, doguname)
 			if err != nil {
-				getPubKeyErrors = append(getPubKeyErrors, domainservice.NewNotFoundError(err, "could not get public key for dogu %v", doguname))
+				getPubKeyErrors = append(getPubKeyErrors, domainservice.NewNotFoundError(err, "could not get public key for dogu %q", doguname))
 				continue
 			} else {
 				pubkeys[doguname] = pubkeyFromRegistry
@@ -82,14 +89,14 @@ func (p PublicKeyConfigEncryptionAdapter) Decrypt(
 	name common.SimpleDoguName,
 	encryptedValue common.EncryptedDoguConfigValue,
 ) (common.SensitiveDoguConfigValue, error) {
-	privateKeySecret, err := p.secrets.Get(ctx, string(name)+"-private", metav1.GetOptions{})
+	privateKeySecret, err := p.secrets.Get(ctx, fmt.Sprintf(fmtDoguPrivateKeySecretName, string(name)), metav1.GetOptions{})
 	if err != nil {
 		return "", domainservice.NewNotFoundError(err, "could not get private key")
 	}
-	privateKey := privateKeySecret.Data["private.pem"]
+	privateKey := privateKeySecret.Data[privateKey]
 	keyPair, err := getKeyPairFromPrivateKey(privateKey, p.registry)
 	if err != nil {
-		return "", domainservice.NewInternalError(err, "could not get key pair for dogu %v", string(name))
+		return "", domainservice.NewInternalError(err, "could not get key pair for dogu %q", string(name))
 	}
 	decryptedValue, err := keyPair.Private().Decrypt(string(encryptedValue))
 	if err != nil {
@@ -122,7 +129,7 @@ func (p PublicKeyConfigEncryptionAdapter) DecryptAll(ctx context.Context, entrie
 		keyPair := keypairs[doguname]
 		decryptedValue, err := keyPair.Private().Decrypt(string(configValue))
 		if err != nil {
-			decryptionErrors = append(decryptionErrors, domainservice.NewInternalError(err, "could not decrypt encrypted value for dogu %v", doguname))
+			decryptionErrors = append(decryptionErrors, domainservice.NewInternalError(err, "could not decrypt encrypted value for dogu %q", doguname))
 		}
 		decryptedEntries[configKey] = common.SensitiveDoguConfigValue(decryptedValue)
 	}
@@ -136,15 +143,15 @@ func getKeyPairsFromMap(ctx context.Context, entries map[common.SensitiveDoguCon
 		doguname := string(configKey.DoguName)
 		_, privateKnown := keypairs[doguname]
 		if !privateKnown {
-			privateKeySecret, err := secrets.Get(ctx, doguname+"-private", metav1.GetOptions{})
+			privateKeySecret, err := secrets.Get(ctx, fmt.Sprintf(fmtDoguPrivateKeySecretName, doguname), metav1.GetOptions{})
 			if err != nil {
-				getKeyPairErrors = append(getKeyPairErrors, domainservice.NewNotFoundError(err, "could not get private key for dogu %v", doguname))
+				getKeyPairErrors = append(getKeyPairErrors, domainservice.NewNotFoundError(err, "could not get private key for dogu %q", doguname))
 				continue
 			} else {
-				privateKey := privateKeySecret.Data["private.pem"]
+				privateKey := privateKeySecret.Data[privateKey]
 				keyPairFromRegistry, err := getKeyPairFromPrivateKey(privateKey, registry)
 				if err != nil {
-					getKeyPairErrors = append(getKeyPairErrors, domainservice.NewNotFoundError(err, "could not get key pair for dogu %v", doguname))
+					getKeyPairErrors = append(getKeyPairErrors, domainservice.NewNotFoundError(err, "could not get key pair for dogu %q", doguname))
 					continue
 				} else {
 					keypairs[doguname] = keyPairFromRegistry
