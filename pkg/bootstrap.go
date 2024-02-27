@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter"
-	config3 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	configAdapter "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 
 	"k8s.io/client-go/kubernetes"
@@ -72,7 +72,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := config3.NewPublicKeyConfigEncryptionAdapter()
+	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter()
 	doguConfigAdapter := adapterconfigetcd.NewEtcdDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := adapterconfigetcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := adapterconfigetcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())

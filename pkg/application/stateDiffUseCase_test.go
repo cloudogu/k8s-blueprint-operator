@@ -70,7 +70,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 		globalConfigRepoMock := newMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.GlobalConfigKey(nil)).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := newMockDoguConfigEntryRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
@@ -86,7 +86,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get installed components", func(t *testing.T) {
 		// given
@@ -100,7 +100,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, internalTestError)
 		globalConfigRepoMock := newMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.GlobalConfigKey(nil)).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
 		doguConfigRepoMock := newMockDoguConfigEntryRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
@@ -116,7 +116,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get global config", func(t *testing.T) {
 		// given
@@ -150,7 +150,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get dogu config", func(t *testing.T) {
 		// given
@@ -184,7 +184,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to get sensitive dogu config", func(t *testing.T) {
 		// given
@@ -218,7 +218,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		var internalError *domainservice.InternalError
 		assert.ErrorAs(t, err, &internalError)
 		assert.ErrorContains(t, err, "could not determine state diff")
-		assert.ErrorContains(t, err, "could not collect cluster state")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
@@ -279,6 +279,36 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot save blueprint spec \"testBlueprint1\" after determining the state diff to the ecosystem")
+	})
+	t.Run("should fail to decrypt config", func(t *testing.T) {
+		// given
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
+
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+
+		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := newMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		globalConfigRepoMock := newMockGlobalConfigEntryRepository(t)
+		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
+		doguConfigRepoMock := newMockDoguConfigEntryRepository(t)
+		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
+		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
+		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
+		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, internalTestError)
+
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+
+		// when
+		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, internalTestError)
+		assert.ErrorContains(t, err, "could not decrypt sensitive dogu config")
 	})
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
@@ -631,7 +661,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						Key:                  nginxStaticSensitiveConfigKeyNginxKey1,
 						Actual:               domain.DoguConfigValueState{Value: "val1", Exists: true},
 						Expected:             domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction:         domain.ConfigActionSetEncrypted,
 						DoguAlreadyInstalled: true,
 					},
 					{
@@ -654,7 +684,7 @@ func mustParseVersion(t *testing.T, raw string) core.Version {
 	return version
 }
 
-func TestStateDiffUseCase_collectClusterState(t *testing.T) {
+func TestStateDiffUseCase_collectecosystemState(t *testing.T) {
 	t.Run("ignore not found errors", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
@@ -739,11 +769,11 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectClusterState(testCtx, effectiveBlueprint)
+		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.NoError(t, err)
-		assert.Equal(t, ecosystem.ClusterState{
+		assert.Equal(t, ecosystem.EcosystemState{
 			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
 			DoguConfig:   map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
 			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
@@ -752,7 +782,7 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 				nginxStaticSensitiveConfigKeyNginxKey1: "val1",
 			},
-		}, clusterState)
+		}, ecosystemState)
 	})
 	t.Run("fail with internalError and notFoundError", func(t *testing.T) {
 		// given
@@ -823,12 +853,12 @@ func TestStateDiffUseCase_collectClusterState(t *testing.T) {
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
 
 		// when
-		clusterState, err := sut.collectClusterState(testCtx, effectiveBlueprint)
+		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
 
 		// then
 		assert.ErrorIs(t, err, internalTestError)
 		assert.ErrorIs(t, err, globalConfigNotFoundError)
 		assert.ErrorIs(t, err, doguConfigNotFoundError)
-		assert.Equal(t, ecosystem.ClusterState{}, clusterState)
+		assert.Equal(t, ecosystem.EcosystemState{}, ecosystemState)
 	})
 }

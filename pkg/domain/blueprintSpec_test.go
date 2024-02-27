@@ -342,7 +342,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
@@ -381,7 +381,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
 				"name": {Name: common.QualifiedDoguName{
 					Namespace:  "namespace",
@@ -418,7 +418,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
 				"name": {Name: common.QualifiedDoguName{
 					Namespace:  "namespace",
@@ -444,7 +444,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			spec := BlueprintSpec{
 				Status: initialStatus,
 			}
-			clusterState := ecosystem.ClusterState{
+			clusterState := ecosystem.EcosystemState{
 				InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
 				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 			}
@@ -464,7 +464,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		spec := BlueprintSpec{
 			Status: initialStatus,
 		}
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
@@ -493,7 +493,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			},
 			Status: StatusPhaseValidated,
 		}
-		clusterState := ecosystem.ClusterState{
+		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 				testComponentName.SimpleName: {

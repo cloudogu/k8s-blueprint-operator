@@ -9,10 +9,10 @@ type GlobalConfigDiff []GlobalConfigEntryDiff
 
 type GlobalConfigValueState ConfigValueState
 type GlobalConfigEntryDiff struct {
-	Key          string                 `json:"key,omitempty"`
-	Actual       GlobalConfigValueState `json:"actual,omitempty"`
-	Expected     GlobalConfigValueState `json:"expected,omitempty"`
-	NeededAction ConfigAction           `json:"neededAction,omitempty"`
+	Key          string                 `json:"key"`
+	Actual       GlobalConfigValueState `json:"actual"`
+	Expected     GlobalConfigValueState `json:"expected"`
+	NeededAction ConfigAction           `json:"neededAction"`
 }
 
 func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDiffs {

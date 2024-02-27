@@ -13,14 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-//go:embed testdata/doguConfigDiffMockData.yaml
-var doguConfigDiffMockDataBytes []byte
-
-//go:embed testdata/globalConfigDiffMockData.yaml
-var globalConfigDiffMockDataBytes []byte
-
-var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
-
 type EcosystemRegistryUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
@@ -28,6 +20,8 @@ type EcosystemRegistryUseCase struct {
 	globalConfigRepository        globalConfigEntryRepository
 	encryptionAdapter             configEncryptionAdapter
 }
+
+var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
 func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemRegistryUseCase {
 	return &EcosystemRegistryUseCase{
@@ -48,19 +42,6 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint to apply config: %w", err)
 	}
-
-	// TODO Remove this before merge.
-	// stage := os.Getenv("STAGE")
-	// if stage == "development" {
-	// 	logger.Info("set config diffs from mock data...")
-	// 	data := parseDoguConfigDiffMockData()
-	// 	logger.Info("dogu config diffs:")
-	// 	logger.Info(fmt.Sprintf("%+v", data))
-	// 	blueprintSpec.StateDiff.DoguConfigDiffs = data
-	// 	logger.Info("dogu config diffs in statediff:")
-	// 	logger.Info(fmt.Sprintf("%+v", blueprintSpec.StateDiff.DoguConfigDiffs))
-	// 	blueprintSpec.StateDiff.GlobalConfigDiffs = parseGlobalConfigDiffMockData()
-	// }
 
 	doguConfigDiffs := blueprintSpec.StateDiff.DoguConfigDiffs
 	isEmptyDoguDiff := len(doguConfigDiffs) == 0
@@ -97,26 +78,6 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	}
 
 	return useCase.markConfigApplied(ctx, blueprintSpec)
-}
-
-func parseGlobalConfigDiffMockData() domain.GlobalConfigDiffs {
-	object := &domain.GlobalConfigDiffs{}
-	err := yaml.Unmarshal(globalConfigDiffMockDataBytes, object)
-	if err != nil {
-		panic(fmt.Errorf("error during mock data deserialization"))
-	}
-
-	return *object
-}
-
-func parseDoguConfigDiffMockData() map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs {
-	object := &map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-	err := yaml.Unmarshal(doguConfigDiffMockDataBytes, object)
-	if err != nil {
-		panic(fmt.Errorf("error during mock data deserialization"))
-	}
-
-	return *object
 }
 
 func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {

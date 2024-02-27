@@ -66,8 +66,12 @@ func determineSensitiveDoguConfigDiffs(
 
 func getNeededSensitiveConfigAction(expected ConfigValueState, actual ConfigValueState, doguAlreadyInstalled bool) ConfigAction {
 	action := getNeededConfigAction(expected, actual)
-	if action == ConfigActionSet && !doguAlreadyInstalled {
-		return ConfigActionSetToEncrypt
+	if action == ConfigActionSet {
+		if !doguAlreadyInstalled {
+			return ConfigActionSetToEncrypt
+		} else {
+			return ConfigActionSetEncrypted
+		}
 	}
 	return action
 }

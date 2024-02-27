@@ -208,6 +208,8 @@ spec:
                                       type: boolean
                                     value:
                                       type: string
+                                  required:
+                                    - exists
                                   type: object
                                 expected:
                                   properties:
@@ -215,11 +217,18 @@ spec:
                                       type: boolean
                                     value:
                                       type: string
+                                  required:
+                                    - exists
                                   type: object
                                 key:
                                   type: string
                                 neededAction:
                                   type: string
+                              required:
+                                - actual
+                                - expected
+                                - key
+                                - neededAction
                               type: object
                             type: array
                           sensitiveDoguConfigDiff:
@@ -231,20 +240,34 @@ spec:
                                       type: boolean
                                     value:
                                       type: string
+                                  required:
+                                    - exists
                                   type: object
+                                doguNotInstalled:
+                                  type: boolean
                                 expected:
                                   properties:
                                     exists:
                                       type: boolean
                                     value:
                                       type: string
+                                  required:
+                                    - exists
                                   type: object
                                 key:
                                   type: string
                                 neededAction:
                                   type: string
+                              required:
+                                - actual
+                                - expected
+                                - key
+                                - neededAction
                               type: object
                             type: array
+                        required:
+                          - doguConfigDiff
+                          - sensitiveDoguConfigDiff
                         type: object
                       description: DoguConfigDiffs maps simple dogu names to the determined config diff.
                       type: object
@@ -296,6 +319,8 @@ spec:
                                 type: boolean
                               value:
                                 type: string
+                            required:
+                              - exists
                             type: object
                           expected:
                             properties:
@@ -303,11 +328,18 @@ spec:
                                 type: boolean
                               value:
                                 type: string
+                            required:
+                              - exists
                             type: object
                           key:
                             type: string
                           neededAction:
                             type: string
+                        required:
+                          - actual
+                          - expected
+                          - key
+                          - neededAction
                         type: object
                       type: array
                   type: object
