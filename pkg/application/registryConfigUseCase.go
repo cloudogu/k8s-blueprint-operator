@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	_ "embed"
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"

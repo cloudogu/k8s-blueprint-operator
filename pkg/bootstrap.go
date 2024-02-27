@@ -3,7 +3,7 @@ package pkg
 import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter"
-	configAdapter "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 
 	"k8s.io/client-go/kubernetes"
@@ -15,10 +15,10 @@ import (
 	"github.com/cloudogu/cesapp-lib/remote"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
-	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
-	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
+	adapterk8sconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
@@ -72,16 +72,16 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter()
+	configEncryptionAdapter := adapterconfig.NewPublicKeyConfigEncryptionAdapter()
 	doguConfigAdapter := adapterconfigetcd.NewEtcdDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := adapterconfigetcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := adapterconfigetcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
-	secretSensitiveDoguConfigAdapter := config2.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	secretSensitiveDoguConfigAdapter := adapterk8sconfig.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	combinedSensitiveDoguConfigAdapter := adapter.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
-	healthConfigRepo := config2.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	healthConfigRepo := adapterk8sconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
@@ -136,13 +136,13 @@ func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 	return doguregistry.NewRemote(doguRemoteRegistry), nil
 }
 
-func createEcosystemClientSet(restConfig *rest.Config) (*kubernetes2.ClientSet, error) {
+func createEcosystemClientSet(restConfig *rest.Config) (*adapterk8s.ClientSet, error) {
 	k8sClientSet, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create k8s clientset: %w", err)
 	}
 
-	ecosystemClientSet, err := kubernetes2.NewClientSet(restConfig, k8sClientSet)
+	ecosystemClientSet, err := adapterk8s.NewClientSet(restConfig, k8sClientSet)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create ecosystem clientset: %w", err)
 	}
