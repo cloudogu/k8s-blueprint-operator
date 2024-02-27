@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
@@ -60,6 +59,12 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
+	// StatusPhaseApplyRegistryConfig indicates that the apply registry config phase is active.
+	StatusPhaseApplyRegistryConfig StatusPhase = "applyRegistryConfig"
+	// StatusPhaseApplyRegistryConfigFailed indicates that the phase to apply registry config phase failed.
+	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
+	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
+	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
 )
 
 // censorValue is the value for censoring sensitive blueprint configuration data.
@@ -235,7 +240,9 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
-func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) error {
+func (spec *BlueprintSpec) DetermineStateDiff(
+	ecosystemState ecosystem.EcosystemState,
+) error {
 	switch spec.Status {
 	case StatusPhaseNew:
 		fallthrough
@@ -248,20 +255,29 @@ func (spec *BlueprintSpec) DetermineStateDiff(installedDogus map[common.SimpleDo
 		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
 	}
 
-	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, installedDogus)
-	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, installedComponents)
+	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
+	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
+		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
+		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
+	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
+		spec.EffectiveBlueprint.Config,
+		ecosystemState,
+	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: compDiffs,
-		// there will be more diffs, e.g. registry keys
+		DoguDiffs:         doguDiffs,
+		ComponentDiffs:    compDiffs,
+		DoguConfigDiffs:   doguConfigDiffs,
+		GlobalConfigDiffs: globalConfigDiffs,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
+	spec.Events = append(spec.Events, DoguConfigDiffDeterminedEvent{spec.StateDiff.DoguConfigDiffs})
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
@@ -367,7 +383,7 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	}
 }
 
-var notAllowedComponentActions = []Action{ActionSwitchComponentDistributionNamespace}
+var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 
 // ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
@@ -406,6 +422,21 @@ func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, inv
 	}
 
 	return invalidBlueprintErrors
+}
+
+func (spec *BlueprintSpec) StartApplyRegistryConfig() {
+	spec.Status = StatusPhaseApplyRegistryConfig
+	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
+}
+
+func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyRegistryConfigFailed
+	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
+}
+
+func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
+	spec.Status = StatusPhaseRegistryConfigApplied
+	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

@@ -33,4 +33,8 @@ Component-specific:
 - [#14] Apply new component states based on blueprint.
 
 Config-specific:
+- [#42] Implement config repositories
+- [#48] Save config diff in cluster
+- [#39] Encrypt sensitive data
+- [#36] Set registry configuration for dogu and global config.
 - [#38] Censor all sensitive configuration data after applying the blueprint

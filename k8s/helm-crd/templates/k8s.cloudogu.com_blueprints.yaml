@@ -194,7 +194,82 @@ spec:
                           - expected
                           - neededAction
                         type: object
-                      description: DoguDiffs maps simple dogu names to the determined diff.
+                      description: ComponentDiffs maps simple component names to the determined diff.
+                      type: object
+                    doguConfigDiffs:
+                      additionalProperties:
+                        properties:
+                          doguConfigDiff:
+                            items:
+                              properties:
+                                actual:
+                                  properties:
+                                    exists:
+                                      type: boolean
+                                    value:
+                                      type: string
+                                  required:
+                                    - exists
+                                  type: object
+                                expected:
+                                  properties:
+                                    exists:
+                                      type: boolean
+                                    value:
+                                      type: string
+                                  required:
+                                    - exists
+                                  type: object
+                                key:
+                                  type: string
+                                neededAction:
+                                  type: string
+                              required:
+                                - actual
+                                - expected
+                                - key
+                                - neededAction
+                              type: object
+                            type: array
+                          sensitiveDoguConfigDiff:
+                            items:
+                              properties:
+                                actual:
+                                  properties:
+                                    exists:
+                                      type: boolean
+                                    value:
+                                      type: string
+                                  required:
+                                    - exists
+                                  type: object
+                                doguNotInstalled:
+                                  type: boolean
+                                expected:
+                                  properties:
+                                    exists:
+                                      type: boolean
+                                    value:
+                                      type: string
+                                  required:
+                                    - exists
+                                  type: object
+                                key:
+                                  type: string
+                                neededAction:
+                                  type: string
+                              required:
+                                - actual
+                                - expected
+                                - key
+                                - neededAction
+                              type: object
+                            type: array
+                        required:
+                          - doguConfigDiff
+                          - sensitiveDoguConfigDiff
+                        type: object
+                      description: DoguConfigDiffs maps simple dogu names to the determined config diff.
                       type: object
                     doguDiffs:
                       additionalProperties:
@@ -234,6 +309,39 @@ spec:
                         type: object
                       description: DoguDiffs maps simple dogu names to the determined diff.
                       type: object
+                    globalConfigDiff:
+                      description: GlobalConfigDiff is the difference between the GlobalConfig in the EffectiveBlueprint and the cluster state.
+                      items:
+                        properties:
+                          actual:
+                            properties:
+                              exists:
+                                type: boolean
+                              value:
+                                type: string
+                            required:
+                              - exists
+                            type: object
+                          expected:
+                            properties:
+                              exists:
+                                type: boolean
+                              value:
+                                type: string
+                            required:
+                              - exists
+                            type: object
+                          key:
+                            type: string
+                          neededAction:
+                            type: string
+                        required:
+                          - actual
+                          - expected
+                          - key
+                          - neededAction
+                        type: object
+                      type: array
                   type: object
               type: object
           type: object

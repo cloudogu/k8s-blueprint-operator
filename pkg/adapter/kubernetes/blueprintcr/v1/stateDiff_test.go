@@ -4,7 +4,8 @@ import (
 	"cmp"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
-	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -146,6 +147,54 @@ func TestConvertToDTO(t *testing.T) {
 						NeededAction: "uninstall",
 					},
 				}},
+		}, {
+			name: "should convert multiple dogu config diffs",
+			domainModel: domain.StateDiff{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			want: StateDiff{
+				DoguDiffs:      map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{},
+				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+		}, {
+			name: "should convert global config diff",
+			domainModel: domain.StateDiff{
+				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: domain.GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: domain.GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: domain.ConfigActionSet,
+				}},
+			},
+			want: StateDiff{
+				DoguDiffs:      map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{},
+				GlobalConfigDiff: []GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: "set",
+				}},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -439,6 +488,60 @@ func TestConvertToDomainModel(t *testing.T) {
 				},
 			},
 				ComponentDiffs: []domain.ComponentDiff{},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		},
+		{
+			name: "succeed for multiple dogu config diffs",
+			dto: StateDiff{
+				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			want: domain.StateDiff{
+				DoguDiffs:      []domain.DoguDiff{},
+				ComponentDiffs: []domain.ComponentDiff{},
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		},
+		{
+			name: "succeed for global config diffs",
+			dto: StateDiff{
+				GlobalConfigDiff: GlobalConfigDiff{{
+					Key: "fqdn",
+					Actual: GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: "set",
+				}},
+			},
+			want: domain.StateDiff{
+				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
+					Key: "fqdn",
+					Actual: domain.GlobalConfigValueState{
+						Value:  "ces1.example.com",
+						Exists: true,
+					},
+					Expected: domain.GlobalConfigValueState{
+						Value:  "ces2.example.com",
+						Exists: true,
+					},
+					NeededAction: domain.ConfigActionSet,
+				}},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)

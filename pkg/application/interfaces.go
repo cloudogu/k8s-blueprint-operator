@@ -45,6 +45,10 @@ type ecosystemHealthUseCase interface {
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
 }
 
+type registryConfigUseCase interface {
+	ApplyConfig(ctx context.Context, blueprintId string) error
+}
+
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
@@ -84,4 +88,19 @@ type remoteDoguRegistry interface {
 
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
+}
+type globalConfigEntryRepository interface {
+	domainservice.GlobalConfigEntryRepository
+}
+
+type doguConfigEntryRepository interface {
+	domainservice.DoguConfigEntryRepository
+}
+
+type sensitiveDoguConfigEntryRepository interface {
+	domainservice.SensitiveDoguConfigEntryRepository
+}
+
+type configEncryptionAdapter interface {
+	domainservice.ConfigEncryptionAdapter
 }

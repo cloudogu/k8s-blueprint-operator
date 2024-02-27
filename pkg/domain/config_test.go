@@ -270,8 +270,139 @@ func TestConfig_validate(t *testing.T) {
 
 		// then
 		assert.ErrorContains(t, err, "dogu name \"some-name\" in map and dogu name \"another-name\" in value are not equal")
-		assert.ErrorContains(t, err, "config for dogu \"another-name\" invalid")
-		assert.ErrorContains(t, err, "sensitive config for dogu \"another-name\" invalid")
+		assert.ErrorContains(t, err, "config for dogu \"another-name\" is invalid")
 		assert.ErrorContains(t, err, "key for absent global config should not be empty")
 	})
+}
+
+func TestGlobalConfig_GetGlobalConfigKeys(t *testing.T) {
+	var (
+		globalKey1 = common.GlobalConfigKey("key1")
+		globalKey2 = common.GlobalConfigKey("key2")
+	)
+	config := GlobalConfig{
+		Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+			globalKey1: "value",
+		},
+		Absent: []common.GlobalConfigKey{
+			globalKey2,
+		},
+	}
+
+	keys := config.GetGlobalConfigKeys()
+
+	assert.ElementsMatch(t, keys, []common.GlobalConfigKey{globalKey1, globalKey2})
+}
+
+func TestConfig_GetDoguConfigKeys(t *testing.T) {
+	var (
+		nginx       = common.SimpleDoguName("nginx")
+		postfix     = common.SimpleDoguName("postfix")
+		nginxKey1   = common.DoguConfigKey{DoguName: nginx, Key: "key1"}
+		nginxKey2   = common.DoguConfigKey{DoguName: nginx, Key: "key2"}
+		postfixKey1 = common.DoguConfigKey{DoguName: postfix, Key: "key1"}
+		postfixKey2 = common.DoguConfigKey{DoguName: postfix, Key: "key2"}
+	)
+	config := Config{
+		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			nginx: {
+				DoguName: nginx,
+				Config: DoguConfig{
+					Present: map[common.DoguConfigKey]common.DoguConfigValue{
+						nginxKey1: "value",
+					},
+					Absent: []common.DoguConfigKey{
+						nginxKey2,
+					},
+				},
+				SensitiveConfig: SensitiveDoguConfig{},
+			},
+			postfix: {
+				DoguName: postfix,
+				Config: DoguConfig{
+					Present: map[common.DoguConfigKey]common.DoguConfigValue{
+						postfixKey1: "value",
+					},
+					Absent: []common.DoguConfigKey{
+						postfixKey2,
+					},
+				},
+				SensitiveConfig: SensitiveDoguConfig{},
+			},
+		},
+	}
+
+	keys := config.GetDoguConfigKeys()
+
+	assert.ElementsMatch(t, keys, []common.DoguConfigKey{nginxKey1, nginxKey2, postfixKey1, postfixKey2})
+}
+
+func TestConfig_GetSensitiveDoguConfigKeys(t *testing.T) {
+	var (
+		nginx       = common.SimpleDoguName("nginx")
+		postfix     = common.SimpleDoguName("postfix")
+		nginxKey1   = common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: nginx, Key: "key1"}}
+		nginxKey2   = common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: nginx, Key: "key2"}}
+		postfixKey1 = common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: postfix, Key: "key1"}}
+		postfixKey2 = common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: postfix, Key: "key2"}}
+	)
+	config := Config{
+		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			nginx: {
+				DoguName: nginx,
+				SensitiveConfig: SensitiveDoguConfig{
+					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+						nginxKey1: "value",
+					},
+					Absent: []common.SensitiveDoguConfigKey{
+						nginxKey2,
+					},
+				},
+			},
+			postfix: {
+				DoguName: postfix,
+				SensitiveConfig: SensitiveDoguConfig{
+					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+						postfixKey1: "value",
+					},
+					Absent: []common.SensitiveDoguConfigKey{
+						postfixKey2,
+					},
+				},
+			},
+		},
+	}
+
+	keys := config.GetSensitiveDoguConfigKeys()
+
+	assert.ElementsMatch(t, keys, []common.SensitiveDoguConfigKey{nginxKey1, nginxKey2, postfixKey1, postfixKey2})
+}
+
+func TestCombinedDoguConfig_validate(t *testing.T) {
+	normalConfig := DoguConfig{
+		Present: map[common.DoguConfigKey]common.DoguConfigValue{
+			common.DoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: "value1",
+		},
+		Absent: []common.DoguConfigKey{
+			{DoguName: "dogu1", Key: "my/key2"},
+		},
+	}
+	sensitiveConfig := SensitiveDoguConfig{
+		Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+			common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "dogu1", Key: "my/key1"}}: "value1",
+		},
+		Absent: []common.SensitiveDoguConfigKey{
+			{DoguConfigKey: common.DoguConfigKey{DoguName: "dogu1", Key: "my/key2"}},
+		},
+	}
+
+	config := CombinedDoguConfig{
+		DoguName:        "dogu1",
+		Config:          normalConfig,
+		SensitiveConfig: sensitiveConfig,
+	}
+
+	err := config.validate()
+
+	assert.ErrorContains(t, err, "dogu config key key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
 }

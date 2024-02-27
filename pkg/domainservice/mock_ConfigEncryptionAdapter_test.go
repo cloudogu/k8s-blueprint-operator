@@ -23,6 +23,115 @@ func (_m *MockConfigEncryptionAdapter) EXPECT() *MockConfigEncryptionAdapter_Exp
 	return &MockConfigEncryptionAdapter_Expecter{mock: &_m.Mock}
 }
 
+// Decrypt provides a mock function with given fields: _a0, _a1, _a2
+func (_m *MockConfigEncryptionAdapter) Decrypt(_a0 context.Context, _a1 common.SimpleDoguName, _a2 common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error) {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 common.SensitiveDoguConfigValue
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)); ok {
+		return rf(_a0, _a1, _a2)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) common.SensitiveDoguConfigValue); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Get(0).(common.SensitiveDoguConfigValue)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) error); ok {
+		r1 = rf(_a0, _a1, _a2)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockConfigEncryptionAdapter_Decrypt_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Decrypt'
+type MockConfigEncryptionAdapter_Decrypt_Call struct {
+	*mock.Call
+}
+
+// Decrypt is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 common.SimpleDoguName
+//   - _a2 common.EncryptedDoguConfigValue
+func (_e *MockConfigEncryptionAdapter_Expecter) Decrypt(_a0 interface{}, _a1 interface{}, _a2 interface{}) *MockConfigEncryptionAdapter_Decrypt_Call {
+	return &MockConfigEncryptionAdapter_Decrypt_Call{Call: _e.mock.On("Decrypt", _a0, _a1, _a2)}
+}
+
+func (_c *MockConfigEncryptionAdapter_Decrypt_Call) Run(run func(_a0 context.Context, _a1 common.SimpleDoguName, _a2 common.EncryptedDoguConfigValue)) *MockConfigEncryptionAdapter_Decrypt_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(common.SimpleDoguName), args[2].(common.EncryptedDoguConfigValue))
+	})
+	return _c
+}
+
+func (_c *MockConfigEncryptionAdapter_Decrypt_Call) Return(_a0 common.SensitiveDoguConfigValue, _a1 error) *MockConfigEncryptionAdapter_Decrypt_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockConfigEncryptionAdapter_Decrypt_Call) RunAndReturn(run func(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)) *MockConfigEncryptionAdapter_Decrypt_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DecryptAll provides a mock function with given fields: _a0, _a1
+func (_m *MockConfigEncryptionAdapter) DecryptAll(_a0 context.Context, _a1 map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
+	ret := _m.Called(_a0, _a1)
+
+	var r0 map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockConfigEncryptionAdapter_DecryptAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DecryptAll'
+type MockConfigEncryptionAdapter_DecryptAll_Call struct {
+	*mock.Call
+}
+
+// DecryptAll is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue
+func (_e *MockConfigEncryptionAdapter_Expecter) DecryptAll(_a0 interface{}, _a1 interface{}) *MockConfigEncryptionAdapter_DecryptAll_Call {
+	return &MockConfigEncryptionAdapter_DecryptAll_Call{Call: _e.mock.On("DecryptAll", _a0, _a1)}
+}
+
+func (_c *MockConfigEncryptionAdapter_DecryptAll_Call) Run(run func(_a0 context.Context, _a1 map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue)) *MockConfigEncryptionAdapter_DecryptAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue))
+	})
+	return _c
+}
+
+func (_c *MockConfigEncryptionAdapter_DecryptAll_Call) Return(_a0 map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, _a1 error) *MockConfigEncryptionAdapter_DecryptAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockConfigEncryptionAdapter_DecryptAll_Call) RunAndReturn(run func(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)) *MockConfigEncryptionAdapter_DecryptAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Encrypt provides a mock function with given fields: _a0, _a1, _a2
 func (_m *MockConfigEncryptionAdapter) Encrypt(_a0 context.Context, _a1 common.SimpleDoguName, _a2 common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error) {
 	ret := _m.Called(_a0, _a1, _a2)

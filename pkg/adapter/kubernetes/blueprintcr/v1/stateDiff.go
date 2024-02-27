@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
@@ -11,8 +12,12 @@ import (
 type StateDiff struct {
 	// DoguDiffs maps simple dogu names to the determined diff.
 	DoguDiffs map[string]DoguDiff `json:"doguDiffs,omitempty"`
-	// DoguDiffs maps simple dogu names to the determined diff.
+	// ComponentDiffs maps simple component names to the determined diff.
 	ComponentDiffs map[string]ComponentDiff `json:"componentDiffs,omitempty"`
+	// DoguConfigDiffs maps simple dogu names to the determined config diff.
+	DoguConfigDiffs map[string]CombinedDoguConfigDiff `json:"doguConfigDiffs,omitempty"`
+	// GlobalConfigDiff is the difference between the GlobalConfig in the EffectiveBlueprint and the cluster state.
+	GlobalConfigDiff GlobalConfigDiff `json:"globalConfigDiff,omitempty"`
 }
 
 func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
@@ -26,10 +31,19 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 		componentDiffsV1[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
 	}
 
+	var doguConfigDiffs map[string]CombinedDoguConfigDiff
+	if len(domainModel.DoguConfigDiffs) != 0 {
+		doguConfigDiffs = make(map[string]CombinedDoguConfigDiff)
+		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
+			doguConfigDiffs[string(doguName)] = convertToCombinedDoguConfigDiffDTO(doguConfigDiff)
+		}
+	}
+
 	return StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: componentDiffsV1,
-		// in the future, this will also contain registry diffs
+		DoguDiffs:        doguDiffs,
+		ComponentDiffs:   componentDiffsV1,
+		DoguConfigDiffs:  doguConfigDiffs,
+		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiffs),
 	}
 }
 
@@ -55,8 +69,18 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff DTO to domain model: %w", err)
 	}
 
+	var doguConfigDiffs map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs
+	if len(dto.DoguConfigDiffs) != 0 {
+		doguConfigDiffs = make(map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs)
+		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
+			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToCombinedDoguConfigDiffDomain(doguName, doguConfigDiff)
+		}
+	}
+
 	return domain.StateDiff{
-		DoguDiffs:      doguDiffs,
-		ComponentDiffs: componentDiffs,
+		DoguDiffs:         doguDiffs,
+		ComponentDiffs:    componentDiffs,
+		DoguConfigDiffs:   doguConfigDiffs,
+		GlobalConfigDiffs: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
 	}, nil
 }
