@@ -88,7 +88,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter()
+	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter(ecosystemClientSet.CoreV1().Secrets(namespace), configRegistry, namespace)
 	doguConfigAdapter := configAdapter.NewEtcdDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := configAdapter.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := configAdapter.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
