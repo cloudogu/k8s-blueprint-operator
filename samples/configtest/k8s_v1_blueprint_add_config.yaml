@@ -49,7 +49,7 @@ spec:
           "postgresql": {
             "config": {
               "present": {
-                "key1": "value1",
+                "key1/path/test": "value1",
                 "key2": "value2"
               }
             },
