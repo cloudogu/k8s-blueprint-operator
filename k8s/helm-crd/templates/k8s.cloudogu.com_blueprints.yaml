@@ -87,26 +87,34 @@ spec:
                       description: Config is used for ecosystem configuration to be applied. Optional.
                       properties:
                         dogus:
+                          description: Dogu config is the configuration specific to each dogu. Dogus can have normal and sensitive (encrypted) configuration values.
                           additionalProperties:
                             properties:
                               config:
+                                description: Normal configuration that will not be encrypted on save.
                                 properties:
                                   absent:
+                                    description: Configuration keys that shall be deleted with this blueprint.
                                     items:
+                                      description: The key of the configuration to be deleted.
                                       type: string
                                     type: array
                                   present:
+                                    description: Configuration that shall be applied with this blueprint. Key is the configuration key with the complete path, value the corresponding configuration value.
                                     additionalProperties:
                                       type: string
                                     type: object
                                 type: object
                               sensitiveConfig:
+                                description: Sensitive configuration that will be encrypted on save.
                                 properties:
                                   absent:
+                                    description: Configuration keys that shall be deleted with this blueprint.
                                     items:
                                       type: string
                                     type: array
                                   present:
+                                    description: Configuration that shall be applied with this blueprint. Key is the configuration key with the complete path, value the corresponding configuration value.
                                     additionalProperties:
                                       type: string
                                     type: object
@@ -114,12 +122,15 @@ spec:
                             type: object
                           type: object
                         global:
+                          description: Global configuration values that are necessary for multiple dogus or the whole system.
                           properties:
                             absent:
+                              description: Configuration keys that shall be deleted with this blueprint.
                               items:
                                 type: string
                               type: array
                             present:
+                              description: Configuration that shall be applied with this blueprint. Key is the configuration key with the complete path, value the corresponding configuration value.
                               additionalProperties:
                                 type: string
                               type: object
@@ -153,6 +164,7 @@ spec:
                   description: StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state. It describes what operations need to be done to achieve the desired state of the blueprint.
                   properties:
                     componentDiffs:
+                      description: ComponentDiffs maps simple component names to the determined diff.
                       additionalProperties:
                         description: ComponentDiff is the comparison of a Component's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
                         properties:
@@ -194,35 +206,45 @@ spec:
                           - expected
                           - neededAction
                         type: object
-                      description: ComponentDiffs maps simple component names to the determined diff.
                       type: object
                     doguConfigDiffs:
+                      description: DoguConfigDiffs maps simple dogu names to the determined configuration diff.
                       additionalProperties:
+                        description: Each Dogu config diff is the comparison of a Dogu's desired configuration state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
                         properties:
                           doguConfigDiff:
+                            description: Describes the differences in normal configuration values between the blueprint and the cluster.
                             items:
                               properties:
                                 actual:
+                                  description: Actual contains the dogu's configuration state in the current system.
                                   properties:
                                     exists:
+                                      description: Exists describes whether the configuration already exists or not.
                                       type: boolean
                                     value:
+                                      description: Value describes the configuration value.
                                       type: string
                                   required:
                                     - exists
                                   type: object
                                 expected:
+                                  description: Expected contains the desired dogu's configuration target state.
                                   properties:
                                     exists:
+                                      description: Exists describes whether the configuration already exists or not.
                                       type: boolean
                                     value:
+                                      description: Value describes the configuration value.
                                       type: string
                                   required:
                                     - exists
                                   type: object
                                 key:
+                                  description: Key describes the configuration key with its complete path.
                                   type: string
                                 neededAction:
+                                  description: NeededAction contains the refined action as decided by the application's state determination automaton.
                                   type: string
                               required:
                                 - actual
@@ -232,13 +254,17 @@ spec:
                               type: object
                             type: array
                           sensitiveDoguConfigDiff:
+                            description: Describes the differences in sensitive configuration values between the blueprint and the cluster.
                             items:
                               properties:
                                 actual:
+                                  description: Actual contains the dogu's configuration state in the current system.
                                   properties:
                                     exists:
+                                      description: Exists describes whether the configuration already exists or not.
                                       type: boolean
                                     value:
+                                      description: Value describes the configuration value.
                                       type: string
                                   required:
                                     - exists
@@ -246,17 +272,22 @@ spec:
                                 doguNotInstalled:
                                   type: boolean
                                 expected:
+                                  description: Expected contains the desired dogu's configuration target state.
                                   properties:
                                     exists:
+                                      description: Exists describes whether the configuration already exists or not.
                                       type: boolean
                                     value:
+                                      description: Value describes the configuration value.
                                       type: string
                                   required:
                                     - exists
                                   type: object
                                 key:
+                                  description: Key describes the configuration key with its complete path.
                                   type: string
                                 neededAction:
+                                  description: NeededAction contains the refined action as decided by the application's state determination automaton.
                                   type: string
                               required:
                                 - actual
@@ -269,7 +300,6 @@ spec:
                           - doguConfigDiff
                           - sensitiveDoguConfigDiff
                         type: object
-                      description: DoguConfigDiffs maps simple dogu names to the determined config diff.
                       type: object
                     doguDiffs:
                       additionalProperties:
@@ -314,26 +344,34 @@ spec:
                       items:
                         properties:
                           actual:
+                            description: Actual contains the global configuration state in the current system.
                             properties:
                               exists:
+                                description: Exists describes whether the configuration already exists or not.
                                 type: boolean
                               value:
+                                description: Value describes the configuration value.
                                 type: string
                             required:
                               - exists
                             type: object
                           expected:
+                            description: Expected contains the desired dogu's configuration target state.
                             properties:
                               exists:
+                                description: Exists describes whether the configuration already exists or not.
                                 type: boolean
                               value:
+                                description: Value describes the configuration value.
                                 type: string
                             required:
                               - exists
                             type: object
                           key:
+                            description: Key describes the configuration key with its complete path.
                             type: string
                           neededAction:
+                            description: NeededAction contains the refined action as decided by the application's state determination automaton.
                             type: string
                         required:
                           - actual

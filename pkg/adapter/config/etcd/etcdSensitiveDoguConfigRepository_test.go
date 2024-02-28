@@ -1,4 +1,4 @@
-package config
+package etcd
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"

@@ -2,7 +2,9 @@ package pkg
 
 import (
 	"fmt"
-	configAdapter "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter"
+	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
+	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -13,14 +15,13 @@ import (
 	"github.com/cloudogu/cesapp-lib/remote"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
-	kubernetes2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
-	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
+	adapterk8sconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
@@ -32,24 +33,7 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	RemoteDoguRegistry             domainservice.RemoteDoguRegistry
-	DoguInstallationRepository     domainservice.DoguInstallationRepository
-	BlueprintSpecRepository        domainservice.BlueprintSpecRepository
-	BlueprintSpecDomainUseCase     *domainservice.ValidateDependenciesDomainUseCase
-	DoguInstallationUseCase        *application.DoguInstallationUseCase
-	EcosystemHealthUseCase         *application.EcosystemHealthUseCase
-	ApplyBlueprintSpecUseCase      *application.ApplyBlueprintSpecUseCase
-	BlueprintSpecChangeUseCase     *application.BlueprintSpecChangeUseCase
-	BlueprintSpecValidationUseCase *application.BlueprintSpecValidationUseCase
-	EffectiveBlueprintUseCase      *application.EffectiveBlueprintUseCase
-	StateDiffUseCase               *application.StateDiffUseCase
-	BlueprintSerializer            serializer.BlueprintSerializer
-	BlueprintMaskSerializer        serializer.BlueprintMaskSerializer
-	Reconciler                     *reconciler.BlueprintReconciler
-	configEncryptionAdapter        domainservice.ConfigEncryptionAdapter
-	doguConfigAdapter              domainservice.DoguConfigEntryRepository
-	sensitiveDoguConfigAdapter     domainservice.SensitiveDoguConfigEntryRepository
-	globalConfigAdapter            domainservice.GlobalConfigEntryRepository
+	Reconciler *reconciler.BlueprintReconciler
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -88,24 +72,26 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
-	configEncryptionAdapter := configAdapter.NewPublicKeyConfigEncryptionAdapter(ecosystemClientSet.CoreV1().Secrets(namespace), configRegistry, namespace)
-	doguConfigAdapter := configAdapter.NewEtcdDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := configAdapter.NewEtcdSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := configAdapter.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	configEncryptionAdapter := adapterconfig.NewPublicKeyConfigEncryptionAdapter(ecosystemClientSet.CoreV1().Secrets(namespace), configRegistry, namespace)
+	doguConfigAdapter := adapterconfigetcd.NewEtcdDoguConfigRepository(configRegistry)
+	sensitiveDoguConfigAdapter := adapterconfigetcd.NewEtcdSensitiveDoguConfigRepository(configRegistry)
+	globalConfigAdapter := adapterconfigetcd.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
+	secretSensitiveDoguConfigAdapter := adapterk8sconfig.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	combinedSensitiveDoguConfigAdapter := adapter.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
-	healthConfigRepo := config2.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	healthConfigRepo := adapterk8sconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter, configEncryptionAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, configEncryptionAdapter)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
+	registryConfigUseCase := application.NewEcosystemRegistryUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
@@ -115,24 +101,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
-		RemoteDoguRegistry:             remoteDoguRegistry,
-		DoguInstallationRepository:     doguInstallationRepo,
-		BlueprintSpecRepository:        blueprintSpecRepository,
-		BlueprintSpecDomainUseCase:     blueprintSpecDomainUseCase,
-		EcosystemHealthUseCase:         ecosystemHealthUseCase,
-		ApplyBlueprintSpecUseCase:      applyBlueprintSpecUseCase,
-		BlueprintSpecChangeUseCase:     blueprintChangeUseCase,
-		BlueprintSpecValidationUseCase: blueprintValidationUseCase,
-		EffectiveBlueprintUseCase:      effectiveBlueprintUseCase,
-		StateDiffUseCase:               stateDiffUseCase,
-		DoguInstallationUseCase:        doguInstallationUseCase,
-		BlueprintSerializer:            blueprintSerializer,
-		BlueprintMaskSerializer:        blueprintMaskSerializer,
-		Reconciler:                     blueprintReconciler,
-		configEncryptionAdapter:        configEncryptionAdapter,
-		doguConfigAdapter:              doguConfigAdapter,
-		sensitiveDoguConfigAdapter:     sensitiveDoguConfigAdapter,
-		globalConfigAdapter:            globalConfigAdapter,
+		Reconciler: blueprintReconciler,
 	}, nil
 }
 
@@ -167,13 +136,13 @@ func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 	return doguregistry.NewRemote(doguRemoteRegistry), nil
 }
 
-func createEcosystemClientSet(restConfig *rest.Config) (*kubernetes2.ClientSet, error) {
+func createEcosystemClientSet(restConfig *rest.Config) (*adapterk8s.ClientSet, error) {
 	k8sClientSet, err := kubernetes.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create k8s clientset: %w", err)
 	}
 
-	ecosystemClientSet, err := kubernetes2.NewClientSet(restConfig, k8sClientSet)
+	ecosystemClientSet, err := adapterk8s.NewClientSet(restConfig, k8sClientSet)
 	if err != nil {
 		return nil, fmt.Errorf("unable to create ecosystem clientset: %w", err)
 	}
