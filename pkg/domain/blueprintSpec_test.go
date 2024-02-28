@@ -743,10 +743,10 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 			},
 		},
 		StateDiff: StateDiff{
-			DoguConfigDiff: map[common.SimpleDoguName]CombinedDoguConfigDiff{
+			DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{
 				"ldapDiff": {SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{{
-					Actual:   EncryptedDoguConfigValueState{Value: "Test1"},
-					Expected: EncryptedDoguConfigValueState{Value: "Test2"},
+					Actual:   DoguConfigValueState{Value: "Test1"},
+					Expected: DoguConfigValueState{Value: "Test2"},
 				}}},
 			},
 		},
@@ -763,11 +763,11 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), common.SimpleDoguName("ldap"))
 	assert.Equal(t, censorValue, string(spec.EffectiveBlueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
 
-	require.Len(t, spec.StateDiff.DoguConfigDiff, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.DoguConfigDiff), common.SimpleDoguName("ldapDiff"))
-	require.Len(t, spec.StateDiff.DoguConfigDiff["ldapDiff"].SensitiveDoguConfigDiff, 1)
-	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiff["ldapDiff"].SensitiveDoguConfigDiff[0].Actual.Value)
-	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiff["ldapDiff"].SensitiveDoguConfigDiff[0].Expected.Value)
+	require.Len(t, spec.StateDiff.DoguConfigDiffs, 1)
+	assert.Contains(t, maps.Keys(spec.StateDiff.DoguConfigDiffs), common.SimpleDoguName("ldapDiff"))
+	require.Len(t, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff, 1)
+	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff[0].Actual.Value)
+	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff[0].Expected.Value)
 }
 
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
