@@ -9,9 +9,11 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// TODO parse volume and other config
 func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	if cr == nil {
 		return nil, &domainservice.InternalError{
@@ -22,13 +24,25 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
 	doguName, nameErr := common.QualifiedDoguNameFromString(cr.Spec.Name)
-	err := errors.Join(versionErr, nameErr)
+
+	crVolumeSize := cr.Spec.Resources.DataVolumeSize
+	var minVolumeSize ecosystem.VolumeSize
+	var quantityError error
+	if crVolumeSize != "" {
+		minVolumeSize, quantityError = resource.ParseQuantity(crVolumeSize)
+	} else {
+		// TODO if no VolumeSize in Cr is specified we have to check the pvc (if one exists and if yes the actual size).
+		minVolumeSize, quantityError = resource.ParseQuantity("2Gi") // Hardcoded default size!!!
+	}
+
+	err := errors.Join(versionErr, nameErr, quantityError)
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      "cannot load dogu CR as it cannot be parsed correctly",
 		}
 	}
+
 	// parse persistence context
 	persistenceContext := make(map[string]interface{}, 1)
 	persistenceContext[doguInstallationRepoContextKey] = doguInstallationRepoContext{
@@ -40,9 +54,27 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
+		MinVolumeSize:      minVolumeSize,
+		ReverseProxyConfig: ecosystem.ReverseProxyConfigEntries(cr.Spec.AdditionalIngressAnnotations),
 		PersistenceContext: persistenceContext,
 	}, nil
 }
+
+// var nginxReverseProxyConfigs = []string{nginxIngressAnnotationBodySize, nginxIngressAnnotationRewriteTarget, nginxIngressAnnotationAdditionalConfig}
+
+// func parseReverseProxyConfig(cr *v1.Dogu) domain.ReverseProxyConfigEntries {
+// 	reverseProxyConfig := domain.ReverseProxyConfigEntries{}
+// 	util.Map(nginxReverseProxyConfigs, func(t string) error {
+// 		value, ok := cr.Spec.AdditionalIngressAnnotations[t]
+// 		if !ok {
+// 			reverseProxyConfig[t] = value
+// 		}
+//
+// 		return nil
+// 	})
+//
+// 	return reverseProxyConfig
+// }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 	return &v1.Dogu{
@@ -58,14 +90,14 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			Resources: v1.DoguResources{
-				DataVolumeSize: "",
+				DataVolumeSize: dogu.MinVolumeSize.String(),
 			},
 			SupportMode: false,
 			UpgradeConfig: v1.UpgradeConfig{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
 			},
-			AdditionalIngressAnnotations: nil,
+			AdditionalIngressAnnotations: v1.IngressAnnotations(dogu.ReverseProxyConfig),
 		},
 		Status: v1.DoguStatus{},
 	}
@@ -76,15 +108,15 @@ type doguCRPatch struct {
 }
 
 type doguSpecPatch struct {
-	Name    string `json:"name"`
-	Version string `json:"version"`
-	//Resources     doguResourcesPatch `json:"resources"`
-	SupportMode   bool               `json:"supportMode"`
-	UpgradeConfig upgradeConfigPatch `json:"upgradeConfig"`
-	//AdditionalIngressAnnotations ingressAnnotationsPatch `json:"additionalIngressAnnotations"`
+	Name                         string             `json:"name"`
+	Version                      string             `json:"version"`
+	Resources                    doguResourcesPatch `json:"resources"`
+	SupportMode                  bool               `json:"supportMode"`
+	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
+	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
 }
 
-//type ingressAnnotationsPatch map[string]string
+// type ingressAnnotationsPatch map[string]string
 
 type upgradeConfigPatch struct {
 	AllowNamespaceSwitch bool `json:"allowNamespaceSwitch"`
@@ -101,9 +133,10 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 		Spec: doguSpecPatch{
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
-			//Resources: doguResourcesPatch{
-			//	DataVolumeSize: "",
-			//},
+			Resources: doguResourcesPatch{
+				DataVolumeSize: dogu.MinVolumeSize.String(),
+			},
+			AdditionalIngressAnnotations: dogu.ReverseProxyConfig,
 			// always set this to false as a dogu cannot start in support mode
 			SupportMode: false,
 			UpgradeConfig: upgradeConfigPatch{

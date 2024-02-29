@@ -15,11 +15,15 @@ type StateDiff struct {
 type Action string
 
 const (
-	ActionNone                     = "none"
-	ActionInstall                  = "install"
-	ActionUninstall                = "uninstall"
-	ActionUpgrade                  = "upgrade"
-	ActionDowngrade                = "downgrade"
-	ActionSwitchDoguNamespace      = "dogu namespace switch"
-	ActionSwitchComponentNamespace = "component namespace switch"
+	ActionNone                            = "none"
+	ActionInstall                         = "install"
+	ActionUninstall                       = "uninstall"
+	ActionUpgrade                         = "upgrade"
+	ActionDowngrade                       = "downgrade"
+	ActionSwitchDoguNamespace             = "dogu namespace switch"
+	ActionSwitchComponentNamespace        = "component namespace switch"
+	ActionUpdateDoguProxyBodySize         = "update proxy body size"
+	ActionUpdateDoguProxyRewriteTarget    = "update proxy rewrite target"
+	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
+	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
 )

@@ -14,7 +14,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const doguInstallationRepoContextKey = "doguInstallationRepoContext"
+const (
+	doguInstallationRepoContextKey  = "doguInstallationRepoContext"
+	additionalIngressAnnotationsKey = "additionalIngressAnnotations"
+)
 
 type doguInstallationRepoContext struct {
 	resourceVersion string
@@ -91,6 +94,7 @@ func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.Do
 
 func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
 	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
+	// TODO add volume size and config
 	patch, err := toDoguCRPatchBytes(dogu)
 	if err != nil {
 		return &domainservice.InternalError{

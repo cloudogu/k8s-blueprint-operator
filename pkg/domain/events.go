@@ -147,19 +147,25 @@ func (s StateDiffComponentDeterminedEvent) Message() string {
 // StateDiffDoguDeterminedEvent provides event information over detected changes regarding dogus.
 type StateDiffDoguDeterminedEvent struct {
 	StateDiffDeterminedEvent
+	ToUpdateReverseProxyConfig int
+	ToUpdateResourceConfig     int
 }
 
 func newStateDiffDoguEvent(doguDiffs DoguDiffs) StateDiffDoguDeterminedEvent {
-	install, upgrade, uninstall, other := doguDiffs.Statistics()
+	install, upgrade, uninstall, updateReverseProxyConfig, updateResourceConfig, other := doguDiffs.Statistics()
 
-	return StateDiffDoguDeterminedEvent{StateDiffDeterminedEvent: StateDiffDeterminedEvent{
-		DiffCount:    len(doguDiffs),
-		EventSubject: "dogu diffs",
-		ToInstall:    install,
-		ToUpgrade:    upgrade,
-		ToUninstall:  uninstall,
-		OtherActions: other,
-	}}
+	return StateDiffDoguDeterminedEvent{
+		StateDiffDeterminedEvent: StateDiffDeterminedEvent{
+			DiffCount:    len(doguDiffs),
+			EventSubject: "dogu diffs",
+			ToInstall:    install,
+			ToUpgrade:    upgrade,
+			ToUninstall:  uninstall,
+			OtherActions: other,
+		},
+		ToUpdateReverseProxyConfig: updateReverseProxyConfig,
+		ToUpdateResourceConfig:     updateResourceConfig,
+	}
 }
 
 // Name contains the StateDiffDoguDeterminedEvent display name.
@@ -169,7 +175,8 @@ func (s StateDiffDoguDeterminedEvent) Name() string {
 
 // Message contains the StateDiffDoguDeterminedEvent's statistics message.
 func (s StateDiffDoguDeterminedEvent) Message() string {
-	return s.buildMessage()
+	doguMessage := fmt.Sprintf("dogu specific: (%d to update resource config, %d to update reverse proxy config)", s.ToUpdateResourceConfig, s.ToUpdateReverseProxyConfig)
+	return fmt.Sprintf("%s %s", s.buildMessage(), doguMessage)
 }
 
 type EcosystemHealthyUpfrontEvent struct {

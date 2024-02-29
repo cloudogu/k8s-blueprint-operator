@@ -6,26 +6,46 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-postgres-12-15-1-testing
+  name: blueprint-nexus-3-59-0-1-config-on-install
 spec:
   blueprint: |
     {
       "blueprintApi":"v2",
       "dogus":[
         {
-          "name":"testing/postgresql",
-          "version":"12.15-1",
+          "name":"official/nexus",
+          "version":"3.59.0-1",
           "targetState":"present",
           "platformConfig": {
             "resource": {
-              "volumeSize": "2Gi"
+              "volumeSize": "4Gi"
             },
-            "reserveProxy": {
-              "body-size": "1024m",
+            "reverseProxy": {
+              "body-size": "1Gi",
               "rewriteTarget": "/",
               "additionalConfig": "proxy_set_header Accept-Encoding \"identity\";\nrewrite ^(/portainer)$ $1/ redirect;"
             }
           }
+        },
+        {
+          "name":"official/cas",
+          "version":"6.6.15-1",
+          "targetState":"present"
+        },
+        {
+          "name":"official/postfix",
+          "version":"3.8.4-1",
+          "targetState":"present"
+        },
+        {
+          "name":"k8s/nginx-ingress",
+          "version":"1.6.4-4",
+          "targetState":"present"
+        },
+        {
+          "name":"k8s/nginx-static",
+          "version":"1.23.1-6",
+          "targetState":"present"
         }
       ]
     }

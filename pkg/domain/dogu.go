@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"slices"
 )
 
@@ -18,8 +19,12 @@ type Dogu struct {
 	Version core.Version
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
+
+	MinVolumeSize      ecosystem.VolumeSize
+	ReverseProxyConfig ecosystem.ReverseProxyConfigEntries
 }
 
+// TODO validate config?
 // validate checks if the Dogu is semantically correct.
 func (dogu Dogu) validate() error {
 	var errorList []error

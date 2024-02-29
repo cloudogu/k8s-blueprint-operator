@@ -2,10 +2,9 @@ package domain
 
 import (
 	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"golang.org/x/exp/maps"
-
-	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
@@ -14,17 +13,23 @@ import (
 type DoguDiffs []DoguDiff
 
 // Statistics aggregates various figures about the required actions of the DoguDiffs.
-func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+func (dd DoguDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateReverseProxyConfig, toUpdateResourceConfig, other int) {
 	for _, doguDiff := range dd {
-		switch doguDiff.NeededAction {
-		case ActionInstall:
-			toInstall += 1
-		case ActionUpgrade:
-			toUpgrade += 1
-		case ActionUninstall:
-			toUninstall += 1
-		default:
-			other += 1
+		for _, action := range doguDiff.NeededActions {
+			switch action {
+			case ActionInstall:
+				toInstall += 1
+			case ActionUpgrade:
+				toUpgrade += 1
+			case ActionUninstall:
+				toUninstall += 1
+			case ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig:
+				toUpdateReverseProxyConfig += 1
+			case ActionUpdateDoguResourceMinVolumeSize:
+				toUpdateResourceConfig += 1
+			default:
+				other += 1
+			}
 		}
 	}
 	return
@@ -32,27 +37,29 @@ func (dd DoguDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int,
 
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
-	DoguName     common.SimpleDoguName
-	Actual       DoguDiffState
-	Expected     DoguDiffState
-	NeededAction Action
+	DoguName      common.SimpleDoguName
+	Actual        DoguDiffState
+	Expected      DoguDiffState
+	NeededActions []Action
 }
 
 // DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
-	Namespace         common.DoguNamespace
-	Version           core.Version
-	InstallationState TargetState
+	Namespace          common.DoguNamespace
+	Version            core.Version
+	InstallationState  TargetState
+	MinVolumeSize      ecosystem.VolumeSize
+	ReverseProxyConfig ecosystem.ReverseProxyConfigEntries
 }
 
 // String returns a string representation of the DoguDiff.
 func (diff *DoguDiff) String() string {
 	return fmt.Sprintf(
-		"{DoguName: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		"{DoguName: %q, Actual: %s, Expected: %s, NeededActions: %q}",
 		diff.DoguName,
 		diff.Actual.String(),
 		diff.Expected.String(),
-		diff.NeededAction,
+		diff.NeededActions,
 	)
 }
 
@@ -102,9 +109,11 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
-			Namespace:         installedDogu.Name.Namespace,
-			Version:           installedDogu.Version,
-			InstallationState: TargetStatePresent,
+			Namespace:          installedDogu.Name.Namespace,
+			Version:            installedDogu.Version,
+			InstallationState:  TargetStatePresent,
+			MinVolumeSize:      installedDogu.MinVolumeSize,
+			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
 		}
 	}
 
@@ -113,49 +122,71 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = blueprintDogu.Name.SimpleName
 		expectedState = DoguDiffState{
-			Namespace:         blueprintDogu.Name.Namespace,
-			Version:           blueprintDogu.Version,
-			InstallationState: blueprintDogu.TargetState,
+			Namespace:          blueprintDogu.Name.Namespace,
+			Version:            blueprintDogu.Version,
+			InstallationState:  blueprintDogu.TargetState,
+			MinVolumeSize:      blueprintDogu.MinVolumeSize,
+			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
 		}
 	}
 
 	return DoguDiff{
-		DoguName:     doguName,
-		Expected:     expectedState,
-		Actual:       actualState,
-		NeededAction: getNeededDoguAction(expectedState, actualState),
+		DoguName:      doguName,
+		Expected:      expectedState,
+		Actual:        actualState,
+		NeededActions: getNeededDoguActions(expectedState, actualState),
 	}
 }
 
-func getNeededDoguAction(expected DoguDiffState, actual DoguDiffState) Action {
+func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action {
+	var neededActions []Action
 	if expected.InstallationState == actual.InstallationState {
 		switch expected.InstallationState {
 		case TargetStatePresent:
 			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
 			if expected.Namespace != actual.Namespace {
-				return ActionSwitchDoguNamespace
+				neededActions = append(neededActions, ActionSwitchDoguNamespace)
+			}
+			if expected.MinVolumeSize != actual.MinVolumeSize {
+				if expected.MinVolumeSize.Cmp(actual.MinVolumeSize) == 1 {
+					neededActions = append(neededActions, ActionUpdateDoguResourceMinVolumeSize)
+				}
+				// TODO check for downgrade
+			}
+			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationBodySize] != actual.ReverseProxyConfig[""] {
+				neededActions = append(neededActions, ActionUpdateDoguProxyBodySize)
+			}
+			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationRewriteTarget] != actual.ReverseProxyConfig[""] {
+				neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
+			}
+			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationAdditionalConfig] != actual.ReverseProxyConfig[""] {
+				neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
 			}
 			if expected.Version.IsNewerThan(actual.Version) {
-				return ActionUpgrade
+				neededActions = append(neededActions, ActionUpgrade)
 			} else if expected.Version.IsEqualTo(actual.Version) {
-				return ActionNone
+				if len(neededActions) == 0 {
+					neededActions = append(neededActions, ActionNone)
+				}
 			} else { // is older
 				// if downgrades are allowed is not important here.
 				// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
-				return ActionDowngrade
+				neededActions = append(neededActions, ActionDowngrade)
 			}
+
+			return neededActions
 		case TargetStateAbsent:
-			return ActionNone
+			return append(neededActions, ActionNone)
 		}
 	} else {
 		// actual state is always the opposite
 		switch expected.InstallationState {
 		case TargetStatePresent:
-			return ActionInstall
+			return append(neededActions, ActionInstall)
 		case TargetStateAbsent:
-			return ActionUninstall
+			return append(neededActions, ActionUninstall)
 		}
 	}
 	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
-	return ActionNone
+	return append(neededActions, ActionNone)
 }
