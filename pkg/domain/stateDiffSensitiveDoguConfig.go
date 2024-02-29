@@ -2,9 +2,29 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
+
+func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigValuesToEncrypt() map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue {
+	valuesToEncrypt := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+
+	diffsByAction := diffs.groupSensitiveDoguConfigEntryDiffsByAction()
+
+	for _, diff := range diffsByAction[ConfigActionSetEncrypted] {
+		valuesToEncrypt[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
+	}
+
+	return valuesToEncrypt
+}
+
+func (diffs SensitiveDoguConfigDiffs) groupSensitiveDoguConfigEntryDiffsByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
+	return util.GroupBy(diffs, func(diff SensitiveDoguConfigEntryDiff) ConfigAction {
+		return diff.NeededAction
+	})
+}
+
 type SensitiveDoguConfigEntryDiff struct {
 	Key                  common.SensitiveDoguConfigKey
 	Actual               DoguConfigValueState

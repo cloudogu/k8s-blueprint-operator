@@ -177,18 +177,13 @@ func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(ctx context
 // Only encrypt diffs with action domain.ConfigActionSetEncrypted. Diffs with action domain.ConfigActionSetToEncrypt will
 // be encrypted by other components in further procedure.
 func (useCase *EcosystemConfigUseCase) encryptSensitiveDoguDiffs(ctx context.Context, diffs domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
-	toEncryptEntries := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-	for _, diff := range diffs {
-		if diff.NeededAction == domain.ConfigActionSetEncrypted {
-			toEncryptEntries[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
-		}
+	valuesToEncrypt := diffs.GetSensitiveDoguConfigValuesToEncrypt()
+
+	if len(valuesToEncrypt) > 0 {
+		return useCase.encryptionAdapter.EncryptAll(ctx, valuesToEncrypt)
 	}
 
-	if len(toEncryptEntries) > 0 {
-		return useCase.encryptionAdapter.EncryptAll(ctx, toEncryptEntries)
-	}
-
-	return nil, nil
+	return map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}, nil
 }
 
 func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
