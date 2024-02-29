@@ -1,8 +1,8 @@
-package adapter
+package config
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/config"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -11,7 +11,7 @@ import (
 func TestNewCombinedSecretEtcdSensitiveDoguConfigRepository(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
-		secretRepo := &config.SecretSensitiveDoguConfigRepository{}
+		secretRepo := &kubernetes.SecretSensitiveDoguConfigRepository{}
 		etcdRepo := &etcd.SensitiveDoguConfigRepository{}
 
 		// when
