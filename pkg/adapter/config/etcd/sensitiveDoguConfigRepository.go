@@ -9,15 +9,15 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
-type EtcdSensitiveDoguConfigRepository struct {
+type SensitiveDoguConfigRepository struct {
 	etcdStore etcdStore
 }
 
-func NewEtcdSensitiveDoguConfigRepository(etcdStore etcdStore) *EtcdSensitiveDoguConfigRepository {
-	return &EtcdSensitiveDoguConfigRepository{etcdStore: etcdStore}
+func NewSensitiveDoguConfigRepository(etcdStore etcdStore) *SensitiveDoguConfigRepository {
+	return &SensitiveDoguConfigRepository{etcdStore: etcdStore}
 }
 
-func (e EtcdSensitiveDoguConfigRepository) Get(_ context.Context, key common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error) {
+func (e SensitiveDoguConfigRepository) Get(_ context.Context, key common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error) {
 	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
 	if registry.IsKeyNotFoundError(err) {
 		return nil, domainservice.NewNotFoundError(err, "could not find sensitive %s in etcd", key)
@@ -31,7 +31,7 @@ func (e EtcdSensitiveDoguConfigRepository) Get(_ context.Context, key common.Sen
 	}, nil
 }
 
-func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
+func (e SensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
 	strValue := string(entry.Value)
 	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
@@ -42,7 +42,7 @@ func (e EtcdSensitiveDoguConfigRepository) Save(_ context.Context, entry *ecosys
 	return nil
 }
 
-func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.SensitiveDoguConfigKey) error {
+func (e SensitiveDoguConfigRepository) Delete(_ context.Context, key common.SensitiveDoguConfigKey) error {
 	strDoguName := string(key.DoguName)
 	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
@@ -52,15 +52,15 @@ func (e EtcdSensitiveDoguConfigRepository) Delete(_ context.Context, key common.
 	return nil
 }
 
-func (e EtcdSensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
+func (e SensitiveDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error) {
 	return getAllByKeyOrEntry(ctx, keys, e.Get)
 }
 
-func (e EtcdSensitiveDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
+func (e SensitiveDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.SensitiveDoguConfigEntry) error {
 	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given sensitive dogu config entries in etcd")
 }
 
-func (e EtcdSensitiveDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.SensitiveDoguConfigKey) error {
+func (e SensitiveDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.SensitiveDoguConfigKey) error {
 	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given sensitive dogu config keys in etcd")
 }
 

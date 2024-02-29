@@ -13,7 +13,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
-		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := SensitiveDoguConfigRepository{etcdStore: etcdMock}
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(nil)
@@ -29,7 +29,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
-		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := SensitiveDoguConfigRepository{etcdStore: etcdMock}
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(etcdNotFoundError)
@@ -45,7 +45,7 @@ func TestEtcdSensitiveDoguConfigRepository_Delete(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
-		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := SensitiveDoguConfigRepository{etcdStore: etcdMock}
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
 		configurationContextMock.EXPECT().Delete(key.Key).Return(assert.AnError)
@@ -71,7 +71,7 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		keys := []common.SensitiveDoguConfigKey{
 			{common.DoguConfigKey{
@@ -103,7 +103,7 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		keys := []common.SensitiveDoguConfigKey{
 			{common.DoguConfigKey{
@@ -155,7 +155,7 @@ func TestEtcdSensitiveDoguConfigRepository_GetAllByKey(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		keys := []common.SensitiveDoguConfigKey{
 			{common.DoguConfigKey{
@@ -210,7 +210,7 @@ func TestEtcdSensitiveDoguConfigRepository_Save(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
-		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := SensitiveDoguConfigRepository{etcdStore: etcdMock}
 		entry := &ecosystem.SensitiveDoguConfigEntry{
 			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}},
 			Value: "value",
@@ -229,7 +229,7 @@ func TestEtcdSensitiveDoguConfigRepository_Save(t *testing.T) {
 		// given
 		etcdMock := newMockEtcdStore(t)
 		configurationContextMock := newMockConfigurationContext(t)
-		sut := EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entry := &ecosystem.SensitiveDoguConfigEntry{
 			Key:                common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}},
@@ -261,7 +261,7 @@ func TestEtcdSensitiveDoguConfigRepository_SaveAll(t *testing.T) {
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
 
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entries := []*ecosystem.SensitiveDoguConfigEntry{
 			{
@@ -298,7 +298,7 @@ func TestEtcdSensitiveDoguConfigRepository_SaveAll(t *testing.T) {
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
 
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entries := []*ecosystem.SensitiveDoguConfigEntry{
 			{
@@ -331,7 +331,7 @@ func TestNewEtcdSensitiveDoguConfigRepository(t *testing.T) {
 		etcdMock := newMockEtcdStore(t)
 
 		// when
-		repository := NewEtcdSensitiveDoguConfigRepository(etcdMock)
+		repository := NewSensitiveDoguConfigRepository(etcdMock)
 
 		// then
 		assert.Equal(t, etcdMock, repository.etcdStore)
@@ -345,7 +345,7 @@ func TestEtcdSensitiveDoguConfigRepository_Get(t *testing.T) {
 		configurationContextMock.EXPECT().Get("container_config/memory_limit").Return("", etcdNotFoundError)
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 			DoguName: "ldap",
@@ -366,7 +366,7 @@ func TestEtcdSensitiveDoguConfigRepository_Get(t *testing.T) {
 		configurationContextMock.EXPECT().Get("container_config/swap_limit").Return("", assert.AnError)
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 			DoguName: "ldap",
@@ -386,7 +386,7 @@ func TestEtcdSensitiveDoguConfigRepository_Get(t *testing.T) {
 		configurationContextMock.EXPECT().Get("container_config/swap_limit").Return("512m", nil)
 		etcdMock := newMockEtcdStore(t)
 		etcdMock.EXPECT().DoguConfig("ldap").Return(configurationContextMock)
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		key := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 			DoguName: "ldap",
@@ -419,7 +419,7 @@ func TestEtcdSensitiveDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
 
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entries := []common.SensitiveDoguConfigKey{
 			{
@@ -453,7 +453,7 @@ func TestEtcdSensitiveDoguConfigRepository_DeleteAllByKeys(t *testing.T) {
 		etcdMock.EXPECT().DoguConfig("ldap").Return(ldapConfigMock)
 		etcdMock.EXPECT().DoguConfig("postfix").Return(postfixConfigMock)
 
-		sut := &EtcdSensitiveDoguConfigRepository{etcdStore: etcdMock}
+		sut := &SensitiveDoguConfigRepository{etcdStore: etcdMock}
 
 		entries := []common.SensitiveDoguConfigKey{
 			{

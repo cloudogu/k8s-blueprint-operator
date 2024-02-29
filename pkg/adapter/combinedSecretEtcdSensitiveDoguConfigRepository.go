@@ -6,13 +6,13 @@ import (
 )
 
 type SecretEtcdSensitiveDoguConfigRepository struct {
-	*etcd.EtcdSensitiveDoguConfigRepository
+	*etcd.SensitiveDoguConfigRepository
 	*config.SecretSensitiveDoguConfigRepository
 }
 
-func NewCombinedSecretEtcdSensitiveDoguConfigRepository(etcdRepo *etcd.EtcdSensitiveDoguConfigRepository, secretRepo *config.SecretSensitiveDoguConfigRepository) *SecretEtcdSensitiveDoguConfigRepository {
+func NewCombinedSecretEtcdSensitiveDoguConfigRepository(etcdRepo *etcd.SensitiveDoguConfigRepository, secretRepo *config.SecretSensitiveDoguConfigRepository) *SecretEtcdSensitiveDoguConfigRepository {
 	return &SecretEtcdSensitiveDoguConfigRepository{
-		EtcdSensitiveDoguConfigRepository:   etcdRepo,
+		SensitiveDoguConfigRepository:       etcdRepo,
 		SecretSensitiveDoguConfigRepository: secretRepo,
 	}
 }

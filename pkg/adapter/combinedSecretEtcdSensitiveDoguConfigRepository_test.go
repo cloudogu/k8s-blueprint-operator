@@ -12,7 +12,7 @@ func TestNewCombinedSecretEtcdSensitiveDoguConfigRepository(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		secretRepo := &config.SecretSensitiveDoguConfigRepository{}
-		etcdRepo := &etcd.EtcdSensitiveDoguConfigRepository{}
+		etcdRepo := &etcd.SensitiveDoguConfigRepository{}
 
 		// when
 		combinedRepo := NewCombinedSecretEtcdSensitiveDoguConfigRepository(etcdRepo, secretRepo)
@@ -20,6 +20,6 @@ func TestNewCombinedSecretEtcdSensitiveDoguConfigRepository(t *testing.T) {
 		// then
 		require.NotNil(t, combinedRepo)
 		assert.Equal(t, secretRepo, combinedRepo.SecretSensitiveDoguConfigRepository)
-		assert.Equal(t, etcdRepo, combinedRepo.EtcdSensitiveDoguConfigRepository)
+		assert.Equal(t, etcdRepo, combinedRepo.SensitiveDoguConfigRepository)
 	})
 }
