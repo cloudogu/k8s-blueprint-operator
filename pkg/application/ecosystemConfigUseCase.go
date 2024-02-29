@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type EcosystemRegistryUseCase struct {
+type EcosystemConfigUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
@@ -21,8 +21,8 @@ type EcosystemRegistryUseCase struct {
 
 var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
-func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemRegistryUseCase {
-	return &EcosystemRegistryUseCase{
+func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemConfigUseCase {
+	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
@@ -32,8 +32,8 @@ func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, do
 }
 
 // ApplyConfig fetches the dogu and global config statediff of the blueprint and applies these keys to the repositories.
-func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("EcosystemRegistryUseCase.ApplyConfig").
+func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("EcosystemConfigUseCase.ApplyConfig").
 		WithValues("blueprintId", blueprintId)
 
 	blueprintSpec, err := useCase.blueprintRepository.GetById(ctx, blueprintId)
@@ -78,7 +78,7 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	return useCase.markConfigApplied(ctx, blueprintSpec)
 }
 
-func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {
 	var errs []error
 	var entriesToSet []*ecosystem.GlobalConfigEntry
 	var keysToDelete []common.GlobalConfigKey
@@ -106,7 +106,7 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiffs) error {
 	var errs []error
 	var entriesToSet []*ecosystem.DoguConfigEntry
 	var keysToDelete []common.DoguConfigKey
@@ -134,7 +134,7 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
 	var encryptedEntriesToSet []*ecosystem.SensitiveDoguConfigEntry
@@ -176,7 +176,7 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 
 // Only encrypt diffs with action domain.ConfigActionSetEncrypted. Diffs with action domain.ConfigActionSetToEncrypt will
 // be encrypted by other components in further procedure.
-func (useCase *EcosystemRegistryUseCase) encryptSensitiveDoguDiffs(ctx context.Context, diffs domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
+func (useCase *EcosystemConfigUseCase) encryptSensitiveDoguDiffs(ctx context.Context, diffs domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
 	toEncryptEntries := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
 	for _, diff := range diffs {
 		if diff.NeededAction == domain.ConfigActionSetEncrypted {
@@ -224,7 +224,7 @@ func doguUnknownConfigActionError(action domain.ConfigAction, key string, doguNa
 	return fmt.Errorf("cannot perform unknown action %q for dogu %q with key %q", action, doguName, key)
 }
 
-func (useCase *EcosystemRegistryUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.StartApplyRegistryConfig()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
@@ -233,9 +233,9 @@ func (useCase *EcosystemRegistryUseCase) markApplyConfigStart(ctx context.Contex
 	return nil
 }
 
-func (useCase *EcosystemRegistryUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
+func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
-		WithName("EcosystemRegistryUseCase.handleFailedApplyRegistryConfig").
+		WithName("EcosystemConfigUseCase.handleFailedApplyRegistryConfig").
 		WithValues("blueprintId", blueprintSpec.Id)
 
 	blueprintSpec.MarkApplyRegistryConfigFailed(err)
@@ -249,7 +249,7 @@ func (useCase *EcosystemRegistryUseCase) handleFailedApplyRegistryConfig(ctx con
 	return nil
 }
 
-func (useCase *EcosystemRegistryUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.MarkRegistryConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
