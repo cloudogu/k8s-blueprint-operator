@@ -70,13 +70,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		return nil, err
 	}
 
-	println("DEEEEEEEEEEEEEEEEEEEBUUUUUUUUUUUUUUUG GET")
-	println("DEEEEEEEEEEEEEEEEEEEBUUUUUUUUUUUUUUUG")
-	println("Effective")
-	println(fmt.Sprintf("%+v", effectiveBlueprint))
-	println("Status")
-	println(fmt.Sprintf("%+v", stateDiff))
-
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                 blueprintId,
 		EffectiveBlueprint: effectiveBlueprint,
@@ -159,13 +152,6 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		EffectiveBlueprint: effectiveBlueprint,
 		StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
 	}
-
-	println("DEEEEEEEEEEEEEEEEEEEBUUUUUUUUUUUUUUUG Update")
-	println("DEEEEEEEEEEEEEEEEEEEBUUUUUUUUUUUUUUUG")
-	println("Effective")
-	println(fmt.Sprintf("%+v", blueprintStatus.EffectiveBlueprint))
-	println("Status")
-	println(fmt.Sprintf("%+v", blueprintStatus.StateDiff))
 
 	CRAfterUpdate.Status = blueprintStatus
 	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
