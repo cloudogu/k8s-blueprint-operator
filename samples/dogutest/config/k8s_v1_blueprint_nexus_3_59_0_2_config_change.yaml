@@ -18,7 +18,7 @@ spec:
           "targetState":"present",
           "platformConfig": {
             "resource": {
-              "minVolumeSize": "7Gi"
+              "minVolumeSize": "6Gi"
             },
             "reverseProxy": {
               "maxBodySize": "2Gi"
