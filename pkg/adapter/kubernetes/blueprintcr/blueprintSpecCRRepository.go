@@ -135,7 +135,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		},
 	}
 
-	logger.Info("update blueprint", "blueprint to save", updatedBlueprint)
+	logger.Info("update blueprint")
 	CRAfterUpdate, err := repo.blueprintClient.Update(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
