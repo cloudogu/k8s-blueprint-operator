@@ -7,19 +7,7 @@ import (
 
 type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
 
-func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigValuesToEncrypt() map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue {
-	valuesToEncrypt := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-
-	diffsByAction := diffs.groupSensitiveDoguConfigEntryDiffsByAction()
-
-	for _, diff := range diffsByAction[ConfigActionSetEncrypted] {
-		valuesToEncrypt[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
-	}
-
-	return valuesToEncrypt
-}
-
-func (diffs SensitiveDoguConfigDiffs) groupSensitiveDoguConfigEntryDiffsByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
+func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
 	return util.GroupBy(diffs, func(diff SensitiveDoguConfigEntryDiff) ConfigAction {
 		return diff.NeededAction
 	})
