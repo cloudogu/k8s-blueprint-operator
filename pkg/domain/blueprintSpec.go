@@ -67,6 +67,9 @@ const (
 	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
 )
 
+// censorValue is the value for censoring sensitive blueprint configuration data.
+const censorValue = "*****"
+
 type BlueprintConfiguration struct {
 	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
 	IgnoreDoguHealth bool
@@ -347,6 +350,18 @@ func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
 func (spec *BlueprintSpec) MarkBlueprintApplied() {
 	spec.Status = StatusPhaseBlueprintApplied
 	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
+}
+
+// CensorSensitiveData censors all sensitive configuration data of the blueprint, effective blueprint and the statediff,
+// to make the values unrecognisable.
+func (spec *BlueprintSpec) CensorSensitiveData() {
+	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
+	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
+	for k, v := range spec.StateDiff.DoguConfigDiffs {
+		spec.StateDiff.DoguConfigDiffs[k] = v.censorValues()
+	}
+
+	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
 }
 
 // CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.

@@ -133,15 +133,18 @@ func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx co
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PostProcessBlueprintApplication").
 		WithValues("blueprintId", blueprintId)
 
-	logger.Info("deactivate maintenance mode")
-	err := useCase.maintenanceModeAdapter.Deactivate()
-	if err != nil {
-		return fmt.Errorf("could not deactivate maintenance mode after applying the blueprint: %w", err)
-	}
-
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		return fmt.Errorf("cannot load blueprint spec %q while post-processing blueprint application: %w", blueprintId, err)
+	}
+
+	logger.Info("censor sensitive data")
+	blueprintSpec.CensorSensitiveData()
+
+	logger.Info("deactivate maintenance mode")
+	err = useCase.maintenanceModeAdapter.Deactivate()
+	if err != nil {
+		return fmt.Errorf("could not deactivate maintenance mode after applying the blueprint: %w", err)
 	}
 
 	blueprintSpec.CompletePostProcessing()

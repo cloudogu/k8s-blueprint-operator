@@ -567,9 +567,9 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
 		maintenanceMock.EXPECT().Deactivate().Return(nil)
-		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
@@ -578,15 +578,15 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		require.NoError(t, err)
 
 		assert.Equal(t, domain.StatusPhaseCompleted, spec.Status)
-		assert.Equal(t, []domain.Event{domain.CompletedEvent{}}, spec.Events)
+		assert.Len(t, spec.Events, 2)
+		assert.Contains(t, spec.Events, domain.SensitiveConfigDataCensoredEvent{}, spec.Events)
+		assert.Contains(t, spec.Events, domain.CompletedEvent{}, spec.Events)
 	})
 
 	t.Run("repo error while loading", func(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
-		maintenanceMock := newMockMaintenanceMode(t)
-		maintenanceMock.EXPECT().Deactivate().Return(nil)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
+		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, nil)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)
 
@@ -599,9 +599,9 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
 		maintenanceMock.EXPECT().Deactivate().Return(nil)
-		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
@@ -611,7 +611,12 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 	})
 
 	t.Run("error deactivating maintenance mode", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyAfterwards,
+		}
+
 		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
 		maintenanceMock.EXPECT().Deactivate().Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
