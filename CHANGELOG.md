@@ -37,3 +37,4 @@ Config-specific:
 - [#48] Save config diff in cluster
 - [#39] Encrypt sensitive data
 - [#36] Set registry configuration for dogu and global config.
+- [#45] Set registry configuration for encrypted values.

@@ -3,9 +3,16 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type GlobalConfigDiffs []GlobalConfigEntryDiff
+
+func (diffs GlobalConfigDiffs) GetGlobalConfigDiffsByAction() map[ConfigAction][]GlobalConfigEntryDiff {
+	return util.GroupBy(diffs, func(diff GlobalConfigEntryDiff) ConfigAction {
+		return diff.NeededAction
+	})
+}
 
 type GlobalConfigValueState ConfigValueState
 type GlobalConfigEntryDiff struct {
