@@ -8,15 +8,15 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
 
-type EtcdDoguConfigRepository struct {
+type DoguConfigRepository struct {
 	etcdStore etcdStore
 }
 
-func NewEtcdDoguConfigRepository(etcdStore etcdStore) *EtcdDoguConfigRepository {
-	return &EtcdDoguConfigRepository{etcdStore: etcdStore}
+func NewDoguConfigRepository(etcdStore etcdStore) *DoguConfigRepository {
+	return &DoguConfigRepository{etcdStore: etcdStore}
 }
 
-func (e EtcdDoguConfigRepository) Get(_ context.Context, key common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error) {
+func (e DoguConfigRepository) Get(_ context.Context, key common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error) {
 	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
 	if registry.IsKeyNotFoundError(err) {
 		return nil, domainservice.NewNotFoundError(err, "could not find %s in etcd", key)
@@ -30,7 +30,7 @@ func (e EtcdDoguConfigRepository) Get(_ context.Context, key common.DoguConfigKe
 	}, nil
 }
 
-func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {
+func (e DoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
 	strValue := string(entry.Value)
 	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
@@ -41,7 +41,7 @@ func (e EtcdDoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguC
 	return nil
 }
 
-func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfigKey) error {
+func (e DoguConfigRepository) Delete(_ context.Context, key common.DoguConfigKey) error {
 	strDoguName := string(key.DoguName)
 	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
@@ -51,14 +51,14 @@ func (e EtcdDoguConfigRepository) Delete(_ context.Context, key common.DoguConfi
 	return nil
 }
 
-func (e EtcdDoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
+func (e DoguConfigRepository) GetAllByKey(ctx context.Context, keys []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error) {
 	return getAllByKeyOrEntry(ctx, keys, e.Get)
 }
 
-func (e EtcdDoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.DoguConfigEntry) error {
+func (e DoguConfigRepository) SaveAll(ctx context.Context, entries []*ecosystem.DoguConfigEntry) error {
 	return mapKeyOrEntry(ctx, entries, e.Save, "failed to set given dogu config entries in etcd")
 }
 
-func (e EtcdDoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.DoguConfigKey) error {
+func (e DoguConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.DoguConfigKey) error {
 	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given dogu config keys in etcd")
 }

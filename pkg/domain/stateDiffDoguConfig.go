@@ -3,9 +3,17 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type DoguConfigDiffs []DoguConfigEntryDiff
+
+func (diffs DoguConfigDiffs) GetDoguConfigDiffByAction() map[ConfigAction][]DoguConfigEntryDiff {
+	return util.GroupBy(diffs, func(diff DoguConfigEntryDiff) ConfigAction {
+		return diff.NeededAction
+	})
+}
+
 type DoguConfigValueState ConfigValueState
 
 type ConfigValueState struct {

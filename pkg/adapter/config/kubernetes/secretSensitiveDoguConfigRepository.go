@@ -1,4 +1,4 @@
-package config
+package kubernetes
 
 import (
 	"context"
@@ -74,7 +74,7 @@ func (repo *SecretSensitiveDoguConfigRepository) updateSecretWithEntries(ctx con
 	return retry.OnConflict(func() error {
 		doguSecret, getErr := repo.client.Get(ctx, secretName, metav1.GetOptions{})
 		if getErr != nil {
-			return getGetError(secretName, getErr)
+			return newGetSecretError(secretName, getErr)
 		}
 
 		if doguSecret.StringData == nil {
@@ -101,7 +101,7 @@ func (repo *SecretSensitiveDoguConfigRepository) checkAndCreateDoguSecret(ctx co
 				return "", createErr
 			}
 		} else {
-			return "", getGetError(secretName, err)
+			return "", newGetSecretError(secretName, err)
 		}
 	}
 
@@ -127,7 +127,7 @@ func createKeyValueEntry(entry *ecosystem.SensitiveDoguConfigEntry) (key string,
 	return
 }
 
-func getGetError(secretName string, err error) error {
+func newGetSecretError(secretName string, err error) error {
 	return fmt.Errorf("failed to get dogu secret %q: %w", secretName, err)
 }
 

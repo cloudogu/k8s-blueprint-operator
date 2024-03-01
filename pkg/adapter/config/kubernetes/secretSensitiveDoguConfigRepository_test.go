@@ -1,6 +1,7 @@
-package config
+package kubernetes
 
 import (
+	"context"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,7 @@ import (
 )
 
 var (
+	testCtx     = context.Background()
 	notFoundErr = apierrors.NewNotFound(schema.GroupResource{}, "")
 )
 

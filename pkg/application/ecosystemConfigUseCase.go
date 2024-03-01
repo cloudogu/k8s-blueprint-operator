@@ -11,7 +11,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type EcosystemRegistryUseCase struct {
+type EcosystemConfigUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
@@ -21,8 +21,8 @@ type EcosystemRegistryUseCase struct {
 
 var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
-func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemRegistryUseCase {
-	return &EcosystemRegistryUseCase{
+func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemConfigUseCase {
+	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
@@ -32,8 +32,8 @@ func NewEcosystemRegistryUseCase(blueprintRepository blueprintSpecRepository, do
 }
 
 // ApplyConfig fetches the dogu and global config statediff of the blueprint and applies these keys to the repositories.
-func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("EcosystemRegistryUseCase.ApplyConfig").
+func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
+	logger := log.FromContext(ctx).WithName("EcosystemConfigUseCase.ApplyConfig").
 		WithValues("blueprintId", blueprintId)
 
 	blueprintSpec, err := useCase.blueprintRepository.GetById(ctx, blueprintId)
@@ -63,12 +63,9 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	}
 
 	var errs []error
-	for doguName, doguDiffs := range doguConfigDiffs {
-		errs = append(errs, useCase.applyDoguConfigDiffs(ctx, doguName, doguDiffs.DoguConfigDiff))
-		errs = append(errs, useCase.applySensitiveDoguConfigDiffs(ctx, doguName, doguDiffs.SensitiveDoguConfigDiff))
-	}
-
-	errs = append(errs, useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs))
+	errs = append(errs, useCase.applyDoguConfigDiffs(ctx, blueprintSpec.StateDiff.GetDoguConfigDiffsByAction()))
+	errs = append(errs, useCase.applySensitiveDoguConfigDiffs(ctx, blueprintSpec.StateDiff.GetSensitiveDoguConfigDiffsByAction()))
+	errs = append(errs, useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction()))
 
 	joinedErr := errors.Join(errs...)
 	if joinedErr != nil {
@@ -78,26 +75,23 @@ func (useCase *EcosystemRegistryUseCase) ApplyConfig(ctx context.Context, bluepr
 	return useCase.markConfigApplied(ctx, blueprintSpec)
 }
 
-func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Context, diffs domain.GlobalConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Context, globalConfigDiffsByAction map[domain.ConfigAction][]domain.GlobalConfigEntryDiff) error {
 	var errs []error
-	var entriesToSet []*ecosystem.GlobalConfigEntry
-	var keysToDelete []common.GlobalConfigKey
 
-	for _, diff := range diffs {
-		switch diff.NeededAction {
-		case domain.ConfigActionSet:
-			entry := &ecosystem.GlobalConfigEntry{
-				Key:   diff.Key,
-				Value: common.GlobalConfigValue(diff.Expected.Value),
-			}
-			entriesToSet = append(entriesToSet, entry)
-		case domain.ConfigActionRemove:
-			keysToDelete = append(keysToDelete, diff.Key)
-		case domain.ConfigActionNone:
-			continue
-		default:
-			errs = append(errs, fmt.Errorf("cannot perform unknown action %q for global config with key %q", diff.NeededAction, diff.Key))
+	entryDiffsToSet := globalConfigDiffsByAction[domain.ConfigActionSet]
+	var entriesToSet = make([]*ecosystem.GlobalConfigEntry, 0, len(entryDiffsToSet))
+	for _, diff := range entryDiffsToSet {
+		entry := &ecosystem.GlobalConfigEntry{
+			Key:   diff.Key,
+			Value: common.GlobalConfigValue(diff.Expected.Value),
 		}
+		entriesToSet = append(entriesToSet, entry)
+	}
+
+	entryDiffsToRemove := globalConfigDiffsByAction[domain.ConfigActionRemove]
+	var keysToDelete = make([]common.GlobalConfigKey, 0, len(entryDiffsToRemove))
+	for _, diff := range entryDiffsToRemove {
+		keysToDelete = append(keysToDelete, diff.Key)
 	}
 
 	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigRepository.SaveAll))
@@ -106,26 +100,21 @@ func (useCase *EcosystemRegistryUseCase) applyGlobalConfigDiffs(ctx context.Cont
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.DoguConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(ctx context.Context, doguConfigDiffsByAction map[domain.ConfigAction]domain.DoguConfigDiffs) error {
 	var errs []error
 	var entriesToSet []*ecosystem.DoguConfigEntry
 	var keysToDelete []common.DoguConfigKey
 
-	for _, diff := range diffs {
-		switch diff.NeededAction {
-		case domain.ConfigActionSet:
-			entry := &ecosystem.DoguConfigEntry{
-				Key:   common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key},
-				Value: common.DoguConfigValue(diff.Expected.Value),
-			}
-			entriesToSet = append(entriesToSet, entry)
-		case domain.ConfigActionRemove:
-			keysToDelete = append(keysToDelete, common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key})
-		case domain.ConfigActionNone:
-			continue
-		default:
-			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
+	for _, diff := range doguConfigDiffsByAction[domain.ConfigActionSet] {
+		entry := &ecosystem.DoguConfigEntry{
+			Key:   common.DoguConfigKey{DoguName: diff.Key.DoguName, Key: diff.Key.Key},
+			Value: common.DoguConfigValue(diff.Expected.Value),
 		}
+		entriesToSet = append(entriesToSet, entry)
+	}
+
+	for _, diff := range doguConfigDiffsByAction[domain.ConfigActionRemove] {
+		keysToDelete = append(keysToDelete, common.DoguConfigKey{DoguName: diff.Key.DoguName, Key: diff.Key.Key})
 	}
 
 	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.doguConfigRepository.SaveAll))
@@ -134,37 +123,34 @@ func (useCase *EcosystemRegistryUseCase) applyDoguConfigDiffs(ctx context.Contex
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, doguName common.SimpleDoguName, diffs domain.SensitiveDoguConfigDiffs) error {
+func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, sensitiveDoguConfigDiffsByAction map[domain.ConfigAction]domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
 	var encryptedEntriesToSet []*ecosystem.SensitiveDoguConfigEntry
 	var entriesToEncrypt []*ecosystem.SensitiveDoguConfigEntry
 	var keysToDelete []common.SensitiveDoguConfigKey
 
-	encryptedEntryValues, err := useCase.encryptSensitiveDoguDiffs(ctx, diffs)
+	encryptedEntryValues, err := useCase.encryptSensitiveDoguDiffs(ctx, sensitiveDoguConfigDiffsByAction)
 	if err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	for _, diff := range diffs {
-		switch diff.NeededAction {
-		case domain.ConfigActionSetEncrypted:
-			entry, createEncryptedEntryErr := getSensitiveDoguConfigEntryWithEncryption(doguName, diff, encryptedEntryValues)
-			if createEncryptedEntryErr != nil {
-				errs = append(errs, createEncryptedEntryErr)
-				continue
-			}
-			entriesToEncrypt = append(entriesToEncrypt, entry)
-		case domain.ConfigActionSetToEncrypt:
-			entry := getSensitiveDoguConfigEntry(doguName, diff)
-			encryptedEntriesToSet = append(encryptedEntriesToSet, entry)
-		case domain.ConfigActionRemove:
-			keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}})
-		case domain.ConfigActionNone:
+	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetEncrypted] {
+		entry, createEncryptedEntryErr := getSensitiveDoguConfigEntryWithEncryption(diff.Key.DoguName, diff, encryptedEntryValues)
+		if createEncryptedEntryErr != nil {
+			errs = append(errs, createEncryptedEntryErr)
 			continue
-		default:
-			errs = append(errs, doguUnknownConfigActionError(diff.NeededAction, diff.Key.Key, doguName))
 		}
+		entriesToEncrypt = append(entriesToEncrypt, entry)
+	}
+
+	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetToEncrypt] {
+		entry := getSensitiveDoguConfigEntry(diff.Key.DoguName, diff)
+		encryptedEntriesToSet = append(encryptedEntriesToSet, entry)
+	}
+
+	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionRemove] {
+		keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: diff.Key.DoguName, Key: diff.Key.Key}})
 	}
 
 	errs = append(errs, callIfNotEmpty(ctx, entriesToEncrypt, useCase.doguSensitiveConfigRepository.SaveAll))
@@ -176,19 +162,18 @@ func (useCase *EcosystemRegistryUseCase) applySensitiveDoguConfigDiffs(ctx conte
 
 // Only encrypt diffs with action domain.ConfigActionSetEncrypted. Diffs with action domain.ConfigActionSetToEncrypt will
 // be encrypted by other components in further procedure.
-func (useCase *EcosystemRegistryUseCase) encryptSensitiveDoguDiffs(ctx context.Context, diffs domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
-	toEncryptEntries := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-	for _, diff := range diffs {
-		if diff.NeededAction == domain.ConfigActionSetEncrypted {
-			toEncryptEntries[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
-		}
+func (useCase *EcosystemConfigUseCase) encryptSensitiveDoguDiffs(ctx context.Context, sensitiveDoguConfigDiffsByAction map[domain.ConfigAction]domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
+	valuesToEncrypt := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+
+	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetEncrypted] {
+		valuesToEncrypt[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
 	}
 
-	if len(toEncryptEntries) > 0 {
-		return useCase.encryptionAdapter.EncryptAll(ctx, toEncryptEntries)
+	if len(valuesToEncrypt) > 0 {
+		return useCase.encryptionAdapter.EncryptAll(ctx, valuesToEncrypt)
 	}
 
-	return nil, nil
+	return map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}, nil
 }
 
 func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
@@ -220,11 +205,7 @@ func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName, diff domain.Sen
 	}
 }
 
-func doguUnknownConfigActionError(action domain.ConfigAction, key string, doguName common.SimpleDoguName) error {
-	return fmt.Errorf("cannot perform unknown action %q for dogu %q with key %q", action, doguName, key)
-}
-
-func (useCase *EcosystemRegistryUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.StartApplyRegistryConfig()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
@@ -233,9 +214,9 @@ func (useCase *EcosystemRegistryUseCase) markApplyConfigStart(ctx context.Contex
 	return nil
 }
 
-func (useCase *EcosystemRegistryUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
+func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
-		WithName("EcosystemRegistryUseCase.handleFailedApplyRegistryConfig").
+		WithName("EcosystemConfigUseCase.handleFailedApplyRegistryConfig").
 		WithValues("blueprintId", blueprintSpec.Id)
 
 	blueprintSpec.MarkApplyRegistryConfigFailed(err)
@@ -249,7 +230,7 @@ func (useCase *EcosystemRegistryUseCase) handleFailedApplyRegistryConfig(ctx con
 	return nil
 }
 
-func (useCase *EcosystemRegistryUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
+func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	blueprintSpec.MarkRegistryConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {

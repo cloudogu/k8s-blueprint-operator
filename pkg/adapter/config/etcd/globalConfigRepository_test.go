@@ -20,7 +20,7 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 		key := common.GlobalConfigKey("key")
 		globalConfigMock.EXPECT().Delete(string(key)).Return(nil)
 
@@ -34,7 +34,7 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 	t.Run("should return nil on not found error", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 		key := common.GlobalConfigKey("key")
 		globalConfigMock.EXPECT().Delete(string(key)).Return(etcdNotFoundError)
 
@@ -48,7 +48,7 @@ func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 	t.Run("should return error on delete error", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 		key := common.GlobalConfigKey("key")
 		globalConfigMock.EXPECT().Delete(string(key)).Return(assert.AnError)
 
@@ -67,7 +67,7 @@ func TestEtcdGlobalConfigRepository_Save(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 		entry := &ecosystem.GlobalConfigEntry{
 			Key:   common.GlobalConfigKey("key"),
 			Value: "value",
@@ -84,7 +84,7 @@ func TestEtcdGlobalConfigRepository_Save(t *testing.T) {
 	t.Run("should return error on save error", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigStore(t)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 		entry := &ecosystem.GlobalConfigEntry{
 			Key:   common.GlobalConfigKey("key"),
 			Value: "value",
@@ -108,7 +108,7 @@ func TestEtcdGlobalConfigRepository_SaveAll(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 		globalConfigMock.EXPECT().Set("key_provider", "pkcs1v15").Return(assert.AnError)
 		globalConfigMock.EXPECT().Set("fqdn", "ces.example.com").Return(anotherErr)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		entries := []*ecosystem.GlobalConfigEntry{
 			{
@@ -137,7 +137,7 @@ func TestEtcdGlobalConfigRepository_SaveAll(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 		globalConfigMock.EXPECT().Set("key_provider", "pkcs1v15").Return(nil)
 		globalConfigMock.EXPECT().Set("fqdn", "ces.example.com").Return(nil)
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		entries := []*ecosystem.GlobalConfigEntry{
 			{
@@ -164,7 +164,7 @@ func TestNewEtcdGlobalConfigRepository(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 
 		// when
-		repository := NewEtcdGlobalConfigRepository(globalConfigMock)
+		repository := NewGlobalConfigRepository(globalConfigMock)
 
 		// then
 		assert.Equal(t, globalConfigMock, repository.configStore)
@@ -177,7 +177,7 @@ func TestEtcdGlobalConfigRepository_Get(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 		globalConfigMock.EXPECT().Get("key_provider").Return("", etcdNotFoundError)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		// when
 		_, err := sut.Get(testCtx, "key_provider")
@@ -192,7 +192,7 @@ func TestEtcdGlobalConfigRepository_Get(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 		globalConfigMock.EXPECT().Get("key_provider").Return("", assert.AnError)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		// when
 		_, err := sut.Get(testCtx, "key_provider")
@@ -207,7 +207,7 @@ func TestEtcdGlobalConfigRepository_Get(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigStore(t)
 		globalConfigMock.EXPECT().Get("key_provider").Return("pkcs1v15", nil)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		// when
 		actualValue, err := sut.Get(testCtx, "key_provider")
@@ -228,7 +228,7 @@ func TestEtcdGlobalConfigRepository_GetAllByKey(t *testing.T) {
 		globalConfigMock.EXPECT().Get("key_provider").Return("", etcdNotFoundError)
 		globalConfigMock.EXPECT().Get("fqdn").Return("", assert.AnError)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
 
@@ -248,7 +248,7 @@ func TestEtcdGlobalConfigRepository_GetAllByKey(t *testing.T) {
 		globalConfigMock.EXPECT().Get("key_provider").Return("", etcdNotFoundError)
 		globalConfigMock.EXPECT().Get("fqdn").Return("ces.example.com", nil)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
 
@@ -272,7 +272,7 @@ func TestEtcdGlobalConfigRepository_GetAllByKey(t *testing.T) {
 		globalConfigMock.EXPECT().Get("key_provider").Return("pkcs1v15", nil)
 		globalConfigMock.EXPECT().Get("fqdn").Return("ces.example.com", nil)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		keysToRetrieve := []common.GlobalConfigKey{"key_provider", "fqdn"}
 
@@ -301,7 +301,7 @@ func TestEtcdGlobalConfigRepository_DeleteAllByKeys(t *testing.T) {
 		globalConfigMock.EXPECT().Delete("fqdn").Return(nil)
 		globalConfigMock.EXPECT().Delete("certificate").Return(nil)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		entries := []common.GlobalConfigKey{"fqdn", "certificate"}
 
@@ -318,7 +318,7 @@ func TestEtcdGlobalConfigRepository_DeleteAllByKeys(t *testing.T) {
 		globalConfigMock.EXPECT().Delete("fqdn").Return(nil)
 		globalConfigMock.EXPECT().Delete("certificate").Return(assert.AnError)
 
-		sut := &EtcdGlobalConfigRepository{configStore: globalConfigMock}
+		sut := &GlobalConfigRepository{configStore: globalConfigMock}
 
 		entries := []common.GlobalConfigKey{"fqdn", "certificate"}
 
