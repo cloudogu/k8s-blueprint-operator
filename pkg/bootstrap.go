@@ -93,7 +93,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	sensitiveDoguConfigAdapter := configAdapter.NewEtcdSensitiveDoguConfigRepository(configRegistry)
 	globalConfigAdapter := configAdapter.NewEtcdGlobalConfigRepository(configRegistry.GlobalConfig())
 
-	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
+	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace), ecosystemClientSet.CoreV1().PersistentVolumeClaims(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := config2.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 

@@ -37,3 +37,10 @@ rules:
       - secrets
     verbs:
       - get
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list

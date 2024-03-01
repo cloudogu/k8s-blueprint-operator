@@ -10,7 +10,9 @@ import (
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"testing"
@@ -27,11 +29,12 @@ var testCtx = context.Background()
 
 func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		//given
-		k8sMock := NewMockDoguInterface(t)
-		repo := NewDoguInstallationRepo(k8sMock)
-		//when
-		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		pvcClientMock := NewMockPvcInterface(t)
+		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		// when
+		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			&v1.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
@@ -54,7 +57,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 		dogu, err := repo.GetByName(testCtx, "postgresql")
 
-		//then
+		// then
 		require.NoError(t, err)
 		assert.Equal(t, &ecosystem.DoguInstallation{
 			Name:               postgresDoguName,
@@ -67,36 +70,38 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	})
 
 	t.Run("not found error", func(t *testing.T) {
-		//given
-		k8sMock := NewMockDoguInterface(t)
-		repo := NewDoguInstallationRepo(k8sMock)
-		//when
-		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		pvcClientMock := NewMockPvcInterface(t)
+		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		// when
+		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
 			k8sErrors.NewNotFound(schema.GroupResource{}, "postgresql"),
 		)
 
 		_, err := repo.GetByName(testCtx, "postgresql")
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedError *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &expectedError)
 	})
 
 	t.Run("internal error", func(t *testing.T) {
-		//given
-		k8sMock := NewMockDoguInterface(t)
-		repo := NewDoguInstallationRepo(k8sMock)
-		//when
-		k8sMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
+		// given
+		doguClientMock := NewMockDoguInterface(t)
+		pvcClientMock := NewMockPvcInterface(t)
+		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		// when
+		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
 			k8sErrors.NewInternalError(errors.New("test-error")),
 		)
 
 		_, err := repo.GetByName(testCtx, "postgresql")
 
-		//then
+		// then
 		require.Error(t, err)
 		var expectedError *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedError)
@@ -205,5 +210,24 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			},
 		}
 		assert.Equal(t, expectedDoguInstallations, actual)
+	})
+}
+
+func Test_doguInstallationRepo_appendVolumeSize(t *testing.T) {
+	t.Run("should set volume size from pvc in dogu cr", func(t *testing.T) {
+		// given
+		sut := doguInstallationRepo{}
+		cr := &v1.Dogu{}
+		size := resource.MustParse("2Gi")
+		pvcList := corev1.PersistentVolumeClaimList{
+			Items: []corev1.PersistentVolumeClaim{{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: size}}}},
+		}
+
+		// when
+		err := sut.appendVolumeSize(cr, &pvcList)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, size.String(), cr.Spec.Resources.DataVolumeSize)
 	})
 }

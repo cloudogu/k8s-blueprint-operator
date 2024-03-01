@@ -8,6 +8,8 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -24,12 +26,13 @@ type doguInstallationRepoContext struct {
 }
 
 type doguInstallationRepo struct {
-	doguClient ecosystemclient.DoguInterface
+	doguClient DoguInterface
+	pvcClient  PvcInterface
 }
 
 // NewDoguInstallationRepo returns a new doguInstallationRepo to interact on BlueprintSpecs.
-func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface) domainservice.DoguInstallationRepository {
-	return &doguInstallationRepo{doguClient: doguClient}
+func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface, pvcClient PvcInterface) domainservice.DoguInstallationRepository {
+	return &doguInstallationRepo{doguClient: doguClient, pvcClient: pvcClient}
 }
 func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error) {
 	cr, err := repo.doguClient.Get(ctx, string(doguName), metav1.GetOptions{})
@@ -58,9 +61,15 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 		}
 	}
 
+	pvcList, err := repo.pvcClient.List(ctx, metav1.ListOptions{LabelSelector: "app=ces"})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return nil, domainservice.NewInternalError(err, "error while listing dogu PVCs")
+	}
+
 	var errs []error
 	doguInstallations := make(map[common.SimpleDoguName]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
+		errs = append(errs, repo.appendVolumeSize(&cr, pvcList))
 		doguInstallation, err := parseDoguCR(&cr)
 		if err != nil {
 			errs = append(errs, err)
@@ -80,6 +89,34 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 	return doguInstallations, nil
 }
 
+func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) error {
+	if cr == nil {
+		return domainservice.NewInternalError(fmt.Errorf("dogu is nil"), "could not get volume size")
+	}
+
+	crResources := cr.Spec.Resources
+	if crResources.DataVolumeSize != "" {
+		// VolumeSize is specified in spec.
+		return nil
+	}
+
+	// Check if dogu has volumeSize
+	var pvc *corev1.PersistentVolumeClaim
+	for _, item := range list.Items {
+		if item.Name == cr.Name {
+			pvc = &item
+		}
+	}
+
+	if pvc == nil {
+		return nil
+	}
+
+	cr.Spec.Resources.DataVolumeSize = pvc.Status.Capacity.Storage().String()
+
+	return nil
+}
+
 func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
 	cr := toDoguCR(dogu)
 	_, err := repo.doguClient.Create(ctx, cr, metav1.CreateOptions{})
@@ -94,7 +131,6 @@ func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.Do
 
 func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
 	logger := log.FromContext(ctx).WithName("doguInstallationRepo.Update")
-	// TODO add volume size and config
 	patch, err := toDoguCRPatchBytes(dogu)
 	if err != nil {
 		return &domainservice.InternalError{

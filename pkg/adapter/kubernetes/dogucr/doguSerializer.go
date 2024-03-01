@@ -13,7 +13,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// TODO parse volume and other config
 func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	if cr == nil {
 		return nil, &domainservice.InternalError{
@@ -30,9 +29,6 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	var quantityError error
 	if crVolumeSize != "" {
 		minVolumeSize, quantityError = resource.ParseQuantity(crVolumeSize)
-	} else {
-		// TODO if no VolumeSize in Cr is specified we have to check the pvc (if one exists and if yes the actual size).
-		minVolumeSize, quantityError = resource.ParseQuantity("2Gi") // Hardcoded default size!!!
 	}
 
 	err := errors.Join(versionErr, nameErr, quantityError)
@@ -77,6 +73,12 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 // }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
+	doguResources := v1.DoguResources{}
+
+	if !dogu.MinVolumeSize.IsZero() {
+		doguResources.DataVolumeSize = dogu.MinVolumeSize.String()
+	}
+
 	return &v1.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -87,11 +89,9 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 			},
 		},
 		Spec: v1.DoguSpec{
-			Name:    dogu.Name.String(),
-			Version: dogu.Version.Raw,
-			Resources: v1.DoguResources{
-				DataVolumeSize: dogu.MinVolumeSize.String(),
-			},
+			Name:        dogu.Name.String(),
+			Version:     dogu.Version.Raw,
+			Resources:   doguResources,
 			SupportMode: false,
 			UpgradeConfig: v1.UpgradeConfig{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
