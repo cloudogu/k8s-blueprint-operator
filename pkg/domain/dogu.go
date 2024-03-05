@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"slices"
 )
 
@@ -21,10 +22,9 @@ type Dogu struct {
 	TargetState TargetState
 
 	MinVolumeSize      ecosystem.VolumeSize
-	ReverseProxyConfig ecosystem.ReverseProxyConfigEntries
+	ReverseProxyConfig ecosystem.ReverseProxyConfig
 }
 
-// TODO validate config?
 // validate checks if the Dogu is semantically correct.
 func (dogu Dogu) validate() error {
 	var errorList []error
@@ -36,6 +36,13 @@ func (dogu Dogu) validate() error {
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
+
+	// Nginx only supports quantities in decimal format. This check can be removed if the dogu-operator implements an abstraction for the body size.
+	size := dogu.ReverseProxyConfig.MaxBodySize
+	if size != nil && !size.IsZero() && size.Format != resource.DecimalSI {
+		errorList = append(errorList, fmt.Errorf("dogu proxy body size does not have decimal format: %s", dogu.Name))
+	}
+
 	err := errors.Join(errorList...)
 	if err != nil {
 		err = fmt.Errorf("dogu is invalid: %w", err)

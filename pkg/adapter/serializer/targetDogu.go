@@ -63,27 +63,38 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 			}
 		}
 
-		minSize := dogu.PlatformConfig.ResourceConfig.MinVolumeSize
-		var quantity ecosystem.VolumeSize
-		var quantityErr error
-		if minSize != "" {
-			quantity, quantityErr = resource.ParseQuantity(minSize)
+		minVolumeSize := dogu.PlatformConfig.ResourceConfig.MinVolumeSize
+		var volumeQuantity ecosystem.VolumeSize
+		var volumeQuantityErr error
+		if minVolumeSize != "" {
+			volumeQuantity, volumeQuantityErr = resource.ParseQuantity(minVolumeSize)
 		}
-		if quantityErr != nil {
-			errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", minSize, dogu.Name))
+		if volumeQuantityErr != nil {
+			errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", minVolumeSize, dogu.Name))
 		}
-		reverseProxyConfig := map[string]string{}
-		// TODO Introduce abstract keys.
-		reverseProxyConfig[ecosystem.NginxIngressAnnotationBodySize] = dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
-		reverseProxyConfig[ecosystem.NginxIngressAnnotationRewriteTarget] = dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget
-		reverseProxyConfig[ecosystem.NginxIngressAnnotationAdditionalConfig] = dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig
+
+		var maxBodySize *ecosystem.BodySize
+		var parse ecosystem.BodySize
+		var maxBodyQuantityErr error
+		maxProxyBodySize := dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
+		if maxProxyBodySize != "" {
+			parse, maxBodyQuantityErr = resource.ParseQuantity(maxProxyBodySize)
+			if maxBodyQuantityErr != nil {
+				errorList = append(errorList, fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", maxProxyBodySize, dogu.Name))
+			}
+			maxBodySize = &parse
+		}
 
 		convertedDogus = append(convertedDogus, domain.Dogu{
-			Name:               name,
-			Version:            version,
-			TargetState:        newState,
-			MinVolumeSize:      quantity,
-			ReverseProxyConfig: reverseProxyConfig,
+			Name:          name,
+			Version:       version,
+			TargetState:   newState,
+			MinVolumeSize: volumeQuantity,
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      maxBodySize,
+				RewriteTarget:    ecosystem.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig),
+			},
 		})
 	}
 
@@ -100,18 +111,29 @@ func ConvertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
 	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
 		newState, err := ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
+
+		maxBodySize := ""
+		domainSize := dogu.ReverseProxyConfig.MaxBodySize
+		if domainSize != nil {
+			maxBodySize = domainSize.String()
+		}
+		// TODO
+		minVolumeSize := dogu.MinVolumeSize.String()
+		if minVolumeSize == "0" {
+			minVolumeSize = ""
+		}
 		return TargetDogu{
 			Name:        dogu.Name.String(),
 			Version:     dogu.Version.Raw,
 			TargetState: newState,
 			PlatformConfig: PlatformConfig{
 				ResourceConfig: ResourceConfig{
-					MinVolumeSize: dogu.MinVolumeSize.String(),
+					MinVolumeSize: minVolumeSize,
 				},
 				ReverseProxyConfig: ReverseProxyConfig{
-					MaxBodySize:      dogu.ReverseProxyConfig[ecosystem.NginxIngressAnnotationBodySize],
-					RewriteTarget:    dogu.ReverseProxyConfig[ecosystem.NginxIngressAnnotationRewriteTarget],
-					AdditionalConfig: dogu.ReverseProxyConfig[ecosystem.NginxIngressAnnotationAdditionalConfig],
+					MaxBodySize:      maxBodySize,
+					RewriteTarget:    string(dogu.ReverseProxyConfig.RewriteTarget),
+					AdditionalConfig: string(dogu.ReverseProxyConfig.AdditionalConfig),
 				},
 			},
 		}

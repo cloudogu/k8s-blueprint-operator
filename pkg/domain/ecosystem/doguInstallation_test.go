@@ -16,7 +16,8 @@ func TestInstallDogu(t *testing.T) {
 		Name:          postgresqlQualifiedName,
 		Version:       version1_2_3_1,
 		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
-	}, InstallDogu(postgresqlQualifiedName, version1_2_3_1))
+		// TODO
+	}, InstallDogu(postgresqlQualifiedName, version1_2_3_1, VolumeSize{}, ReverseProxyConfig{}))
 }
 
 func TestDoguInstallation_IsHealthy(t *testing.T) {
@@ -64,7 +65,7 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 			Version: version1_2_3_1,
 		}
 
-		err := dogu.SwitchNamespace("premium", version1_2_3_2, true)
+		err := dogu.SwitchNamespace("premium", true)
 
 		require.NoError(t, err)
 		assert.Equal(t, &DoguInstallation{
@@ -72,7 +73,6 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 				Namespace:  "premium",
 				SimpleName: "postgresql",
 			},
-			Version: version1_2_3_2,
 			UpgradeConfig: UpgradeConfig{
 				AllowNamespaceSwitch: true,
 			},
@@ -81,11 +81,10 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 
 	t.Run("namespace switch not allowed", func(t *testing.T) {
 		dogu := &DoguInstallation{
-			Name:    postgresqlQualifiedName,
-			Version: version1_2_3_1,
+			Name: postgresqlQualifiedName,
 		}
 
-		err := dogu.SwitchNamespace("premium", version1_2_3_2, false)
+		err := dogu.SwitchNamespace("premium", false)
 
 		require.ErrorContains(t, err, "not allowed to switch dogu namespace")
 	})

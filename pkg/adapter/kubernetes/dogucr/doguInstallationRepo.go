@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	doguInstallationRepoContextKey  = "doguInstallationRepoContext"
-	additionalIngressAnnotationsKey = "additionalIngressAnnotations"
+	doguInstallationRepoContextKey = "doguInstallationRepoContext"
 )
 
 type doguInstallationRepoContext struct {
@@ -105,6 +104,7 @@ func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.Per
 	for _, item := range list.Items {
 		if item.Name == cr.Name {
 			pvc = &item
+			break
 		}
 	}
 

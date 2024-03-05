@@ -21,7 +21,7 @@ spec:
               "minVolumeSize": "6Gi"
             },
             "reverseProxy": {
-              "maxBodySize": "2Gi"
+              "maxBodySize": "2G"
             }
           }
         },

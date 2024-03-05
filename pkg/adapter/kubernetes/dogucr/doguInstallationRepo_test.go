@@ -151,7 +151,15 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 		}}
 		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
 
-		sut := &doguInstallationRepo{doguClient: doguClientMock}
+		volumeQuantity2 := resource.MustParse("2Gi")
+		volumeQuantity3 := resource.MustParse("3Gi")
+		pvcClientMock := NewMockPvcInterface(t)
+		postgresqlPvc := corev1.PersistentVolumeClaim{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity2}}}
+		ldapPvc := corev1.PersistentVolumeClaim{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity3}}}
+		list := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{postgresqlPvc, ldapPvc}}
+		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(list, nil)
+
+		sut := &doguInstallationRepo{doguClient: doguClientMock, pvcClient: pvcClientMock}
 
 		// when
 		_, err := sut.GetAll(testCtx)
@@ -186,8 +194,15 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			},
 		}}
 		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
+		volumeQuantity2 := resource.MustParse("2Gi")
+		volumeQuantity3 := resource.MustParse("3Gi")
+		pvcClientMock := NewMockPvcInterface(t)
+		postgresqlPvc := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "postgresql"}, Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity2}}}
+		ldapPvc := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ldap"}, Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity3}}}
+		list := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{postgresqlPvc, ldapPvc}}
+		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(list, nil)
 
-		sut := &doguInstallationRepo{doguClient: doguClientMock}
+		sut := &doguInstallationRepo{doguClient: doguClientMock, pvcClient: pvcClientMock}
 
 		// when
 		actual, err := sut.GetAll(testCtx)
@@ -198,6 +213,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
+				MinVolumeSize:      volumeQuantity2,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
@@ -206,6 +222,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 					SimpleName: "ldap",
 				},
 				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
+				MinVolumeSize:      volumeQuantity3,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 		}

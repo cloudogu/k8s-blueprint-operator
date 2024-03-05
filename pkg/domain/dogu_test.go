@@ -1,8 +1,10 @@
 package domain
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 )
 
@@ -51,4 +53,37 @@ func Test_TargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
 
 	require.Error(t, err)
 	require.ErrorContains(t, err, "dogu target state is invalid: official/dogu1")
+}
+
+func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
+	t.Run("error on invalid format", func(t *testing.T) {
+		// given
+		parse := resource.MustParse("1Mi")
+		dogu := Dogu{Name: officialDogu1, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &parse}}
+		// when
+		err := dogu.validate()
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, "proxy body size does not have decimal format: official/dogu1")
+	})
+
+	t.Run("no error on empty quantity", func(t *testing.T) {
+		// given
+		dogu := Dogu{Name: officialDogu1, Version: version1_2_3}
+		// when
+		err := dogu.validate()
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("no error on zero size quantity", func(t *testing.T) {
+		// given
+		zeroQuantity := resource.MustParse("0")
+		dogu := Dogu{Name: officialDogu1, Version: version1_2_3, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
+		// when
+		err := dogu.validate()
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, resource.DecimalSI, dogu.ReverseProxyConfig.MaxBodySize.Format)
+	})
 }

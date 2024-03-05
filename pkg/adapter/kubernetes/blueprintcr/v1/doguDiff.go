@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 // DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
@@ -31,7 +32,9 @@ type ResourceConfig struct {
 }
 
 type ReverseProxyConfig struct {
-	Entries map[string]string `json:"entries,omitempty"`
+	MaxBodySize      string `json:"maxBodySize,omitempty"`
+	RewriteTarget    string `json:"rewriteTarget,omitempty"`
+	AdditionalConfig string `json:"additionalConfig,omitempty"`
 }
 
 // DoguAction is the action that needs to be done for a dogu
@@ -45,6 +48,17 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 		doguActions = append(doguActions, DoguAction(action))
 	}
 
+	actualProxyBodySize := domainModel.Actual.ReverseProxyConfig.MaxBodySize
+	actualProxyBodySizeStr := ""
+	if actualProxyBodySize != nil {
+		actualProxyBodySizeStr = actualProxyBodySize.String()
+	}
+
+	expectedProxyBodySize := domainModel.Expected.ReverseProxyConfig.MaxBodySize
+	expectedProxyBodySizeStr := ""
+	if expectedProxyBodySize != nil {
+		expectedProxyBodySizeStr = expectedProxyBodySize.String()
+	}
 	return DoguDiff{
 		Actual: DoguDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
@@ -54,7 +68,9 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				MinVolumeSize: domainModel.Actual.MinVolumeSize.String(),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
-				Entries: domainModel.Actual.ReverseProxyConfig,
+				MaxBodySize:      actualProxyBodySizeStr,
+				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
 		},
 		Expected: DoguDiffState{
@@ -65,7 +81,9 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				MinVolumeSize: domainModel.Expected.MinVolumeSize.String(),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
-				Entries: domainModel.Expected.ReverseProxyConfig,
+				MaxBodySize:      expectedProxyBodySizeStr,
+				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
 		},
 		NeededActions: doguActions,
@@ -110,7 +128,16 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 		expectedVolumeSizeErr = fmt.Errorf("failed to parse expected minimum volume size %q: %w", dto.Expected.ResourceConfig.MinVolumeSize, expectedVolumeSizeErr)
 	}
 
-	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr, actualVolumeSizeErr, expectedVolumeSizeErr)
+	actualMaxBodySize, actualBodySizeErr := serializer.ToDomainProxyBodySize(dto.Actual.ReverseProxyConfig.MaxBodySize)
+	if actualBodySizeErr != nil {
+		actualBodySizeErr = fmt.Errorf("failed to parse actual maximum proxy body size %q: %w", dto.Actual.ReverseProxyConfig.MaxBodySize, actualBodySizeErr)
+	}
+	expectedMaxBodySize, expectedBodySizeErr := serializer.ToDomainProxyBodySize(dto.Expected.ReverseProxyConfig.MaxBodySize)
+	if expectedBodySizeErr != nil {
+		expectedBodySizeErr = fmt.Errorf("failed to parse expected maximum proxy body size %q: %w", dto.Expected.ReverseProxyConfig.MaxBodySize, expectedBodySizeErr)
+	}
+
+	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr, actualVolumeSizeErr, expectedVolumeSizeErr, actualBodySizeErr, expectedBodySizeErr)
 	if err != nil {
 		return domain.DoguDiff{}, fmt.Errorf("failed to convert dogu diff dto %q to domain model: %w", doguName, err)
 	}
@@ -124,18 +151,26 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 	return domain.DoguDiff{
 		DoguName: common.SimpleDoguName(doguName),
 		Actual: domain.DoguDiffState{
-			Namespace:          common.DoguNamespace(dto.Actual.Namespace),
-			Version:            actualVersion,
-			InstallationState:  actualState,
-			MinVolumeSize:      actualMinVolumeSize,
-			ReverseProxyConfig: dto.Actual.ReverseProxyConfig.Entries,
+			Namespace:         common.DoguNamespace(dto.Actual.Namespace),
+			Version:           actualVersion,
+			InstallationState: actualState,
+			MinVolumeSize:     actualMinVolumeSize,
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      actualMaxBodySize,
+				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(dto.Actual.ReverseProxyConfig.AdditionalConfig),
+			},
 		},
 		Expected: domain.DoguDiffState{
-			Namespace:          common.DoguNamespace(dto.Expected.Namespace),
-			Version:            expectedVersion,
-			InstallationState:  expectedState,
-			MinVolumeSize:      expectedMinVolumeSize,
-			ReverseProxyConfig: dto.Expected.ReverseProxyConfig.Entries,
+			Namespace:         common.DoguNamespace(dto.Expected.Namespace),
+			Version:           expectedVersion,
+			InstallationState: expectedState,
+			MinVolumeSize:     expectedMinVolumeSize,
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      expectedMaxBodySize,
+				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(dto.Expected.ReverseProxyConfig.AdditionalConfig),
+			},
 		},
 		NeededActions: doguActions,
 	}, nil

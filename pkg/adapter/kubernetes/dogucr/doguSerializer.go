@@ -31,7 +31,9 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 		minVolumeSize, quantityError = resource.ParseQuantity(crVolumeSize)
 	}
 
-	err := errors.Join(versionErr, nameErr, quantityError)
+	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
+
+	err := errors.Join(versionErr, nameErr, quantityError, proxyErr)
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
@@ -51,26 +53,32 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
 		MinVolumeSize:      minVolumeSize,
-		ReverseProxyConfig: ecosystem.ReverseProxyConfigEntries(cr.Spec.AdditionalIngressAnnotations),
+		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
 	}, nil
 }
 
-// var nginxReverseProxyConfigs = []string{nginxIngressAnnotationBodySize, nginxIngressAnnotationRewriteTarget, nginxIngressAnnotationAdditionalConfig}
+func parseDoguAdditionalIngressAnnotationsCR(annotations v1.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
+	reverseProxyConfig := ecosystem.ReverseProxyConfig{}
 
-// func parseReverseProxyConfig(cr *v1.Dogu) domain.ReverseProxyConfigEntries {
-// 	reverseProxyConfig := domain.ReverseProxyConfigEntries{}
-// 	util.Map(nginxReverseProxyConfigs, func(t string) error {
-// 		value, ok := cr.Spec.AdditionalIngressAnnotations[t]
-// 		if !ok {
-// 			reverseProxyConfig[t] = value
-// 		}
-//
-// 		return nil
-// 	})
-//
-// 	return reverseProxyConfig
-// }
+	reverseProxyBodySize, ok := annotations[ecosystem.NginxIngressAnnotationBodySize]
+	if ok {
+		// Sizes for Nginx can be specified in bytes, kilobytes (suffixes k and K) or megabytes (suffixes m and M), for example, “1024”, “8k”, “1m”
+		// Since the actual dogu-operator and service-discovery just use this format we can expect that the values for the volume size in are safe to set in the doguinstallation.
+		// Formats “1024”, “8k”, “1m” can be parsed by resource.Quantity
+		// See: [Documentation](https://nginx.org/en/docs/syntax.html)
+		quantity, err := resource.ParseQuantity(reverseProxyBodySize)
+		if err != nil {
+			return ecosystem.ReverseProxyConfig{}, domainservice.NewInternalError(err, "failed to parse quantity %q", reverseProxyBodySize)
+		}
+		reverseProxyConfig.MaxBodySize = &quantity
+	}
+
+	reverseProxyConfig.RewriteTarget = ecosystem.RewriteTarget(annotations[ecosystem.NginxIngressAnnotationRewriteTarget])
+	reverseProxyConfig.AdditionalConfig = ecosystem.AdditionalConfig(annotations[ecosystem.NginxIngressAnnotationAdditionalConfig])
+
+	return reverseProxyConfig, nil
+}
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 	doguResources := v1.DoguResources{}
@@ -97,10 +105,35 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
 			},
-			AdditionalIngressAnnotations: v1.IngressAnnotations(dogu.ReverseProxyConfig),
+			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 		},
 		Status: v1.DoguStatus{},
 	}
+}
+
+func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {
+	annotations := v1.IngressAnnotations{}
+	maxBodySize := config.MaxBodySize
+	if maxBodySize != nil {
+		annotations[ecosystem.NginxIngressAnnotationBodySize] = maxBodySize.String()
+	}
+
+	rewriteTarget := config.RewriteTarget
+	if rewriteTarget != "" {
+		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = string(rewriteTarget)
+	}
+
+	additionalConfig := config.AdditionalConfig
+	if additionalConfig != "" {
+		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = string(additionalConfig)
+	}
+
+	// Use nil here to delete existing annotation from the cr.
+	if len(annotations) == 0 {
+		return nil
+	}
+
+	return annotations
 }
 
 type doguCRPatch struct {
@@ -115,8 +148,6 @@ type doguSpecPatch struct {
 	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
 	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
 }
-
-// type ingressAnnotationsPatch map[string]string
 
 type upgradeConfigPatch struct {
 	AllowNamespaceSwitch bool `json:"allowNamespaceSwitch"`
@@ -136,7 +167,7 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 			Resources: doguResourcesPatch{
 				DataVolumeSize: dogu.MinVolumeSize.String(),
 			},
-			AdditionalIngressAnnotations: dogu.ReverseProxyConfig,
+			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode
 			SupportMode: false,
 			UpgradeConfig: upgradeConfigPatch{

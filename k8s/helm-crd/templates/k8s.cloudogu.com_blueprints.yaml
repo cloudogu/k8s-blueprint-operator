@@ -306,10 +306,12 @@ spec:
                                 type: object
                               reverseProxyConfig:
                                 properties:
-                                  entries:
-                                    additionalProperties:
-                                      type: string
-                                    type: object
+                                  additionalConfig:
+                                    type: string
+                                  maxBodySize:
+                                    type: string
+                                  rewriteTarget:
+                                    type: string
                                 type: object
                               version:
                                 type: string
@@ -330,10 +332,12 @@ spec:
                                 type: object
                               reverseProxyConfig:
                                 properties:
-                                  entries:
-                                    additionalProperties:
-                                      type: string
-                                    type: object
+                                  additionalConfig:
+                                    type: string
+                                  maxBodySize:
+                                    type: string
+                                  rewriteTarget:
+                                    type: string
                                 type: object
                               version:
                                 type: string

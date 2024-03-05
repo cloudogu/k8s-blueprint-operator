@@ -49,7 +49,7 @@ type DoguDiffState struct {
 	Version            core.Version
 	InstallationState  TargetState
 	MinVolumeSize      ecosystem.VolumeSize
-	ReverseProxyConfig ecosystem.ReverseProxyConfigEntries
+	ReverseProxyConfig ecosystem.ReverseProxyConfig
 }
 
 // String returns a string representation of the DoguDiff.
@@ -153,13 +153,16 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 				}
 				// TODO check for downgrade
 			}
-			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationBodySize] != actual.ReverseProxyConfig[""] {
-				neededActions = append(neededActions, ActionUpdateDoguProxyBodySize)
+
+			proxyBodySizeAction := getActionForProxyBodySizes(expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
+			if proxyBodySizeAction != "" {
+				neededActions = append(neededActions, proxyBodySizeAction)
 			}
-			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationRewriteTarget] != actual.ReverseProxyConfig[""] {
+
+			if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
 				neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
 			}
-			if expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationAdditionalConfig] != actual.ReverseProxyConfig[""] {
+			if expected.ReverseProxyConfig.AdditionalConfig != actual.ReverseProxyConfig.AdditionalConfig {
 				neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
 			}
 			if expected.Version.IsNewerThan(actual.Version) {
@@ -189,4 +192,21 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 	}
 	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
 	return append(neededActions, ActionNone)
+}
+
+func getActionForProxyBodySizes(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) Action {
+	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
+		return ""
+	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {
+		return ActionUpdateDoguProxyBodySize
+	} else {
+		if expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
+			return ActionUpdateDoguProxyBodySize
+		}
+	}
+	return ""
+}
+
+func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {
+	return (expectedProxyBodySize != nil && actualProxyBodySize == nil) || (expectedProxyBodySize == nil && actualProxyBodySize != nil)
 }

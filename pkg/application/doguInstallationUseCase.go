@@ -155,15 +155,15 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			continue
 		case domain.ActionUpdateDoguProxyBodySize:
 			logger.Info("update proxy body size for dogu")
-			doguInstallation.UpdateProxyBodySize(doguDiff.Expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationBodySize])
+			doguInstallation.UpdateProxyBodySize(doguDiff.Expected.ReverseProxyConfig.MaxBodySize)
 			continue
 		case domain.ActionUpdateDoguProxyRewriteTarget:
 			logger.Info("update proxy body size for dogu")
-			doguInstallation.UpdateProxyRewriteTarget(doguDiff.Expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationRewriteTarget])
+			doguInstallation.UpdateProxyRewriteTarget(doguDiff.Expected.ReverseProxyConfig.RewriteTarget)
 			continue
 		case domain.ActionUpdateDoguProxyAdditionalConfig:
 			logger.Info("update proxy body size for dogu")
-			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig[ecosystem.NginxIngressAnnotationAdditionalConfig])
+			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig.AdditionalConfig)
 			continue
 		default:
 			return fmt.Errorf("cannot perform unknown action %q for dogu %q", action, doguDiff.DoguName)
