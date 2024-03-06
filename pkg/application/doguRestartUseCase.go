@@ -74,14 +74,7 @@ func getDogusThatNeedARestart(blueprintSpec *domain.BlueprintSpec) []common.Qual
 	dogusInEffectiveBlueprint := blueprintSpec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
 		if blueprintSpec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
-			// only restart Dogu if config changed and action is none
-			// if action is not none, the Dogu is already restarted
-			for _, diff := range blueprintSpec.StateDiff.DoguDiffs {
-				if diff.DoguName == dogu.Name.SimpleName && diff.NeededAction == domain.ActionNone {
-					dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name)
-					break
-				}
-			}
+			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name)
 		}
 	}
 	return dogusThatNeedRestart
