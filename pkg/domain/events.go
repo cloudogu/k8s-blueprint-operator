@@ -175,8 +175,8 @@ func (s StateDiffDoguDeterminedEvent) Name() string {
 
 // Message contains the StateDiffDoguDeterminedEvent's statistics message.
 func (s StateDiffDoguDeterminedEvent) Message() string {
-	doguMessage := fmt.Sprintf("dogu specific: (%d to update resource config, %d to update reverse proxy config)", s.ToUpdateResourceConfig, s.ToUpdateReverseProxyConfig)
-	return fmt.Sprintf("%s %s", s.buildMessage(), doguMessage)
+	doguMessage := fmt.Sprintf("dogu config diffs: (%d to update resource config, %d to update reverse proxy config)", s.ToUpdateResourceConfig, s.ToUpdateReverseProxyConfig)
+	return fmt.Sprintf("%s\n%s", s.buildMessage(), doguMessage)
 }
 
 type EcosystemHealthyUpfrontEvent struct {

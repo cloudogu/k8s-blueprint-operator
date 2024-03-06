@@ -53,10 +53,7 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common
 		return nil, err
 	}
 
-	err = repo.appendVolumeSize(cr, pvcList)
-	if err != nil {
-		return nil, err
-	}
+	repo.appendVolumeSizeIfNotSet(cr, pvcList)
 
 	return parseDoguCR(cr)
 }
@@ -78,7 +75,7 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 	var errs []error
 	doguInstallations := make(map[common.SimpleDoguName]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
-		errs = append(errs, repo.appendVolumeSize(&cr, pvcList))
+		repo.appendVolumeSizeIfNotSet(&cr, pvcList)
 		doguInstallation, err := parseDoguCR(&cr)
 		if err != nil {
 			errs = append(errs, err)
@@ -106,15 +103,11 @@ func (repo *doguInstallationRepo) getEcosystemPVCs(ctx context.Context) (*corev1
 	return pvcList, nil
 }
 
-func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) error {
-	if cr == nil {
-		return domainservice.NewInternalError(fmt.Errorf("dogu is nil"), "could not append volume size")
-	}
-
+func (repo *doguInstallationRepo) appendVolumeSizeIfNotSet(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) {
 	crResources := cr.Spec.Resources
 	if crResources.DataVolumeSize != "" {
 		// VolumeSize is specified in spec.
-		return nil
+		return
 	}
 
 	// Check if dogu has volumeSize
@@ -127,12 +120,12 @@ func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.Per
 	}
 
 	if pvc == nil {
-		return nil
+		return
 	}
 
 	cr.Spec.Resources.DataVolumeSize = ecosystem.GetQuantityString(pvc.Status.Capacity.Storage())
 
-	return nil
+	return
 }
 
 func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {

@@ -469,20 +469,24 @@ func Test_determineDoguDiffs(t *testing.T) {
 
 func TestDoguDiffs_Statistics(t *testing.T) {
 	tests := []struct {
-		name            string
-		dd              DoguDiffs
-		wantToInstall   int
-		wantToUpgrade   int
-		wantToUninstall int
-		wantOther       int
+		name                           string
+		dd                             DoguDiffs
+		wantToInstall                  int
+		wantToUpgrade                  int
+		wantToUninstall                int
+		wantOther                      int
+		wantToUpdateReverseProxyConfig int
+		wantToUpdateResourceConfig     int
 	}{
 		{
-			name:            "0 overall",
-			dd:              DoguDiffs{},
-			wantToInstall:   0,
-			wantToUpgrade:   0,
-			wantToUninstall: 0,
-			wantOther:       0,
+			name:                           "0 overall",
+			dd:                             DoguDiffs{},
+			wantToInstall:                  0,
+			wantToUpgrade:                  0,
+			wantToUninstall:                0,
+			wantOther:                      0,
+			wantToUpdateReverseProxyConfig: 0,
+			wantToUpdateResourceConfig:     0,
 		},
 		{
 			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
@@ -491,28 +495,31 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize}},
 				{NeededActions: []Action{ActionSwitchDoguNamespace}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionDowngrade}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade}},
-				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguProxyAdditionalConfig}},
+				{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguProxyRewriteTarget}},
 			},
-			wantToInstall:   4,
-			wantToUpgrade:   3,
-			wantToUninstall: 2,
-			wantOther:       3,
+			wantToInstall:                  4,
+			wantToUpgrade:                  3,
+			wantToUninstall:                2,
+			wantOther:                      3,
+			wantToUpdateReverseProxyConfig: 2,
+			wantToUpdateResourceConfig:     1,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// TODO
-			gotToInstall, gotToUpgrade, gotToUninstall, gotOther, _, _ := tt.dd.Statistics()
+			gotToInstall, gotToUpgrade, gotToUninstall, gotProxyConfig, gotResourceConfig, gotOther := tt.dd.Statistics()
 			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
 			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
 			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
+			assert.Equalf(t, tt.wantToUpdateReverseProxyConfig, gotProxyConfig, "Statistics()")
+			assert.Equalf(t, tt.wantToUpdateResourceConfig, gotResourceConfig, "Statistics()")
 			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
@@ -533,14 +540,14 @@ func TestDoguDiff_String(t *testing.T) {
 		DoguName:      "postgresql",
 		Actual:        actual,
 		Expected:      expected,
-		NeededActions: []Action{ActionInstall},
+		NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize},
 	}
 
 	assert.Equal(t, "{"+
 		"DoguName: \"postgresql\", "+
 		"Actual: {Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}, "+
 		"Expected: {Version: \"3.2.1-2\", Namespace: \"premium\", InstallationState: \"present\"}, "+
-		"NeededAction: \"install\""+
+		"NeededActions: [\"upgrade\" \"update resource minimum volume size\"]"+
 		"}", diff.String())
 }
 func TestDoguDiffState_String(t *testing.T) {

@@ -56,7 +56,7 @@ func Test_TargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
-	t.Run("error on invalid format", func(t *testing.T) {
+	t.Run("error on invalid proxy body size format", func(t *testing.T) {
 		// given
 		parse := resource.MustParse("1Mi")
 		dogu := Dogu{Name: officialDogu1, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &parse}}
@@ -64,7 +64,18 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "proxy body size does not have decimal format: official/dogu1")
+		require.ErrorContains(t, err, "dogu proxy body size is not in Decimal SI: official/dogu1")
+	})
+
+	t.Run("error on invalid volume size format", func(t *testing.T) {
+		// given
+		parse := resource.MustParse("1M")
+		dogu := Dogu{Name: officialDogu1, MinVolumeSize: &parse}
+		// when
+		err := dogu.validate()
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, "dogu minimum volume size is not in Binary SI: official/dogu1")
 	})
 
 	t.Run("no error on empty quantity", func(t *testing.T) {

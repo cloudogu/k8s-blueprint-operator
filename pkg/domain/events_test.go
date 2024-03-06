@@ -89,11 +89,11 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUpgrade}},
+					{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig}},
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffDoguDetermined",
-			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
+			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)\ndogu config diffs: (1 to update resource config, 3 to update reverse proxy config)",
 		},
 		{
 			name: "component state diff determined",

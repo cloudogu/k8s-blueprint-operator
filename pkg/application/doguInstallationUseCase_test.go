@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 	"time"
 )
@@ -22,6 +23,7 @@ var postgresqlQualifiedName = common.QualifiedDoguName{
 	SimpleName: "postgresql",
 }
 
+// TODO Add test for proxy and volume actions
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
@@ -40,7 +42,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Version:           version3211,
 				InstallationState: domain.TargetStatePresent,
 			},
-			NeededAction: domain.ActionNone,
+			NeededActions: []domain.Action{domain.ActionNone},
 		}, &ecosystem.DoguInstallation{
 			Name:    postgresqlQualifiedName,
 			Version: version3211,
@@ -51,9 +53,16 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	})
 
 	t.Run("action install", func(t *testing.T) {
+		volumeSize := resource.MustParse("2Gi")
+		bodySize := resource.MustParse("2G")
+		config := ecosystem.ReverseProxyConfig{
+			MaxBodySize:      &bodySize,
+			RewriteTarget:    "/",
+			AdditionalConfig: "additional",
+		}
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
-			Create(testCtx, ecosystem.InstallDogu(postgresqlQualifiedName, version3211)).
+			Create(testCtx, ecosystem.InstallDogu(postgresqlQualifiedName, version3211, &volumeSize, config)).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
@@ -69,11 +78,13 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 					InstallationState: domain.TargetStateAbsent,
 				},
 				Expected: domain.DoguDiffState{
-					Namespace:         "official",
-					Version:           version3211,
-					InstallationState: domain.TargetStatePresent,
+					Namespace:          "official",
+					Version:            version3211,
+					InstallationState:  domain.TargetStatePresent,
+					MinVolumeSize:      &volumeSize,
+					ReverseProxyConfig: config,
 				},
-				NeededAction: domain.ActionInstall,
+				NeededActions: []domain.Action{domain.ActionInstall},
 			},
 			nil,
 			domain.BlueprintConfiguration{},
@@ -95,8 +106,8 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		err := sut.applyDoguState(
 			testCtx,
 			domain.DoguDiff{
-				DoguName:     "postgresql",
-				NeededAction: domain.ActionUninstall,
+				DoguName:      "postgresql",
+				NeededActions: []domain.Action{domain.ActionUninstall},
 			},
 			&ecosystem.DoguInstallation{
 				Name:    postgresqlQualifiedName,
@@ -129,7 +140,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Version: version3212,
 				},
-				NeededAction: domain.ActionUpgrade,
+				NeededActions: []domain.Action{domain.ActionUpgrade},
 			},
 			dogu,
 			domain.BlueprintConfiguration{},
@@ -157,7 +168,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Version: version3211,
 				},
-				NeededAction: domain.ActionDowngrade,
+				NeededActions: []domain.Action{domain.ActionDowngrade},
 			},
 			dogu,
 			domain.BlueprintConfiguration{},
@@ -184,7 +195,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchDoguNamespace,
+				NeededActions: []domain.Action{domain.ActionSwitchDoguNamespace},
 			},
 			dogu,
 			domain.BlueprintConfiguration{
@@ -214,7 +225,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: domain.ActionSwitchDoguNamespace,
+				NeededActions: []domain.Action{domain.ActionSwitchDoguNamespace},
 			},
 			dogu,
 			domain.BlueprintConfiguration{
@@ -239,7 +250,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Expected: domain.DoguDiffState{
 					Namespace: "premium",
 				},
-				NeededAction: "unknown",
+				NeededActions: []domain.Action{"unknown"},
 			},
 			nil,
 			domain.BlueprintConfiguration{},
@@ -293,8 +304,8 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				DoguDiffs: []domain.DoguDiff{
 					{
-						DoguName:     "postgresql",
-						NeededAction: domain.ActionNone,
+						DoguName:      "postgresql",
+						NeededActions: []domain.Action{domain.ActionNone},
 					},
 				},
 			},
@@ -320,8 +331,8 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				DoguDiffs: []domain.DoguDiff{
 					{
-						DoguName:     "postgresql",
-						NeededAction: domain.ActionDowngrade,
+						DoguName:      "postgresql",
+						NeededActions: []domain.Action{domain.ActionDowngrade},
 					},
 				},
 			},

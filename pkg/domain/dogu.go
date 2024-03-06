@@ -43,7 +43,7 @@ func (dogu Dogu) validate() error {
 	// rounded up (longhorn does this in volume resize).
 	minVolumeSize := dogu.MinVolumeSize
 	if minVolumeSize != nil && !minVolumeSize.IsZero() && minVolumeSize.Format != resource.BinarySI {
-		errorList = append(errorList, fmt.Errorf("dogu min volume size is not in Binary SI: %s", dogu.Name))
+		errorList = append(errorList, fmt.Errorf("dogu minimum volume size is not in Binary SI: %s", dogu.Name))
 	}
 
 	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.

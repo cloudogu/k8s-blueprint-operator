@@ -10,7 +10,9 @@ func GetQuantityReference(quantityStr string) (*resource.Quantity, error) {
 	var err error
 	if quantityStr != "" && quantityStr != "<nil>" {
 		quantityValue, err = resource.ParseQuantity(quantityStr)
-		quantityPtr = &quantityValue
+		if err == nil {
+			quantityPtr = &quantityValue
+		}
 	}
 
 	return quantityPtr, err
