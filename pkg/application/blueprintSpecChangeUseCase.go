@@ -27,6 +27,7 @@ func NewBlueprintSpecChangeUseCase(
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
 	doguConfigUseCase registryConfigUseCase,
+	doguRestartUseCase doguRestartUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:                  repo,
@@ -35,6 +36,7 @@ func NewBlueprintSpecChangeUseCase(
 		stateDiff:             stateDiff,
 		applyUseCase:          applyUseCase,
 		registryConfigUseCase: doguConfigUseCase,
+		doguRestartUseCase:    doguRestartUseCase,
 	}
 }
 
