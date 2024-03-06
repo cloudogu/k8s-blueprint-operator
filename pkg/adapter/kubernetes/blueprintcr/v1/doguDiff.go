@@ -48,27 +48,16 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 		doguActions = append(doguActions, DoguAction(action))
 	}
 
-	actualProxyBodySize := domainModel.Actual.ReverseProxyConfig.MaxBodySize
-	actualProxyBodySizeStr := ""
-	if actualProxyBodySize != nil {
-		actualProxyBodySizeStr = actualProxyBodySize.String()
-	}
-
-	expectedProxyBodySize := domainModel.Expected.ReverseProxyConfig.MaxBodySize
-	expectedProxyBodySizeStr := ""
-	if expectedProxyBodySize != nil {
-		expectedProxyBodySizeStr = expectedProxyBodySize.String()
-	}
 	return DoguDiff{
 		Actual: DoguDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 			ResourceConfig: ResourceConfig{
-				MinVolumeSize: domainModel.Actual.MinVolumeSize.String(),
+				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Actual.MinVolumeSize),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
-				MaxBodySize:      actualProxyBodySizeStr,
+				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
@@ -78,10 +67,10 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
 			ResourceConfig: ResourceConfig{
-				MinVolumeSize: domainModel.Expected.MinVolumeSize.String(),
+				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Expected.MinVolumeSize),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
-				MaxBodySize:      expectedProxyBodySizeStr,
+				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
@@ -119,20 +108,20 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}
 
-	actualMinVolumeSize, actualVolumeSizeErr := serializer.ToDomainVolumeSize(dto.Actual.ResourceConfig.MinVolumeSize)
+	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetQuantityReference(dto.Actual.ResourceConfig.MinVolumeSize)
 	if actualVolumeSizeErr != nil {
 		actualVolumeSizeErr = fmt.Errorf("failed to parse actual minimum volume size %q: %w", dto.Actual.ResourceConfig.MinVolumeSize, actualVolumeSizeErr)
 	}
-	expectedMinVolumeSize, expectedVolumeSizeErr := serializer.ToDomainVolumeSize(dto.Expected.ResourceConfig.MinVolumeSize)
+	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetQuantityReference(dto.Expected.ResourceConfig.MinVolumeSize)
 	if expectedVolumeSizeErr != nil {
 		expectedVolumeSizeErr = fmt.Errorf("failed to parse expected minimum volume size %q: %w", dto.Expected.ResourceConfig.MinVolumeSize, expectedVolumeSizeErr)
 	}
 
-	actualMaxBodySize, actualBodySizeErr := serializer.ToDomainProxyBodySize(dto.Actual.ReverseProxyConfig.MaxBodySize)
+	actualMaxBodySize, actualBodySizeErr := ecosystem.GetQuantityReference(dto.Actual.ReverseProxyConfig.MaxBodySize)
 	if actualBodySizeErr != nil {
 		actualBodySizeErr = fmt.Errorf("failed to parse actual maximum proxy body size %q: %w", dto.Actual.ReverseProxyConfig.MaxBodySize, actualBodySizeErr)
 	}
-	expectedMaxBodySize, expectedBodySizeErr := serializer.ToDomainProxyBodySize(dto.Expected.ReverseProxyConfig.MaxBodySize)
+	expectedMaxBodySize, expectedBodySizeErr := ecosystem.GetQuantityReference(dto.Expected.ReverseProxyConfig.MaxBodySize)
 	if expectedBodySizeErr != nil {
 		expectedBodySizeErr = fmt.Errorf("failed to parse expected maximum proxy body size %q: %w", dto.Expected.ReverseProxyConfig.MaxBodySize, expectedBodySizeErr)
 	}

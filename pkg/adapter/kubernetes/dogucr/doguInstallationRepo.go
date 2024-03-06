@@ -48,6 +48,16 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common
 		}
 	}
 
+	pvcList, err := repo.getEcosystemPVCs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	err = repo.appendVolumeSize(cr, pvcList)
+	if err != nil {
+		return nil, err
+	}
+
 	return parseDoguCR(cr)
 }
 
@@ -60,9 +70,9 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 		}
 	}
 
-	pvcList, err := repo.pvcClient.List(ctx, metav1.ListOptions{LabelSelector: "app=ces"})
-	if err != nil && !k8sErrors.IsNotFound(err) {
-		return nil, domainservice.NewInternalError(err, "error while listing dogu PVCs")
+	pvcList, err := repo.getEcosystemPVCs(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	var errs []error
@@ -88,9 +98,17 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 	return doguInstallations, nil
 }
 
+func (repo *doguInstallationRepo) getEcosystemPVCs(ctx context.Context) (*corev1.PersistentVolumeClaimList, error) {
+	pvcList, err := repo.pvcClient.List(ctx, metav1.ListOptions{LabelSelector: "app=ces"})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return nil, domainservice.NewInternalError(err, "error while listing dogu PVCs")
+	}
+	return pvcList, nil
+}
+
 func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) error {
 	if cr == nil {
-		return domainservice.NewInternalError(fmt.Errorf("dogu is nil"), "could not get volume size")
+		return domainservice.NewInternalError(fmt.Errorf("dogu is nil"), "could not append volume size")
 	}
 
 	crResources := cr.Spec.Resources
@@ -112,7 +130,7 @@ func (repo *doguInstallationRepo) appendVolumeSize(cr *v1.Dogu, list *corev1.Per
 		return nil
 	}
 
-	cr.Spec.Resources.DataVolumeSize = pvc.Status.Capacity.Storage().String()
+	cr.Spec.Resources.DataVolumeSize = ecosystem.GetQuantityString(pvc.Status.Capacity.Storage())
 
 	return nil
 }

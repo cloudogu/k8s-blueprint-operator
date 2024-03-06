@@ -48,7 +48,7 @@ type DoguDiffState struct {
 	Namespace          common.DoguNamespace
 	Version            core.Version
 	InstallationState  TargetState
-	MinVolumeSize      ecosystem.VolumeSize
+	MinVolumeSize      *ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 }
 
@@ -147,11 +147,10 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 			if expected.Namespace != actual.Namespace {
 				neededActions = append(neededActions, ActionSwitchDoguNamespace)
 			}
-			if expected.MinVolumeSize != actual.MinVolumeSize {
-				if expected.MinVolumeSize.Cmp(actual.MinVolumeSize) == 1 {
-					neededActions = append(neededActions, ActionUpdateDoguResourceMinVolumeSize)
-				}
-				// TODO check for downgrade
+
+			volumeAction := getActionForMinVolumeSize(expected.MinVolumeSize, actual.MinVolumeSize)
+			if volumeAction != "" {
+				neededActions = append(neededActions, volumeAction)
 			}
 
 			proxyBodySizeAction := getActionForProxyBodySizes(expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
@@ -192,6 +191,16 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 	}
 	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
 	return append(neededActions, ActionNone)
+}
+
+func getActionForMinVolumeSize(expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) Action {
+	if expectedSize != nil && actualSize != nil {
+		if expectedSize.Cmp(*actualSize) == 1 {
+			return ActionUpdateDoguResourceMinVolumeSize
+		}
+	}
+
+	return ""
 }
 
 func getActionForProxyBodySizes(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) Action {

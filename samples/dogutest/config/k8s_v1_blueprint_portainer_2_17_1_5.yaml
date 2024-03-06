@@ -21,7 +21,7 @@ spec:
               "volumeSize": "4Gi"
             },
             "reverseProxy": {
-              "body-size": "1Gi",
+              "body-size": "1G",
               "rewriteTarget": "/",
               "additionalConfig": "proxy_set_header Accept-Encoding \"identity\";\nrewrite ^(/portainer)$ $1/ redirect;"
             }

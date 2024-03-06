@@ -22,8 +22,10 @@ type DoguInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
-
-	MinVolumeSize      VolumeSize
+	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
+	// storage is needed.
+	MinVolumeSize *VolumeSize
+	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ReverseProxyConfig
 }
 
@@ -59,7 +61,7 @@ type UpgradeConfig struct {
 }
 
 // InstallDogu is a factory for new DoguInstallation's.
-func InstallDogu(name common.QualifiedDoguName, version core.Version, minVolumeSize VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
+func InstallDogu(name common.QualifiedDoguName, version core.Version, minVolumeSize *VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
 	return &DoguInstallation{
 		Name:               name,
 		Version:            version,
@@ -91,7 +93,7 @@ func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
 	dogu.ReverseProxyConfig.MaxBodySize = value
 }
 
-func (dogu *DoguInstallation) UpdateMinVolumeSize(size VolumeSize) {
+func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
 	dogu.MinVolumeSize = size
 }
 
