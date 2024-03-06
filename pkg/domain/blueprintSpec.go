@@ -65,6 +65,9 @@ const (
 	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
 	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
 	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
+	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
+	// Restarts are needed when the Dogu config changes.
+	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
 // censorValue is the value for censoring sensitive blueprint configuration data.

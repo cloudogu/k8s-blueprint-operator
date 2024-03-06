@@ -90,3 +90,17 @@ func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) C
 	}
 	return ConfigActionSet
 }
+
+func (combinedDiff CombinedDoguConfigDiffs) HasChanges() bool {
+	for _, diff := range combinedDiff.DoguConfigDiff {
+		if diff.NeededAction != ActionNone {
+			return true
+		}
+	}
+	for _, diff := range combinedDiff.SensitiveDoguConfigDiff {
+		if diff.NeededAction != ActionNone {
+			return true
+		}
+	}
+	return false
+}

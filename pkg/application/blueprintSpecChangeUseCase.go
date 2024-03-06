@@ -17,6 +17,7 @@ type BlueprintSpecChangeUseCase struct {
 	stateDiff             stateDiffUseCase
 	applyUseCase          applyBlueprintSpecUseCase
 	registryConfigUseCase registryConfigUseCase
+	doguRestartUseCase    doguRestartUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -84,6 +85,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseBlueprintApplied:
+		return useCase.triggerDoguRestarts(ctx, blueprintId)
+	case domain.StatusPhaseRestartsTriggered:
 		return useCase.checkEcosystemHealthAfterwards(ctx, blueprintId)
 	case domain.StatusPhaseBlueprintApplicationFailed:
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
@@ -183,6 +186,15 @@ func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx co
 
 func (useCase *BlueprintSpecChangeUseCase) applyRegistryConfig(ctx context.Context, blueprintId string) error {
 	err := useCase.registryConfigUseCase.ApplyConfig(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+
+	return useCase.HandleChange(ctx, blueprintId)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) triggerDoguRestarts(ctx context.Context, blueprintId string) error {
+	err := useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprintId)
 	if err != nil {
 		return err
 	}

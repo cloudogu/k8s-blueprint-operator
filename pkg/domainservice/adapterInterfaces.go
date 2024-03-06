@@ -131,6 +131,11 @@ type ConfigEncryptionAdapter interface {
 	DecryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)
 }
 
+type DoguRestartAdapter interface {
+	//RestartAll restarts all provided Dogus
+	RestartAll(context.Context, []common.QualifiedDoguName) error
+}
+
 type GlobalConfigEntryRepository interface {
 	// Get retrieves a key from the global config.
 	// It can throw the following errors:
