@@ -13,8 +13,8 @@ import (
 type ComponentDiffs []ComponentDiff
 
 // Statistics aggregates various figures about the required actions of the ComponentDiffs.
-func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
-	for _, componentDiff := range cd {
+func (diffs ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+	for _, componentDiff := range diffs {
 		switch componentDiff.NeededAction {
 		case ActionInstall:
 			toInstall += 1
@@ -27,6 +27,16 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 		}
 	}
 	return
+}
+
+// GetComponentDiffByName returns the diff for the given component name or an empty struct if it was not found.
+func (diffs ComponentDiffs) GetComponentDiffByName(name common.SimpleComponentName) ComponentDiff {
+	for _, diff := range diffs {
+		if diff.Name == name {
+			return diff
+		}
+	}
+	return ComponentDiff{}
 }
 
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
