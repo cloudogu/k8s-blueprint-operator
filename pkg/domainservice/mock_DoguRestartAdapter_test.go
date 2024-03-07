@@ -24,11 +24,11 @@ func (_m *MockDoguRestartAdapter) EXPECT() *MockDoguRestartAdapter_Expecter {
 }
 
 // RestartAll provides a mock function with given fields: _a0, _a1
-func (_m *MockDoguRestartAdapter) RestartAll(_a0 context.Context, _a1 []common.QualifiedDoguName) error {
+func (_m *MockDoguRestartAdapter) RestartAll(_a0 context.Context, _a1 []common.SimpleDoguName) error {
 	ret := _m.Called(_a0, _a1)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []common.QualifiedDoguName) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []common.SimpleDoguName) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -44,14 +44,14 @@ type MockDoguRestartAdapter_RestartAll_Call struct {
 
 // RestartAll is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 []common.QualifiedDoguName
+//   - _a1 []common.SimpleDoguName
 func (_e *MockDoguRestartAdapter_Expecter) RestartAll(_a0 interface{}, _a1 interface{}) *MockDoguRestartAdapter_RestartAll_Call {
 	return &MockDoguRestartAdapter_RestartAll_Call{Call: _e.mock.On("RestartAll", _a0, _a1)}
 }
 
-func (_c *MockDoguRestartAdapter_RestartAll_Call) Run(run func(_a0 context.Context, _a1 []common.QualifiedDoguName)) *MockDoguRestartAdapter_RestartAll_Call {
+func (_c *MockDoguRestartAdapter_RestartAll_Call) Run(run func(_a0 context.Context, _a1 []common.SimpleDoguName)) *MockDoguRestartAdapter_RestartAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]common.QualifiedDoguName))
+		run(args[0].(context.Context), args[1].([]common.SimpleDoguName))
 	})
 	return _c
 }
@@ -61,7 +61,7 @@ func (_c *MockDoguRestartAdapter_RestartAll_Call) Return(_a0 error) *MockDoguRes
 	return _c
 }
 
-func (_c *MockDoguRestartAdapter_RestartAll_Call) RunAndReturn(run func(context.Context, []common.QualifiedDoguName) error) *MockDoguRestartAdapter_RestartAll_Call {
+func (_c *MockDoguRestartAdapter_RestartAll_Call) RunAndReturn(run func(context.Context, []common.SimpleDoguName) error) *MockDoguRestartAdapter_RestartAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
