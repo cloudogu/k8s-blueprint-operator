@@ -158,11 +158,11 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			doguInstallation.UpdateProxyBodySize(doguDiff.Expected.ReverseProxyConfig.MaxBodySize)
 			continue
 		case domain.ActionUpdateDoguProxyRewriteTarget:
-			logger.Info("update proxy body size for dogu")
+			logger.Info("update proxy rewrite target for dogu")
 			doguInstallation.UpdateProxyRewriteTarget(doguDiff.Expected.ReverseProxyConfig.RewriteTarget)
 			continue
 		case domain.ActionUpdateDoguProxyAdditionalConfig:
-			logger.Info("update proxy body size for dogu")
+			logger.Info("update proxy additional config for dogu")
 			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig.AdditionalConfig)
 			continue
 		default:

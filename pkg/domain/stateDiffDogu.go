@@ -148,15 +148,8 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 				neededActions = append(neededActions, ActionSwitchDoguNamespace)
 			}
 
-			volumeAction := getActionForMinVolumeSize(expected.MinVolumeSize, actual.MinVolumeSize)
-			if volumeAction != "" {
-				neededActions = append(neededActions, volumeAction)
-			}
-
-			proxyBodySizeAction := getActionForProxyBodySizes(expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
-			if proxyBodySizeAction != "" {
-				neededActions = append(neededActions, proxyBodySizeAction)
-			}
+			neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
+			neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
 
 			if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
 				neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
@@ -193,27 +186,27 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 	return append(neededActions, ActionNone)
 }
 
-func getActionForMinVolumeSize(expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) Action {
+func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
 	if expectedSize != nil && actualSize != nil {
 		if expectedSize.Cmp(*actualSize) == 1 {
-			return ActionUpdateDoguResourceMinVolumeSize
+			return append(actions, ActionUpdateDoguResourceMinVolumeSize)
 		}
 	}
 
-	return ""
+	return actions
 }
 
-func getActionForProxyBodySizes(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) Action {
+func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) []Action {
 	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
-		return ""
+		return actions
 	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {
-		return ActionUpdateDoguProxyBodySize
+		return append(actions, ActionUpdateDoguProxyBodySize)
 	} else {
 		if expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
-			return ActionUpdateDoguProxyBodySize
+			return append(actions, ActionUpdateDoguProxyBodySize)
 		}
 	}
-	return ""
+	return actions
 }
 
 func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {

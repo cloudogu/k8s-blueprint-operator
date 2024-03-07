@@ -124,8 +124,6 @@ func (repo *doguInstallationRepo) appendVolumeSizeIfNotSet(cr *v1.Dogu, list *co
 	}
 
 	cr.Spec.Resources.DataVolumeSize = ecosystem.GetQuantityString(pvc.Status.Capacity.Storage())
-
-	return
 }
 
 func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {

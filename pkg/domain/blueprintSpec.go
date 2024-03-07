@@ -376,7 +376,6 @@ var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 // ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 
-// TODO Check for Action volume resize. Dogu should have multiple actions
 func (spec *BlueprintSpec) validateStateDiff() error {
 	var invalidBlueprintErrors []error
 
