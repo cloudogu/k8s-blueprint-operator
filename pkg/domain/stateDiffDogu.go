@@ -139,51 +139,55 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 }
 
 func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action {
-	var neededActions []Action
 	if expected.InstallationState == actual.InstallationState {
 		switch expected.InstallationState {
 		case TargetStatePresent:
 			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
-			if expected.Namespace != actual.Namespace {
-				neededActions = append(neededActions, ActionSwitchDoguNamespace)
-			}
-
-			neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
-			neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
-
-			if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
-				neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
-			}
-			if expected.ReverseProxyConfig.AdditionalConfig != actual.ReverseProxyConfig.AdditionalConfig {
-				neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
-			}
-			if expected.Version.IsNewerThan(actual.Version) {
-				neededActions = append(neededActions, ActionUpgrade)
-			} else if expected.Version.IsEqualTo(actual.Version) {
-				if len(neededActions) == 0 {
-					neededActions = append(neededActions, ActionNone)
-				}
-			} else { // is older
-				// if downgrades are allowed is not important here.
-				// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
-				neededActions = append(neededActions, ActionDowngrade)
-			}
-
-			return neededActions
+			return getActionsForPresentDoguDiffs(expected, actual)
 		case TargetStateAbsent:
-			return append(neededActions, ActionNone)
+			return []Action{ActionNone}
 		}
 	} else {
 		// actual state is always the opposite
 		switch expected.InstallationState {
 		case TargetStatePresent:
-			return append(neededActions, ActionInstall)
+			return []Action{ActionInstall}
 		case TargetStateAbsent:
-			return append(neededActions, ActionUninstall)
+			return []Action{ActionUninstall}
 		}
 	}
 	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
-	return append(neededActions, ActionNone)
+	return []Action{ActionNone}
+}
+
+func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState) []Action {
+	var neededActions []Action
+	if expected.Namespace != actual.Namespace {
+		neededActions = append(neededActions, ActionSwitchDoguNamespace)
+	}
+
+	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
+	neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
+
+	if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
+		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
+	}
+	if expected.ReverseProxyConfig.AdditionalConfig != actual.ReverseProxyConfig.AdditionalConfig {
+		neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
+	}
+	if expected.Version.IsNewerThan(actual.Version) {
+		neededActions = append(neededActions, ActionUpgrade)
+	} else if expected.Version.IsEqualTo(actual.Version) {
+		if len(neededActions) == 0 {
+			neededActions = append(neededActions, ActionNone)
+		}
+	} else { // is older
+		// if downgrades are allowed is not important here.
+		// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
+		neededActions = append(neededActions, ActionDowngrade)
+	}
+
+	return neededActions
 }
 
 func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
