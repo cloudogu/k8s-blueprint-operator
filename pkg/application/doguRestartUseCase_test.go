@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -123,4 +124,35 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		// then
 		require.NoError(t, err)
 	})
+}
+
+func Test_getDogusThatNeedARestart(t *testing.T) {
+	type args struct {
+		blueprintSpec *domain.BlueprintSpec
+	}
+
+	testdogu1 := domain.Dogu{Name: common.QualifiedDoguName{Namespace: "testnamespace", SimpleName: "testdogu1"}}
+	testBlueprint1 := domain.Blueprint{Dogus: []domain.Dogu{testdogu1}}
+
+	tests := []struct {
+		name string
+		args args
+		want []common.SimpleDoguName
+	}{
+		{
+			name: "return nothing on empty blueprint",
+			args: args{blueprintSpec: &domain.BlueprintSpec{}},
+			want: []common.SimpleDoguName{},
+		},
+		{
+			name: "return nothing on no config change",
+			args: args{blueprintSpec: &domain.BlueprintSpec{Blueprint: testBlueprint1}},
+			want: []common.SimpleDoguName{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, getDogusThatNeedARestart(tt.args.blueprintSpec), "getDogusThatNeedARestart(%v)", tt.args.blueprintSpec)
+		})
+	}
 }
