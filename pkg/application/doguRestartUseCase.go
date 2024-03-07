@@ -26,7 +26,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	}
 
 	logger.Info("searching for Dogus that need a restart...")
-	dogusThatNeedARestart := []common.QualifiedDoguName{}
+	dogusThatNeedARestart := []common.SimpleDoguName{}
 	allDogusNeedARestart := false
 
 	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
@@ -43,9 +43,9 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 		if getInstalledDogusError != nil {
 			return fmt.Errorf("could not get all installed Dogus: %q", getInstalledDogusError)
 		}
-		installedDogusQualifiedNames := []common.QualifiedDoguName{}
+		installedDogusQualifiedNames := []common.SimpleDoguName{}
 		for _, installation := range installedDogus {
-			installedDogusQualifiedNames = append(installedDogusQualifiedNames, installation.Name)
+			installedDogusQualifiedNames = append(installedDogusQualifiedNames, installation.Name.SimpleName)
 		}
 		restartAllError := useCase.doguRestartAdapter.RestartAll(ctx, installedDogusQualifiedNames)
 		if restartAllError != nil {
@@ -69,12 +69,12 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	return nil
 }
 
-func getDogusThatNeedARestart(blueprintSpec *domain.BlueprintSpec) []common.QualifiedDoguName {
-	dogusThatNeedRestart := []common.QualifiedDoguName{}
+func getDogusThatNeedARestart(blueprintSpec *domain.BlueprintSpec) []common.SimpleDoguName {
+	dogusThatNeedRestart := []common.SimpleDoguName{}
 	dogusInEffectiveBlueprint := blueprintSpec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
 		if blueprintSpec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
-			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name)
+			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
 		}
 	}
 	return dogusThatNeedRestart

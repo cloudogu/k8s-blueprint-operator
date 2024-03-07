@@ -78,6 +78,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	globalConfigAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
 	secretSensitiveDoguConfigAdapter := adapterconfigkubernetes.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	combinedSensitiveDoguConfigAdapter := adapterconfig.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
+	//doguRestartAdapter := restartcr.NewDoguRestartAdapter()
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
@@ -92,11 +93,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
+	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, nil) // TODO: Use doguRestartAdapter instead of nil
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, registryConfigUseCase,
+		doguRestartUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 

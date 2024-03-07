@@ -133,7 +133,7 @@ type ConfigEncryptionAdapter interface {
 
 type DoguRestartAdapter interface {
 	//RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []common.QualifiedDoguName) error
+	RestartAll(context.Context, []common.SimpleDoguName) error
 }
 
 type GlobalConfigEntryRepository interface {
