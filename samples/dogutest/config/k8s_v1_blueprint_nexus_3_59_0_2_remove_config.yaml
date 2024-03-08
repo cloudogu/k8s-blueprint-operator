@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-nexus-3-59-0-2-config-change
+  name: blueprint-nexus-3-59-0-2-config-remove
 spec:
   blueprint: |
     {
@@ -15,15 +15,7 @@ spec:
         {
           "name":"official/nexus",
           "version":"3.59.0-2",
-          "targetState":"present",
-          "platformConfig": {
-            "resource": {
-              "minVolumeSize": "6Gi"
-            },
-            "reverseProxy": {
-              "maxBodySize": "2G"
-            }
-          }
+          "targetState":"present"
         },
         {
           "name":"official/cas",

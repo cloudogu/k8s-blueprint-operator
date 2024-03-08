@@ -70,7 +70,7 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Expected.MinVolumeSize),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
-				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
+				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Expected.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},

@@ -6,7 +6,7 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-nexus-3-59-0-1-config-on-install
+  name: blueprint-nexus-3-59-0-2-config-change
 spec:
   blueprint: |
     {
@@ -14,16 +14,16 @@ spec:
       "dogus":[
         {
           "name":"official/nexus",
-          "version":"3.59.0-1",
+          "version":"3.59.0-2",
           "targetState":"present",
           "platformConfig": {
             "resource": {
-              "volumeSize": "4Gi"
+              "minVolumeSize": "6Gi"
             },
             "reverseProxy": {
-              "body-size": "1G",
+              "maxBodySize": "2G",
               "rewriteTarget": "/",
-              "additionalConfig": "proxy_set_header Accept-Encoding \"identity\";\nrewrite ^(/portainer)$ $1/ redirect;"
+              "additionalConfig": "more_set_headers \"Request-Id: $req_id\";"
             }
           }
         },

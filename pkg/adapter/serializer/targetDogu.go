@@ -66,12 +66,14 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 		minVolumeSize, minVolumeSizeErr := ecosystem.GetQuantityReference(minVolumeSizeStr)
 		if minVolumeSizeErr != nil {
 			errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", minVolumeSizeStr, dogu.Name))
+			continue
 		}
 
 		maxBodySizeStr := dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
 		maxBodySize, maxBodySizeErr := ecosystem.GetQuantityReference(maxBodySizeStr)
 		if maxBodySizeErr != nil {
 			errorList = append(errorList, fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", maxBodySizeStr, dogu.Name))
+			continue
 		}
 
 		convertedDogus = append(convertedDogus, domain.Dogu{

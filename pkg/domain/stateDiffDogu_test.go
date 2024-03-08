@@ -9,6 +9,10 @@ import (
 )
 
 func Test_determineDoguDiff(t *testing.T) {
+	proxyBodySize := resource.MustParse("1M")
+	volumeSize1 := resource.MustParse("1Gi")
+	volumeSize2 := resource.MustParse("2Gi")
+
 	type args struct {
 		blueprintDogu *Dogu
 		installedDogu *ecosystem.DoguInstallation
@@ -153,6 +157,48 @@ func Test_determineDoguDiff(t *testing.T) {
 					InstallationState: TargetStatePresent,
 				},
 				NeededActions: []Action{ActionUpgrade},
+			},
+		},
+		{
+			name: "multiple update actions",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					Version:     version3212,
+					TargetState: TargetStatePresent,
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+						MaxBodySize:      &proxyBodySize,
+						AdditionalConfig: "additional",
+						RewriteTarget:    "/",
+					},
+					MinVolumeSize: &volumeSize2,
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name:          officialNexus,
+					Version:       version3211,
+					MinVolumeSize: &volumeSize1,
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					Version:           version3211,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     &volumeSize1,
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					Version:           version3212,
+					InstallationState: TargetStatePresent,
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+						MaxBodySize:      &proxyBodySize,
+						AdditionalConfig: "additional",
+						RewriteTarget:    "/",
+					},
+					MinVolumeSize: &volumeSize2,
+				},
+				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig, ActionUpgrade},
 			},
 		},
 		{
