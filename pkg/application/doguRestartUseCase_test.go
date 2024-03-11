@@ -345,6 +345,53 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, "testerror", err.Error())
 	})
+
+	t.Run("fail on error when getting blueprint", func(t *testing.T) {
+		// given
+		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
+			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
+			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+			Expected:     domain.DoguConfigValueState{"initial", true},
+			NeededAction: domain.ConfigActionSet}},
+		}
+		testContext := context.Background()
+		testStateDiff := domain.StateDiff{
+			DoguDiffs:         domain.DoguDiffs{},
+			ComponentDiffs:    domain.ComponentDiffs{},
+			DoguConfigDiffs:   doguConfigDiff,
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+		}
+		testDogu := domain.Dogu{
+			Name:        common.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
+			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
+			TargetState: 0,
+		}
+		testBlueprint := domain.BlueprintSpec{
+			Id:                 testBlueprintId,
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{testDogu}},
+			StateDiff:          testStateDiff,
+			Config:             domain.BlueprintConfiguration{},
+			Status:             "",
+			PersistenceContext: nil,
+			Events:             nil,
+		}
+		installationRepository := newMockDoguInstallationRepository(t)
+		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
+		restartRepository := newMockDoguRestartRepository(t)
+		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, errors.New("testerror"))
+		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
+
+		// when
+		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, "could not get blueprint spec by id: \"testerror\"", err.Error())
+	})
 }
 
 func Test_getDogusThatNeedARestart(t *testing.T) {
