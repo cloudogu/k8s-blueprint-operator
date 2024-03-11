@@ -109,6 +109,6 @@ type configEncryptionAdapter interface {
 	domainservice.ConfigEncryptionAdapter
 }
 
-type doguRestartAdapter interface {
-	domainservice.DoguRestartAdapter
+type doguRestartRepository interface {
+	domainservice.DoguRestartRepository
 }

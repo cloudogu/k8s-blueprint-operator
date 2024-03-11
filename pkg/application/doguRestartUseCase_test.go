@@ -133,6 +133,33 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 
 	testdogu1 := domain.Dogu{Name: common.QualifiedDoguName{Namespace: "testnamespace", SimpleName: "testdogu1"}}
 	testBlueprint1 := domain.Blueprint{Dogus: []domain.Dogu{testdogu1}}
+	testDoguConfigDiffsChanged := domain.CombinedDoguConfigDiffs{
+		DoguConfigDiff: []domain.DoguConfigEntryDiff{{
+			Actual:       domain.DoguConfigValueState{"", false},
+			Expected:     domain.DoguConfigValueState{"testvalue", true},
+			NeededAction: domain.ConfigActionSet,
+		}},
+		SensitiveDoguConfigDiff: nil,
+	}
+	testDoguConfigDiffsActionNone := domain.CombinedDoguConfigDiffs{
+		DoguConfigDiff: []domain.DoguConfigEntryDiff{{
+			NeededAction: domain.ActionNone,
+		}},
+		SensitiveDoguConfigDiff: nil,
+	}
+
+	testDoguConfigChangeDiffChanged := domain.StateDiff{
+		DoguDiffs:         nil,
+		ComponentDiffs:    nil,
+		DoguConfigDiffs:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsChanged},
+		GlobalConfigDiffs: nil,
+	}
+	testDoguConfigChangeDiffActionNone := domain.StateDiff{
+		DoguDiffs:         nil,
+		ComponentDiffs:    nil,
+		DoguConfigDiffs:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
+		GlobalConfigDiffs: nil,
+	}
 
 	tests := []struct {
 		name string
@@ -147,6 +174,28 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 		{
 			name: "return nothing on no config change",
 			args: args{blueprintSpec: &domain.BlueprintSpec{Blueprint: testBlueprint1}},
+			want: []common.SimpleDoguName{},
+		},
+		{
+			name: "return dogu on dogu config change",
+			args: args{
+				blueprintSpec: &domain.BlueprintSpec{
+					Blueprint:          testBlueprint1,
+					EffectiveBlueprint: domain.EffectiveBlueprint(testBlueprint1),
+					StateDiff:          testDoguConfigChangeDiffChanged,
+				},
+			},
+			want: []common.SimpleDoguName{testdogu1.Name.SimpleName},
+		},
+		{
+			name: "return nothing on dogu config unchanged",
+			args: args{
+				blueprintSpec: &domain.BlueprintSpec{
+					Blueprint:          testBlueprint1,
+					EffectiveBlueprint: domain.EffectiveBlueprint(testBlueprint1),
+					StateDiff:          testDoguConfigChangeDiffActionNone,
+				},
+			},
 			want: []common.SimpleDoguName{},
 		},
 	}

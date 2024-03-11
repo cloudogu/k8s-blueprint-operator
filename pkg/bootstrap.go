@@ -5,6 +5,7 @@ import (
 	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 	adapterconfigkubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -78,11 +79,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	globalConfigAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
 	secretSensitiveDoguConfigAdapter := adapterconfigkubernetes.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	combinedSensitiveDoguConfigAdapter := adapterconfig.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
-	//doguRestartAdapter := restartcr.NewDoguRestartAdapter()
+	//doguRestartAdapter := restartcr.NewDoguRestartRepository()
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := adapterhealthconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	doguRestartAdapter := dogusInterface.DoguRestarts(namespace)
+	restartRepository := restartcr.NewDoguRestartRepository(doguRestartAdapter)
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
@@ -93,7 +96,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
-	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, nil) // TODO: Use doguRestartAdapter instead of nil
+	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
