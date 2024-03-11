@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"testing"
 
@@ -640,5 +641,32 @@ func TestBlueprintSpecChangeUseCase_checkEcosystemHealthAfterwards(t *testing.T)
 		err := useCase.checkEcosystemHealthAfterwards(testCtx, blueprintId)
 		// then
 		require.ErrorIs(t, err, assert.AnError)
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_triggerDoguRestarts(t *testing.T) {
+	t.Run("handle error in TriggerDoguRestarts", func(t *testing.T) {
+		// given
+		repoMock := newMockBlueprintSpecRepository(t)
+		validationMock := newMockBlueprintSpecValidationUseCase(t)
+		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
+		stateDiffMock := newMockStateDiffUseCase(t)
+		applyMock := newMockApplyBlueprintSpecUseCase(t)
+		registryConfigUseCaseMock := newMockRegistryConfigUseCase(t)
+		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
+		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, registryConfigUseCaseMock, doguRestartUseCaseMock)
+
+		blueprintSpec := &domain.BlueprintSpec{
+			Id:     testBlueprintId,
+			Status: domain.StatusPhaseBlueprintApplied,
+		}
+		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
+		doguRestartUseCaseMock.EXPECT().TriggerDoguRestarts(testCtx, testBlueprintId).Return(errors.New("testerror"))
+
+		// when
+		err := useCase.HandleChange(testCtx, testBlueprintId)
+		// then
+		require.Error(t, err)
+		assert.Equal(t, "testerror", err.Error())
 	})
 }
