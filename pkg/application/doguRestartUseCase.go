@@ -5,17 +5,18 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type DoguRestartUseCase struct {
 	doguInstallationRepository doguInstallationRepository
 	blueprintSpecRepo          blueprintSpecRepository
-	doguRestartAdapter         doguRestartAdapter
+	restartRepository          domainservice.DoguRestartRepository
 }
 
-func NewDoguRestartUseCase(doguInstallationRepository doguInstallationRepository, blueprintSpecRepo blueprintSpecRepository, doguRestartAdapter doguRestartAdapter) *DoguRestartUseCase {
-	return &DoguRestartUseCase{doguInstallationRepository: doguInstallationRepository, blueprintSpecRepo: blueprintSpecRepo, doguRestartAdapter: doguRestartAdapter}
+func NewDoguRestartUseCase(doguInstallationRepository doguInstallationRepository, blueprintSpecRepo blueprintSpecRepository, restartRepository doguRestartRepository) *DoguRestartUseCase {
+	return &DoguRestartUseCase{doguInstallationRepository: doguInstallationRepository, blueprintSpecRepo: blueprintSpecRepo, restartRepository: restartRepository}
 }
 
 func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blueprintId string) error {
@@ -47,7 +48,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 		for _, installation := range installedDogus {
 			installedDogusQualifiedNames = append(installedDogusQualifiedNames, installation.Name.SimpleName)
 		}
-		restartAllError := useCase.doguRestartAdapter.RestartAll(ctx, installedDogusQualifiedNames)
+		restartAllError := useCase.restartRepository.RestartAll(ctx, installedDogusQualifiedNames)
 		if restartAllError != nil {
 			logger.Error(restartAllError, "could not restart all Dogus")
 		}
@@ -55,7 +56,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 		dogusThatNeedARestart = getDogusThatNeedARestart(blueprintSpec)
 		if len(dogusThatNeedARestart) > 0 {
 			logger.Info("restarting Dogus...")
-			restartError := useCase.doguRestartAdapter.RestartAll(ctx, dogusThatNeedARestart)
+			restartError := useCase.restartRepository.RestartAll(ctx, dogusThatNeedARestart)
 			if restartError != nil {
 				logger.Error(restartError, "could not restart Dogus")
 			}
