@@ -17,8 +17,8 @@ type ComponentDiff struct {
 	Actual ComponentDiffState `json:"actual"`
 	// Expected contains the desired component's target state.
 	Expected ComponentDiffState `json:"expected"`
-	// NeededAction contains the refined action as decided by the application's state determination automaton.
-	NeededAction ComponentAction `json:"neededAction"`
+	// NeededActions contains the refined actions as decided by the application's state determination automaton.
+	NeededActions []ComponentAction `json:"neededActions"`
 }
 
 // ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
@@ -52,6 +52,12 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 		expectedVersion = domainModel.Expected.Version.String()
 	}
 
+	neededActions := domainModel.NeededActions
+	componentActions := make([]ComponentAction, 0, len(neededActions))
+	for _, action := range neededActions {
+		componentActions = append(componentActions, ComponentAction(action))
+	}
+
 	return ComponentDiff{
 		Actual: ComponentDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
@@ -63,7 +69,7 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
 		},
-		NeededAction: ComponentAction(domainModel.NeededAction),
+		NeededActions: componentActions,
 	}
 }
 
@@ -99,6 +105,12 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	actualDistributionNamespace := dto.Actual.Namespace
 	expectedDistributionNamespace := dto.Expected.Namespace
 
+	neededActions := dto.NeededActions
+	componentActions := make([]domain.Action, 0, len(neededActions))
+	for _, action := range neededActions {
+		componentActions = append(componentActions, domain.Action(action))
+	}
+
 	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr)
 	if err != nil {
 		return domain.ComponentDiff{}, fmt.Errorf("failed to convert component diff dto %q to domain model: %w", componentName, err)
@@ -116,6 +128,6 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 			Version:           expectedVersion,
 			InstallationState: expectedState,
 		},
-		NeededAction: domain.Action(dto.NeededAction),
+		NeededActions: componentActions,
 	}, nil
 }

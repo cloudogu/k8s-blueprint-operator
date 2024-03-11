@@ -41,10 +41,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionNone,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				NeededActions: []Action{ActionNone},
 			},
 		},
 		{
@@ -54,10 +54,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState("", nil, TargetStateAbsent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionInstall,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState("", nil, TargetStateAbsent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				NeededActions: []Action{ActionInstall},
 			},
 		},
 		{
@@ -67,10 +67,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent),
-				NeededAction: ActionUninstall,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent),
+				NeededActions: []Action{ActionUninstall},
 			},
 		},
 		{
@@ -80,10 +80,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
-				NeededAction: ActionUpgrade,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
+				NeededActions: []Action{ActionUpgrade},
 			},
 		},
 		{
@@ -93,10 +93,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3212),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionDowngrade,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				NeededActions: []Action{ActionDowngrade},
 			},
 		},
 		{
@@ -106,10 +106,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionNone,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				NeededActions: []Action{ActionNone},
 			},
 		},
 		{
@@ -119,10 +119,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
-				Name:         "",
-				Actual:       ComponentDiffState{InstallationState: TargetStateAbsent},
-				Expected:     ComponentDiffState{InstallationState: TargetStateAbsent},
-				NeededAction: ActionNone,
+				Name:          "",
+				Actual:        ComponentDiffState{InstallationState: TargetStateAbsent},
+				Expected:      ComponentDiffState{InstallationState: TargetStateAbsent},
+				NeededActions: []Action{ActionNone},
 			},
 		},
 	}
@@ -155,17 +155,17 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 		{
 			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
 			dd: ComponentDiffs{
-				{NeededAction: ActionNone},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionDowngrade},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionUpgrade},
+				{NeededActions: []Action{ActionNone}},
+				{NeededActions: []Action{ActionInstall}},
+				{NeededActions: []Action{ActionUninstall}},
+				{NeededActions: []Action{ActionInstall}},
+				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionInstall}},
+				{NeededActions: []Action{ActionDowngrade}},
+				{NeededActions: []Action{ActionUninstall}},
+				{NeededActions: []Action{ActionInstall}},
+				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionUpgrade}},
 			},
 			wantToInstall:   4,
 			wantToUpgrade:   3,
@@ -194,17 +194,17 @@ func TestComponentDiff_String(t *testing.T) {
 		InstallationState: TargetStatePresent,
 	}
 	diff := &ComponentDiff{
-		Name:         testComponentName.SimpleName,
-		Actual:       actual,
-		Expected:     expected,
-		NeededAction: ActionInstall,
+		Name:          testComponentName.SimpleName,
+		Actual:        actual,
+		Expected:      expected,
+		NeededActions: []Action{ActionInstall},
 	}
 
 	assert.Equal(t, "{"+
 		"Name: \"my-component\", "+
 		"Actual: {Namespace: \"\", Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
 		"Expected: {Namespace: \"\", Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
-		"NeededAction: \"install\""+
+		"NeededActions: [\"install\"]"+
 		"}", diff.String())
 }
 
@@ -283,7 +283,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionInstall,
+					NeededActions: []Action{ActionInstall},
 				},
 			},
 		},
@@ -311,7 +311,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionNone,
+					NeededActions: []Action{ActionNone},
 				},
 			},
 		},
@@ -345,7 +345,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						InstallationState: TargetStatePresent,
 						Namespace:         testChangeDistributionNamespace,
 					},
-					NeededAction: ActionSwitchComponentNamespace,
+					NeededActions: []Action{ActionSwitchComponentNamespace},
 				},
 			},
 		},
@@ -379,7 +379,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Namespace:         testComponentName.Namespace,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionUpgrade,
+					NeededActions: []Action{ActionUpgrade},
 				},
 			},
 		},

@@ -175,7 +175,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		logger.Info("upgrade dogu")
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	} else {
-		return fmt.Errorf("fail because the total amount of actions is zero. actions should contain at least action %q if nothing changed", domain.ActionNone)
+		return noActionErr
 	}
 }
 

@@ -49,8 +49,8 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
-						Name:         componentName1,
-						NeededAction: domain.ActionNone,
+						Name:          componentName1,
+						NeededActions: []domain.Action{domain.ActionNone},
 						Actual: domain.ComponentDiffState{
 							Version: semVer3212,
 						},
@@ -158,8 +158,8 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
-						Name:         componentName1,
-						NeededAction: "unknown",
+						Name:          componentName1,
+						NeededActions: []domain.Action{"unknown"},
 					},
 				},
 			},
@@ -193,8 +193,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionInstall,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionInstall},
 			Expected: domain.ComponentDiffState{
 				Namespace: testNamespace,
 				Version:   semVer3212,
@@ -226,8 +226,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionUninstall,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -259,7 +259,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 				Namespace: testNamespace,
 				Version:   semVer3212,
 			},
-			NeededAction: domain.ActionUpgrade,
+			NeededActions: []domain.Action{domain.ActionUpgrade},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -287,8 +287,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionDowngrade,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionDowngrade},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -314,8 +314,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionSwitchComponentNamespace,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionSwitchComponentNamespace},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{

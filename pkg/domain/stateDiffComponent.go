@@ -15,15 +15,17 @@ type ComponentDiffs []ComponentDiff
 // Statistics aggregates various figures about the required actions of the ComponentDiffs.
 func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
 	for _, componentDiff := range cd {
-		switch componentDiff.NeededAction {
-		case ActionInstall:
-			toInstall += 1
-		case ActionUpgrade:
-			toUpgrade += 1
-		case ActionUninstall:
-			toUninstall += 1
-		default:
-			other += 1
+		for _, action := range componentDiff.NeededActions {
+			switch action {
+			case ActionInstall:
+				toInstall += 1
+			case ActionUpgrade:
+				toUpgrade += 1
+			case ActionUninstall:
+				toUninstall += 1
+			default:
+				other += 1
+			}
 		}
 	}
 	return
@@ -37,9 +39,9 @@ type ComponentDiff struct {
 	Actual ComponentDiffState
 	// Expected contains that desired state of a component how it is supposed to be.
 	Expected ComponentDiffState
-	// NeededAction hints how the component should be handled by the application change automaton in order to reconcile
+	// NeededActions hints how the component should be handled by the application change automaton in order to reconcile
 	// differences between Actual and Expected in the current system.
-	NeededAction Action
+	NeededActions []Action
 }
 
 // ComponentDiffState contains all fields to make a diff for components in respect to another ComponentDiffState.
@@ -56,11 +58,11 @@ type ComponentDiffState struct {
 // String returns a string representation of the ComponentDiff.
 func (diff *ComponentDiff) String() string {
 	return fmt.Sprintf(
-		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
+		"{Name: %q, Actual: %s, Expected: %s, NeededActions: %q}",
 		diff.Name,
 		diff.Actual.String(),
 		diff.Expected.String(),
-		diff.NeededAction,
+		diff.NeededActions,
 	)
 }
 
@@ -147,16 +149,16 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		}
 	}
 
-	nextAction, err := getNextComponentAction(expectedState, actualState)
+	nextActions, err := getComponentActions(expectedState, actualState)
 	if err != nil {
 		return ComponentDiff{}, fmt.Errorf("failed to determine diff for component %q : %w", componentName, err)
 	}
 
 	return ComponentDiff{
-		Name:         componentName,
-		Expected:     expectedState,
-		Actual:       actualState,
-		NeededAction: nextAction,
+		Name:          componentName,
+		Expected:      expectedState,
+		Actual:        actualState,
+		NeededActions: nextActions,
 	}, nil
 }
 
@@ -169,7 +171,7 @@ func findComponentByName(components []Component, name common.SimpleComponentName
 	return Component{}, false
 }
 
-func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
+func getComponentActions(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
 	if expected.InstallationState == actual.InstallationState {
 		return decideOnEqualState(expected, actual)
 	}
@@ -177,35 +179,40 @@ func getNextComponentAction(expected ComponentDiffState, actual ComponentDiffSta
 	return decideOnDifferentState(expected)
 }
 
-func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) (Action, error) {
+func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
+	var neededActions []Action
+
 	switch expected.InstallationState {
 	case TargetStatePresent:
 		if expected.Namespace != actual.Namespace {
-			return ActionSwitchComponentNamespace, nil
+			neededActions = append(neededActions, ActionSwitchComponentNamespace)
 		}
 
 		if expected.Version.GreaterThan(actual.Version) {
-			return ActionUpgrade, nil
+			neededActions = append(neededActions, ActionUpgrade)
+		} else if expected.Version.Equal(actual.Version) {
+			if len(neededActions) == 0 {
+				neededActions = append(neededActions, ActionNone)
+			}
+		} else {
+			neededActions = append(neededActions, ActionDowngrade)
 		}
-		if expected.Version.Equal(actual.Version) {
-			return ActionNone, nil
-		}
-		return ActionDowngrade, nil
+		return neededActions, nil
 	case TargetStateAbsent:
-		return ActionNone, nil
+		return append(neededActions, ActionNone), nil
 	default:
-		return ActionNone, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
+		return nil, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
 	}
 }
 
-func decideOnDifferentState(expected ComponentDiffState) (Action, error) {
+func decideOnDifferentState(expected ComponentDiffState) ([]Action, error) {
 	// at this place, the actual state is always the opposite to the expected state so just follow the expected state.
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		return ActionInstall, nil
+		return []Action{ActionInstall}, nil
 	case TargetStateAbsent:
-		return ActionUninstall, nil
+		return []Action{ActionUninstall}, nil
 	default:
-		return ActionNone, fmt.Errorf("component has unexpected installation state %q", expected.InstallationState)
+		return nil, fmt.Errorf("component has unexpected installation state %q", expected.InstallationState)
 	}
 }
