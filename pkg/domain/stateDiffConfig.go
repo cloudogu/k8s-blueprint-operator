@@ -27,6 +27,19 @@ const (
 	ConfigActionRemove ConfigAction = "remove"
 )
 
+// censorValues censors all sensitive configuration data to make them unrecognisable.
+func (combinedDiff CombinedDoguConfigDiffs) censorValues() CombinedDoguConfigDiffs {
+	for i, entry := range combinedDiff.SensitiveDoguConfigDiff {
+		if len(entry.Actual.Value) > 0 {
+			combinedDiff.SensitiveDoguConfigDiff[i].Actual.Value = censorValue
+		}
+		if len(entry.Expected.Value) > 0 {
+			combinedDiff.SensitiveDoguConfigDiff[i].Expected.Value = censorValue
+		}
+	}
+	return combinedDiff
+}
+
 func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs) map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, doguDiffs := range combinedDogusConfigDiffs {

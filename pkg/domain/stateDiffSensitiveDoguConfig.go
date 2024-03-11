@@ -2,9 +2,17 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
 type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
+
+func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
+	return util.GroupBy(diffs, func(diff SensitiveDoguConfigEntryDiff) ConfigAction {
+		return diff.NeededAction
+	})
+}
+
 type SensitiveDoguConfigEntryDiff struct {
 	Key                  common.SensitiveDoguConfigKey
 	Actual               DoguConfigValueState

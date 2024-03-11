@@ -267,6 +267,16 @@ func (e EcosystemUnhealthyAfterwardsEvent) Message() string {
 	return e.HealthResult.String()
 }
 
+type SensitiveConfigDataCensoredEvent struct{}
+
+func (e SensitiveConfigDataCensoredEvent) Name() string {
+	return "sensitiveConfigDataCensored"
+}
+
+func (e SensitiveConfigDataCensoredEvent) Message() string {
+	return ""
+}
+
 type ExecutionFailedEvent struct {
 	err error
 }

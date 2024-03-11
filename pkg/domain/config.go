@@ -60,6 +60,16 @@ func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKe
 	return keys
 }
 
+// censorValues censors all sensitive configuration data to make them unrecognisable.
+func (config Config) censorValues() Config {
+	for _, doguConfig := range config.Dogus {
+		for k := range doguConfig.SensitiveConfig.Present {
+			doguConfig.SensitiveConfig.Present[k] = censorValue
+		}
+	}
+	return config
+}
+
 func (config Config) validate() error {
 	var errs []error
 	for doguName, doguConfig := range config.Dogus {
