@@ -28,15 +28,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 
 	logger.Info("searching for Dogus that need a restart...")
 	var dogusThatNeedARestart []common.SimpleDoguName
-	allDogusNeedARestart := false
-
-	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
-		if globalConfigDiff.NeededAction != domain.ActionNone {
-			logger.Info("global config has changed, we need to restart all Dogus")
-			allDogusNeedARestart = true
-			break
-		}
-	}
+	allDogusNeedARestart := checkForAllDoguRestart(blueprintSpec)
 
 	if allDogusNeedARestart {
 		logger.Info("restarting all Dogus...")
@@ -76,6 +68,18 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 		return err
 	}
 	return nil
+}
+
+func checkForAllDoguRestart(blueprintSpec *domain.BlueprintSpec) bool {
+	fmt.Println("DEBUG: hello0")
+	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
+		fmt.Println("DEBUG: hello1")
+		if globalConfigDiff.NeededAction != domain.ActionNone {
+			fmt.Println("DEBUG: hello2")
+			return true
+		}
+	}
+	return false
 }
 
 func getDogusThatNeedARestart(blueprintSpec *domain.BlueprintSpec) []common.SimpleDoguName {

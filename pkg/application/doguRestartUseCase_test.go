@@ -376,3 +376,61 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 		})
 	}
 }
+
+func Test_checkForAllDoguRestart(t *testing.T) {
+	type args struct {
+		blueprintSpec *domain.BlueprintSpec
+	}
+	tests := []struct {
+		name string
+		args args
+		want bool
+	}{
+		{
+			name: "false on empty input",
+			args: args{blueprintSpec: &domain.BlueprintSpec{}},
+			want: false,
+		},
+		{
+			name: "true on GlobalConfigDiff with action",
+			args: args{
+				blueprintSpec: &domain.BlueprintSpec{
+					StateDiff: domain.StateDiff{
+						GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{
+							{
+								Key:          "testkey",
+								Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
+								Expected:     domain.GlobalConfigValueState{"initial", true},
+								NeededAction: domain.ConfigActionSet,
+							},
+						},
+					},
+				},
+			},
+			want: true,
+		},
+		{
+			name: "false on GlobalConfigDiff without action",
+			args: args{
+				blueprintSpec: &domain.BlueprintSpec{
+					StateDiff: domain.StateDiff{
+						GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{
+							{
+								Key:          "testkey",
+								Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
+								Expected:     domain.GlobalConfigValueState{"initial", true},
+								NeededAction: domain.ActionNone,
+							},
+						},
+					},
+				},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, checkForAllDoguRestart(tt.args.blueprintSpec), "checkForAllDoguRestart(%v)", tt.args.blueprintSpec)
+		})
+	}
+}
