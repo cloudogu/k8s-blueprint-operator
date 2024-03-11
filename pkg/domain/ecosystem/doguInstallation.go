@@ -22,6 +22,11 @@ type DoguInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
+	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
+	// storage is needed.
+	MinVolumeSize *VolumeSize
+	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
+	ReverseProxyConfig ReverseProxyConfig
 }
 
 const (
@@ -33,6 +38,20 @@ const (
 	DoguStatusPVCResizing  = "resizing PVC"
 )
 
+// Specific Nginx annotations. In future those annotations will be replaced be generalized fields in the dogu cr.
+// The dogu-operator or service-discovery will interpret them.
+const (
+	NginxIngressAnnotationBodySize         = "nginx.ingress.kubernetes.io/proxy-body-size"
+	NginxIngressAnnotationRewriteTarget    = "nginx.ingress.kubernetes.io/rewrite-target"
+	NginxIngressAnnotationAdditionalConfig = "nginx.ingress.kubernetes.io/configuration-snippet"
+)
+
+type ReverseProxyConfig struct {
+	MaxBodySize      *BodySize
+	RewriteTarget    RewriteTarget
+	AdditionalConfig AdditionalConfig
+}
+
 // UpgradeConfig contains configuration hints regarding aspects during the upgrade of dogus.
 type UpgradeConfig struct {
 	// AllowNamespaceSwitch lets a dogu switch its dogu namespace during an upgrade. The dogu must be technically the
@@ -42,11 +61,13 @@ type UpgradeConfig struct {
 }
 
 // InstallDogu is a factory for new DoguInstallation's.
-func InstallDogu(name common.QualifiedDoguName, version core.Version) *DoguInstallation {
+func InstallDogu(name common.QualifiedDoguName, version core.Version, minVolumeSize *VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
 	return &DoguInstallation{
-		Name:          name,
-		Version:       version,
-		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
+		Name:               name,
+		Version:            version,
+		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
+		MinVolumeSize:      minVolumeSize,
+		ReverseProxyConfig: reverseProxyConfig,
 	}
 }
 
@@ -59,12 +80,27 @@ func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {
 	dogu.UpgradeConfig.AllowNamespaceSwitch = false
 }
 
-func (dogu *DoguInstallation) SwitchNamespace(newNamespace common.DoguNamespace, newVersion core.Version, isNamespaceSwitchAllowed bool) error {
+func (dogu *DoguInstallation) SwitchNamespace(newNamespace common.DoguNamespace, isNamespaceSwitchAllowed bool) error {
 	if !isNamespaceSwitchAllowed {
 		return fmt.Errorf("not allowed to switch dogu namespace from %q to %q", dogu.Name.Namespace, newNamespace)
 	}
 	dogu.Name.Namespace = newNamespace
-	dogu.Version = newVersion
 	dogu.UpgradeConfig.AllowNamespaceSwitch = true
 	return nil
+}
+
+func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
+	dogu.ReverseProxyConfig.MaxBodySize = value
+}
+
+func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
+	dogu.MinVolumeSize = size
+}
+
+func (dogu *DoguInstallation) UpdateProxyRewriteTarget(value RewriteTarget) {
+	dogu.ReverseProxyConfig.RewriteTarget = value
+}
+
+func (dogu *DoguInstallation) UpdateProxyAdditionalConfig(value AdditionalConfig) {
+	dogu.ReverseProxyConfig.AdditionalConfig = value
 }

@@ -8,25 +8,30 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const doguInstallationRepoContextKey = "doguInstallationRepoContext"
+const (
+	doguInstallationRepoContextKey = "doguInstallationRepoContext"
+)
 
 type doguInstallationRepoContext struct {
 	resourceVersion string
 }
 
 type doguInstallationRepo struct {
-	doguClient ecosystemclient.DoguInterface
+	doguClient DoguInterface
+	pvcClient  PvcInterface
 }
 
 // NewDoguInstallationRepo returns a new doguInstallationRepo to interact on BlueprintSpecs.
-func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface) domainservice.DoguInstallationRepository {
-	return &doguInstallationRepo{doguClient: doguClient}
+func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface, pvcClient PvcInterface) domainservice.DoguInstallationRepository {
+	return &doguInstallationRepo{doguClient: doguClient, pvcClient: pvcClient}
 }
 func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error) {
 	cr, err := repo.doguClient.Get(ctx, string(doguName), metav1.GetOptions{})
@@ -43,6 +48,13 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common
 		}
 	}
 
+	pvcList, err := repo.getEcosystemPVCs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	repo.appendVolumeSizeIfNotSet(cr, pvcList)
+
 	return parseDoguCR(cr)
 }
 
@@ -55,9 +67,15 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 		}
 	}
 
+	pvcList, err := repo.getEcosystemPVCs(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	var errs []error
 	doguInstallations := make(map[common.SimpleDoguName]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
+		repo.appendVolumeSizeIfNotSet(&cr, pvcList)
 		doguInstallation, err := parseDoguCR(&cr)
 		if err != nil {
 			errs = append(errs, err)
@@ -75,6 +93,37 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 	}
 
 	return doguInstallations, nil
+}
+
+func (repo *doguInstallationRepo) getEcosystemPVCs(ctx context.Context) (*corev1.PersistentVolumeClaimList, error) {
+	pvcList, err := repo.pvcClient.List(ctx, metav1.ListOptions{LabelSelector: "app=ces"})
+	if err != nil && !k8sErrors.IsNotFound(err) {
+		return nil, domainservice.NewInternalError(err, "error while listing dogu PVCs")
+	}
+	return pvcList, nil
+}
+
+func (repo *doguInstallationRepo) appendVolumeSizeIfNotSet(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) {
+	crResources := cr.Spec.Resources
+	if crResources.DataVolumeSize != "" {
+		// VolumeSize is specified in spec.
+		return
+	}
+
+	// Check if dogu has volumeSize
+	var pvc *corev1.PersistentVolumeClaim
+	for _, item := range list.Items {
+		if item.Name == cr.Name {
+			pvc = &item
+			break
+		}
+	}
+
+	if pvc == nil {
+		return
+	}
+
+	cr.Spec.Resources.DataVolumeSize = ecosystem.GetQuantityString(pvc.Status.Capacity.Storage())
 }
 
 func (repo *doguInstallationRepo) Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error {
