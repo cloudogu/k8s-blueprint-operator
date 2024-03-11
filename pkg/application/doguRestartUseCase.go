@@ -40,17 +40,20 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 
 	if allDogusNeedARestart {
 		logger.Info("restarting all Dogus...")
+
 		installedDogus, getInstalledDogusError := useCase.doguInstallationRepository.GetAll(ctx)
 		if getInstalledDogusError != nil {
 			return fmt.Errorf("could not get all installed Dogus: %q", getInstalledDogusError)
 		}
-		installedDogusQualifiedNames := []common.SimpleDoguName{}
+		installedDogusSimpleNames := []common.SimpleDoguName{}
 		for _, installation := range installedDogus {
-			installedDogusQualifiedNames = append(installedDogusQualifiedNames, installation.Name.SimpleName)
+
+			installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
 		}
-		restartAllError := useCase.restartRepository.RestartAll(ctx, installedDogusQualifiedNames)
+		restartAllError := useCase.restartRepository.RestartAll(ctx, installedDogusSimpleNames)
 		if restartAllError != nil {
 			logger.Error(restartAllError, "could not restart all Dogus")
+			return restartAllError
 		}
 	} else {
 		dogusThatNeedARestart = getDogusThatNeedARestart(blueprintSpec)

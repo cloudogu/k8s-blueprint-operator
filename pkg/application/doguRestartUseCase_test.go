@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
@@ -94,6 +95,163 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		blueprintSpecRepo.EXPECT().Update(testContext, &testBlueprint).Return(nil)
 
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartAdapter)
+
+		// when
+		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("fail on get all dogus from repository error", func(t *testing.T) {
+		// given
+		testContext := context.Background()
+		testStateDiff := domain.StateDiff{
+			DoguDiffs:       domain.DoguDiffs{},
+			ComponentDiffs:  domain.ComponentDiffs{},
+			DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
+				Key:          "testkey",
+				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
+				Expected:     domain.GlobalConfigValueState{"initial", true},
+				NeededAction: domain.ConfigActionSet,
+			}},
+		}
+		testBlueprint := domain.BlueprintSpec{
+			Id:                 testBlueprintId,
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{},
+			StateDiff:          testStateDiff,
+			Config:             domain.BlueprintConfiguration{},
+			Status:             "",
+			PersistenceContext: nil,
+			Events:             nil,
+		}
+		installationRepository := newMockDoguInstallationRepository(t)
+		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
+		restartAdapter := newMockDoguRestartAdapter(t)
+		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
+		installationRepository.EXPECT().GetAll(testContext).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, errors.New("testerror"))
+
+		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartAdapter)
+
+		// when
+		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, "could not get all installed Dogus: \"testerror\"", err.Error())
+	})
+
+	t.Run("fail on repository restart all error", func(t *testing.T) {
+		// given
+		testContext := context.Background()
+		testStateDiff := domain.StateDiff{
+			DoguDiffs:       domain.DoguDiffs{},
+			ComponentDiffs:  domain.ComponentDiffs{},
+			DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
+				Key:          "testkey",
+				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
+				Expected:     domain.GlobalConfigValueState{"initial", true},
+				NeededAction: domain.ConfigActionSet,
+			}},
+		}
+		testBlueprint := domain.BlueprintSpec{
+			Id:                 testBlueprintId,
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{},
+			StateDiff:          testStateDiff,
+			Config:             domain.BlueprintConfiguration{},
+			Status:             "",
+			PersistenceContext: nil,
+			Events:             nil,
+		}
+		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		installedDogu := ecosystem.DoguInstallation{
+			Name:               common.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
+			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
+			Status:             "installed",
+			Health:             ecosystem.AvailableHealthStatus,
+			UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: false},
+			PersistenceContext: nil,
+		}
+		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+			testDoguSimpleName: &installedDogu,
+		}
+		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		installationRepository := newMockDoguInstallationRepository(t)
+		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
+		restartAdapter := newMockDoguRestartAdapter(t)
+		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
+		installationRepository.EXPECT().GetAll(testContext).Return(installedDogus, nil)
+		restartAdapter.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(errors.New("testerror"))
+		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartAdapter)
+
+		// when
+		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, "testerror", err.Error())
+	})
+
+	t.Run("restart some dogus", func(t *testing.T) {
+		// given
+		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
+			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName},
+			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+			Expected:     domain.DoguConfigValueState{"initial", true},
+			NeededAction: domain.ConfigActionSet}},
+		}
+		testContext := context.Background()
+		testStateDiff := domain.StateDiff{
+			DoguDiffs:       domain.DoguDiffs{},
+			ComponentDiffs:  domain.ComponentDiffs{},
+			DoguConfigDiffs: doguConfigDiff,
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
+				Key:          "testkey",
+				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
+				Expected:     domain.GlobalConfigValueState{"initial", true},
+				NeededAction: domain.ConfigActionSet,
+			}},
+		}
+		testBlueprint := domain.BlueprintSpec{
+			Id:                 testBlueprintId,
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{},
+			StateDiff:          testStateDiff,
+			Config:             domain.BlueprintConfiguration{},
+			Status:             "",
+			PersistenceContext: nil,
+			Events:             nil,
+		}
+
+		installedDogu := ecosystem.DoguInstallation{
+			Name:               common.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
+			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
+			Status:             "installed",
+			Health:             ecosystem.AvailableHealthStatus,
+			UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: false},
+			PersistenceContext: nil,
+		}
+		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+			testDoguSimpleName: &installedDogu,
+		}
+		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		installationRepository := newMockDoguInstallationRepository(t)
+		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
+		restartAdapter := newMockDoguRestartAdapter(t)
+		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
+		installationRepository.EXPECT().GetAll(testContext).Return(installedDogus, nil)
+		restartAdapter.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(nil)
+		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartAdapter)
+		blueprintSpecRepo.EXPECT().Update(testContext, &testBlueprint).Return(nil)
 
 		// when
 		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
