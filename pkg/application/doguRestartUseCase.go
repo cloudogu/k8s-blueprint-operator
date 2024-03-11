@@ -71,11 +71,8 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 }
 
 func checkForAllDoguRestart(blueprintSpec *domain.BlueprintSpec) bool {
-	fmt.Println("DEBUG: hello0")
 	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
-		fmt.Println("DEBUG: hello1")
 		if globalConfigDiff.NeededAction != domain.ActionNone {
-			fmt.Println("DEBUG: hello2")
 			return true
 		}
 	}
