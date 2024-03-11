@@ -62,6 +62,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 			restartError := useCase.restartRepository.RestartAll(ctx, dogusThatNeedARestart)
 			if restartError != nil {
 				logger.Error(restartError, "could not restart Dogus")
+				return restartError
 			}
 		} else {
 			logger.Info("no Dogu restarts necessary")
