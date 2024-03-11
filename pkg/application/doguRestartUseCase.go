@@ -27,7 +27,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	}
 
 	logger.Info("searching for Dogus that need a restart...")
-	dogusThatNeedARestart := []common.SimpleDoguName{}
+	var dogusThatNeedARestart []common.SimpleDoguName
 	allDogusNeedARestart := false
 
 	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
@@ -66,7 +66,11 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	}
 
 	blueprintSpec.Status = domain.StatusPhaseRestartsTriggered
-	useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+	err = useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+	if err != nil {
+		logger.Error(err, "could not update blueprint spec")
+		return err
+	}
 	return nil
 }
 
