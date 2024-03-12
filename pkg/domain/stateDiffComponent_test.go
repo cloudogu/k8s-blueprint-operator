@@ -37,65 +37,91 @@ func Test_determineComponentDiff(t *testing.T) {
 		{
 			name: "equal, no action",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				NeededActions: []Action{ActionNone},
 			},
 		},
 		{
 			name: "install",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState("", nil, TargetStateAbsent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Actual:        mockComponentDiffState("", nil, TargetStateAbsent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				NeededActions: []Action{ActionInstall},
 			},
 		},
 		{
 			name: "uninstall",
 			args: args{
-				blueprintComponent: mockTargetComponent(nil, TargetStateAbsent),
+				blueprintComponent: mockTargetComponent(nil, TargetStateAbsent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent),
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent, nil),
 				NeededActions: []Action{ActionUninstall},
 			},
 		},
 		{
 			name: "upgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, nil),
 				NeededActions: []Action{ActionUpgrade},
+			},
+		},
+		{
+			name: "update package config",
+			args: args{
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				installedComponent: mockComponentInstallation(compVersion3211),
+			},
+			want: ComponentDiff{
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				NeededActions: []Action{ActionUpdateComponentPackageConfig},
+			},
+		},
+		{
+			name: "update package config and upgrade",
+			args: args{
+				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				installedComponent: mockComponentInstallation(compVersion3211),
+			},
+			want: ComponentDiff{
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				NeededActions: []Action{ActionUpdateComponentPackageConfig, ActionUpgrade},
 			},
 		},
 		{
 			name: "downgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3212),
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				NeededActions: []Action{ActionDowngrade},
 			},
 		},
@@ -107,8 +133,8 @@ func Test_determineComponentDiff(t *testing.T) {
 			},
 			want: ComponentDiff{
 				Name:          testComponentName.SimpleName,
-				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				NeededActions: []Action{ActionNone},
 			},
 		},
@@ -137,48 +163,56 @@ func Test_determineComponentDiff(t *testing.T) {
 
 func TestComponentDiffs_Statistics(t *testing.T) {
 	tests := []struct {
-		name            string
-		dd              ComponentDiffs
-		wantToInstall   int
-		wantToUpgrade   int
-		wantToUninstall int
-		wantOther       int
+		name                      string
+		dd                        ComponentDiffs
+		wantToInstall             int
+		wantToUpgrade             int
+		wantToUninstall           int
+		wantToUpdateNamespace     int
+		wantToUpdatePackageConfig int
+		wantOther                 int
 	}{
 		{
-			name:            "0 overall",
-			dd:              ComponentDiffs{},
-			wantToInstall:   0,
-			wantToUpgrade:   0,
-			wantToUninstall: 0,
-			wantOther:       0,
+			name:                      "0 overall",
+			dd:                        ComponentDiffs{},
+			wantToInstall:             0,
+			wantToUpgrade:             0,
+			wantToUninstall:           0,
+			wantToUpdateNamespace:     0,
+			wantToUpdatePackageConfig: 0,
+			wantOther:                 0,
 		},
 		{
-			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
+			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 to update namespace, 3 to update package config, 3 other",
 			dd: ComponentDiffs{
 				{NeededActions: []Action{ActionNone}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentPackageConfig}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionDowngrade}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade}},
-				{NeededActions: []Action{ActionUpgrade}},
+				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentPackageConfig}},
+				{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentPackageConfig}},
 			},
-			wantToInstall:   4,
-			wantToUpgrade:   3,
-			wantToUninstall: 2,
-			wantOther:       2,
+			wantToInstall:             4,
+			wantToUpgrade:             3,
+			wantToUninstall:           2,
+			wantToUpdateNamespace:     2,
+			wantToUpdatePackageConfig: 3,
+			wantOther:                 2,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotToInstall, gotToUpgrade, gotToUninstall, gotOther := tt.dd.Statistics()
+			gotToInstall, gotToUpgrade, gotToUninstall, gotToUpdateNamespace, gotToUpdatePackageConfig, gotOther := tt.dd.Statistics()
 			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
 			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
 			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
+			assert.Equalf(t, tt.wantToUpdateNamespace, gotToUpdateNamespace, "Statistics()")
+			assert.Equalf(t, tt.wantToUpdatePackageConfig, gotToUpdatePackageConfig, "Statistics()")
 			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
@@ -218,11 +252,12 @@ func TestComponentDiffState_String(t *testing.T) {
 	assert.Equal(t, `{Namespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
 }
 
-func mockTargetComponent(version *semver.Version, state TargetState) *Component {
+func mockTargetComponent(version *semver.Version, state TargetState, packageConfig ecosystem.PackageConfig) *Component {
 	return &Component{
-		Name:        testComponentName,
-		Version:     version,
-		TargetState: state,
+		Name:          testComponentName,
+		Version:       version,
+		TargetState:   state,
+		PackageConfig: packageConfig,
 	}
 }
 
@@ -233,11 +268,12 @@ func mockComponentInstallation(version *semver.Version) *ecosystem.ComponentInst
 	}
 }
 
-func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState) ComponentDiffState {
+func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState, packageConfig ecosystem.PackageConfig) ComponentDiffState {
 	return ComponentDiffState{
 		Namespace:         namespace,
 		Version:           version,
 		InstallationState: state,
+		PackageConfig:     packageConfig,
 	}
 }
 

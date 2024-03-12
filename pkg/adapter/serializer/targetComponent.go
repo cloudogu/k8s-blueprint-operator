@@ -6,6 +6,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -17,10 +18,13 @@ type TargetComponent struct {
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
 	TargetState string `json:"targetState"`
-	// DeployNamespace defines the namespace where the component should be installed to. Actually this is only used for
-	// the component `k8s-longhorn` because it requires the `longhorn-system` namespace.
-	DeployNamespace string `json:"deployNamespace"`
+
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	PackageConfig TargetPackageConfig `json:"packageConfig,omitempty"`
 }
+
+type TargetPackageConfig map[string]interface{}
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
 func ConvertComponents(components []TargetComponent) ([]domain.Component, error) {
@@ -50,9 +54,10 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 		}
 
 		convertedComponents = append(convertedComponents, domain.Component{
-			Name:        name,
-			Version:     version,
-			TargetState: newState,
+			Name:          name,
+			Version:       version,
+			TargetState:   newState,
+			PackageConfig: ecosystem.PackageConfig(component.PackageConfig),
 		})
 	}
 
@@ -79,17 +84,11 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 			version = component.Version.String()
 		}
 
-		// TODO Delete this if the blueprint can handle a component configuration.
-		// This section would contain the deployNamespace in a generic Map.
-		var deployNamespace string
-		if component.Name == common.K8sK8sLonghornName {
-			deployNamespace = "longhorn-system"
-		}
 		return TargetComponent{
-			Name:            joinedComponentName,
-			Version:         version,
-			TargetState:     newState,
-			DeployNamespace: deployNamespace,
+			Name:          joinedComponentName,
+			Version:       version,
+			TargetState:   newState,
+			PackageConfig: TargetPackageConfig(component.PackageConfig),
 		}
 	})
 	return converted, errors.Join(errorList...)

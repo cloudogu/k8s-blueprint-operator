@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
@@ -35,6 +34,9 @@ type ComponentDiffState struct {
 	//  - domain.ActionUninstall
 	//  - and so on
 	InstallationState string `json:"installationState"`
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`
 }
 
 // ComponentAction is the action that needs to be done for a component
@@ -63,11 +65,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
+			PackageConfig:     domainModel.Actual.PackageConfig,
 		},
 		Expected: ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
+			PackageConfig:     domainModel.Expected.PackageConfig,
 		},
 		NeededActions: componentActions,
 	}
@@ -122,11 +126,13 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
+			PackageConfig:     dto.Actual.PackageConfig,
 		},
 		Expected: domain.ComponentDiffState{
 			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
+			PackageConfig:     dto.Expected.PackageConfig,
 		},
 		NeededActions: componentActions,
 	}, nil

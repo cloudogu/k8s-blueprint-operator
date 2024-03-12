@@ -8,7 +8,13 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+)
+
+const (
+	packageConfigKeyDeployNamespace = "deployNamespace"
+	packageConfigKeyOverwriteConfig = "overwriteConfig"
 )
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
@@ -31,17 +37,50 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		return nil, err
 	}
 
+	componentConfig, err := parsePackageConfig(cr)
+	if err != nil {
+		return nil, err
+	}
+
 	return &ecosystem.ComponentInstallation{
 		Name:               name,
-		DeployNamespace:    cr.Spec.DeployNamespace,
 		Version:            version,
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		PersistenceContext: persistenceContext,
+		PackageConfig:      componentConfig,
 	}, nil
 }
 
-func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) *compV1.Component {
+func parsePackageConfig(cr *compV1.Component) (ecosystem.PackageConfig, error) {
+	componentConfig := ecosystem.PackageConfig{}
+	if cr.Spec.DeployNamespace != "" {
+		componentConfig[packageConfigKeyDeployNamespace] = cr.Spec.DeployNamespace
+	}
+
+	if cr.Spec.ValuesYamlOverwrite != "" {
+		valuesYamlOverwrite := map[string]interface{}{}
+		err := yaml.Unmarshal([]byte(cr.Spec.ValuesYamlOverwrite), valuesYamlOverwrite)
+		if err != nil {
+			return nil, domainservice.NewInternalError(err, "failed to unmarshal values yaml overwrite %q", cr.Spec.ValuesYamlOverwrite)
+		}
+		componentConfig[packageConfigKeyOverwriteConfig] = valuesYamlOverwrite
+	}
+
+	return componentConfig, nil
+}
+
+func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*compV1.Component, error) {
+	deployNamespace, err := toDeployNamespace(componentInstallation.PackageConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	valuesYamlOverwrite, err := toValuesYamlOverwrite(componentInstallation.PackageConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &compV1.Component{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: string(componentInstallation.Name.SimpleName),
@@ -51,15 +90,39 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) *comp
 			},
 		},
 		Spec: compV1.ComponentSpec{
-			Namespace: string(componentInstallation.Name.Namespace),
-			Name:      string(componentInstallation.Name.SimpleName),
-			Version:   componentInstallation.Version.String(),
-			// TODO
-			DeployNamespace: "",
-			// TODO
-			ValuesYamlOverwrite: "",
+			Namespace:           string(componentInstallation.Name.Namespace),
+			Name:                string(componentInstallation.Name.SimpleName),
+			Version:             componentInstallation.Version.String(),
+			DeployNamespace:     deployNamespace,
+			ValuesYamlOverwrite: valuesYamlOverwrite,
 		},
+	}, nil
+}
+
+func toDeployNamespace(packageConfig ecosystem.PackageConfig) (string, error) {
+	deployNamespace, found := packageConfig[packageConfigKeyDeployNamespace]
+	if !found {
+		return "", nil
 	}
+	deployNamespaceStr, ok := deployNamespace.(string)
+	if !ok {
+		return "", fmt.Errorf("deployNamespace is not type of string")
+	}
+
+	return deployNamespaceStr, nil
+}
+
+func toValuesYamlOverwrite(packageConfig ecosystem.PackageConfig) (string, error) {
+	in, found := packageConfig[packageConfigKeyOverwriteConfig]
+	if !found {
+		return "", nil
+	}
+	valuesYamlOverwriteBytes, err := yaml.Marshal(in)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal overwrite config %q", in)
+	}
+
+	return string(valuesYamlOverwriteBytes), nil
 }
 
 type componentCRPatch struct {
@@ -67,29 +130,44 @@ type componentCRPatch struct {
 }
 
 type componentSpecPatch struct {
-	Namespace string `json:"namespace"`
-	Name      string `json:"name"`
-	Version   string `json:"version"`
+	Namespace           string `json:"namespace"`
+	Name                string `json:"name"`
+	Version             string `json:"version"`
+	DeployNamespace     string `json:"deployNamespace"`
+	ValuesYamlOverwrite string `json:"valuesYamlOverwrite"`
 }
 
-func toComponentCRPatch(component *ecosystem.ComponentInstallation) *componentCRPatch {
+func toComponentCRPatch(component *ecosystem.ComponentInstallation) (*componentCRPatch, error) {
+	deployNamespace, err := toDeployNamespace(component.PackageConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	valuesYamlOverwrite, err := toValuesYamlOverwrite(component.PackageConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	return &componentCRPatch{
 		Spec: componentSpecPatch{
-			Namespace: string(component.Name.Namespace),
-			Name:      string(component.Name.SimpleName),
-			Version:   component.Version.String(),
+			Namespace:           string(component.Name.Namespace),
+			Name:                string(component.Name.SimpleName),
+			Version:             component.Version.String(),
+			DeployNamespace:     deployNamespace,
+			ValuesYamlOverwrite: valuesYamlOverwrite,
 		},
-	}
+	}, nil
 }
 
 func toComponentCRPatchBytes(component *ecosystem.ComponentInstallation) ([]byte, error) {
-	crPatch := toComponentCRPatch(component)
-	patch, err := json.Marshal(crPatch)
+	crPatch, err := toComponentCRPatch(component)
 	if err != nil {
-		return []byte{}, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      fmt.Sprintf("cannot patch component CR for component %q", component.Name),
-		}
+		return nil, domainservice.NewInternalError(err, "failed to create component CR patch for component %q", component.Name)
+	}
+	patch, err := json.Marshal(crPatch)
+
+	if err != nil {
+		return []byte{}, domainservice.NewInternalError(err, "cannot patch component CR for component %q", component.Name)
 	}
 	return patch, nil
 }

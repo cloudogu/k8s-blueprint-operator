@@ -38,8 +38,8 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "normal component",
-			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}}},
-			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: 0}},
+			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present", PackageConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
+			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: 0, PackageConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
 			wantErr: assert.NoError,
 		},
 		{

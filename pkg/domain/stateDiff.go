@@ -47,9 +47,10 @@ const (
 	ActionUpgrade                         = "upgrade"
 	ActionDowngrade                       = "downgrade"
 	ActionSwitchDoguNamespace             = "dogu namespace switch"
-	ActionSwitchComponentNamespace        = "component namespace switch"
 	ActionUpdateDoguProxyBodySize         = "update proxy body size"
 	ActionUpdateDoguProxyRewriteTarget    = "update proxy rewrite target"
 	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
+	ActionSwitchComponentNamespace        = "component namespace switch"
+	ActionUpdateComponentPackageConfig    = "update component package config"
 )

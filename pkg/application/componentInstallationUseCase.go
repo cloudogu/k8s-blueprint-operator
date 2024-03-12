@@ -147,17 +147,18 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			return nil
 		case domain.ActionInstall:
 			logger.Info("install component")
-			// TODO apply valuesYamlOverwrite
 			newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
 				Namespace:  componentDiff.Expected.Namespace,
 				SimpleName: componentDiff.Name,
-			}, componentDiff.Expected.Version)
+			}, componentDiff.Expected.Version, componentDiff.Expected.PackageConfig)
 			return useCase.componentRepo.Create(ctx, newComponent)
 		case domain.ActionUninstall:
 			logger.Info("uninstall component")
 			return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
 		case domain.ActionUpgrade:
 			componentInstallation.Upgrade(componentDiff.Expected.Version)
+		case domain.ActionUpdateComponentPackageConfig:
+			componentInstallation.UpdatePackageConfig(componentDiff.Expected.PackageConfig)
 		case domain.ActionSwitchComponentNamespace:
 			logger.Info("switch distribution namespace")
 			return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)

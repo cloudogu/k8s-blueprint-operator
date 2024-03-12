@@ -9,31 +9,17 @@ import (
 type ComponentInstallation struct {
 	// Name identifies the component by simple dogu name and namespace, e.g 'k8s/k8s-dogu-operator'.
 	Name common.QualifiedComponentName
-	// DeployNamespace is the cluster namespace where the component is deployed, e.g. `ecosystem` or `longhorn-system`
-	// The default value is empty and indicated that the component should be deployed in the current namespace.
-	// TODO: this field breaks the abstraction of the domain against kubernetes. We should discuss if a generic property list is better.
-	DeployNamespace string
 	// Version is the version of the component
 	Version *semver.Version
 	// Status is the installation status of the component in the ecosystem
 	Status string
-	// ValuesYamlOverwrite represents a helm configuration as string in yaml format.
-	// Example:
-	// ```
-	// controller:
-	//   env:
-	//     logLevel: info
-	// ```
-	ValuesYamlOverwrite string
-	// MappedValues represents also a helm configuration like ValuesYamlOverwrite.
-	// The difference here is that these values will be mapped by the component-operator with a metadata file in the component's chart.
-	MappedValues map[string]string
 	// Health is the current health status of the component in the ecosystem
 	Health HealthStatus
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
+	PackageConfig      PackageConfig
 }
 
 const (
@@ -59,23 +45,18 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version) *ComponentInstallation {
-	// TODO Delete this if the blueprint can handle a component configuration.
-	// This section would contain the deployNamespace in a generic Map.
-	var deployNamespace string
-
-	if componentName == common.K8sK8sLonghornName {
-		deployNamespace = "longhorn-system"
-	}
-
+func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version, packageConfig PackageConfig) *ComponentInstallation {
 	return &ComponentInstallation{
-		Name:            componentName,
-		Version:         version,
-		DeployNamespace: deployNamespace,
-		// ValuesYamlOverwrite: valuesYamlOverwrite,
+		Name:          componentName,
+		Version:       version,
+		PackageConfig: packageConfig,
 	}
 }
 
 func (ci *ComponentInstallation) Upgrade(version *semver.Version) {
 	ci.Version = version
+}
+
+func (ci *ComponentInstallation) UpdatePackageConfig(packageConfig PackageConfig) {
+	ci.PackageConfig = packageConfig
 }

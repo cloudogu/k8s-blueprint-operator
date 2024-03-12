@@ -119,19 +119,24 @@ func (s StateDiffDeterminedEvent) buildMessage() string {
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
 type StateDiffComponentDeterminedEvent struct {
 	StateDiffDeterminedEvent
+	ToUpdateNamespace     int
+	ToUpdatePackageConfig int
 }
 
 func newStateDiffComponentEvent(componentDiffs ComponentDiffs) StateDiffComponentDeterminedEvent {
-	install, upgrade, uninstall, other := componentDiffs.Statistics()
+	install, upgrade, uninstall, updateNamespace, updatePackageConfig, other := componentDiffs.Statistics()
 
-	return StateDiffComponentDeterminedEvent{StateDiffDeterminedEvent: StateDiffDeterminedEvent{
-		DiffCount:    len(componentDiffs),
-		EventSubject: "component diffs",
-		ToInstall:    install,
-		ToUpgrade:    upgrade,
-		ToUninstall:  uninstall,
-		OtherActions: other,
-	}}
+	return StateDiffComponentDeterminedEvent{
+		ToUpdateNamespace:     updateNamespace,
+		ToUpdatePackageConfig: updatePackageConfig,
+		StateDiffDeterminedEvent: StateDiffDeterminedEvent{
+			DiffCount:    len(componentDiffs),
+			EventSubject: "component diffs",
+			ToInstall:    install,
+			ToUpgrade:    upgrade,
+			ToUninstall:  uninstall,
+			OtherActions: other,
+		}}
 }
 
 // Name contains the StateDiffComponentDeterminedEvent display name.
@@ -141,7 +146,8 @@ func (s StateDiffComponentDeterminedEvent) Name() string {
 
 // Message contains the StateDiffComponentDeterminedEvent's statistics message.
 func (s StateDiffComponentDeterminedEvent) Message() string {
-	return s.buildMessage()
+	componentMessage := fmt.Sprintf("component config diffs: (%d to update namespace, %d to update package config)", s.ToUpdateNamespace, s.ToUpdatePackageConfig)
+	return fmt.Sprintf("%s\n%s", s.buildMessage(), componentMessage)
 }
 
 // StateDiffDoguDeterminedEvent provides event information over detected changes regarding dogus.

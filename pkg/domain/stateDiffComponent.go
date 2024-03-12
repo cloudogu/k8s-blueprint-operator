@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"golang.org/x/exp/maps"
+	"reflect"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
@@ -13,7 +14,7 @@ import (
 type ComponentDiffs []ComponentDiff
 
 // Statistics aggregates various figures about the required actions of the ComponentDiffs.
-func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall int, other int) {
+func (cd ComponentDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateNamespace, toUpdatePackageConfig, other int) {
 	for _, componentDiff := range cd {
 		for _, action := range componentDiff.NeededActions {
 			switch action {
@@ -23,6 +24,10 @@ func (cd ComponentDiffs) Statistics() (toInstall int, toUpgrade int, toUninstall
 				toUpgrade += 1
 			case ActionUninstall:
 				toUninstall += 1
+			case ActionUpdateComponentPackageConfig:
+				toUpdatePackageConfig += 1
+			case ActionSwitchComponentNamespace:
+				toUpdateNamespace += 1
 			default:
 				other += 1
 			}
@@ -53,6 +58,7 @@ type ComponentDiffState struct {
 	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
+	PackageConfig     ecosystem.PackageConfig
 }
 
 // String returns a string representation of the ComponentDiff.
@@ -135,6 +141,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 			Namespace:         installedComponent.Name.Namespace,
 			Version:           installedComponent.Version,
 			InstallationState: TargetStatePresent,
+			PackageConfig:     installedComponent.PackageConfig,
 		}
 	}
 
@@ -146,6 +153,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 			Namespace:         blueprintComponent.Name.Namespace,
 			Version:           blueprintComponent.Version,
 			InstallationState: blueprintComponent.TargetState,
+			PackageConfig:     blueprintComponent.PackageConfig,
 		}
 	}
 
@@ -186,6 +194,10 @@ func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) 
 	case TargetStatePresent:
 		if expected.Namespace != actual.Namespace {
 			neededActions = append(neededActions, ActionSwitchComponentNamespace)
+		}
+
+		if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
+			neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
 		}
 
 		if expected.Version.GreaterThan(actual.Version) {

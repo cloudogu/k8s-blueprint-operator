@@ -281,6 +281,51 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		require.NoError(t, err)
 	})
 
+	t.Run("should update component with multiple actions", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name: componentName1,
+			Expected: domain.ComponentDiffState{
+				Namespace: testNamespace,
+				Version:   semVer3212,
+				PackageConfig: map[string]interface{}{
+					"deployNamespace": "longhorn-system",
+					"overwriteConfig": map[string]string{
+						"key": "value",
+					},
+				},
+			},
+			NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionUpdateComponentPackageConfig},
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Version: semVer3212,
+			PackageConfig: map[string]interface{}{
+				"deployNamespace": "longhorn-system",
+				"overwriteConfig": map[string]string{
+					"key": "value",
+				},
+			},
+		}
+
+		componentRepoMock.EXPECT().Update(testCtx, componentInstallation).Return(nil)
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.NoError(t, err)
+	})
+
 	t.Run("should return error on action downgrade", func(t *testing.T) {
 		// given
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
@@ -333,6 +378,33 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, noDistributionNamespaceSwitchExplanationText)
+	})
+
+	t.Run("should return error on empty actions in diff", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name:          componentName1,
+			NeededActions: []domain.Action{},
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+		}
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "fail because the total amount of actions is zero. actions should contain at least action \"none\"")
 	})
 }
 

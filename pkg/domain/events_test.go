@@ -105,11 +105,11 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUpgrade}},
+					{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentPackageConfig, ActionSwitchComponentNamespace}},
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffComponentDetermined",
-			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)",
+			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)\ncomponent config diffs: (1 to update namespace, 1 to update package config)",
 		},
 		{
 			name: "global config diff determined",
