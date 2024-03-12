@@ -3,7 +3,9 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
@@ -45,6 +47,10 @@ const (
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
 	// were successful.
 	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
+	// StatusPhaseAwaitSelfUpgrade marks that the blueprint operator waits for termination for a self upgrade.
+	StatusPhaseAwaitSelfUpgrade StatusPhase = "awaitSelfUpgrade"
+	// StatusPhaseSelfUpgradeCompleted marks that the blueprint operator itself got successfully upgraded.
+	StatusPhaseSelfUpgradeCompleted StatusPhase = "selfUpgradeCompleted"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
 	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
@@ -319,6 +325,33 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 		spec.Status = StatusPhaseBlueprintApplicationPreProcessed
 		spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
 	}
+}
+
+// HandleSelfUpgrade checks if a self upgrade is needed and sets the appropriate status.
+// Returns the ComponentDiff for the given component name so that it can be used to initiate further steps.
+func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleComponentName, actualInstalledVersion *semver.Version) ComponentDiff {
+	ownDiff := spec.StateDiff.ComponentDiffs.GetComponentDiffByName(ownComponentName)
+	// if already everything is as it should
+	if isExpectedVersionInstalled(ownDiff.Expected.Version, actualInstalledVersion) {
+		// no self upgrade planned
+		spec.Status = StatusPhaseSelfUpgradeCompleted
+		spec.Events = append(spec.Events) //TODO: add event
+		return ownDiff
+	}
+	// if there is sth. left to be done
+	spec.Status = StatusPhaseAwaitSelfUpgrade
+	spec.Events = append(spec.Events) //TODO: add event
+	return ownDiff
+}
+
+func isExpectedVersionInstalled(expected, actual *semver.Version) bool {
+	if expected == nil {
+		return true
+	}
+	if actual == nil {
+		return false
+	}
+	return expected.Equal(actual)
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
