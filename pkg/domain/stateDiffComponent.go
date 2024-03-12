@@ -4,10 +4,9 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
 	"reflect"
-
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 )
 
 // ComponentDiffs contains the differences for all expected Components to the current ecosystem.ComponentInstallations.
@@ -103,19 +102,13 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 	}
 
 	for _, installedComponent := range installedComponents {
-		blueprintComponent, found := findComponentByName(blueprintComponents, installedComponent.Name.SimpleName)
-
-		if !found {
-			var notFoundInBlueprint *Component = nil
-			compDiff, err := determineComponentDiff(notFoundInBlueprint, installedComponent)
-			if err != nil {
-				return nil, err
-			}
-			componentDiffs[installedComponent.Name.SimpleName] = compDiff
+		_, found := findComponentByName(blueprintComponents, installedComponent.Name.SimpleName)
+		// StateDiff was already determined
+		if found {
 			continue
 		}
-
-		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
+		var notFoundInBlueprint *Component = nil
+		compDiff, err := determineComponentDiff(notFoundInBlueprint, installedComponent)
 		if err != nil {
 			return nil, err
 		}
@@ -197,7 +190,10 @@ func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) 
 		}
 
 		if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
-			neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
+			// TODO Why is this check needed? Both maps can be empty and have same type but deepEqual returns false.
+			if len(expected.PackageConfig) != 0 || len(actual.PackageConfig) != 0 {
+				neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
+			}
 		}
 
 		if expected.Version.GreaterThan(actual.Version) {

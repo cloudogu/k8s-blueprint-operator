@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"reflect"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -22,6 +23,20 @@ var (
 var (
 	compVersion3211 = semver.MustParse("3.2.1-1")
 )
+
+func Test_reflectDummies(t *testing.T) {
+	t.Run("lalal", func(t *testing.T) {
+		// given
+		config1 := ecosystem.PackageConfig{}
+		config2 := ecosystem.PackageConfig{}
+
+		// when
+		equal := reflect.DeepEqual(config1, config2)
+
+		// then
+		assert.True(t, equal)
+	})
+}
 
 func Test_determineComponentDiff(t *testing.T) {
 	type args struct {

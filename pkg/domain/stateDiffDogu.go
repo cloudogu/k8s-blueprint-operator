@@ -83,12 +83,10 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[common.SimpleD
 	}
 	for _, installedDogu := range installedDogus {
 		blueprintDogu, notFound := FindDoguByName(blueprintDogus, installedDogu.Name.SimpleName)
-
+		// Only create DoguDiff if the installed dogu is not found in the blueprint.
+		// If the installed dogu is in blueprint the DoguDiff was already determined above.
 		if notFound == nil {
 			doguDiffs[installedDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
-		} else {
-			// if no dogu with this name in blueprint, use nil to indicate that
-			doguDiffs[installedDogu.Name.SimpleName] = determineDoguDiff(nil, installedDogu)
 		}
 	}
 	return maps.Values(doguDiffs)
