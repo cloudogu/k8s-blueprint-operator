@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -31,21 +32,11 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	allDogusNeedARestart := checkForAllDoguRestart(blueprintSpec)
 
 	if allDogusNeedARestart {
-		logger.Info("restarting all Dogus...")
-
-		installedDogus, getInstalledDogusError := useCase.doguInstallationRepository.GetAll(ctx)
-		if getInstalledDogusError != nil {
-			return fmt.Errorf("could not get all installed Dogus: %q", getInstalledDogusError)
-		}
-		installedDogusSimpleNames := []common.SimpleDoguName{}
-		for _, installation := range installedDogus {
-
-			installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
-		}
-		restartAllError := useCase.restartRepository.RestartAll(ctx, installedDogusSimpleNames)
-		if restartAllError != nil {
-			logger.Error(restartAllError, "could not restart all Dogus")
-			return restartAllError
+		logger.Info("restarting all installed Dogus...")
+		err := useCase.restartAllInstalledDogus(ctx, logger)
+		if err != nil {
+			logger.Error(err, "could not restart all installed Dogus")
+			return err
 		}
 	} else {
 		dogusThatNeedARestart = getDogusThatNeedARestart(blueprintSpec)
@@ -66,6 +57,23 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	if err != nil {
 		logger.Error(err, "could not update blueprint spec")
 		return err
+	}
+	return nil
+}
+
+func (useCase *DoguRestartUseCase) restartAllInstalledDogus(ctx context.Context, logger logr.Logger) error {
+	installedDogus, getInstalledDogusError := useCase.doguInstallationRepository.GetAll(ctx)
+	if getInstalledDogusError != nil {
+		return fmt.Errorf("could not get all installed Dogus: %q", getInstalledDogusError)
+	}
+	installedDogusSimpleNames := []common.SimpleDoguName{}
+	for _, installation := range installedDogus {
+		installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
+	}
+	restartAllError := useCase.restartRepository.RestartAll(ctx, installedDogusSimpleNames)
+	if restartAllError != nil {
+		logger.Error(restartAllError, "could not restart all Dogus")
+		return restartAllError
 	}
 	return nil
 }
