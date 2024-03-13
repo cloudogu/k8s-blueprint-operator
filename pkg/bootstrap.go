@@ -105,6 +105,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, registryConfigUseCase,
+		selfUpgradeUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
