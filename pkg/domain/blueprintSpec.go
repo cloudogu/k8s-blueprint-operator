@@ -328,6 +328,7 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 }
 
 // HandleSelfUpgrade checks if a self upgrade is needed and sets the appropriate status.
+// if the operator is not installed in the usual way, the actualInstalledVersion can be nil.
 // Returns the ComponentDiff for the given component name so that it can be used to initiate further steps.
 func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleComponentName, actualInstalledVersion *semver.Version) ComponentDiff {
 	ownDiff := spec.StateDiff.ComponentDiffs.GetComponentDiffByName(ownComponentName)

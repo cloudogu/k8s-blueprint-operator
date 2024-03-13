@@ -2,6 +2,7 @@ package domainservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -261,6 +262,11 @@ func (e *NotFoundError) Error() string {
 // Unwrap is used to make it work with errors.Is, errors.As.
 func (e *NotFoundError) Unwrap() error {
 	return e.WrappedError
+}
+
+func IsNotFoundError(err error) bool {
+	var notFoundError *NotFoundError
+	return errors.As(err, &notFoundError)
 }
 
 // NewInternalError creates an InternalError with a given message. The wrapped error may be nil. The error message must

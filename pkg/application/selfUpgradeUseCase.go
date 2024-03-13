@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -44,25 +45,31 @@ func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, bluepr
 		return fmt.Errorf("cannot load blueprint spec %q to possibly self upgrade the operator: %w", blueprintId, err)
 	}
 	ownComponent, err := useCase.componentRepo.GetByName(ctx, useCase.blueprintOperatorName)
-	if err != nil {
-		return err
+
+	if err != nil && !domainservice.IsNotFoundError(err) {
+		// ignore not found errors as this is ok if the component was not installed via a component CR
+		// only return if other errors happen, e.g. InternalError
+		return fmt.Errorf("cannot load component installation for %q from ecosystem: %w", useCase.blueprintOperatorName, err)
 	}
 	// FIXME: we need to use the version which the component operator really has installed, not what is just in the spec.
 	//  the actual version is not yet implemented in the component operator.
-	ownDiff := blueprintSpec.HandleSelfUpgrade(useCase.blueprintOperatorName, ownComponent.Version)
+	var actualInstalledVersion *semver.Version
+	if ownComponent != nil {
+		actualInstalledVersion = ownComponent.Version
+	}
+	ownDiff := blueprintSpec.HandleSelfUpgrade(useCase.blueprintOperatorName, actualInstalledVersion)
 	err = useCase.blueprintRepo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot save blueprint spec %q while possibly self upgrading the operator: %w", blueprintId, err)
 	}
 
 	if blueprintSpec.Status == domain.StatusPhaseAwaitSelfUpgrade {
-		logger.Info("self upgrade needed")
+		logger.Info("self upgrade needed, apply self upgrade")
 		err = useCase.applySelfUpgrade(ctx, ownDiff, ownComponent)
-		logger.Info("apply self upgrade")
 		if err != nil {
 			return err
 		}
-		logger.Info("await self upgrade")
+		logger.Info("await termination for self upgrade")
 		useCase.waitForTermination(ctx)
 		// nothing can come after this as the operator gets terminated while waiting.
 	} else {
