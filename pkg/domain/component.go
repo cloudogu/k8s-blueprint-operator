@@ -17,7 +17,8 @@ type Component struct {
 	// "present"; otherwise it is optional and is not going to be interpreted.
 	Version *semver.Version
 	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
-	TargetState   TargetState
+	TargetState TargetState
+	// PackageConfig defines generic properties for the component. This field is optional.
 	PackageConfig ecosystem.PackageConfig
 }
 

@@ -17,7 +17,7 @@ type TargetComponent struct {
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
 	TargetState string `json:"targetState"`
-
+	// PackageConfig defines a generic property map for the component configuration. This field is optional.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`

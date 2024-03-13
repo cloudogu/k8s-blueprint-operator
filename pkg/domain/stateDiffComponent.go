@@ -57,7 +57,8 @@ type ComponentDiffState struct {
 	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
-	PackageConfig     ecosystem.PackageConfig
+	// PackageConfig contains generic properties for the component.
+	PackageConfig ecosystem.PackageConfig
 }
 
 // String returns a string representation of the ComponentDiff.

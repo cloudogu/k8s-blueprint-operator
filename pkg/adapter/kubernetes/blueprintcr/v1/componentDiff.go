@@ -34,6 +34,7 @@ type ComponentDiffState struct {
 	//  - domain.ActionUninstall
 	//  - and so on
 	InstallationState string `json:"installationState"`
+	// PackageConfig contains generic properties for the component.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`
