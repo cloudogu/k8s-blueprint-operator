@@ -104,7 +104,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 
 	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to install components: %w", blueprintId, err)
+		return fmt.Errorf("cannot load blueprint spec %q to apply components: %w", blueprintId, err)
 	}
 
 	if len(blueprintSpec.StateDiff.ComponentDiffs) == 0 {
@@ -119,7 +119,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	}
 
 	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
-		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
+		err = useCase.ApplyComponentState(ctx, componentDiff, components[componentDiff.Name])
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
 		}
@@ -127,7 +127,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	return nil
 }
 
-func (useCase *ComponentInstallationUseCase) applyComponentState(
+func (useCase *ComponentInstallationUseCase) ApplyComponentState(
 	ctx context.Context,
 	componentDiff domain.ComponentDiff,
 	componentInstallation *ecosystem.ComponentInstallation,

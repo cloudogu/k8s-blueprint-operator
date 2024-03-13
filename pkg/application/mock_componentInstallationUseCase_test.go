@@ -5,7 +5,9 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -20,6 +22,50 @@ type mockComponentInstallationUseCase_Expecter struct {
 
 func (_m *mockComponentInstallationUseCase) EXPECT() *mockComponentInstallationUseCase_Expecter {
 	return &mockComponentInstallationUseCase_Expecter{mock: &_m.Mock}
+}
+
+// ApplyComponentState provides a mock function with given fields: _a0, _a1, _a2
+func (_m *mockComponentInstallationUseCase) ApplyComponentState(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation) error {
+	ret := _m.Called(_a0, _a1, _a2)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error); ok {
+		r0 = rf(_a0, _a1, _a2)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockComponentInstallationUseCase_ApplyComponentState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyComponentState'
+type mockComponentInstallationUseCase_ApplyComponentState_Call struct {
+	*mock.Call
+}
+
+// ApplyComponentState is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 domain.ComponentDiff
+//   - _a2 *ecosystem.ComponentInstallation
+func (_e *mockComponentInstallationUseCase_Expecter) ApplyComponentState(_a0 interface{}, _a1 interface{}, _a2 interface{}) *mockComponentInstallationUseCase_ApplyComponentState_Call {
+	return &mockComponentInstallationUseCase_ApplyComponentState_Call{Call: _e.mock.On("ApplyComponentState", _a0, _a1, _a2)}
+}
+
+func (_c *mockComponentInstallationUseCase_ApplyComponentState_Call) Run(run func(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation)) *mockComponentInstallationUseCase_ApplyComponentState_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(domain.ComponentDiff), args[2].(*ecosystem.ComponentInstallation))
+	})
+	return _c
+}
+
+func (_c *mockComponentInstallationUseCase_ApplyComponentState_Call) Return(_a0 error) *mockComponentInstallationUseCase_ApplyComponentState_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockComponentInstallationUseCase_ApplyComponentState_Call) RunAndReturn(run func(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error) *mockComponentInstallationUseCase_ApplyComponentState_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // ApplyComponentStates provides a mock function with given fields: ctx, blueprintId

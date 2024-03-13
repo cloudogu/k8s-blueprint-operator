@@ -214,7 +214,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+		err := sut.ApplyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+		err := sut.ApplyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -275,7 +275,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+		err := sut.ApplyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.NoError(t, err)
@@ -301,7 +301,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+		err := sut.ApplyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.Error(t, err)
@@ -328,7 +328,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+		err := sut.ApplyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
 		require.Error(t, err)
