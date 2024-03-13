@@ -21,7 +21,7 @@ const (
 )
 
 var (
-	noActionErr = fmt.Errorf("fail because the total amount of actions is zero. actions should contain at least action %q if nothing changed", domain.ActionNone)
+	errNoAction = fmt.Errorf("fail because the total amount of actions is zero. actions should contain at least action %q if nothing changed", domain.ActionNone)
 )
 
 type ComponentInstallationUseCase struct {
@@ -175,7 +175,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		logger.Info("upgrade component")
 		return useCase.componentRepo.Update(ctx, componentInstallation)
 	} else {
-		return noActionErr
+		return errNoAction
 	}
 
 }

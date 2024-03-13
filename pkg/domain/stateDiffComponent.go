@@ -184,32 +184,39 @@ func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) 
 
 	switch expected.InstallationState {
 	case TargetStatePresent:
-		if expected.Namespace != actual.Namespace {
-			neededActions = append(neededActions, ActionSwitchComponentNamespace)
-		}
-
-		if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
-			// TODO Why is this check needed? Both maps can be empty and have same type but deepEqual returns false.
-			if len(expected.PackageConfig) != 0 || len(actual.PackageConfig) != 0 {
-				neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
-			}
-		}
-
-		if expected.Version.GreaterThan(actual.Version) {
-			neededActions = append(neededActions, ActionUpgrade)
-		} else if expected.Version.Equal(actual.Version) {
-			if len(neededActions) == 0 {
-				neededActions = append(neededActions, ActionNone)
-			}
-		} else {
-			neededActions = append(neededActions, ActionDowngrade)
-		}
-		return neededActions, nil
+		return getActionsForEqualPresentState(expected, actual), nil
 	case TargetStateAbsent:
 		return append(neededActions, ActionNone), nil
 	default:
 		return nil, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
 	}
+}
+
+func getActionsForEqualPresentState(expected ComponentDiffState, actual ComponentDiffState) []Action {
+	var neededActions []Action
+
+	if expected.Namespace != actual.Namespace {
+		neededActions = append(neededActions, ActionSwitchComponentNamespace)
+	}
+
+	if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
+		// TODO Why is this check needed? Both maps can be empty and have same type but deepEqual returns false.
+		if len(expected.PackageConfig) != 0 || len(actual.PackageConfig) != 0 {
+			neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
+		}
+	}
+
+	if expected.Version.GreaterThan(actual.Version) {
+		neededActions = append(neededActions, ActionUpgrade)
+	} else if expected.Version.Equal(actual.Version) {
+		if len(neededActions) == 0 {
+			neededActions = append(neededActions, ActionNone)
+		}
+	} else {
+		neededActions = append(neededActions, ActionDowngrade)
+	}
+
+	return neededActions
 }
 
 func decideOnDifferentState(expected ComponentDiffState) ([]Action, error) {

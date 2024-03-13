@@ -175,7 +175,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		logger.Info("upgrade dogu")
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	} else {
-		return noActionErr
+		return errNoAction
 	}
 }
 
