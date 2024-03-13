@@ -2,6 +2,7 @@ package domainservice
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -98,4 +99,10 @@ func TestConflictError_Unwrap(t *testing.T) {
 		assert.Error(t, actual.Unwrap())
 		assert.ErrorContains(t, actual.Unwrap(), "test2")
 	})
+}
+
+func TestIsNotFoundError(t *testing.T) {
+	assert.True(t, IsNotFoundError(NewNotFoundError(assert.AnError, "test")))
+	assert.True(t, IsNotFoundError(fmt.Errorf("test: %w", NewNotFoundError(assert.AnError, "test"))))
+	assert.False(t, IsNotFoundError(assert.AnError))
 }

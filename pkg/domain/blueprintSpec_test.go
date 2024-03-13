@@ -1018,3 +1018,42 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 }
+
+func Test_isExpectedVersionInstalled(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected *semver.Version
+		actual   *semver.Version
+		want     bool
+	}{
+		{
+			name:     "equal",
+			expected: semver.MustParse("1.0"),
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "higher expected",
+			expected: semver.MustParse("1.1"),
+			actual:   semver.MustParse("1.0"),
+			want:     false,
+		},
+		{
+			name:     "nothing expected",
+			expected: nil,
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "nothing installed",
+			expected: semver.MustParse("1.0"),
+			actual:   nil,
+			want:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, isExpectedVersionInstalled(tt.expected, tt.actual), "isExpectedVersionInstalled(%v, %v)", tt.expected, tt.actual)
+		})
+	}
+}
