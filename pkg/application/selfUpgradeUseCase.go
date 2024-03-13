@@ -88,8 +88,5 @@ func (useCase *SelfUpgradeUseCase) applySelfUpgrade(ctx context.Context, ownDiff
 }
 
 func (useCase *SelfUpgradeUseCase) waitForTermination(ctx context.Context) {
-	select {
-	case <-ctx.Done():
-		return
-	}
+	<-ctx.Done()
 }
