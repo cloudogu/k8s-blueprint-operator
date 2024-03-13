@@ -6,26 +6,28 @@ metadata:
     app.kubernetes.io/instance: blueprint-sample
     app.kubernetes.io/part-of: k8s-blueprint-operator
     app.kubernetes.io/created-by: k8s-blueprint-operator
-  name: blueprint-add-component-config
+  name: blueprint-add-component-config-on-install
 spec:
   blueprint: |
     {
     "blueprintApi":"v2",
     "components": [
       {
-        "name":"k8s/k8s-ces-control",
-        "version":"0.5.0",
-        "targetState":"present"
-      },
-      {
-        "name":"k8s/k8s-loki",
-        "version":"2.9.1-4",
-        "targetState":"present"
-      },
-      {
-        "name":"k8s/k8s-minio",
-        "version":"2023.9.23-5",
-        "targetState":"present"
+        "name":"k8s/k8s-promtail",
+        "version":"2.9.1-1",
+        "targetState":"present",
+        "packageConfig":{
+          "overwriteConfig":{
+            "promtail":{
+              "deployment":{
+                "enabled": true
+              },
+              "daemonset":{
+                "enabled": false
+              }
+            }
+          }
+        }
       }
     ]
     }
