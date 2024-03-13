@@ -200,7 +200,8 @@ func getActionsForEqualPresentState(expected ComponentDiffState, actual Componen
 	}
 
 	if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
-		// TODO Why is this check needed? Both maps can be empty and have same type but deepEqual returns false.
+		// Do update only if any PackageConfig contains data.
+		// A nil PackageConfig and an empty PackageConfig are not deeply equal. But in this case we do not want to update the PackageConfig.
 		if len(expected.PackageConfig) != 0 || len(actual.PackageConfig) != 0 {
 			neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
 		}
