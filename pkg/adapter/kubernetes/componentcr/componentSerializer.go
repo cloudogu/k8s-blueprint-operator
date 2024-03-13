@@ -83,6 +83,18 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 		return nil, err
 	}
 
+	spec := compV1.ComponentSpec{
+		Namespace: string(componentInstallation.Name.Namespace),
+		Name:      string(componentInstallation.Name.SimpleName),
+		Version:   componentInstallation.Version.String(),
+	}
+	if deployNamespace != "" {
+		spec.DeployNamespace = deployNamespace
+	}
+	if valuesYamlOverwrite != "" {
+		spec.ValuesYamlOverwrite = valuesYamlOverwrite
+	}
+
 	return &compV1.Component{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: string(componentInstallation.Name.SimpleName),
@@ -91,13 +103,7 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 				ComponentVersionLabelKey: componentInstallation.Version.String(),
 			},
 		},
-		Spec: compV1.ComponentSpec{
-			Namespace:           string(componentInstallation.Name.Namespace),
-			Name:                string(componentInstallation.Name.SimpleName),
-			Version:             componentInstallation.Version.String(),
-			DeployNamespace:     deployNamespace,
-			ValuesYamlOverwrite: valuesYamlOverwrite,
-		},
+		Spec: spec,
 	}, nil
 }
 
@@ -132,11 +138,11 @@ type componentCRPatch struct {
 }
 
 type componentSpecPatch struct {
-	Namespace           string `json:"namespace"`
-	Name                string `json:"name"`
-	Version             string `json:"version"`
-	DeployNamespace     string `json:"deployNamespace"`
-	ValuesYamlOverwrite string `json:"valuesYamlOverwrite"`
+	Namespace           string  `json:"namespace"`
+	Name                string  `json:"name"`
+	Version             string  `json:"version"`
+	DeployNamespace     *string `json:"deployNamespace"`
+	ValuesYamlOverwrite *string `json:"valuesYamlOverwrite"`
 }
 
 func toComponentCRPatch(component *ecosystem.ComponentInstallation) (*componentCRPatch, error) {
@@ -150,14 +156,20 @@ func toComponentCRPatch(component *ecosystem.ComponentInstallation) (*componentC
 		return nil, err
 	}
 
+	spec := componentSpecPatch{
+		Namespace: string(component.Name.Namespace),
+		Name:      string(component.Name.SimpleName),
+		Version:   component.Version.String(),
+	}
+	if deployNamespace != "" {
+		spec.DeployNamespace = &deployNamespace
+	}
+	if valuesYamlOverwrite != "" {
+		spec.ValuesYamlOverwrite = &valuesYamlOverwrite
+	}
+
 	return &componentCRPatch{
-		Spec: componentSpecPatch{
-			Namespace:           string(component.Name.Namespace),
-			Name:                string(component.Name.SimpleName),
-			Version:             component.Version.String(),
-			DeployNamespace:     deployNamespace,
-			ValuesYamlOverwrite: valuesYamlOverwrite,
-		},
+		Spec: spec,
 	}, nil
 }
 

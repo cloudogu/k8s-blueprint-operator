@@ -198,6 +198,8 @@ func Test_toComponentCR(t *testing.T) {
 }
 
 func Test_toComponentCRPatch(t *testing.T) {
+	testDeployNamespace := "longhorn-system"
+	testPackageConfig := "key: value\n"
 	type args struct {
 		component *ecosystem.ComponentInstallation
 	}
@@ -224,8 +226,8 @@ func Test_toComponentCRPatch(t *testing.T) {
 					Namespace:           testDistributionNamespace,
 					Name:                testComponentNameRaw,
 					Version:             testVersion1.String(),
-					DeployNamespace:     "longhorn-system",
-					ValuesYamlOverwrite: "key: value\n",
+					DeployNamespace:     &testDeployNamespace,
+					ValuesYamlOverwrite: &testPackageConfig,
 				},
 			},
 			wantErr: assert.NoError,

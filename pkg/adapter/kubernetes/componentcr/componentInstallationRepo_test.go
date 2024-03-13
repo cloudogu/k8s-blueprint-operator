@@ -277,7 +277,7 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			Name:    testComponentName,
 			Version: testVersion1,
 		}
-		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\",\"deployNamespace\":\"\",\"valuesYamlOverwrite\":\"\"}}")
+		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\",\"deployNamespace\":null,\"valuesYamlOverwrite\":null}}")
 		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
 
 		// when
