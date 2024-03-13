@@ -31,6 +31,7 @@ Dogu-specific:
 Component-specific:
 - [#19] Create component differences between effective blueprint and cluster state
 - [#14] Apply new component states based on blueprint.
+- [#62] Add component specific property map to configure attributes like deployNamespace or helm values in k8s.
 
 Config-specific:
 - [#42] Implement config repositories
