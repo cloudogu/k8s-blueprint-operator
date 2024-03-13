@@ -63,8 +63,12 @@ type ComponentDiffState struct {
 	InstallationState TargetState
 }
 
+func (diff ComponentDiff) HasChanges() bool {
+	return diff.NeededAction != ActionNone
+}
+
 // String returns a string representation of the ComponentDiff.
-func (diff *ComponentDiff) String() string {
+func (diff ComponentDiff) String() string {
 	return fmt.Sprintf(
 		"{Name: %q, Actual: %s, Expected: %s, NeededAction: %q}",
 		diff.Name,
@@ -75,7 +79,7 @@ func (diff *ComponentDiff) String() string {
 }
 
 // String returns a string representation of the ComponentDiffState.
-func (diff *ComponentDiffState) String() string {
+func (diff ComponentDiffState) String() string {
 	return fmt.Sprintf(
 		"{Namespace: %q, Version: %q, InstallationState: %q}",
 		diff.Namespace,
@@ -84,7 +88,7 @@ func (diff *ComponentDiffState) String() string {
 	)
 }
 
-func (diff *ComponentDiffState) getSafeVersionString() string {
+func (diff ComponentDiffState) getSafeVersionString() string {
 	if diff.Version != nil {
 		return diff.Version.String()
 	} else {

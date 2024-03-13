@@ -465,3 +465,18 @@ func TestComponentDiffs_GetComponentDiffByName(t *testing.T) {
 		assert.Equal(t, ComponentDiff{}, foundDiff)
 	})
 }
+
+func TestComponentDiff_HasChanges(t *testing.T) {
+	t.Run("no change", func(t *testing.T) {
+		diff := ComponentDiff{
+			NeededAction: ActionNone,
+		}
+		assert.False(t, diff.HasChanges())
+	})
+	t.Run("change for any", func(t *testing.T) {
+		diff := ComponentDiff{
+			NeededAction: ActionUpgrade,
+		}
+		assert.True(t, diff.HasChanges())
+	})
+}
