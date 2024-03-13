@@ -64,7 +64,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu proxy body size is not in Decimal SI: official/dogu1")
+		require.ErrorContains(t, err, "dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): official/dogu1")
 	})
 
 	t.Run("error on invalid volume size format", func(t *testing.T) {
@@ -75,7 +75,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu minimum volume size is not in Binary SI: official/dogu1")
+		require.ErrorContains(t, err, "dogu minimum volume size is not in Binary SI (\"Mi\" or \"Gi\"): official/dogu1")
 	})
 
 	t.Run("no error on empty quantity", func(t *testing.T) {
