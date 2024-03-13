@@ -103,16 +103,15 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 
 	for _, installedComponent := range installedComponents {
 		_, found := findComponentByName(blueprintComponents, installedComponent.Name.SimpleName)
-		// StateDiff was already determined
-		if found {
-			continue
+		// Only create ComponentDiff if the installed component is not found in the blueprint.
+		// If the installed component is in blueprint the ComponentDiff was already determined above.
+		if !found {
+			compDiff, err := determineComponentDiff(nil, installedComponent)
+			if err != nil {
+				return nil, err
+			}
+			componentDiffs[installedComponent.Name.SimpleName] = compDiff
 		}
-		var notFoundInBlueprint *Component = nil
-		compDiff, err := determineComponentDiff(notFoundInBlueprint, installedComponent)
-		if err != nil {
-			return nil, err
-		}
-		componentDiffs[installedComponent.Name.SimpleName] = compDiff
 	}
 	return maps.Values(componentDiffs), nil
 }

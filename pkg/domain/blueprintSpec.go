@@ -120,8 +120,8 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
-		if noDoguFoundError != nil {
+		dogu, found := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
+		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
 		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {

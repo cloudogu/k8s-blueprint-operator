@@ -129,11 +129,10 @@ func checkDoguDependency(
 	knownDoguSpecs map[common.QualifiedDoguName]*core.Dogu,
 ) error {
 	// this also works with namespace changes as only the simple dogu name get searched
-	dependencyInBlueprint, err := domain.FindDoguByName(wantedDogus, common.SimpleDoguName(dependencyOfWantedDogu.Name))
-	if err != nil {
+	dependencyInBlueprint, found := domain.FindDoguByName(wantedDogus, common.SimpleDoguName(dependencyOfWantedDogu.Name))
+	if !found {
 		return fmt.Errorf("dependency '%s' in version '%s' is not a present dogu in the effective blueprint", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version)
 	}
-	// dependencyDoguSpec := useCase.remoteDoguRegistry.GetDogu(dependencyInBlueprint.GetQualifiedName(), dependencyInBlueprint.Version)
 	dependencyDoguSpec := knownDoguSpecs[dependencyInBlueprint.Name]
 	return checkDependencyVersion(dependencyInBlueprint, dependencyDoguSpec.Version)
 }

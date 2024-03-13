@@ -482,7 +482,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 					},
 				},
 				installedDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
-					"postgresql": {
+					"nexus": {
 						Name:    officialNexus,
 						Version: version3211,
 					},

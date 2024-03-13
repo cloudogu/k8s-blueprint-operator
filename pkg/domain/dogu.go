@@ -59,11 +59,11 @@ func (dogu Dogu) validate() error {
 	return err
 }
 
-func FindDoguByName(dogus []Dogu, name common.SimpleDoguName) (Dogu, error) {
+func FindDoguByName(dogus []Dogu, name common.SimpleDoguName) (Dogu, bool) {
 	for _, dogu := range dogus {
 		if dogu.Name.SimpleName == name {
-			return dogu, nil
+			return dogu, true
 		}
 	}
-	return Dogu{}, fmt.Errorf("could not find dogu '%s'", name)
+	return Dogu{}, false
 }
