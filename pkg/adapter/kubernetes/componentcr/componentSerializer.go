@@ -8,8 +8,9 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
 )
 
 const (
@@ -60,7 +61,8 @@ func parsePackageConfig(cr *compV1.Component) (ecosystem.PackageConfig, error) {
 
 	if cr.Spec.ValuesYamlOverwrite != "" {
 		valuesYamlOverwrite := map[string]interface{}{}
-		err := yaml.Unmarshal([]byte(cr.Spec.ValuesYamlOverwrite), valuesYamlOverwrite)
+		// We need to use k8syaml here because goyaml unmarshals to map[interface{}]interface {} which is not supported setting in a k8s resource.
+		err := k8syaml.Unmarshal([]byte(cr.Spec.ValuesYamlOverwrite), &valuesYamlOverwrite)
 		if err != nil {
 			return nil, domainservice.NewInternalError(err, "failed to unmarshal values yaml overwrite %q", cr.Spec.ValuesYamlOverwrite)
 		}

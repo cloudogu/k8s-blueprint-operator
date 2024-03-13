@@ -6,7 +6,6 @@ import (
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 )
 
@@ -21,10 +20,8 @@ type TargetComponent struct {
 
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	PackageConfig TargetPackageConfig `json:"packageConfig,omitempty"`
+	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`
 }
-
-type TargetPackageConfig map[string]interface{}
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
 func ConvertComponents(components []TargetComponent) ([]domain.Component, error) {
@@ -57,7 +54,7 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 			Name:          name,
 			Version:       version,
 			TargetState:   newState,
-			PackageConfig: ecosystem.PackageConfig(component.PackageConfig),
+			PackageConfig: component.PackageConfig,
 		})
 	}
 
@@ -88,7 +85,7 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 			Name:          joinedComponentName,
 			Version:       version,
 			TargetState:   newState,
-			PackageConfig: TargetPackageConfig(component.PackageConfig),
+			PackageConfig: component.PackageConfig,
 		}
 	})
 	return converted, errors.Join(errorList...)

@@ -7,6 +7,8 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
@@ -25,6 +27,11 @@ var (
 )
 
 func Test_parseComponentCR(t *testing.T) {
+	valuesOverwrite := map[string]interface{}{"key": "value", "key1": map[string]string{"key": "value"}}
+	expectedValuesOverwrite := map[string]interface{}{"key": "value", "key1": map[string]interface{}{"key": "value"}}
+	valuesOverwriteYAMLBytes, err := yaml.Marshal(valuesOverwrite)
+	require.NoError(t, err)
+
 	type args struct {
 		cr *compV1.Component
 	}
@@ -48,7 +55,7 @@ func Test_parseComponentCR(t *testing.T) {
 						Name:                testComponentNameRaw,
 						Version:             testVersion1.String(),
 						DeployNamespace:     "longhorn-system",
-						ValuesYamlOverwrite: "key: value",
+						ValuesYamlOverwrite: string(valuesOverwriteYAMLBytes),
 					},
 					Status: compV1.ComponentStatus{
 						Status: testStatus,
@@ -63,8 +70,7 @@ func Test_parseComponentCR(t *testing.T) {
 				Health:  ecosystem.HealthStatus(testHealthStatus),
 				PackageConfig: map[string]interface{}{
 					"deployNamespace": "longhorn-system",
-					// TODO check cluster error
-					"overwriteConfig": map[string]interface{}{"key": "value"},
+					"overwriteConfig": expectedValuesOverwrite,
 				},
 				PersistenceContext: map[string]interface{}{
 					componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
