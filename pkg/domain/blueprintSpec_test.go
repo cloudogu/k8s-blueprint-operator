@@ -942,6 +942,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 
 		assert.Equal(t, normalOwnDiff, diff)
 		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
 	})
 	t.Run("component not installed for any reason", func(t *testing.T) {
 		blueprint := BlueprintSpec{
@@ -952,6 +953,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 
 		assert.Equal(t, normalOwnDiff, diff)
 		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 	t.Run("no action in diff", func(t *testing.T) {
 		blueprint := BlueprintSpec{
@@ -962,6 +964,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 
 		assert.Equal(t, normalOwnDiff, diff)
 		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
 	})
 	t.Run("no action in diff but installed version is different", func(t *testing.T) {
 		blueprint := BlueprintSpec{
@@ -974,6 +977,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 		// yes, we do a self upgrade even if the diff does not match the installed version.
 		// This is because we maybe need the features of the expected version
 		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 
 	t.Run("needs upgrade", func(t *testing.T) {
@@ -992,6 +996,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 
 		assert.Equal(t, UpgradeActionDiff, diff)
 		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 
 	t.Run("needs upgrade even after restart", func(t *testing.T) {
@@ -1010,5 +1015,6 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 
 		assert.Equal(t, UpgradeActionDiff, diff)
 		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 }

@@ -336,12 +336,12 @@ func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleCompo
 	if isExpectedVersionInstalled(ownDiff.Expected.Version, actualInstalledVersion) {
 		// no self upgrade planned
 		spec.Status = StatusPhaseSelfUpgradeCompleted
-		spec.Events = append(spec.Events) //TODO: add event
+		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 		return ownDiff
 	}
 	// if there is sth. left to be done
 	spec.Status = StatusPhaseAwaitSelfUpgrade
-	spec.Events = append(spec.Events) //TODO: add event
+	spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	return ownDiff
 }
 
