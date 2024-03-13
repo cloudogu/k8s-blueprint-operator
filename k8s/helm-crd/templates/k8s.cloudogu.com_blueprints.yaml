@@ -144,6 +144,23 @@ spec:
                           name:
                             description: Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty.
                             type: string
+                          platformConfig:
+                            properties:
+                              resource:
+                                properties:
+                                  minVolumeSize:
+                                    type: string
+                                type: object
+                              reverseProxy:
+                                properties:
+                                  additionalConfig:
+                                    type: string
+                                  maxBodySize:
+                                    type: string
+                                  rewriteTarget:
+                                    type: string
+                                type: object
+                            type: object
                           targetState:
                             description: TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
                             type: string
@@ -312,6 +329,20 @@ spec:
                                 type: string
                               namespace:
                                 type: string
+                              resourceConfig:
+                                properties:
+                                  minVolumeSize:
+                                    type: string
+                                type: object
+                              reverseProxyConfig:
+                                properties:
+                                  additionalConfig:
+                                    type: string
+                                  maxBodySize:
+                                    type: string
+                                  rewriteTarget:
+                                    type: string
+                                type: object
                               version:
                                 type: string
                             required:
@@ -324,18 +355,34 @@ spec:
                                 type: string
                               namespace:
                                 type: string
+                              resourceConfig:
+                                properties:
+                                  minVolumeSize:
+                                    type: string
+                                type: object
+                              reverseProxyConfig:
+                                properties:
+                                  additionalConfig:
+                                    type: string
+                                  maxBodySize:
+                                    type: string
+                                  rewriteTarget:
+                                    type: string
+                                type: object
                               version:
                                 type: string
                             required:
                               - installationState
                             type: object
-                          neededAction:
-                            description: DoguAction is the action that needs to be done for a dogu to achieve the desired state in the cluster.
-                            type: string
+                          neededActions:
+                            items:
+                              description: DoguAction is the action that needs to be done for a dogu to achieve the desired state in the cluster.
+                              type: string
+                            type: array
                         required:
                           - actual
                           - expected
-                          - neededAction
+                          - neededActions
                         type: object
                       description: DoguDiffs maps simple dogu names to the determined diff.
                       type: object

@@ -13,9 +13,9 @@ import (
 )
 
 var (
-	version3211, _    = core.ParseVersion("3.2.1-1")
-	version3212, _    = core.ParseVersion("3.2.1-2")
-	version1_2_3_3, _ = core.ParseVersion("1.2.3-3")
+	version3211, _ = core.ParseVersion("3.2.1-1")
+	version3212, _ = core.ParseVersion("3.2.1-2")
+	version1233, _ = core.ParseVersion("1.2.3-3")
 )
 
 var (
@@ -30,7 +30,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233},
 	}
 
 	components := []domain.Component{
@@ -73,7 +73,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "official/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "official/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "official/dogu4", Version: version1233.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []serializer.TargetComponent{
@@ -115,7 +115,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "official/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "official/dogu4", Version: version1_2_3_3.Raw},
+		{Name: "official/dogu4", Version: version1233.Raw},
 	}
 
 	components := []serializer.TargetComponent{
@@ -155,7 +155,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
 		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1_2_3_3},
+		{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233},
 	}
 
 	convertedComponents := []domain.Component{
