@@ -36,21 +36,23 @@ type DoguInstallationRepository interface {
 }
 
 type ComponentInstallationRepository interface {
-	// GetByName returns the ecosystem.ComponentInstallation or
-	// a NotFoundError if the component is not installed or
-	// an InternalError if there is any other error.
+	// GetByName loads an installed component from the ecosystem and returns
+	//  - the ecosystem.ComponentInstallation or
+	//  - a NotFoundError if the component is not installed or
+	//  - an InternalError if there is any other error.
 	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
-	// GetAll returns the installation info of all installed components or
-	// an InternalError if there is any other error.
+	// GetAll returns
+	//  - the installation info of all installed components or
+	//  - an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
 	// Delete deletes the component by name from the ecosystem.
 	// returns an InternalError if there is an error.
 	Delete(ctx context.Context, componentName common.SimpleComponentName) error
-	// Create creates the ecosystem.ComponentInstallation in the cluster.
+	// Create creates the ecosystem.ComponentInstallation in the ecosystem.
 	// returns an InternalError if there is an error.
 	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
-	// Update updates the ecosystem.ComponentInstallation with a patch operation in the cluster.
-	// returns an InternalError on patch error.
+	// Update updates the ecosystem.ComponentInstallation in the ecosystem.
+	// returns an InternalError if anything went wrong.
 	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
 }
 
