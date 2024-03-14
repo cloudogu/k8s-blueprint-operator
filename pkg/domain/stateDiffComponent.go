@@ -187,7 +187,7 @@ func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) 
 	case TargetStatePresent:
 		return getActionsForEqualPresentState(expected, actual), nil
 	case TargetStateAbsent:
-		return append(neededActions, ActionNone), nil
+		return neededActions, nil
 	default:
 		return nil, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
 	}
@@ -210,11 +210,7 @@ func getActionsForEqualPresentState(expected ComponentDiffState, actual Componen
 
 	if expected.Version.GreaterThan(actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
-	} else if expected.Version.Equal(actual.Version) {
-		if len(neededActions) == 0 {
-			neededActions = append(neededActions, ActionNone)
-		}
-	} else {
+	} else if actual.Version.GreaterThan(expected.Version) {
 		neededActions = append(neededActions, ActionDowngrade)
 	}
 

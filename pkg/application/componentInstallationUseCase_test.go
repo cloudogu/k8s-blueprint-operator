@@ -380,7 +380,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		assert.ErrorContains(t, err, noDistributionNamespaceSwitchExplanationText)
 	})
 
-	t.Run("should return error on empty actions in diff", func(t *testing.T) {
+	t.Run("should return no error on empty actions in diff", func(t *testing.T) {
 		// given
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
 		componentRepoMock := newMockComponentInstallationRepository(t)
@@ -403,8 +403,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
 
 		// then
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "fail because the total amount of actions is zero. actions should contain at least action \"none\"")
+		require.NoError(t, err)
 	})
 }
 

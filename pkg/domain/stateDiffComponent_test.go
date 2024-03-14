@@ -59,7 +59,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				Name:          testComponentName.SimpleName,
 				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 		{
@@ -150,7 +150,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				Name:          testComponentName.SimpleName,
 				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 		{
@@ -163,7 +163,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				Name:          "",
 				Actual:        ComponentDiffState{InstallationState: TargetStateAbsent},
 				Expected:      ComponentDiffState{InstallationState: TargetStateAbsent},
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 	}
@@ -362,7 +362,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededActions: []Action{ActionNone},
+					NeededActions: nil,
 				},
 			},
 		},

@@ -174,10 +174,9 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	if len(componentDiff.NeededActions) > 0 {
 		logger.Info("upgrade component")
 		return useCase.componentRepo.Update(ctx, componentInstallation)
-	} else {
-		return errNoAction
 	}
 
+	return nil
 }
 
 func getNoDowngradesExplanationTextForComponents() string {
