@@ -51,7 +51,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 		{
@@ -250,7 +250,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					Version:           version3211,
 					InstallationState: TargetStatePresent,
 				},
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 		{
@@ -267,7 +267,7 @@ func Test_determineDoguDiff(t *testing.T) {
 				Expected: DoguDiffState{
 					InstallationState: TargetStateAbsent,
 				},
-				NeededActions: []Action{ActionNone},
+				NeededActions: []Action{},
 			},
 		},
 		{
@@ -387,7 +387,7 @@ func Test_determineDoguDiff(t *testing.T) {
 						MaxBodySize: nil,
 					},
 				},
-				NeededActions: []Action{ActionNone},
+				NeededActions: nil,
 			},
 		},
 	}
@@ -467,7 +467,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 						Version:           version3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededActions: []Action{ActionNone},
+					NeededActions: nil,
 				},
 			},
 		},
@@ -535,9 +535,8 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 			wantToUpdateResourceConfig:     0,
 		},
 		{
-			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
+			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 other, 2 update reverse proxy config, 1 update resource config",
 			dd: DoguDiffs{
-				{NeededActions: []Action{ActionNone}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
@@ -553,7 +552,7 @@ func TestDoguDiffs_Statistics(t *testing.T) {
 			wantToInstall:                  4,
 			wantToUpgrade:                  3,
 			wantToUninstall:                2,
-			wantOther:                      3,
+			wantOther:                      2,
 			wantToUpdateReverseProxyConfig: 2,
 			wantToUpdateResourceConfig:     1,
 		},

@@ -143,7 +143,7 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
 			return getActionsForPresentDoguDiffs(expected, actual)
 		case TargetStateAbsent:
-			return []Action{ActionNone}
+			return []Action{}
 		}
 	} else {
 		// actual state is always the opposite
@@ -155,7 +155,7 @@ func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action
 		}
 	}
 	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
-	return []Action{ActionNone}
+	return []Action{}
 }
 
 func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState) []Action {
@@ -175,11 +175,7 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	}
 	if expected.Version.IsNewerThan(actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
-	} else if expected.Version.IsEqualTo(actual.Version) {
-		if len(neededActions) == 0 {
-			neededActions = append(neededActions, ActionNone)
-		}
-	} else { // is older
+	} else if actual.Version.IsNewerThan(expected.Version) {
 		// if downgrades are allowed is not important here.
 		// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
 		neededActions = append(neededActions, ActionDowngrade)

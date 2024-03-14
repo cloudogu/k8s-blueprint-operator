@@ -120,9 +120,6 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		WithValues("dogu", doguDiff.DoguName, "diff", doguDiff.String())
 	for _, action := range doguDiff.NeededActions {
 		switch action {
-		case domain.ActionNone:
-			logger.Info("apply nothing for dogu")
-			return nil
 		case domain.ActionInstall:
 			logger.Info("install dogu")
 			newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
@@ -174,9 +171,9 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	if len(doguDiff.NeededActions) > 0 {
 		logger.Info("upgrade dogu")
 		return useCase.doguRepo.Update(ctx, doguInstallation)
-	} else {
-		return errNoAction
 	}
+
+	return nil
 }
 
 func getNoDowngradesExplanationTextForDogus() string {

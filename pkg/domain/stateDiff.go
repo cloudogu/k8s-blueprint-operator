@@ -41,7 +41,6 @@ func (diff StateDiff) GetSensitiveDoguConfigDiffsByAction() map[ConfigAction]Sen
 type Action string
 
 const (
-	ActionNone                            = "none"
 	ActionInstall                         = "install"
 	ActionUninstall                       = "uninstall"
 	ActionUpgrade                         = "upgrade"

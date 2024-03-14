@@ -42,7 +42,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Version:           version3211,
 				InstallationState: domain.TargetStatePresent,
 			},
-			NeededActions: []domain.Action{domain.ActionNone},
+			NeededActions: []domain.Action{},
 		}, &ecosystem.DoguInstallation{
 			Name:    postgresqlQualifiedName,
 			Version: version3211,
@@ -488,7 +488,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		require.ErrorContains(t, err, "cannot perform unknown action \"unknown\"")
 	})
 
-	t.Run("should fail with no actions", func(t *testing.T) {
+	t.Run("should no fail with no actions", func(t *testing.T) {
 		// given
 		sut := NewDoguInstallationUseCase(nil, nil, nil)
 
@@ -507,8 +507,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		)
 
 		// then
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "fail because the total amount of actions is zero. actions should contain at least action \"none\" if nothing changed")
+		require.NoError(t, err)
 	})
 }
 
@@ -555,7 +554,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 				DoguDiffs: []domain.DoguDiff{
 					{
 						DoguName:      "postgresql",
-						NeededActions: []domain.Action{domain.ActionNone},
+						NeededActions: []domain.Action{},
 					},
 				},
 			},

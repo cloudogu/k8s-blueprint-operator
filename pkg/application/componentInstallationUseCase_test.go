@@ -50,7 +50,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 				ComponentDiffs: []domain.ComponentDiff{
 					{
 						Name:          componentName1,
-						NeededActions: []domain.Action{domain.ActionNone},
+						NeededActions: []domain.Action{},
 						Actual: domain.ComponentDiffState{
 							Version: semVer3212,
 						},

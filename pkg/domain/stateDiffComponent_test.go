@@ -183,9 +183,8 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 			wantOther:                0,
 		},
 		{
-			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 to update namespace, 3 to update package config, 3 other",
+			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 to update namespace, 3 to update package config, 1 other",
 			dd: ComponentDiffs{
-				{NeededActions: []Action{ActionNone}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
@@ -202,7 +201,7 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 			wantToUninstall:          2,
 			wantToUpdateNamespace:    2,
 			wantToUpdateDeployConfig: 3,
-			wantOther:                2,
+			wantOther:                1,
 		},
 	}
 	for _, tt := range tests {

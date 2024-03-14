@@ -20,10 +20,6 @@ const (
 		"`allow-switch-distribution-namespace` flag, issue a feature request"
 )
 
-var (
-	errNoAction = fmt.Errorf("fail because the total amount of actions is zero. actions should contain at least action %q if nothing changed", domain.ActionNone)
-)
-
 type ComponentInstallationUseCase struct {
 	blueprintSpecRepo    domainservice.BlueprintSpecRepository
 	componentRepo        domainservice.ComponentInstallationRepository
@@ -142,9 +138,6 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 
 	for _, action := range componentDiff.NeededActions {
 		switch action {
-		case domain.ActionNone:
-			logger.Info("apply nothing for component")
-			return nil
 		case domain.ActionInstall:
 			logger.Info("install component")
 			newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{

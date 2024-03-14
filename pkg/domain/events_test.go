@@ -85,7 +85,6 @@ func TestEvents(t *testing.T) {
 				DoguDiffs{
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionNone}},
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
@@ -93,7 +92,7 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffDoguDetermined",
-			expectedMessage: "state diff determined: 8 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)\ndogu config diffs: (1 to update resource config, 3 to update reverse proxy config)",
+			expectedMessage: "state diff determined: 7 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 1 others)\ndogu config diffs: (1 to update resource config, 3 to update reverse proxy config)",
 		},
 		{
 			name: "component state diff determined",
@@ -101,7 +100,6 @@ func TestEvents(t *testing.T) {
 				ComponentDiffs{
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionNone}},
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
@@ -109,7 +107,7 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffComponentDetermined",
-			expectedMessage: "state diff determined: 8 component diffs (2 to install, 1 to upgrade, 3 to delete, 2 others)\ncomponent config diffs: (1 to update namespace, 1 to update package config)",
+			expectedMessage: "state diff determined: 7 component diffs (2 to install, 1 to upgrade, 3 to delete, 1 others)\ncomponent config diffs: (1 to update namespace, 1 to update package config)",
 		},
 		{
 			name: "global config diff determined",
