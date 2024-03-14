@@ -32,6 +32,7 @@ Dogu-specific:
 Component-specific:
 - [#19] Create component differences between effective blueprint and cluster state
 - [#14] Apply new component states based on blueprint.
+- [#61] Add process for safe self upgrades of the blueprint operator
 
 Config-specific:
 - [#42] Implement config repositories

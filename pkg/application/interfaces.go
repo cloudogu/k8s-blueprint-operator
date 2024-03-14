@@ -2,7 +2,7 @@ package application
 
 import (
 	"context"
-
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 )
@@ -30,6 +30,7 @@ type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprintId string) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
+	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 
 type applyBlueprintSpecUseCase interface {
@@ -43,6 +44,10 @@ type applyBlueprintSpecUseCase interface {
 type ecosystemHealthUseCase interface {
 	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error)
 	WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error)
+}
+
+type selfUpgradeUseCase interface {
+	HandleSelfUpgrade(ctx context.Context, blueprintId string) error
 }
 
 type registryConfigUseCase interface {

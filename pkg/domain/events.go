@@ -330,3 +330,23 @@ func (e RegistryConfigAppliedEvent) Name() string {
 func (e RegistryConfigAppliedEvent) Message() string {
 	return "registry config applied"
 }
+
+type AwaitSelfUpgradeEvent struct{}
+
+func (e AwaitSelfUpgradeEvent) Name() string {
+	return "AwaitSelfUpgrade"
+}
+
+func (e AwaitSelfUpgradeEvent) Message() string {
+	return "the operator awaits an upgrade for itself before other changes will be applied"
+}
+
+type SelfUpgradeCompletedEvent struct{}
+
+func (e SelfUpgradeCompletedEvent) Name() string {
+	return "SelfUpgradeCompleted"
+}
+
+func (e SelfUpgradeCompletedEvent) Message() string {
+	return "if a self upgrade was necessary, it was successful"
+}
