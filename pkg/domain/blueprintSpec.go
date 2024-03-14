@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"slices"
 )
 
 type BlueprintSpec struct {
@@ -210,9 +211,11 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 
 func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	effectiveDogu := Dogu{
-		Name:        dogu.Name,
-		Version:     dogu.Version,
-		TargetState: dogu.TargetState,
+		Name:               dogu.Name,
+		Version:            dogu.Version,
+		TargetState:        dogu.TargetState,
+		MinVolumeSize:      dogu.MinVolumeSize,
+		ReverseProxyConfig: dogu.ReverseProxyConfig,
 	}
 	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.SimpleName)
 	if noMaskDoguErr == nil {
@@ -264,7 +267,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
-		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
+		// FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
 		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
@@ -423,16 +426,10 @@ var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 
 func (spec *BlueprintSpec) validateStateDiff() error {
-	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
-		return doguDiff.NeededAction
-	})
 	var invalidBlueprintErrors []error
 
-	for _, action := range notAllowedDoguActions {
-		if action == ActionSwitchDoguNamespace && spec.Config.AllowDoguNamespaceSwitch {
-			continue
-		}
-		invalidBlueprintErrors = evaluateInvalidAction(action, dogusByAction, invalidBlueprintErrors)
+	for _, diff := range spec.StateDiff.DoguDiffs {
+		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateDoguDiffActions(diff)...)
 	}
 
 	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
@@ -444,6 +441,22 @@ func (spec *BlueprintSpec) validateStateDiff() error {
 	}
 
 	return errors.Join(invalidBlueprintErrors...)
+}
+
+func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
+	return util.Map(diff.NeededActions, func(action Action) error {
+		if slices.Contains(notAllowedDoguActions, action) {
+			if action == ActionSwitchDoguNamespace && spec.Config.AllowDoguNamespaceSwitch {
+				return nil
+			}
+
+			return &InvalidBlueprintError{
+				Message: fmt.Sprintf("action %q is not allowed", action),
+			}
+		}
+
+		return nil
+	})
 }
 
 func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {

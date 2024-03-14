@@ -152,6 +152,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		EffectiveBlueprint: effectiveBlueprint,
 		StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
 	}
+
 	CRAfterUpdate.Status = blueprintStatus
 	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
 	if err != nil {
