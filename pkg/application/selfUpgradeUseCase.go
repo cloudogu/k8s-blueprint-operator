@@ -69,7 +69,7 @@ func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, bluepr
 		if err != nil {
 			return err
 		}
-		logger.Info("await termination for self upgrade")
+		logger.Info("await termination for self upgrade. You can check the component-CR for the installation status")
 		useCase.waitForTermination(ctx)
 		// nothing can come after this as the operator gets terminated while waiting.
 	} else {
