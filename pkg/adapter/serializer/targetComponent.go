@@ -17,10 +17,10 @@ type TargetComponent struct {
 	Version string `json:"version"`
 	// TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
 	TargetState string `json:"targetState"`
-	// PackageConfig defines a generic property map for the component configuration. This field is optional.
+	// DeployConfig defines a generic property map for the component configuration. This field is optional.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`
+	DeployConfig map[string]interface{} `json:"deployConfig,omitempty"`
 }
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
@@ -51,10 +51,10 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 		}
 
 		convertedComponents = append(convertedComponents, domain.Component{
-			Name:          name,
-			Version:       version,
-			TargetState:   newState,
-			PackageConfig: component.PackageConfig,
+			Name:         name,
+			Version:      version,
+			TargetState:  newState,
+			DeployConfig: component.DeployConfig,
 		})
 	}
 
@@ -82,10 +82,10 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 		}
 
 		return TargetComponent{
-			Name:          joinedComponentName,
-			Version:       version,
-			TargetState:   newState,
-			PackageConfig: component.PackageConfig,
+			Name:         joinedComponentName,
+			Version:      version,
+			TargetState:  newState,
+			DeployConfig: component.DeployConfig,
 		}
 	})
 	return converted, errors.Join(errorList...)

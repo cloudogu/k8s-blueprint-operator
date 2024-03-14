@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	packageConfigKeyDeployNamespace = "deployNamespace"
-	packageConfigKeyOverwriteConfig = "overwriteConfig"
+	deployConfigKeyDeployNamespace = "deployNamespace"
+	deployConfigKeyOverwriteConfig = "overwriteConfig"
 )
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
@@ -38,7 +38,7 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		return nil, err
 	}
 
-	componentConfig, err := parsePackageConfig(cr)
+	componentConfig, err := parseDeployConfig(cr)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +49,14 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		PersistenceContext: persistenceContext,
-		PackageConfig:      componentConfig,
+		DeployConfig:       componentConfig,
 	}, nil
 }
 
-func parsePackageConfig(cr *compV1.Component) (ecosystem.PackageConfig, error) {
-	componentConfig := ecosystem.PackageConfig{}
+func parseDeployConfig(cr *compV1.Component) (ecosystem.DeployConfig, error) {
+	componentConfig := ecosystem.DeployConfig{}
 	if cr.Spec.DeployNamespace != "" {
-		componentConfig[packageConfigKeyDeployNamespace] = cr.Spec.DeployNamespace
+		componentConfig[deployConfigKeyDeployNamespace] = cr.Spec.DeployNamespace
 	}
 
 	if cr.Spec.ValuesYamlOverwrite != "" {
@@ -66,19 +66,19 @@ func parsePackageConfig(cr *compV1.Component) (ecosystem.PackageConfig, error) {
 		if err != nil {
 			return nil, domainservice.NewInternalError(err, "failed to unmarshal values yaml overwrite %q", cr.Spec.ValuesYamlOverwrite)
 		}
-		componentConfig[packageConfigKeyOverwriteConfig] = valuesYamlOverwrite
+		componentConfig[deployConfigKeyOverwriteConfig] = valuesYamlOverwrite
 	}
 
 	return componentConfig, nil
 }
 
 func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*compV1.Component, error) {
-	deployNamespace, err := toDeployNamespace(componentInstallation.PackageConfig)
+	deployNamespace, err := toDeployNamespace(componentInstallation.DeployConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	valuesYamlOverwrite, err := toValuesYamlOverwrite(componentInstallation.PackageConfig)
+	valuesYamlOverwrite, err := toValuesYamlOverwrite(componentInstallation.DeployConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +107,8 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 	}, nil
 }
 
-func toDeployNamespace(packageConfig ecosystem.PackageConfig) (string, error) {
-	deployNamespace, found := packageConfig[packageConfigKeyDeployNamespace]
+func toDeployNamespace(deployConfig ecosystem.DeployConfig) (string, error) {
+	deployNamespace, found := deployConfig[deployConfigKeyDeployNamespace]
 	if !found {
 		return "", nil
 	}
@@ -120,8 +120,8 @@ func toDeployNamespace(packageConfig ecosystem.PackageConfig) (string, error) {
 	return deployNamespaceStr, nil
 }
 
-func toValuesYamlOverwrite(packageConfig ecosystem.PackageConfig) (string, error) {
-	in, found := packageConfig[packageConfigKeyOverwriteConfig]
+func toValuesYamlOverwrite(deployConfig ecosystem.DeployConfig) (string, error) {
+	in, found := deployConfig[deployConfigKeyOverwriteConfig]
 	if !found {
 		return "", nil
 	}
@@ -146,12 +146,12 @@ type componentSpecPatch struct {
 }
 
 func toComponentCRPatch(component *ecosystem.ComponentInstallation) (*componentCRPatch, error) {
-	deployNamespace, err := toDeployNamespace(component.PackageConfig)
+	deployNamespace, err := toDeployNamespace(component.DeployConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	valuesYamlOverwrite, err := toValuesYamlOverwrite(component.PackageConfig)
+	valuesYamlOverwrite, err := toValuesYamlOverwrite(component.DeployConfig)
 	if err != nil {
 		return nil, err
 	}

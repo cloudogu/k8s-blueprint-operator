@@ -13,7 +13,7 @@ import (
 type ComponentDiffs []ComponentDiff
 
 // Statistics aggregates various figures about the required actions of the ComponentDiffs.
-func (cd ComponentDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateNamespace, toUpdatePackageConfig, other int) {
+func (cd ComponentDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateNamespace, toUpdateDeployConfig, other int) {
 	for _, componentDiff := range cd {
 		for _, action := range componentDiff.NeededActions {
 			switch action {
@@ -23,8 +23,8 @@ func (cd ComponentDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpda
 				toUpgrade += 1
 			case ActionUninstall:
 				toUninstall += 1
-			case ActionUpdateComponentPackageConfig:
-				toUpdatePackageConfig += 1
+			case ActionUpdateComponentDeployConfig:
+				toUpdateDeployConfig += 1
 			case ActionSwitchComponentNamespace:
 				toUpdateNamespace += 1
 			default:
@@ -57,8 +57,8 @@ type ComponentDiffState struct {
 	Version *semver.Version
 	// InstallationState contains the component's target state.
 	InstallationState TargetState
-	// PackageConfig contains generic properties for the component.
-	PackageConfig ecosystem.PackageConfig
+	// DeployConfig contains generic properties for the component.
+	DeployConfig ecosystem.DeployConfig
 }
 
 // String returns a string representation of the ComponentDiff.
@@ -134,7 +134,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 			Namespace:         installedComponent.Name.Namespace,
 			Version:           installedComponent.Version,
 			InstallationState: TargetStatePresent,
-			PackageConfig:     installedComponent.PackageConfig,
+			DeployConfig:      installedComponent.DeployConfig,
 		}
 	}
 
@@ -146,7 +146,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 			Namespace:         blueprintComponent.Name.Namespace,
 			Version:           blueprintComponent.Version,
 			InstallationState: blueprintComponent.TargetState,
-			PackageConfig:     blueprintComponent.PackageConfig,
+			DeployConfig:      blueprintComponent.DeployConfig,
 		}
 	}
 
@@ -200,11 +200,11 @@ func getActionsForEqualPresentState(expected ComponentDiffState, actual Componen
 		neededActions = append(neededActions, ActionSwitchComponentNamespace)
 	}
 
-	if !reflect.DeepEqual(expected.PackageConfig, actual.PackageConfig) {
-		// Do update only if any PackageConfig contains data.
-		// A nil PackageConfig and an empty PackageConfig are not deeply equal. But in this case we do not want to update the PackageConfig.
-		if len(expected.PackageConfig) != 0 || len(actual.PackageConfig) != 0 {
-			neededActions = append(neededActions, ActionUpdateComponentPackageConfig)
+	if !reflect.DeepEqual(expected.DeployConfig, actual.DeployConfig) {
+		// Do update only if any DeployConfig contains data.
+		// A nil DeployConfig and an empty DeployConfig are not deeply equal. But in this case we do not want to update the DeployConfig.
+		if len(expected.DeployConfig) != 0 || len(actual.DeployConfig) != 0 {
+			neededActions = append(neededActions, ActionUpdateComponentDeployConfig)
 		}
 	}
 

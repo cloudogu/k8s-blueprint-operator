@@ -291,20 +291,20 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 			Expected: domain.ComponentDiffState{
 				Namespace: testNamespace,
 				Version:   semVer3212,
-				PackageConfig: map[string]interface{}{
+				DeployConfig: map[string]interface{}{
 					"deployNamespace": "longhorn-system",
 					"overwriteConfig": map[string]string{
 						"key": "value",
 					},
 				},
 			},
-			NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionUpdateComponentPackageConfig},
+			NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionUpdateComponentDeployConfig},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			Version: semVer3212,
-			PackageConfig: map[string]interface{}{
+			DeployConfig: map[string]interface{}{
 				"deployNamespace": "longhorn-system",
 				"overwriteConfig": map[string]string{
 					"key": "value",

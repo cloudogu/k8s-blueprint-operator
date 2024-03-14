@@ -22,7 +22,7 @@ func TestInstallComponent(t *testing.T) {
 	type args struct {
 		componentName common.QualifiedComponentName
 		version       *semver.Version
-		packageConfig PackageConfig
+		deployConfig  DeployConfig
 	}
 	tests := []struct {
 		name string
@@ -34,18 +34,18 @@ func TestInstallComponent(t *testing.T) {
 			args: args{
 				componentName: testComponentName,
 				version:       testVersion1,
-				packageConfig: map[string]interface{}{"deployNamespace": "longhorn-system"},
+				deployConfig:  map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 			want: &ComponentInstallation{
-				Name:          testComponentName,
-				Version:       testVersion1,
-				PackageConfig: map[string]interface{}{"deployNamespace": "longhorn-system"},
+				Name:         testComponentName,
+				Version:      testVersion1,
+				DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, InstallComponent(tt.args.componentName, tt.args.version, tt.args.packageConfig), "InstallComponent(%v, %v, %v)", tt.args.componentName, tt.args.version)
+			assert.Equalf(t, tt.want, InstallComponent(tt.args.componentName, tt.args.version, tt.args.deployConfig), "InstallComponent(%v, %v, %v)", tt.args.componentName, tt.args.version)
 		})
 	}
 }
@@ -91,16 +91,16 @@ func TestComponentInstallation_Upgrade(t *testing.T) {
 	}
 }
 
-func TestComponentInstallation_UpdatePackageConfig(t *testing.T) {
+func TestComponentInstallation_UpdateDeployConfig(t *testing.T) {
 	t.Run("should set config", func(t *testing.T) {
 		// given
 		sut := ComponentInstallation{}
 		config := map[string]interface{}{"key": "value"}
 
 		// when
-		sut.UpdatePackageConfig(config)
+		sut.UpdateDeployConfig(config)
 
 		// then
-		assert.Equal(t, PackageConfig(config), sut.PackageConfig)
+		assert.Equal(t, DeployConfig(config), sut.DeployConfig)
 	})
 }

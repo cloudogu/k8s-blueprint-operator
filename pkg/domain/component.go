@@ -18,8 +18,8 @@ type Component struct {
 	Version *semver.Version
 	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
-	// PackageConfig defines generic properties for the component. This field is optional.
-	PackageConfig ecosystem.PackageConfig
+	// DeployConfig defines generic properties for the component. This field is optional.
+	DeployConfig ecosystem.DeployConfig
 }
 
 // Validate checks if the component is semantically correct.

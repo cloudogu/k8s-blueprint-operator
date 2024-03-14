@@ -52,5 +52,5 @@ const (
 	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
 	ActionSwitchComponentNamespace        = "component namespace switch"
-	ActionUpdateComponentPackageConfig    = "update component package config"
+	ActionUpdateComponentDeployConfig     = "update component package config"
 )

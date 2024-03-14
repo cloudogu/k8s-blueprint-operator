@@ -64,11 +64,12 @@ spec:
                       description: Components contains a set of exact component versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
                       items:
                         properties:
+                          deployConfig:
+                            description: DeployConfig defines a generic property map for the component configuration. This field is optional.
+                            x-kubernetes-preserve-unknown-fields: true
                           name:
                             description: Name defines the name of the component including its distribution namespace, f. i. "k8s/k8s-dogu-operator". Must not be empty.
                             type: string
-                          packageConfig:
-                            x-kubernetes-preserve-unknown-fields: true
                           targetState:
                             description: TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
                             type: string
@@ -174,14 +175,15 @@ spec:
                           actual:
                             description: Actual contains the component's state in the current system.
                             properties:
+                              deployConfig:
+                                description: DeployConfig contains generic properties for the component.
+                                x-kubernetes-preserve-unknown-fields: true
                               distributionNamespace:
                                 description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
                                 description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
                                 type: string
-                              packageConfig:
-                                x-kubernetes-preserve-unknown-fields: true
                               version:
                                 description: Version contains the component's version.
                                 type: string
@@ -191,14 +193,15 @@ spec:
                           expected:
                             description: Expected contains the desired component's target state.
                             properties:
+                              deployConfig:
+                                description: DeployConfig contains generic properties for the component.
+                                x-kubernetes-preserve-unknown-fields: true
                               distributionNamespace:
                                 description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
                                 description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
                                 type: string
-                              packageConfig:
-                                x-kubernetes-preserve-unknown-fields: true
                               version:
                                 description: Version contains the component's version.
                                 type: string

@@ -96,7 +96,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				Name:          testComponentName.SimpleName,
 				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
-				NeededActions: []Action{ActionUpdateComponentPackageConfig},
+				NeededActions: []Action{ActionUpdateComponentDeployConfig},
 			},
 		},
 		{
@@ -109,7 +109,7 @@ func Test_determineComponentDiff(t *testing.T) {
 				Name:          testComponentName.SimpleName,
 				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
 				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
-				NeededActions: []Action{ActionUpdateComponentPackageConfig, ActionUpgrade},
+				NeededActions: []Action{ActionUpdateComponentDeployConfig, ActionUpgrade},
 			},
 		},
 		{
@@ -163,24 +163,24 @@ func Test_determineComponentDiff(t *testing.T) {
 
 func TestComponentDiffs_Statistics(t *testing.T) {
 	tests := []struct {
-		name                      string
-		dd                        ComponentDiffs
-		wantToInstall             int
-		wantToUpgrade             int
-		wantToUninstall           int
-		wantToUpdateNamespace     int
-		wantToUpdatePackageConfig int
-		wantOther                 int
+		name                     string
+		dd                       ComponentDiffs
+		wantToInstall            int
+		wantToUpgrade            int
+		wantToUninstall          int
+		wantToUpdateNamespace    int
+		wantToUpdateDeployConfig int
+		wantOther                int
 	}{
 		{
-			name:                      "0 overall",
-			dd:                        ComponentDiffs{},
-			wantToInstall:             0,
-			wantToUpgrade:             0,
-			wantToUninstall:           0,
-			wantToUpdateNamespace:     0,
-			wantToUpdatePackageConfig: 0,
-			wantOther:                 0,
+			name:                     "0 overall",
+			dd:                       ComponentDiffs{},
+			wantToInstall:            0,
+			wantToUpgrade:            0,
+			wantToUninstall:          0,
+			wantToUpdateNamespace:    0,
+			wantToUpdateDeployConfig: 0,
+			wantOther:                0,
 		},
 		{
 			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 to update namespace, 3 to update package config, 3 other",
@@ -189,30 +189,30 @@ func TestComponentDiffs_Statistics(t *testing.T) {
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentPackageConfig}},
+				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentDeployConfig}},
 				{NeededActions: []Action{ActionInstall}},
 				{NeededActions: []Action{ActionDowngrade}},
 				{NeededActions: []Action{ActionUninstall}},
 				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentPackageConfig}},
-				{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentPackageConfig}},
+				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentDeployConfig}},
+				{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentDeployConfig}},
 			},
-			wantToInstall:             4,
-			wantToUpgrade:             3,
-			wantToUninstall:           2,
-			wantToUpdateNamespace:     2,
-			wantToUpdatePackageConfig: 3,
-			wantOther:                 2,
+			wantToInstall:            4,
+			wantToUpgrade:            3,
+			wantToUninstall:          2,
+			wantToUpdateNamespace:    2,
+			wantToUpdateDeployConfig: 3,
+			wantOther:                2,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotToInstall, gotToUpgrade, gotToUninstall, gotToUpdateNamespace, gotToUpdatePackageConfig, gotOther := tt.dd.Statistics()
+			gotToInstall, gotToUpgrade, gotToUninstall, gotToUpdateNamespace, gotToUpdateDeployConfig, gotOther := tt.dd.Statistics()
 			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
 			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
 			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
 			assert.Equalf(t, tt.wantToUpdateNamespace, gotToUpdateNamespace, "Statistics()")
-			assert.Equalf(t, tt.wantToUpdatePackageConfig, gotToUpdatePackageConfig, "Statistics()")
+			assert.Equalf(t, tt.wantToUpdateDeployConfig, gotToUpdateDeployConfig, "Statistics()")
 			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
@@ -252,12 +252,12 @@ func TestComponentDiffState_String(t *testing.T) {
 	assert.Equal(t, `{Namespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
 }
 
-func mockTargetComponent(version *semver.Version, state TargetState, packageConfig ecosystem.PackageConfig) *Component {
+func mockTargetComponent(version *semver.Version, state TargetState, deployConfig ecosystem.DeployConfig) *Component {
 	return &Component{
-		Name:          testComponentName,
-		Version:       version,
-		TargetState:   state,
-		PackageConfig: packageConfig,
+		Name:         testComponentName,
+		Version:      version,
+		TargetState:  state,
+		DeployConfig: deployConfig,
 	}
 }
 
@@ -268,12 +268,12 @@ func mockComponentInstallation(version *semver.Version) *ecosystem.ComponentInst
 	}
 }
 
-func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState, packageConfig ecosystem.PackageConfig) ComponentDiffState {
+func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState, deployConfig ecosystem.DeployConfig) ComponentDiffState {
 	return ComponentDiffState{
 		Namespace:         namespace,
 		Version:           version,
 		InstallationState: state,
-		PackageConfig:     packageConfig,
+		DeployConfig:      deployConfig,
 	}
 }
 

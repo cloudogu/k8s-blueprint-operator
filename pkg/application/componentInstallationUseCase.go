@@ -150,15 +150,15 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
 				Namespace:  componentDiff.Expected.Namespace,
 				SimpleName: componentDiff.Name,
-			}, componentDiff.Expected.Version, componentDiff.Expected.PackageConfig)
+			}, componentDiff.Expected.Version, componentDiff.Expected.DeployConfig)
 			return useCase.componentRepo.Create(ctx, newComponent)
 		case domain.ActionUninstall:
 			logger.Info("uninstall component")
 			return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
 		case domain.ActionUpgrade:
 			componentInstallation.Upgrade(componentDiff.Expected.Version)
-		case domain.ActionUpdateComponentPackageConfig:
-			componentInstallation.UpdatePackageConfig(componentDiff.Expected.PackageConfig)
+		case domain.ActionUpdateComponentDeployConfig:
+			componentInstallation.UpdateDeployConfig(componentDiff.Expected.DeployConfig)
 		case domain.ActionSwitchComponentNamespace:
 			logger.Info("switch distribution namespace")
 			return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)

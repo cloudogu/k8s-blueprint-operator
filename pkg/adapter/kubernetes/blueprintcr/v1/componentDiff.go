@@ -34,10 +34,10 @@ type ComponentDiffState struct {
 	//  - domain.ActionUninstall
 	//  - and so on
 	InstallationState string `json:"installationState"`
-	// PackageConfig contains generic properties for the component.
+	// DeployConfig contains generic properties for the component.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	PackageConfig map[string]interface{} `json:"packageConfig,omitempty"`
+	DeployConfig map[string]interface{} `json:"deployConfig,omitempty"`
 }
 
 // ComponentAction is the action that needs to be done for a component
@@ -66,13 +66,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			PackageConfig:     domainModel.Actual.PackageConfig,
+			DeployConfig:      domainModel.Actual.DeployConfig,
 		},
 		Expected: ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			PackageConfig:     domainModel.Expected.PackageConfig,
+			DeployConfig:      domainModel.Expected.DeployConfig,
 		},
 		NeededActions: componentActions,
 	}
@@ -127,13 +127,13 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
-			PackageConfig:     dto.Actual.PackageConfig,
+			DeployConfig:      dto.Actual.DeployConfig,
 		},
 		Expected: domain.ComponentDiffState{
 			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
-			PackageConfig:     dto.Expected.PackageConfig,
+			DeployConfig:      dto.Expected.DeployConfig,
 		},
 		NeededActions: componentActions,
 	}, nil

@@ -105,7 +105,7 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentPackageConfig, ActionSwitchComponentNamespace}},
+					{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentDeployConfig, ActionSwitchComponentNamespace}},
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffComponentDetermined",

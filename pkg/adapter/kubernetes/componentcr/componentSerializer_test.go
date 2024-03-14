@@ -68,7 +68,7 @@ func Test_parseComponentCR(t *testing.T) {
 				Version: testVersion1,
 				Status:  testStatus,
 				Health:  ecosystem.HealthStatus(testHealthStatus),
-				PackageConfig: map[string]interface{}{
+				DeployConfig: map[string]interface{}{
 					"deployNamespace": "longhorn-system",
 					"overwriteConfig": expectedValuesOverwrite,
 				},
@@ -161,7 +161,7 @@ func Test_toComponentCR(t *testing.T) {
 					PersistenceContext: map[string]interface{}{
 						componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 					},
-					PackageConfig: map[string]interface{}{
+					DeployConfig: map[string]interface{}{
 						"deployNamespace": "longhorn-system",
 						"overwriteConfig": map[string]interface{}{"key": "value"},
 					},
@@ -199,7 +199,7 @@ func Test_toComponentCR(t *testing.T) {
 
 func Test_toComponentCRPatch(t *testing.T) {
 	testDeployNamespace := "longhorn-system"
-	testPackageConfig := "key: value\n"
+	testDeployConfig := "key: value\n"
 	type args struct {
 		component *ecosystem.ComponentInstallation
 	}
@@ -215,7 +215,7 @@ func Test_toComponentCRPatch(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
-					PackageConfig: map[string]interface{}{
+					DeployConfig: map[string]interface{}{
 						"deployNamespace": "longhorn-system",
 						"overwriteConfig": map[string]interface{}{"key": "value"},
 					},
@@ -227,7 +227,7 @@ func Test_toComponentCRPatch(t *testing.T) {
 					Name:                testComponentNameRaw,
 					Version:             testVersion1.String(),
 					DeployNamespace:     &testDeployNamespace,
-					ValuesYamlOverwrite: &testPackageConfig,
+					ValuesYamlOverwrite: &testDeployConfig,
 				},
 			},
 			wantErr: assert.NoError,
@@ -238,7 +238,7 @@ func Test_toComponentCRPatch(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
-					PackageConfig: map[string]interface{}{
+					DeployConfig: map[string]interface{}{
 						"deployNamespace": map[string]interface{}{"no": "string"},
 					},
 				},
@@ -273,7 +273,7 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
-					PackageConfig: map[string]interface{}{
+					DeployConfig: map[string]interface{}{
 						"deployNamespace": "longhorn-system",
 						"overwriteConfig": map[string]interface{}{"key": "value"},
 					},
@@ -288,7 +288,7 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
-					PackageConfig: map[string]interface{}{
+					DeployConfig: map[string]interface{}{
 						"deployNamespace": map[string]interface{}{"no": "string"},
 					},
 				},

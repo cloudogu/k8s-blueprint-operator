@@ -1,3 +1,3 @@
 package ecosystem
 
-type PackageConfig map[string]interface{}
+type DeployConfig map[string]interface{}

@@ -56,10 +56,10 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
 					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent, PackageConfig: map[string]interface{}{"deployNamespace": "ecosystem", "overwriteConfig": map[string]string{"key": "value"}}},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent, DeployConfig: map[string]interface{}{"deployNamespace": "ecosystem", "overwriteConfig": map[string]string{"key": "value"}}},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"","targetState":"absent","packageConfig":{"deployNamespace":"ecosystem","overwriteConfig":{"key":"value"}}}],"config":{"global":{}}}`,
+			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployConfig":{"deployNamespace":"ecosystem","overwriteConfig":{"key":"value"}}}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
@@ -159,11 +159,11 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			args: args{
 				spec: domain.Blueprint{
 					Components: []domain.Component{
-						{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, PackageConfig: map[string]interface{}{"key": "value"}},
+						{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
 					},
 				},
 			},
-			want:    "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"packageConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}",
+			want:    "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}",
 			wantErr: assert.NoError,
 		},
 	}
@@ -327,17 +327,17 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		},
 		{
 			"component package config",
-			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"packageConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}"},
+			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}"},
 			domain.Blueprint{
 				Components: []domain.Component{
-					{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, PackageConfig: map[string]interface{}{"key": "value"}},
+					{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
 				},
 			},
 			assert.NoError,
 		},
 		{
 			"component package config error",
-			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"packageConfig\":{\"key\"\":\"\"::\"value:{\"}}],\"config\":{\"global\":{}}}"},
+			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\"\":\"\"::\"value:{\"}}],\"config\":{\"global\":{}}}"},
 			domain.Blueprint{},
 			assert.Error,
 		},

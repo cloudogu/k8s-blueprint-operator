@@ -10,7 +10,7 @@ import (
 
 const testNamespace = "k8s"
 
-var testPackageConfig = map[string]interface{}{"key": "value", "key1": map[string]interface{}{"key": "value2"}}
+var testDeployConfig = map[string]interface{}{"key": "value", "key1": map[string]interface{}{"key": "value2"}}
 
 func Test_convertToComponentDiffDTO(t *testing.T) {
 	t.Run("should copy model diff to DTO diff - absent", func(t *testing.T) {
@@ -18,7 +18,7 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		domainDiff := domain.ComponentDiff{
 			Name:          testComponentName,
 			Actual:        domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent, Namespace: testNamespace, PackageConfig: testPackageConfig},
+			Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent, Namespace: testNamespace, DeployConfig: testDeployConfig},
 			NeededActions: []domain.Action{domain.ActionInstall}}
 
 		// when
@@ -27,7 +27,7 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		// then
 		expected := ComponentDiff{
 			Actual:        ComponentDiffState{Version: "", InstallationState: "absent"},
-			Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present", Namespace: testNamespace, PackageConfig: testPackageConfig},
+			Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present", Namespace: testNamespace, DeployConfig: testDeployConfig},
 			NeededActions: []ComponentAction{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)
@@ -58,7 +58,7 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		// given
 		diff := ComponentDiff{
 			Actual:        ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			Expected:      ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present", PackageConfig: testPackageConfig},
+			Expected:      ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present", DeployConfig: testDeployConfig},
 			NeededActions: []ComponentAction{domain.ActionInstall},
 		}
 
@@ -70,7 +70,7 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		expected := domain.ComponentDiff{
 			Name:          testComponentName,
 			Actual:        domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:      domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent, PackageConfig: testPackageConfig},
+			Expected:      domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent, DeployConfig: testDeployConfig},
 			NeededActions: []domain.Action{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)

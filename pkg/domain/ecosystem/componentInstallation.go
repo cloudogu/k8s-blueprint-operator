@@ -19,7 +19,7 @@ type ComponentInstallation struct {
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
-	PackageConfig      PackageConfig
+	DeployConfig       DeployConfig
 }
 
 const (
@@ -45,11 +45,11 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version, packageConfig PackageConfig) *ComponentInstallation {
+func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version, deployConfig DeployConfig) *ComponentInstallation {
 	return &ComponentInstallation{
-		Name:          componentName,
-		Version:       version,
-		PackageConfig: packageConfig,
+		Name:         componentName,
+		Version:      version,
+		DeployConfig: deployConfig,
 	}
 }
 
@@ -57,6 +57,6 @@ func (ci *ComponentInstallation) Upgrade(version *semver.Version) {
 	ci.Version = version
 }
 
-func (ci *ComponentInstallation) UpdatePackageConfig(packageConfig PackageConfig) {
-	ci.PackageConfig = packageConfig
+func (ci *ComponentInstallation) UpdateDeployConfig(deployConfig DeployConfig) {
+	ci.DeployConfig = deployConfig
 }

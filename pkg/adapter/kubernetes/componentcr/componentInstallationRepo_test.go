@@ -252,7 +252,7 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:    testComponentName,
 			Version: testVersion1,
-			PackageConfig: map[string]interface{}{
+			DeployConfig: map[string]interface{}{
 				"deployNamespace": "longhorn-system",
 				"overwriteConfig": map[string]interface{}{"key": "value"},
 			},
@@ -370,7 +370,7 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:    testComponentName,
 			Version: testVersion1,
-			PackageConfig: map[string]interface{}{
+			DeployConfig: map[string]interface{}{
 				"deployNamespace": map[string]string{"no": "string"},
 			},
 		}
