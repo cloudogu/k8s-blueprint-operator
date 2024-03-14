@@ -119,7 +119,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	}
 
 	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
-		err = useCase.ApplyComponentState(ctx, componentDiff, components[componentDiff.Name])
+		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
 		}
@@ -127,7 +127,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	return nil
 }
 
-func (useCase *ComponentInstallationUseCase) ApplyComponentState(
+func (useCase *ComponentInstallationUseCase) applyComponentState(
 	ctx context.Context,
 	componentDiff domain.ComponentDiff,
 	componentInstallation *ecosystem.ComponentInstallation,

@@ -30,7 +30,7 @@ type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprintId string) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
-	ApplyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
+	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 
 type applyBlueprintSpecUseCase interface {

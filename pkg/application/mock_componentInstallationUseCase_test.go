@@ -25,7 +25,7 @@ func (_m *mockComponentInstallationUseCase) EXPECT() *mockComponentInstallationU
 }
 
 // ApplyComponentState provides a mock function with given fields: _a0, _a1, _a2
-func (_m *mockComponentInstallationUseCase) ApplyComponentState(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation) error {
+func (_m *mockComponentInstallationUseCase) applyComponentState(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation) error {
 	ret := _m.Called(_a0, _a1, _a2)
 
 	var r0 error
@@ -38,7 +38,7 @@ func (_m *mockComponentInstallationUseCase) ApplyComponentState(_a0 context.Cont
 	return r0
 }
 
-// mockComponentInstallationUseCase_ApplyComponentState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyComponentState'
+// mockComponentInstallationUseCase_ApplyComponentState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'applyComponentState'
 type mockComponentInstallationUseCase_ApplyComponentState_Call struct {
 	*mock.Call
 }
@@ -48,7 +48,7 @@ type mockComponentInstallationUseCase_ApplyComponentState_Call struct {
 //   - _a1 domain.ComponentDiff
 //   - _a2 *ecosystem.ComponentInstallation
 func (_e *mockComponentInstallationUseCase_Expecter) ApplyComponentState(_a0 interface{}, _a1 interface{}, _a2 interface{}) *mockComponentInstallationUseCase_ApplyComponentState_Call {
-	return &mockComponentInstallationUseCase_ApplyComponentState_Call{Call: _e.mock.On("ApplyComponentState", _a0, _a1, _a2)}
+	return &mockComponentInstallationUseCase_ApplyComponentState_Call{Call: _e.mock.On("applyComponentState", _a0, _a1, _a2)}
 }
 
 func (_c *mockComponentInstallationUseCase_ApplyComponentState_Call) Run(run func(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation)) *mockComponentInstallationUseCase_ApplyComponentState_Call {

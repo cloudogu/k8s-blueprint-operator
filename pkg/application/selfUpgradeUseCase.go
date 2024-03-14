@@ -80,7 +80,7 @@ func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, bluepr
 }
 
 func (useCase *SelfUpgradeUseCase) applySelfUpgrade(ctx context.Context, ownDiff domain.ComponentDiff, ownComponent *ecosystem.ComponentInstallation) error {
-	err := useCase.componentUseCase.ApplyComponentState(ctx, ownDiff, ownComponent)
+	err := useCase.componentUseCase.applyComponentState(ctx, ownDiff, ownComponent)
 	if err != nil {
 		return fmt.Errorf("an error occurred while applying the self-upgrade to the ecosystem: %w", err)
 	}
