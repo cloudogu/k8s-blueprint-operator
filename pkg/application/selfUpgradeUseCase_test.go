@@ -139,7 +139,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
 			require.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
 		})
-		componentUseCase.EXPECT().ApplyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(nil).Run(
+		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(nil).Run(
 			func(_ context.Context, _ domain.ComponentDiff, _ *ecosystem.ComponentInstallation) {
 				cancelCtx()
 			},
@@ -170,7 +170,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 			require.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
 		})
 		var nilComponent *ecosystem.ComponentInstallation
-		componentUseCase.EXPECT().ApplyComponentState(mock.Anything, UpgradeToV2ComponentDiff, nilComponent).Return(nil).Run(
+		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, nilComponent).Return(nil).Run(
 			func(_ context.Context, _ domain.ComponentDiff, _ *ecosystem.ComponentInstallation) {
 				cancelCtx()
 			},
@@ -263,7 +263,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
 		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(component, nil)
 		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil)
-		componentUseCase.EXPECT().ApplyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(internalTestError)
+		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(internalTestError)
 
 		err := useCase.HandleSelfUpgrade(testCtx, blueprintId)
 
