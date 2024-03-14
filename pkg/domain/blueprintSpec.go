@@ -342,7 +342,7 @@ func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleCompo
 		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 		return ownDiff
 	}
-	// if there is sth. left to be done
+	// if self upgrade is not done yet
 	spec.Status = StatusPhaseAwaitSelfUpgrade
 	spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	return ownDiff
