@@ -161,62 +161,6 @@ func Test_determineComponentDiff(t *testing.T) {
 	}
 }
 
-func TestComponentDiffs_Statistics(t *testing.T) {
-	tests := []struct {
-		name                     string
-		dd                       ComponentDiffs
-		wantToInstall            int
-		wantToUpgrade            int
-		wantToUninstall          int
-		wantToUpdateNamespace    int
-		wantToUpdateDeployConfig int
-		wantOther                int
-	}{
-		{
-			name:                     "0 overall",
-			dd:                       ComponentDiffs{},
-			wantToInstall:            0,
-			wantToUpgrade:            0,
-			wantToUninstall:          0,
-			wantToUpdateNamespace:    0,
-			wantToUpdateDeployConfig: 0,
-			wantOther:                0,
-		},
-		{
-			name: "4 to install, 3 to upgrade, 2 to uninstall, 2 to update namespace, 3 to update package config, 1 other",
-			dd: ComponentDiffs{
-				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUninstall}},
-				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentDeployConfig}},
-				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionDowngrade}},
-				{NeededActions: []Action{ActionUninstall}},
-				{NeededActions: []Action{ActionInstall}},
-				{NeededActions: []Action{ActionUpgrade, ActionSwitchComponentNamespace, ActionUpdateComponentDeployConfig}},
-				{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentDeployConfig}},
-			},
-			wantToInstall:            4,
-			wantToUpgrade:            3,
-			wantToUninstall:          2,
-			wantToUpdateNamespace:    2,
-			wantToUpdateDeployConfig: 3,
-			wantOther:                1,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotToInstall, gotToUpgrade, gotToUninstall, gotToUpdateNamespace, gotToUpdateDeployConfig, gotOther := tt.dd.Statistics()
-			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
-			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
-			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
-			assert.Equalf(t, tt.wantToUpdateNamespace, gotToUpdateNamespace, "Statistics()")
-			assert.Equalf(t, tt.wantToUpdateDeployConfig, gotToUpdateDeployConfig, "Statistics()")
-			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
-		})
-	}
-}
-
 func TestComponentDiff_String(t *testing.T) {
 	actual := ComponentDiffState{
 		Version:           compVersion3211,

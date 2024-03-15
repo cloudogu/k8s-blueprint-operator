@@ -12,29 +12,6 @@ import (
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
 type DoguDiffs []DoguDiff
 
-// Statistics aggregates various figures about the required actions of the DoguDiffs.
-func (dd DoguDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateReverseProxyConfig, toUpdateResourceConfig, other int) {
-	for _, doguDiff := range dd {
-		for _, action := range doguDiff.NeededActions {
-			switch action {
-			case ActionInstall:
-				toInstall += 1
-			case ActionUpgrade:
-				toUpgrade += 1
-			case ActionUninstall:
-				toUninstall += 1
-			case ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig:
-				toUpdateReverseProxyConfig += 1
-			case ActionUpdateDoguResourceMinVolumeSize:
-				toUpdateResourceConfig += 1
-			default:
-				other += 1
-			}
-		}
-	}
-	return
-}
-
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
 	DoguName      common.SimpleDoguName

@@ -12,29 +12,6 @@ import (
 // ComponentDiffs contains the differences for all expected Components to the current ecosystem.ComponentInstallations.
 type ComponentDiffs []ComponentDiff
 
-// Statistics aggregates various figures about the required actions of the ComponentDiffs.
-func (cd ComponentDiffs) Statistics() (toInstall, toUpgrade, toUninstall, toUpdateNamespace, toUpdateDeployConfig, other int) {
-	for _, componentDiff := range cd {
-		for _, action := range componentDiff.NeededActions {
-			switch action {
-			case ActionInstall:
-				toInstall += 1
-			case ActionUpgrade:
-				toUpgrade += 1
-			case ActionUninstall:
-				toUninstall += 1
-			case ActionUpdateComponentDeployConfig:
-				toUpdateDeployConfig += 1
-			case ActionSwitchComponentNamespace:
-				toUpdateNamespace += 1
-			default:
-				other += 1
-			}
-		}
-	}
-	return
-}
-
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
 	// Name contains the component's name.

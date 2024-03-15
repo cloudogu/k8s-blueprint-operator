@@ -92,7 +92,7 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffDoguDetermined",
-			expectedMessage: "state diff determined: 7 dogu diffs (2 to install, 1 to upgrade, 3 to delete, 1 others)\ndogu config diffs: (1 to update resource config, 3 to update reverse proxy config)",
+			expectedMessage: "dogu state diff determined: 11 actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 3, \"upgrade\": 1)",
 		},
 		{
 			name: "component state diff determined",
@@ -107,7 +107,7 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionDowngrade}},
 				}),
 			expectedName:    "StateDiffComponentDetermined",
-			expectedMessage: "state diff determined: 7 component diffs (2 to install, 1 to upgrade, 3 to delete, 1 others)\ncomponent config diffs: (1 to update namespace, 1 to update package config)",
+			expectedMessage: "component state diff determined: 9 actions (\"component namespace switch\": 1, \"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update component package config\": 1, \"upgrade\": 1)",
 		},
 		{
 			name: "global config diff determined",

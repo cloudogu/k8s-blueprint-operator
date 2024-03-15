@@ -53,3 +53,7 @@ const (
 	ActionSwitchComponentNamespace        = "component namespace switch"
 	ActionUpdateComponentDeployConfig     = "update component package config"
 )
+
+func (a Action) IsDoguProxyAction() bool {
+	return a == ActionUpdateDoguProxyBodySize || a == ActionUpdateDoguProxyAdditionalConfig || a == ActionUpdateDoguProxyRewriteTarget
+}
