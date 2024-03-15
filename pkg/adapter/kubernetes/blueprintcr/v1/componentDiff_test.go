@@ -8,42 +8,46 @@ import (
 	"testing"
 )
 
+const testNamespace = "k8s"
+
+var testDeployConfig = map[string]interface{}{"key": "value", "key1": map[string]interface{}{"key": "value2"}}
+
 func Test_convertToComponentDiffDTO(t *testing.T) {
 	t.Run("should copy model diff to DTO diff - absent", func(t *testing.T) {
 		// given
 		domainDiff := domain.ComponentDiff{
-			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			NeededAction: domain.ActionInstall}
+			Name:          testComponentName,
+			Actual:        domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
+			Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent, Namespace: testNamespace, DeployConfig: testDeployConfig},
+			NeededActions: []domain.Action{domain.ActionInstall}}
 
 		// when
 		actual := convertToComponentDiffDTO(domainDiff)
 
 		// then
 		expected := ComponentDiff{
-			Actual:       ComponentDiffState{Version: "", InstallationState: "absent"},
-			Expected:     ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-			NeededAction: domain.ActionInstall,
+			Actual:        ComponentDiffState{Version: "", InstallationState: "absent"},
+			Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present", Namespace: testNamespace, DeployConfig: testDeployConfig},
+			NeededActions: []ComponentAction{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
 	t.Run("should copy model diff to DTO diff - present", func(t *testing.T) {
 		// given
 		domainDiff := domain.ComponentDiff{
-			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:     domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
-			NeededAction: domain.ActionUninstall}
+			Name:          testComponentName,
+			Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
+			NeededActions: []domain.Action{domain.ActionUninstall}}
 
 		// when
 		actual := convertToComponentDiffDTO(domainDiff)
 
 		// then
 		expected := ComponentDiff{
-			Actual:       ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-			Expected:     ComponentDiffState{Version: "", InstallationState: "absent"},
-			NeededAction: domain.ActionUninstall,
+			Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+			Expected:      ComponentDiffState{Version: "", InstallationState: "absent"},
+			NeededActions: []ComponentAction{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
@@ -53,9 +57,9 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 	t.Run("should copy model diff to DTO diff - absent", func(t *testing.T) {
 		// given
 		diff := ComponentDiff{
-			Actual:       ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			Expected:     ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present"},
-			NeededAction: domain.ActionInstall,
+			Actual:        ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			Expected:      ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present", DeployConfig: testDeployConfig},
+			NeededActions: []ComponentAction{domain.ActionInstall},
 		}
 
 		// when
@@ -64,19 +68,19 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
-			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:     domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			NeededAction: domain.ActionInstall,
+			Name:          testComponentName,
+			Actual:        domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			Expected:      domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent, DeployConfig: testDeployConfig},
+			NeededActions: []domain.Action{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
 	t.Run("should copy model diff to DTO diff - present", func(t *testing.T) {
 		// given
 		diff := ComponentDiff{
-			Actual:       ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present"},
-			Expected:     ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			NeededAction: domain.ActionUninstall,
+			Actual:        ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present"},
+			Expected:      ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			NeededActions: []ComponentAction{domain.ActionUninstall},
 		}
 
 		// when
@@ -85,19 +89,19 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
-			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:     domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
-			NeededAction: domain.ActionUninstall,
+			Name:          testComponentName,
+			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
 	t.Run("should fail in all ways", func(t *testing.T) {
 		// given
 		diff := ComponentDiff{
-			Actual:       ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
-			Expected:     ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
-			NeededAction: domain.ActionUninstall,
+			Actual:        ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
+			Expected:      ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
+			NeededActions: []ComponentAction{domain.ActionUninstall},
 		}
 
 		// when
@@ -114,9 +118,9 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		compVersion080dev := semver.MustParse("0.8.0-dev")
 		// given
 		diff := ComponentDiff{
-			Actual:       ComponentDiffState{Namespace: "k8s", Version: compVersion080dev.String(), InstallationState: "present"},
-			Expected:     ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			NeededAction: domain.ActionUninstall,
+			Actual:        ComponentDiffState{Namespace: "k8s", Version: compVersion080dev.String(), InstallationState: "present"},
+			Expected:      ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			NeededActions: []ComponentAction{domain.ActionUninstall},
 		}
 
 		// when
@@ -125,10 +129,10 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
-			Name:         testComponentName,
-			Actual:       domain.ComponentDiffState{Namespace: "k8s", Version: compVersion080dev, InstallationState: domain.TargetStatePresent},
-			Expected:     domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
-			NeededAction: domain.ActionUninstall,
+			Name:          testComponentName,
+			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: compVersion080dev, InstallationState: domain.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
 	})

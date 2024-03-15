@@ -126,8 +126,8 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
-		if noDoguFoundError != nil {
+		dogu, found := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
+		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
 		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
@@ -432,12 +432,8 @@ func (spec *BlueprintSpec) validateStateDiff() error {
 		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateDoguDiffActions(diff)...)
 	}
 
-	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
-		return componentDiff.NeededAction
-	})
-
-	for _, action := range notAllowedComponentActions {
-		invalidBlueprintErrors = evaluateInvalidAction(action, componentsByAction, invalidBlueprintErrors)
+	for _, diff := range spec.StateDiff.ComponentDiffs {
+		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateComponentDiffActions(diff)...)
 	}
 
 	return errors.Join(invalidBlueprintErrors...)
@@ -450,13 +446,27 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 				return nil
 			}
 
-			return &InvalidBlueprintError{
-				Message: fmt.Sprintf("action %q is not allowed", action),
-			}
+			return getActionNotAllowedError(action)
 		}
 
 		return nil
 	})
+}
+
+func (spec *BlueprintSpec) validateComponentDiffActions(diff ComponentDiff) []error {
+	return util.Map(diff.NeededActions, func(action Action) error {
+		if slices.Contains(notAllowedComponentActions, action) {
+			return getActionNotAllowedError(action)
+		}
+
+		return nil
+	})
+}
+
+func getActionNotAllowedError(action Action) *InvalidBlueprintError {
+	return &InvalidBlueprintError{
+		Message: fmt.Sprintf("action %q is not allowed", action),
+	}
 }
 
 func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {

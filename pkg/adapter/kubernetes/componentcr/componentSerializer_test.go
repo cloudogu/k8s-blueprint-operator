@@ -2,11 +2,14 @@ package componentcr
 
 import (
 	_ "embed"
+	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
 	"testing"
 )
 
@@ -24,6 +27,11 @@ var (
 )
 
 func Test_parseComponentCR(t *testing.T) {
+	valuesOverwrite := map[string]interface{}{"key": "value", "key1": map[string]string{"key": "value"}}
+	expectedValuesOverwrite := map[string]interface{}{"key": "value", "key1": map[string]interface{}{"key": "value"}}
+	valuesOverwriteYAMLBytes, err := yaml.Marshal(valuesOverwrite)
+	require.NoError(t, err)
+
 	type args struct {
 		cr *compV1.Component
 	}
@@ -31,7 +39,7 @@ func Test_parseComponentCR(t *testing.T) {
 		name    string
 		args    args
 		want    *ecosystem.ComponentInstallation
-		wantErr bool
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "success",
@@ -43,9 +51,11 @@ func Test_parseComponentCR(t *testing.T) {
 						ResourceVersion: testResourceVersion,
 					},
 					Spec: compV1.ComponentSpec{
-						Namespace: testDistributionNamespace,
-						Name:      testComponentNameRaw,
-						Version:   testVersion1.String(),
+						Namespace:           testDistributionNamespace,
+						Name:                testComponentNameRaw,
+						Version:             testVersion1.String(),
+						DeployNamespace:     "longhorn-system",
+						ValuesYamlOverwrite: string(valuesOverwriteYAMLBytes),
 					},
 					Status: compV1.ComponentStatus{
 						Status: testStatus,
@@ -58,18 +68,22 @@ func Test_parseComponentCR(t *testing.T) {
 				Version: testVersion1,
 				Status:  testStatus,
 				Health:  ecosystem.HealthStatus(testHealthStatus),
+				DeployConfig: map[string]interface{}{
+					"deployNamespace": "longhorn-system",
+					"overwriteConfig": expectedValuesOverwrite,
+				},
 				PersistenceContext: map[string]interface{}{
 					componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 				},
 			},
-			wantErr: false,
+			wantErr: assert.NoError,
 		},
 		{
 			name: "should return error on nil component",
 			args: args{
 				cr: nil,
 			},
-			wantErr: true,
+			wantErr: assert.Error,
 		},
 		{
 			name: "should return error version parse error",
@@ -80,19 +94,48 @@ func Test_parseComponentCR(t *testing.T) {
 					},
 				},
 			},
-			wantErr: true,
+			wantErr: assert.Error,
+		},
+		{
+			name: "should return error on missing resource name",
+			args: args{
+				cr: &compV1.Component{
+					ObjectMeta: metav1.ObjectMeta{},
+					Spec: compV1.ComponentSpec{
+						Namespace: testDistributionNamespace,
+						Name:      testComponentNameRaw,
+						Version:   testVersion1.String(),
+					},
+				},
+			},
+			wantErr: assert.Error,
+		},
+		{
+			name: "should return error on wrong package config value",
+			args: args{
+				cr: &compV1.Component{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "name",
+					},
+					Spec: compV1.ComponentSpec{
+						Namespace:           testDistributionNamespace,
+						Name:                testComponentNameRaw,
+						Version:             testVersion1.String(),
+						DeployNamespace:     "longhorn-system",
+						ValuesYamlOverwrite: "no yaml object",
+					},
+				},
+			},
+			wantErr: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := parseComponentCR(tt.args.cr)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("parseComponentCR() error = %v, wantErr %v", err, tt.wantErr)
+			if !tt.wantErr(t, err, fmt.Sprintf("parseComponentCR(%v)", tt.args.cr)) {
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseComponentCR() got = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -102,9 +145,10 @@ func Test_toComponentCR(t *testing.T) {
 		componentInstallation *ecosystem.ComponentInstallation
 	}
 	tests := []struct {
-		name string
-		args args
-		want *compV1.Component
+		name    string
+		args    args
+		want    *compV1.Component
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "success",
@@ -117,6 +161,10 @@ func Test_toComponentCR(t *testing.T) {
 					PersistenceContext: map[string]interface{}{
 						componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 					},
+					DeployConfig: map[string]interface{}{
+						"deployNamespace": "longhorn-system",
+						"overwriteConfig": map[string]interface{}{"key": "value"},
+					},
 				},
 			},
 			want: &compV1.Component{
@@ -128,30 +176,38 @@ func Test_toComponentCR(t *testing.T) {
 					},
 				},
 				Spec: compV1.ComponentSpec{
-					Namespace: testDistributionNamespace,
-					Name:      testComponentNameRaw,
-					Version:   testVersion1.String(),
+					Namespace:           testDistributionNamespace,
+					Name:                testComponentNameRaw,
+					Version:             testVersion1.String(),
+					DeployNamespace:     "longhorn-system",
+					ValuesYamlOverwrite: "key: value\n",
 				},
 			},
+			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := toComponentCR(tt.args.componentInstallation); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toComponentCR() = %v, want %v", got, tt.want)
+			got, err := toComponentCR(tt.args.componentInstallation)
+			if !tt.wantErr(t, err, fmt.Sprintf("toComponentCR(%v)", tt.args.componentInstallation)) {
+				return
 			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
 
 func Test_toComponentCRPatch(t *testing.T) {
+	testDeployNamespace := "longhorn-system"
+	testDeployConfig := "key: value\n"
 	type args struct {
 		component *ecosystem.ComponentInstallation
 	}
 	tests := []struct {
-		name string
-		args args
-		want *componentCRPatch
+		name    string
+		args    args
+		want    *componentCRPatch
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "success",
@@ -159,22 +215,44 @@ func Test_toComponentCRPatch(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
+					DeployConfig: map[string]interface{}{
+						"deployNamespace": "longhorn-system",
+						"overwriteConfig": map[string]interface{}{"key": "value"},
+					},
 				},
 			},
 			want: &componentCRPatch{
 				Spec: componentSpecPatch{
-					Namespace: testDistributionNamespace,
-					Name:      testComponentNameRaw,
-					Version:   testVersion1.String(),
+					Namespace:           testDistributionNamespace,
+					Name:                testComponentNameRaw,
+					Version:             testVersion1.String(),
+					DeployNamespace:     &testDeployNamespace,
+					ValuesYamlOverwrite: &testDeployConfig,
 				},
 			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return error on wrong package config type",
+			args: args{
+				component: &ecosystem.ComponentInstallation{
+					Name:    testComponentName,
+					Version: testVersion1,
+					DeployConfig: map[string]interface{}{
+						"deployNamespace": map[string]interface{}{"no": "string"},
+					},
+				},
+			},
+			wantErr: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := toComponentCRPatch(tt.args.component); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toComponentCRPatch() = %v, want %v", got, tt.want)
+			got, err := toComponentCRPatch(tt.args.component)
+			if !tt.wantErr(t, err, fmt.Sprintf("toComponentCRPatch(%v)", tt.args.component)) {
+				return
 			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -187,7 +265,7 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 		name    string
 		args    args
 		want    []byte
-		wantErr bool
+		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "success",
@@ -195,22 +273,36 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 				component: &ecosystem.ComponentInstallation{
 					Name:    testComponentName,
 					Version: testVersion1,
+					DeployConfig: map[string]interface{}{
+						"deployNamespace": "longhorn-system",
+						"overwriteConfig": map[string]interface{}{"key": "value"},
+					},
 				},
 			},
 			want:    testPatchBytes,
-			wantErr: false,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return error on error creating patch",
+			args: args{
+				component: &ecosystem.ComponentInstallation{
+					Name:    testComponentName,
+					Version: testVersion1,
+					DeployConfig: map[string]interface{}{
+						"deployNamespace": map[string]interface{}{"no": "string"},
+					},
+				},
+			},
+			wantErr: assert.Error,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := toComponentCRPatchBytes(tt.args.component)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("toComponentCRPatchBytes() error = %v, wantErr %v", err, tt.wantErr)
+			if !tt.wantErr(t, err, fmt.Sprintf("toComponentCRPatchBytes(%v)", tt.args.component)) {
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("toComponentCRPatchBytes() got = %v, want %v", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }

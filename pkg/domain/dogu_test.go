@@ -38,7 +38,7 @@ func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_defaultToPresentState(t *testing.T) {
-	dogu := Dogu{Name: officialDogu1, Version: version1_2_3}
+	dogu := Dogu{Name: officialDogu1, Version: version123}
 
 	err := dogu.validate()
 
@@ -80,7 +80,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 
 	t.Run("no error on empty quantity", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: officialDogu1, Version: version1_2_3}
+		dogu := Dogu{Name: officialDogu1, Version: version123}
 		// when
 		err := dogu.validate()
 		// then
@@ -90,7 +90,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 	t.Run("no error on zero size quantity", func(t *testing.T) {
 		// given
 		zeroQuantity := resource.MustParse("0")
-		dogu := Dogu{Name: officialDogu1, Version: version1_2_3, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
+		dogu := Dogu{Name: officialDogu1, Version: version123, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
 		// when
 		err := dogu.validate()
 		// then

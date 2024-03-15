@@ -57,22 +57,6 @@ func (e EffectiveBlueprintCalculatedEvent) Message() string {
 	return ""
 }
 
-// StateDiffDeterminedEvent is an abstract type that aggregates shared statistic functionality over different stateDiffDetermined events.
-type StateDiffDeterminedEvent struct {
-	// DiffCount contains the total number of detected actions.
-	DiffCount int
-	// EventSubject contains the subject of the dected actions, f. i. "dogu diffs".
-	EventSubject string
-	// ToInstall contains the number of actions that introduce a new subject, f. i. the number of dogus to be installed.
-	ToInstall int
-	// ToUpgrade contains the number of actions that change an already existing subject, f. i. the number of dogus to be upgraded.
-	ToUpgrade int
-	// ToUninstall contains the number of actions that remove an already existing subject, f. i. the number of dogus to be deleted.
-	ToUninstall int
-	// OtherActions contains the number of actions that do not fall into the other three category, f. i. the number of dogus being ignored
-	OtherActions int
-}
-
 type GlobalConfigDiffDeterminedEvent struct {
 	GlobalConfigDiffs GlobalConfigDiffs
 }
@@ -111,27 +95,15 @@ func (e DoguConfigDiffDeterminedEvent) Message() string {
 	return fmt.Sprintf("dogu config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
-func (s StateDiffDeterminedEvent) buildMessage() string {
-	return fmt.Sprintf("state diff determined: %d %s (%d to install, %d to upgrade, %d to delete, %d others)",
-		s.DiffCount, s.EventSubject, s.ToInstall, s.ToUpgrade, s.ToUninstall, s.OtherActions)
-}
-
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
 type StateDiffComponentDeterminedEvent struct {
-	StateDiffDeterminedEvent
+	componentDiffs []ComponentDiff
 }
 
 func newStateDiffComponentEvent(componentDiffs ComponentDiffs) StateDiffComponentDeterminedEvent {
-	install, upgrade, uninstall, other := componentDiffs.Statistics()
-
-	return StateDiffComponentDeterminedEvent{StateDiffDeterminedEvent: StateDiffDeterminedEvent{
-		DiffCount:    len(componentDiffs),
-		EventSubject: "component diffs",
-		ToInstall:    install,
-		ToUpgrade:    upgrade,
-		ToUninstall:  uninstall,
-		OtherActions: other,
-	}}
+	return StateDiffComponentDeterminedEvent{
+		componentDiffs: componentDiffs,
+	}
 }
 
 // Name contains the StateDiffComponentDeterminedEvent display name.
@@ -141,30 +113,37 @@ func (s StateDiffComponentDeterminedEvent) Name() string {
 
 // Message contains the StateDiffComponentDeterminedEvent's statistics message.
 func (s StateDiffComponentDeterminedEvent) Message() string {
-	return s.buildMessage()
+	var amountActions = map[Action]int{}
+	for _, diff := range s.componentDiffs {
+		for _, action := range diff.NeededActions {
+			amountActions[action]++
+		}
+	}
+
+	message, amount := getActionAmountMessage(amountActions)
+
+	return fmt.Sprintf("component state diff determined: %d actions (%s)", amount, message)
+}
+
+func getActionAmountMessage(amountActions map[Action]int) (message string, totalAmount int) {
+	var messages []string
+	for action, amount := range amountActions {
+		messages = append(messages, fmt.Sprintf("%q: %d", action, amount))
+		totalAmount += amount
+	}
+	slices.Sort(messages)
+	message = strings.Join(messages, ", ")
+	return
 }
 
 // StateDiffDoguDeterminedEvent provides event information over detected changes regarding dogus.
 type StateDiffDoguDeterminedEvent struct {
-	StateDiffDeterminedEvent
-	ToUpdateReverseProxyConfig int
-	ToUpdateResourceConfig     int
+	doguDiffs DoguDiffs
 }
 
 func newStateDiffDoguEvent(doguDiffs DoguDiffs) StateDiffDoguDeterminedEvent {
-	install, upgrade, uninstall, updateReverseProxyConfig, updateResourceConfig, other := doguDiffs.Statistics()
-
 	return StateDiffDoguDeterminedEvent{
-		StateDiffDeterminedEvent: StateDiffDeterminedEvent{
-			DiffCount:    len(doguDiffs),
-			EventSubject: "dogu diffs",
-			ToInstall:    install,
-			ToUpgrade:    upgrade,
-			ToUninstall:  uninstall,
-			OtherActions: other,
-		},
-		ToUpdateReverseProxyConfig: updateReverseProxyConfig,
-		ToUpdateResourceConfig:     updateResourceConfig,
+		doguDiffs: doguDiffs,
 	}
 }
 
@@ -173,10 +152,24 @@ func (s StateDiffDoguDeterminedEvent) Name() string {
 	return "StateDiffDoguDetermined"
 }
 
+const groupedDoguProxyAction = "update reverse proxy"
+
 // Message contains the StateDiffDoguDeterminedEvent's statistics message.
 func (s StateDiffDoguDeterminedEvent) Message() string {
-	doguMessage := fmt.Sprintf("dogu config diffs: (%d to update resource config, %d to update reverse proxy config)", s.ToUpdateResourceConfig, s.ToUpdateReverseProxyConfig)
-	return fmt.Sprintf("%s\n%s", s.buildMessage(), doguMessage)
+	var amountActions = map[Action]int{}
+	for _, diff := range s.doguDiffs {
+		for _, action := range diff.NeededActions {
+			if action.IsDoguProxyAction() {
+				amountActions[groupedDoguProxyAction]++
+			} else {
+				amountActions[action]++
+			}
+		}
+	}
+
+	message, amount := getActionAmountMessage(amountActions)
+
+	return fmt.Sprintf("dogu state diff determined: %d actions (%s)", amount, message)
 }
 
 type EcosystemHealthyUpfrontEvent struct {

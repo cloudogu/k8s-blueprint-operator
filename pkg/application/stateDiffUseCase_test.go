@@ -407,7 +407,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:           mustParseVersion(t, "1.8.5"),
 					InstallationState: domain.TargetStatePresent,
 				},
-				NeededActions: []domain.Action{domain.ActionNone},
+				NeededActions: nil,
 			},
 			{
 				DoguName: "nginx-static",

@@ -18,10 +18,6 @@ var (
 		SimpleName: "my-component",
 	}
 	blueprintOperatorSimpleName = common.SimpleComponentName("k8s-blueprint-operator")
-	blueprintOperatorName       = common.QualifiedComponentName{
-		Namespace:  "k8s",
-		SimpleName: blueprintOperatorSimpleName,
-	}
 )
 
 var (
@@ -42,66 +38,92 @@ func Test_determineComponentDiff(t *testing.T) {
 		{
 			name: "equal, no action",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionNone,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				NeededActions: nil,
 			},
 		},
 		{
 			name: "install",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState("", nil, TargetStateAbsent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionInstall,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState("", nil, TargetStateAbsent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				NeededActions: []Action{ActionInstall},
 			},
 		},
 		{
 			name: "uninstall",
 			args: args{
-				blueprintComponent: mockTargetComponent(nil, TargetStateAbsent),
+				blueprintComponent: mockTargetComponent(nil, TargetStateAbsent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent),
-				NeededAction: ActionUninstall,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, nil, TargetStateAbsent, nil),
+				NeededActions: []Action{ActionUninstall},
 			},
 		},
 		{
 			name: "upgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
-				NeededAction: ActionUpgrade,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, nil),
+				NeededActions: []Action{ActionUpgrade},
+			},
+		},
+		{
+			name: "update package config",
+			args: args{
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				installedComponent: mockComponentInstallation(compVersion3211),
+			},
+			want: ComponentDiff{
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				NeededActions: []Action{ActionUpdateComponentDeployConfig},
+			},
+		},
+		{
+			name: "update package config and upgrade",
+			args: args{
+				blueprintComponent: mockTargetComponent(compVersion3212, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				installedComponent: mockComponentInstallation(compVersion3211),
+			},
+			want: ComponentDiff{
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, map[string]interface{}{"deployNamespace": "k8s-longhorn"}),
+				NeededActions: []Action{ActionUpdateComponentDeployConfig, ActionUpgrade},
 			},
 		},
 		{
 			name: "downgrade",
 			args: args{
-				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent),
+				blueprintComponent: mockTargetComponent(compVersion3211, TargetStatePresent, nil),
 				installedComponent: mockComponentInstallation(compVersion3212),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionDowngrade,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3212, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				NeededActions: []Action{ActionDowngrade},
 			},
 		},
 		{
@@ -111,10 +133,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: mockComponentInstallation(compVersion3211),
 			},
 			want: ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				Expected:     mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent),
-				NeededAction: ActionNone,
+				Name:          testComponentName.SimpleName,
+				Actual:        mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				Expected:      mockComponentDiffState(testDistributionNamespace, compVersion3211, TargetStatePresent, nil),
+				NeededActions: nil,
 			},
 		},
 		{
@@ -124,10 +146,10 @@ func Test_determineComponentDiff(t *testing.T) {
 				installedComponent: nil,
 			},
 			want: ComponentDiff{
-				Name:         "",
-				Actual:       ComponentDiffState{InstallationState: TargetStateAbsent},
-				Expected:     ComponentDiffState{InstallationState: TargetStateAbsent},
-				NeededAction: ActionNone,
+				Name:          "",
+				Actual:        ComponentDiffState{InstallationState: TargetStateAbsent},
+				Expected:      ComponentDiffState{InstallationState: TargetStateAbsent},
+				NeededActions: nil,
 			},
 		},
 	}
@@ -136,55 +158,6 @@ func Test_determineComponentDiff(t *testing.T) {
 			compDiff, err := determineComponentDiff(tt.args.blueprintComponent, tt.args.installedComponent)
 			assert.NoError(t, err)
 			assert.Equalf(t, tt.want, compDiff, "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
-		})
-	}
-}
-
-func TestComponentDiffs_Statistics(t *testing.T) {
-	tests := []struct {
-		name            string
-		dd              ComponentDiffs
-		wantToInstall   int
-		wantToUpgrade   int
-		wantToUninstall int
-		wantOther       int
-	}{
-		{
-			name:            "0 overall",
-			dd:              ComponentDiffs{},
-			wantToInstall:   0,
-			wantToUpgrade:   0,
-			wantToUninstall: 0,
-			wantOther:       0,
-		},
-		{
-			name: "4 to install, 3 to upgrade, 2 to uninstall, 3 other",
-			dd: ComponentDiffs{
-				{NeededAction: ActionNone},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionDowngrade},
-				{NeededAction: ActionUninstall},
-				{NeededAction: ActionInstall},
-				{NeededAction: ActionUpgrade},
-				{NeededAction: ActionUpgrade},
-			},
-			wantToInstall:   4,
-			wantToUpgrade:   3,
-			wantToUninstall: 2,
-			wantOther:       2,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotToInstall, gotToUpgrade, gotToUninstall, gotOther := tt.dd.Statistics()
-			assert.Equalf(t, tt.wantToInstall, gotToInstall, "Statistics()")
-			assert.Equalf(t, tt.wantToUpgrade, gotToUpgrade, "Statistics()")
-			assert.Equalf(t, tt.wantToUninstall, gotToUninstall, "Statistics()")
-			assert.Equalf(t, tt.wantOther, gotOther, "Statistics()")
 		})
 	}
 }
@@ -199,17 +172,17 @@ func TestComponentDiff_String(t *testing.T) {
 		InstallationState: TargetStatePresent,
 	}
 	diff := &ComponentDiff{
-		Name:         testComponentName.SimpleName,
-		Actual:       actual,
-		Expected:     expected,
-		NeededAction: ActionInstall,
+		Name:          testComponentName.SimpleName,
+		Actual:        actual,
+		Expected:      expected,
+		NeededActions: []Action{ActionInstall},
 	}
 
 	assert.Equal(t, "{"+
 		"Name: \"my-component\", "+
 		"Actual: {Namespace: \"\", Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
 		"Expected: {Namespace: \"\", Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
-		"NeededAction: \"install\""+
+		"NeededActions: [\"install\"]"+
 		"}", diff.String())
 }
 
@@ -223,11 +196,12 @@ func TestComponentDiffState_String(t *testing.T) {
 	assert.Equal(t, `{Namespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
 }
 
-func mockTargetComponent(version *semver.Version, state TargetState) *Component {
+func mockTargetComponent(version *semver.Version, state TargetState, deployConfig ecosystem.DeployConfig) *Component {
 	return &Component{
-		Name:        testComponentName,
-		Version:     version,
-		TargetState: state,
+		Name:         testComponentName,
+		Version:      version,
+		TargetState:  state,
+		DeployConfig: deployConfig,
 	}
 }
 
@@ -238,11 +212,12 @@ func mockComponentInstallation(version *semver.Version) *ecosystem.ComponentInst
 	}
 }
 
-func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState) ComponentDiffState {
+func mockComponentDiffState(namespace common.ComponentNamespace, version *semver.Version, state TargetState, deployConfig ecosystem.DeployConfig) ComponentDiffState {
 	return ComponentDiffState{
 		Namespace:         namespace,
 		Version:           version,
 		InstallationState: state,
+		DeployConfig:      deployConfig,
 	}
 }
 
@@ -288,7 +263,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionInstall,
+					NeededActions: []Action{ActionInstall},
 				},
 			},
 		},
@@ -316,7 +291,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Version:           compVersion3211,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionNone,
+					NeededActions: nil,
 				},
 			},
 		},
@@ -350,7 +325,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						InstallationState: TargetStatePresent,
 						Namespace:         testChangeDistributionNamespace,
 					},
-					NeededAction: ActionSwitchComponentNamespace,
+					NeededActions: []Action{ActionSwitchComponentNamespace},
 				},
 			},
 		},
@@ -384,7 +359,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 						Namespace:         testComponentName.Namespace,
 						InstallationState: TargetStatePresent,
 					},
-					NeededAction: ActionUpgrade,
+					NeededActions: []Action{ActionUpgrade},
 				},
 			},
 		},
@@ -437,18 +412,18 @@ func TestComponentDiffState_getSafeVersionString(t *testing.T) {
 func TestComponentDiffs_GetComponentDiffByName(t *testing.T) {
 	t.Run("find diff", func(t *testing.T) {
 		blueprintOpDiff := ComponentDiff{
-			Name:         blueprintOperatorSimpleName,
-			Actual:       ComponentDiffState{},
-			Expected:     ComponentDiffState{},
-			NeededAction: ActionInstall,
+			Name:          blueprintOperatorSimpleName,
+			Actual:        ComponentDiffState{},
+			Expected:      ComponentDiffState{},
+			NeededActions: []Action{ActionUninstall},
 		}
 		diffs := ComponentDiffs{
 			blueprintOpDiff,
 			ComponentDiff{
-				Name:         testComponentName.SimpleName,
-				Actual:       ComponentDiffState{},
-				Expected:     ComponentDiffState{},
-				NeededAction: ActionUninstall,
+				Name:          testComponentName.SimpleName,
+				Actual:        ComponentDiffState{},
+				Expected:      ComponentDiffState{},
+				NeededActions: []Action{ActionUninstall},
 			},
 		}
 
@@ -469,13 +444,13 @@ func TestComponentDiffs_GetComponentDiffByName(t *testing.T) {
 func TestComponentDiff_HasChanges(t *testing.T) {
 	t.Run("no change", func(t *testing.T) {
 		diff := ComponentDiff{
-			NeededAction: ActionNone,
+			NeededActions: []Action{},
 		}
 		assert.False(t, diff.HasChanges())
 	})
 	t.Run("change for any", func(t *testing.T) {
 		diff := ComponentDiff{
-			NeededAction: ActionUpgrade,
+			NeededActions: []Action{ActionInstall},
 		}
 		assert.True(t, diff.HasChanges())
 	})

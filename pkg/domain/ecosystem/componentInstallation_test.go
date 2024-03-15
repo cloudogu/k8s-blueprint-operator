@@ -22,6 +22,7 @@ func TestInstallComponent(t *testing.T) {
 	type args struct {
 		componentName common.QualifiedComponentName
 		version       *semver.Version
+		deployConfig  DeployConfig
 	}
 	tests := []struct {
 		name string
@@ -33,42 +34,29 @@ func TestInstallComponent(t *testing.T) {
 			args: args{
 				componentName: testComponentName,
 				version:       testVersion1,
+				deployConfig:  map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 			want: &ComponentInstallation{
-				Name:    testComponentName,
-				Version: testVersion1,
-			},
-		},
-		{
-			name: "longhorn should always be deployed in longhorn-system",
-			args: args{
-				componentName: k8sK8sLonghorn,
-				version:       testVersion1,
-			},
-			want: &ComponentInstallation{
-				Name:            k8sK8sLonghorn,
-				Version:         testVersion1,
-				DeployNamespace: "longhorn-system",
+				Name:         testComponentName,
+				Version:      testVersion1,
+				DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, InstallComponent(tt.args.componentName, tt.args.version), "InstallComponent(%v, %v, %v)", tt.args.componentName, tt.args.version)
+			assert.Equalf(t, tt.want, InstallComponent(tt.args.componentName, tt.args.version, tt.args.deployConfig), "InstallComponent(%v, %v, %v)", tt.args.componentName, tt.args.version)
 		})
 	}
 }
 
 func TestComponentInstallation_Upgrade(t *testing.T) {
 	type fields struct {
-		Name                common.QualifiedComponentName
-		DeployNamespace     string
-		Version             *semver.Version
-		Status              string
-		ValuesYamlOverwrite string
-		MappedValues        map[string]string
-		PersistenceContext  map[string]interface{}
-		Health              HealthStatus
+		Name               common.QualifiedComponentName
+		Version            *semver.Version
+		Status             string
+		PersistenceContext map[string]interface{}
+		Health             HealthStatus
 	}
 	type args struct {
 		version *semver.Version
@@ -91,17 +79,28 @@ func TestComponentInstallation_Upgrade(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ci := &ComponentInstallation{
-				Name:                tt.fields.Name,
-				DeployNamespace:     tt.fields.DeployNamespace,
-				Version:             tt.fields.Version,
-				Status:              tt.fields.Status,
-				ValuesYamlOverwrite: tt.fields.ValuesYamlOverwrite,
-				MappedValues:        tt.fields.MappedValues,
-				PersistenceContext:  tt.fields.PersistenceContext,
-				Health:              tt.fields.Health,
+				Name:               tt.fields.Name,
+				Version:            tt.fields.Version,
+				Status:             tt.fields.Status,
+				PersistenceContext: tt.fields.PersistenceContext,
+				Health:             tt.fields.Health,
 			}
 			ci.Upgrade(tt.args.version)
 			assert.Equal(t, tt.args.version, ci.Version)
 		})
 	}
+}
+
+func TestComponentInstallation_UpdateDeployConfig(t *testing.T) {
+	t.Run("should set config", func(t *testing.T) {
+		// given
+		sut := ComponentInstallation{}
+		config := map[string]interface{}{"key": "value"}
+
+		// when
+		sut.UpdateDeployConfig(config)
+
+		// then
+		assert.Equal(t, DeployConfig(config), sut.DeployConfig)
+	})
 }

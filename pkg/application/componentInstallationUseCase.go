@@ -136,35 +136,40 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		WithName("ComponentInstallationUseCase.applyComponentState").
 		WithValues("component", componentDiff.Name, "diff", componentDiff.String())
 
-	switch componentDiff.NeededAction {
-	case domain.ActionNone:
-		logger.Info("apply nothing for component")
-		return nil
-	case domain.ActionInstall:
-		logger.Info("install component")
-		// TODO apply valuesYamlOverwrite
-		newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
-			Namespace:  componentDiff.Expected.Namespace,
-			SimpleName: componentDiff.Name,
-		}, componentDiff.Expected.Version)
-		return useCase.componentRepo.Create(ctx, newComponent)
-	case domain.ActionUninstall:
-		logger.Info("uninstall component")
-		return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
-	case domain.ActionUpgrade:
-		logger.Info("upgrade component")
-		// TODO apply valuesYamlOverwrite
-		componentInstallation.Upgrade(componentDiff.Expected.Version)
-		return useCase.componentRepo.Update(ctx, componentInstallation)
-	case domain.ActionSwitchComponentNamespace:
-		logger.Info("switch distribution namespace")
-		return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
-	case domain.ActionDowngrade:
-		logger.Info("downgrade component")
-		return fmt.Errorf(getNoDowngradesExplanationTextForComponents())
-	default:
-		return fmt.Errorf("cannot perform unknown action %q", componentDiff.NeededAction)
+	for _, action := range componentDiff.NeededActions {
+		switch action {
+		case domain.ActionInstall:
+			logger.Info("install component")
+			newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
+				Namespace:  componentDiff.Expected.Namespace,
+				SimpleName: componentDiff.Name,
+			}, componentDiff.Expected.Version, componentDiff.Expected.DeployConfig)
+			return useCase.componentRepo.Create(ctx, newComponent)
+		case domain.ActionUninstall:
+			logger.Info("uninstall component")
+			return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
+		case domain.ActionUpgrade:
+			componentInstallation.Upgrade(componentDiff.Expected.Version)
+		case domain.ActionUpdateComponentDeployConfig:
+			componentInstallation.UpdateDeployConfig(componentDiff.Expected.DeployConfig)
+		case domain.ActionSwitchComponentNamespace:
+			logger.Info("switch distribution namespace")
+			return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
+		case domain.ActionDowngrade:
+			logger.Info("downgrade component")
+			return fmt.Errorf(getNoDowngradesExplanationTextForComponents())
+		default:
+			return fmt.Errorf("cannot perform unknown action %q", action)
+		}
 	}
+
+	// If this routine did not terminate until this point, it is always an update.
+	if len(componentDiff.NeededActions) > 0 {
+		logger.Info("upgrade component")
+		return useCase.componentRepo.Update(ctx, componentInstallation)
+	}
+
+	return nil
 }
 
 func getNoDowngradesExplanationTextForComponents() string {

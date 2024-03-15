@@ -925,7 +925,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 			Version:           wantedVersion,
 			InstallationState: TargetStatePresent,
 		},
-		NeededAction: ActionNone,
+		NeededActions: []Action{},
 	}
 	normalDiff := StateDiff{
 		ComponentDiffs: ComponentDiffs{
@@ -983,7 +983,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 	t.Run("needs upgrade", func(t *testing.T) {
 		stateDiff := normalDiff
 		UpgradeActionDiff := normalOwnDiff
-		UpgradeActionDiff.NeededAction = ActionUpgrade
+		UpgradeActionDiff.NeededActions = []Action{ActionUpgrade}
 		stateDiff.ComponentDiffs = ComponentDiffs{
 			UpgradeActionDiff,
 		}
@@ -1002,7 +1002,7 @@ func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
 	t.Run("needs upgrade even after restart", func(t *testing.T) {
 		stateDiff := normalDiff
 		UpgradeActionDiff := normalOwnDiff
-		UpgradeActionDiff.NeededAction = ActionUpgrade
+		UpgradeActionDiff.NeededActions = []Action{ActionUpgrade}
 		stateDiff.ComponentDiffs = ComponentDiffs{
 			UpgradeActionDiff,
 		}
