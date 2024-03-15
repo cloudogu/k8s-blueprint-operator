@@ -30,7 +30,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		Expected: domain.ComponentDiffState{
 			Version: version2,
 		},
-		NeededAction: domain.ActionUpgrade,
+		NeededActions: []domain.Action{domain.ActionUpgrade},
 	}
 	upgradeToV2StateDiff := domain.StateDiff{
 		ComponentDiffs: []domain.ComponentDiff{
