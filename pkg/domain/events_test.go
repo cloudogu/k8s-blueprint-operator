@@ -187,6 +187,18 @@ func TestEvents(t *testing.T) {
 			expectedName:    "ApplyDoguConfigFailed",
 			expectedMessage: "test-error",
 		},
+		{
+			name:            "await self upgrade",
+			event:           AwaitSelfUpgradeEvent{},
+			expectedName:    "AwaitSelfUpgrade",
+			expectedMessage: "the operator awaits an upgrade for itself before other changes will be applied",
+		},
+		{
+			name:            "self upgrade completed",
+			event:           SelfUpgradeCompletedEvent{},
+			expectedName:    "SelfUpgradeCompleted",
+			expectedMessage: "if a self upgrade was necessary, it was successful",
+		},
 	}
 
 	for _, tt := range tests {

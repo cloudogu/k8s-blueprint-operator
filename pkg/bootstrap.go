@@ -5,6 +5,7 @@ import (
 	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 	adapterconfigkubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -34,6 +35,11 @@ import (
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
 	Reconciler *reconciler.BlueprintReconciler
+}
+
+var blueprintOperatorName = common.QualifiedComponentName{
+	Namespace:  "k8s",
+	SimpleName: "k8s-blueprint-operator",
 }
 
 // Bootstrap creates the ApplicationContext.
@@ -93,10 +99,13 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
 
+	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
+
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, registryConfigUseCase,
+		selfUpgradeUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 

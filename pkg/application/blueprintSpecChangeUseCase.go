@@ -17,6 +17,7 @@ type BlueprintSpecChangeUseCase struct {
 	stateDiff             stateDiffUseCase
 	applyUseCase          applyBlueprintSpecUseCase
 	registryConfigUseCase registryConfigUseCase
+	selfUpgradeUseCase    selfUpgradeUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -26,6 +27,7 @@ func NewBlueprintSpecChangeUseCase(
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
 	doguConfigUseCase registryConfigUseCase,
+	selfUpgradeUseCase selfUpgradeUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:                  repo,
@@ -34,6 +36,7 @@ func NewBlueprintSpecChangeUseCase(
 		stateDiff:             stateDiff,
 		applyUseCase:          applyUseCase,
 		registryConfigUseCase: doguConfigUseCase,
+		selfUpgradeUseCase:    selfUpgradeUseCase,
 	}
 }
 
@@ -77,6 +80,10 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
+		return useCase.handleSelfUpgrade(ctx, blueprintId)
+	case domain.StatusPhaseAwaitSelfUpgrade:
+		return useCase.handleSelfUpgrade(ctx, blueprintId)
+	case domain.StatusPhaseSelfUpgradeCompleted:
 		return useCase.applyRegistryConfig(ctx, blueprintId)
 	case domain.StatusPhaseRegistryConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
@@ -161,6 +168,14 @@ func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx co
 		return nil
 	}
 	return useCase.HandleChange(ctx, blueprintSpec.Id)
+}
+
+func (useCase *BlueprintSpecChangeUseCase) handleSelfUpgrade(ctx context.Context, blueprintId string) error {
+	err := useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprintId)
+	if err != nil {
+		return err
+	}
+	return useCase.HandleChange(ctx, blueprintId)
 }
 
 func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Context, blueprintId string) error {

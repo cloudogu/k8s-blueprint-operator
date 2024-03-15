@@ -97,7 +97,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to install components")
+		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to apply components")
 	})
 
 	t.Run("should return nil and do nothing with no component diffs", func(t *testing.T) {

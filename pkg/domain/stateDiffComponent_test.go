@@ -17,6 +17,11 @@ var (
 		Namespace:  "k8s",
 		SimpleName: "my-component",
 	}
+	blueprintOperatorSimpleName = common.SimpleComponentName("k8s-blueprint-operator")
+	blueprintOperatorName       = common.QualifiedComponentName{
+		Namespace:  "k8s",
+		SimpleName: blueprintOperatorSimpleName,
+	}
 )
 
 var (
@@ -406,4 +411,51 @@ func TestComponentDiffState_getSafeVersionString(t *testing.T) {
 			assert.Equalf(t, tt.want, diff.getSafeVersionString(), "getSafeVersionString()")
 		})
 	}
+}
+
+func TestComponentDiffs_GetComponentDiffByName(t *testing.T) {
+	t.Run("find diff", func(t *testing.T) {
+		blueprintOpDiff := ComponentDiff{
+			Name:         blueprintOperatorSimpleName,
+			Actual:       ComponentDiffState{},
+			Expected:     ComponentDiffState{},
+			NeededAction: ActionInstall,
+		}
+		diffs := ComponentDiffs{
+			blueprintOpDiff,
+			ComponentDiff{
+				Name:         testComponentName.SimpleName,
+				Actual:       ComponentDiffState{},
+				Expected:     ComponentDiffState{},
+				NeededAction: ActionUninstall,
+			},
+		}
+
+		foundDiff := diffs.GetComponentDiffByName(blueprintOperatorSimpleName)
+
+		assert.Equal(t, blueprintOpDiff, foundDiff)
+	})
+
+	t.Run("don't find diff", func(t *testing.T) {
+		diffs := ComponentDiffs{}
+
+		foundDiff := diffs.GetComponentDiffByName(blueprintOperatorSimpleName)
+
+		assert.Equal(t, ComponentDiff{}, foundDiff)
+	})
+}
+
+func TestComponentDiff_HasChanges(t *testing.T) {
+	t.Run("no change", func(t *testing.T) {
+		diff := ComponentDiff{
+			NeededAction: ActionNone,
+		}
+		assert.False(t, diff.HasChanges())
+	})
+	t.Run("change for any", func(t *testing.T) {
+		diff := ComponentDiff{
+			NeededAction: ActionUpgrade,
+		}
+		assert.True(t, diff.HasChanges())
+	})
 }

@@ -12,6 +12,16 @@ import (
 // ComponentDiffs contains the differences for all expected Components to the current ecosystem.ComponentInstallations.
 type ComponentDiffs []ComponentDiff
 
+// GetComponentDiffByName returns the diff for the given component name or an empty struct if it was not found.
+func (diffs ComponentDiffs) GetComponentDiffByName(name common.SimpleComponentName) ComponentDiff {
+	for _, diff := range diffs {
+		if diff.Name == name {
+			return diff
+		}
+	}
+	return ComponentDiff{}
+}
+
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
 	// Name contains the component's name.
@@ -36,6 +46,10 @@ type ComponentDiffState struct {
 	InstallationState TargetState
 	// DeployConfig contains generic properties for the component.
 	DeployConfig ecosystem.DeployConfig
+}
+
+func (diff ComponentDiff) HasChanges() bool {
+	return len(diff.NeededActions) != 0
 }
 
 // String returns a string representation of the ComponentDiff.

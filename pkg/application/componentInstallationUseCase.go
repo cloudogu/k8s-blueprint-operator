@@ -104,7 +104,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 
 	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to install components: %w", blueprintId, err)
+		return fmt.Errorf("cannot load blueprint spec %q to apply components: %w", blueprintId, err)
 	}
 
 	if len(blueprintSpec.StateDiff.ComponentDiffs) == 0 {
