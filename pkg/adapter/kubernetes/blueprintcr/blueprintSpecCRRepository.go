@@ -84,7 +84,17 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	}
 
 	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
+	if blueprintErr != nil {
+		blueprintErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: blueprintErr}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintErrorEvent.Name(), blueprintErrorEvent.Message())
+	}
+
 	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
+	if maskErr != nil {
+		blueprintMaskErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: maskErr}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintMaskErrorEvent.Name(), blueprintMaskErrorEvent.Message())
+	}
+
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
 		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
