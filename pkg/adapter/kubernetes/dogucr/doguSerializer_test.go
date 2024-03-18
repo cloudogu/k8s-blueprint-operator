@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
 	"github.com/stretchr/testify/assert"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"reflect"
 	"testing"
@@ -42,7 +43,7 @@ func Test_parseDoguCR(t *testing.T) {
 				},
 				Spec: v1.DoguSpec{
 					Name:      "official/postgresql",
-					Version:   version3_2_1_4.Raw,
+					Version:   version3214.Raw,
 					Resources: v1.DoguResources{},
 					UpgradeConfig: v1.UpgradeConfig{
 						AllowNamespaceSwitch: true,
@@ -55,7 +56,7 @@ func Test_parseDoguCR(t *testing.T) {
 			}},
 			want: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
-				Version: version3_2_1_4,
+				Version: version3214,
 				Status:  ecosystem.DoguStatusInstalled,
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
@@ -114,7 +115,7 @@ func Test_toDoguCR(t *testing.T) {
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
-				Version: version3_2_1_4,
+				Version: version3214,
 				Status:  ecosystem.DoguStatusInstalled,
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
@@ -132,7 +133,7 @@ func Test_toDoguCR(t *testing.T) {
 				},
 				Spec: v1.DoguSpec{
 					Name:    "official/postgresql",
-					Version: version3_2_1_4.Raw,
+					Version: version3214.Raw,
 					Resources: v1.DoguResources{
 						DataVolumeSize: "",
 					},
@@ -165,7 +166,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
-				Version: version3_2_1_4,
+				Version: version3214,
 				Status:  ecosystem.DoguStatusInstalled,
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
@@ -175,10 +176,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 			want: &doguCRPatch{
 				Spec: doguSpecPatch{
 					Name:    "official/postgresql",
-					Version: version3_2_1_4.Raw,
-					//Resources: doguResourcesPatch{
-					//	DataVolumeSize: "",
-					//},
+					Version: version3214.Raw,
 					UpgradeConfig: upgradeConfigPatch{
 						AllowNamespaceSwitch: true,
 					},
@@ -196,6 +194,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 }
 
 func Test_toDoguCRPatchBytes(t *testing.T) {
+	quantity2 := resource.MustParse("2Gi")
 	tests := []struct {
 		name    string
 		dogu    *ecosystem.DoguInstallation
@@ -203,17 +202,19 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
+			// TODO check ReverseProxy
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
-				Version: version3_2_1_4,
+				Version: version3214,
 				Status:  ecosystem.DoguStatusInstalled,
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				MinVolumeSize: &quantity2,
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false}}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null}}",
 			wantErr: assert.NoError,
 		},
 	}
@@ -224,6 +225,120 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, string(got), "toDoguCRPatchBytes(%v)", tt.dogu)
+		})
+	}
+}
+
+func Test_getNginxIngressAnnotations(t *testing.T) {
+	type args struct {
+		config ecosystem.ReverseProxyConfig
+	}
+	zeroQuantity := resource.MustParse("0")
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "should set proxy body size on zero quantity",
+			args: args{config: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}},
+			want: map[string]string{ecosystem.NginxIngressAnnotationBodySize: "0"},
+		},
+		{
+			name: "should not set proxy body size on nil",
+			args: args{config: ecosystem.ReverseProxyConfig{}},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
+		})
+	}
+}
+
+func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
+	quantity1 := resource.MustParse("1G")
+	type args struct {
+		annotations v1.IngressAnnotations
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    ecosystem.ReverseProxyConfig
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "should parse annotations",
+			args: args{
+				annotations: v1.IngressAnnotations{
+					"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
+					"nginx.ingress.kubernetes.io/rewrite-target":        "/",
+					"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
+				},
+			},
+			want: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      &quantity1,
+				RewriteTarget:    "/",
+				AdditionalConfig: "snippet",
+			},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return err == nil
+			},
+		},
+		{
+			name: "should return internal error on invalid quantity",
+			args: args{
+				annotations: v1.IngressAnnotations{
+					"nginx.ingress.kubernetes.io/proxy-body-size": "1GG",
+				},
+			},
+			want: ecosystem.ReverseProxyConfig{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				assert.Error(t, err)
+				assert.ErrorContains(t, err, "failed to parse quantity \"1GG\"")
+				return false
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := parseDoguAdditionalIngressAnnotationsCR(tt.args.annotations)
+			if !tt.wantErr(t, err, fmt.Sprintf("parseDoguAdditionalIngressAnnotationsCR(%v)", tt.args.annotations)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "parseDoguAdditionalIngressAnnotationsCR(%v)", tt.args.annotations)
+		})
+	}
+}
+
+func Test_getNginxIngressAnnotations1(t *testing.T) {
+	quantity := resource.MustParse("1M")
+	type args struct {
+		config ecosystem.ReverseProxyConfig
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[string]string
+	}{
+		{
+			name: "should parse config",
+			args: args{config: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      &quantity,
+				RewriteTarget:    "/",
+				AdditionalConfig: "additional",
+			}},
+			want: map[string]string{
+				"nginx.ingress.kubernetes.io/proxy-body-size":       "1M",
+				"nginx.ingress.kubernetes.io/rewrite-target":        "/",
+				"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }

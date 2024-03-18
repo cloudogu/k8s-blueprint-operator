@@ -118,42 +118,62 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	logger := log.FromContext(ctx).
 		WithName("DoguInstallationUseCase.applyDoguState").
 		WithValues("dogu", doguDiff.DoguName, "diff", doguDiff.String())
-
-	switch doguDiff.NeededAction {
-	case domain.ActionNone:
-		logger.Info("apply nothing for dogu")
-		return nil
-	case domain.ActionInstall:
-		logger.Info("install dogu")
-		newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
-			Namespace:  doguDiff.Expected.Namespace,
-			SimpleName: doguDiff.DoguName,
-		}, doguDiff.Expected.Version)
-		return useCase.doguRepo.Create(ctx, newDogu)
-	case domain.ActionUninstall:
-		logger.Info("uninstall dogu")
-		return useCase.doguRepo.Delete(ctx, doguInstallation.Name.SimpleName)
-	case domain.ActionUpgrade:
-		logger.Info("upgrade dogu")
-		doguInstallation.Upgrade(doguDiff.Expected.Version)
-		return useCase.doguRepo.Update(ctx, doguInstallation)
-	case domain.ActionDowngrade:
-		logger.Info("downgrade dogu")
-		return fmt.Errorf(getNoDowngradesExplanationTextForDogus())
-	case domain.ActionSwitchDoguNamespace:
-		logger.Info("do namespace switch for dogu")
-		err := doguInstallation.SwitchNamespace(
-			doguDiff.Expected.Namespace,
-			doguDiff.Expected.Version,
-			blueprintConfig.AllowDoguNamespaceSwitch,
-		)
-		if err != nil {
-			return err
+	for _, action := range doguDiff.NeededActions {
+		switch action {
+		case domain.ActionInstall:
+			logger.Info("install dogu")
+			newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
+				Namespace:  doguDiff.Expected.Namespace,
+				SimpleName: doguDiff.DoguName,
+			}, doguDiff.Expected.Version, doguDiff.Expected.MinVolumeSize, doguDiff.Expected.ReverseProxyConfig)
+			return useCase.doguRepo.Create(ctx, newDogu)
+		case domain.ActionUninstall:
+			logger.Info("uninstall dogu")
+			return useCase.doguRepo.Delete(ctx, doguInstallation.Name.SimpleName)
+		case domain.ActionUpgrade:
+			doguInstallation.Upgrade(doguDiff.Expected.Version)
+			continue
+		case domain.ActionDowngrade:
+			logger.Info("downgrade dogu")
+			return fmt.Errorf(getNoDowngradesExplanationTextForDogus())
+		case domain.ActionSwitchDoguNamespace:
+			logger.Info("do namespace switch for dogu")
+			err := doguInstallation.SwitchNamespace(
+				doguDiff.Expected.Namespace,
+				blueprintConfig.AllowDoguNamespaceSwitch,
+			)
+			if err != nil {
+				return err
+			}
+			continue
+		case domain.ActionUpdateDoguResourceMinVolumeSize:
+			logger.Info("update minimum volume size for dogu")
+			doguInstallation.UpdateMinVolumeSize(doguDiff.Expected.MinVolumeSize)
+			continue
+		case domain.ActionUpdateDoguProxyBodySize:
+			logger.Info("update proxy body size for dogu")
+			doguInstallation.UpdateProxyBodySize(doguDiff.Expected.ReverseProxyConfig.MaxBodySize)
+			continue
+		case domain.ActionUpdateDoguProxyRewriteTarget:
+			logger.Info("update proxy rewrite target for dogu")
+			doguInstallation.UpdateProxyRewriteTarget(doguDiff.Expected.ReverseProxyConfig.RewriteTarget)
+			continue
+		case domain.ActionUpdateDoguProxyAdditionalConfig:
+			logger.Info("update proxy additional config for dogu")
+			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig.AdditionalConfig)
+			continue
+		default:
+			return fmt.Errorf("cannot perform unknown action %q for dogu %q", action, doguDiff.DoguName)
 		}
-		return useCase.doguRepo.Update(ctx, doguInstallation)
-	default:
-		return fmt.Errorf("cannot perform unknown action %q", doguDiff.NeededAction)
 	}
+
+	// If this routine did not terminate until this point, it is always an update.
+	if len(doguDiff.NeededActions) > 0 {
+		logger.Info("upgrade dogu")
+		return useCase.doguRepo.Update(ctx, doguInstallation)
+	}
+
+	return nil
 }
 
 func getNoDowngradesExplanationTextForDogus() string {

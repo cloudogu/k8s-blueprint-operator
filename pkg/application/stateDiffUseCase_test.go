@@ -379,7 +379,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:           mustParseVersion(t, "2.9.0"),
 					InstallationState: domain.TargetStatePresent,
 				},
-				NeededAction: domain.ActionInstall,
+				NeededActions: []domain.Action{domain.ActionInstall},
 			},
 			{
 				DoguName: "ldap",
@@ -393,7 +393,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:           mustParseVersion(t, "1.2.3"),
 					InstallationState: domain.TargetStatePresent,
 				},
-				NeededAction: domain.ActionUpgrade,
+				NeededActions: []domain.Action{domain.ActionUpgrade},
 			},
 			{
 				DoguName: "nginx-ingress",
@@ -407,7 +407,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:           mustParseVersion(t, "1.8.5"),
 					InstallationState: domain.TargetStatePresent,
 				},
-				NeededAction: domain.ActionNone,
+				NeededActions: nil,
 			},
 			{
 				DoguName: "nginx-static",
@@ -420,7 +420,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Namespace:         "k8s",
 					InstallationState: domain.TargetStateAbsent,
 				},
-				NeededAction: domain.ActionUninstall,
+				NeededActions: []domain.Action{domain.ActionUninstall},
 			},
 		}
 		assert.ElementsMatch(t, expectedDoguDiffs, blueprint.StateDiff.DoguDiffs)
@@ -684,7 +684,7 @@ func mustParseVersion(t *testing.T, raw string) core.Version {
 	return version
 }
 
-func TestStateDiffUseCase_collectecosystemState(t *testing.T) {
+func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 	t.Run("ignore not found errors", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{

@@ -49,8 +49,8 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
-						Name:         componentName1,
-						NeededAction: domain.ActionNone,
+						Name:          componentName1,
+						NeededActions: []domain.Action{},
 						Actual: domain.ComponentDiffState{
 							Version: semVer3212,
 						},
@@ -97,7 +97,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to install components")
+		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to apply components")
 	})
 
 	t.Run("should return nil and do nothing with no component diffs", func(t *testing.T) {
@@ -158,8 +158,8 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
-						Name:         componentName1,
-						NeededAction: "unknown",
+						Name:          componentName1,
+						NeededActions: []domain.Action{"unknown"},
 					},
 				},
 			},
@@ -193,8 +193,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionInstall,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionInstall},
 			Expected: domain.ComponentDiffState{
 				Namespace: testNamespace,
 				Version:   semVer3212,
@@ -226,8 +226,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionUninstall,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -259,12 +259,57 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 				Namespace: testNamespace,
 				Version:   semVer3212,
 			},
-			NeededAction: domain.ActionUpgrade,
+			NeededActions: []domain.Action{domain.ActionUpgrade},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			Version: semVer3212,
+		}
+
+		componentRepoMock.EXPECT().Update(testCtx, componentInstallation).Return(nil)
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should update component with multiple actions", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name: componentName1,
+			Expected: domain.ComponentDiffState{
+				Namespace: testNamespace,
+				Version:   semVer3212,
+				DeployConfig: map[string]interface{}{
+					"deployNamespace": "longhorn-system",
+					"overwriteConfig": map[string]string{
+						"key": "value",
+					},
+				},
+			},
+			NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionUpdateComponentDeployConfig},
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Version: semVer3212,
+			DeployConfig: map[string]interface{}{
+				"deployNamespace": "longhorn-system",
+				"overwriteConfig": map[string]string{
+					"key": "value",
+				},
+			},
 		}
 
 		componentRepoMock.EXPECT().Update(testCtx, componentInstallation).Return(nil)
@@ -287,8 +332,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionDowngrade,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionDowngrade},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -314,8 +359,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
 		componentDiff := domain.ComponentDiff{
-			Name:         componentName1,
-			NeededAction: domain.ActionSwitchComponentNamespace,
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionSwitchComponentNamespace},
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
@@ -333,6 +378,32 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		// then
 		require.Error(t, err)
 		assert.ErrorContains(t, err, noDistributionNamespaceSwitchExplanationText)
+	})
+
+	t.Run("should return no error on empty actions in diff", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name:          componentName1,
+			NeededActions: []domain.Action{},
+		}
+
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+		}
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, componentInstallation)
+
+		// then
+		require.NoError(t, err)
 	})
 }
 

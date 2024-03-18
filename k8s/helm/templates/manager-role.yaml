@@ -39,3 +39,10 @@ rules:
       - create
       - update
       - get
+  - apiGroups:
+      - ""
+    resources:
+      - persistentvolumeclaims
+    verbs:
+      - get
+      - list

@@ -6,8 +6,10 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 )
 
@@ -22,6 +24,7 @@ var (
 
 func TestSerializeBlueprint_ok(t *testing.T) {
 	serializer := Serializer{}
+	quantity := resource.MustParse("2Gi")
 	type args struct {
 		spec domain.Blueprint
 	}
@@ -41,11 +44,11 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
 					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}],"config":{"global":{}}}`,
+			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present","platformConfig":{"resource":{"minVolumeSize":"2Gi"},"reverseProxy":{"maxBodySize":"2Gi","rewriteTarget":"/","additionalConfig":"additional"}}},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent","platformConfig":{"resource":{},"reverseProxy":{}}}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
@@ -53,10 +56,10 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			args{spec: domain.Blueprint{
 				Components: []domain.Component{
 					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent, DeployConfig: map[string]interface{}{"deployNamespace": "ecosystem", "overwriteConfig": map[string]string{"key": "value"}}},
 				},
 			}},
-			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present","deployNamespace":""},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployNamespace":""}],"config":{"global":{}}}`,
+			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployConfig":{"deployNamespace":"ecosystem","overwriteConfig":{"key":"value"}}}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
@@ -150,6 +153,18 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			}},
 			`{"blueprintApi":"v2","config":{"global":{"present":{"admin_group":"ces-admin","fqdn":"ces.example.com","key_provider":"pkcs1v15"},"absent":["default_dogu","some_other_key"]}}}`,
 			assert.NoError,
+		},
+		{
+			name: "component config",
+			args: args{
+				spec: domain.Blueprint{
+					Components: []domain.Component{
+						{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
+					},
+				},
+			},
+			want:    "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}",
+			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
@@ -309,6 +324,22 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 				},
 			},
 			assert.NoError,
+		},
+		{
+			"component package config",
+			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}"},
+			domain.Blueprint{
+				Components: []domain.Component{
+					{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
+				},
+			},
+			assert.NoError,
+		},
+		{
+			"component package config error",
+			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\"\":\"\"::\"value:{\"}}],\"config\":{\"global\":{}}}"},
+			domain.Blueprint{},
+			assert.Error,
 		},
 	}
 	for _, tt := range tests {

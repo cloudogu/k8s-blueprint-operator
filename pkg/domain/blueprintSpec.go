@@ -3,9 +3,12 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"slices"
 )
 
 type BlueprintSpec struct {
@@ -45,6 +48,10 @@ const (
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
 	// were successful.
 	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
+	// StatusPhaseAwaitSelfUpgrade marks that the blueprint operator waits for termination for a self upgrade.
+	StatusPhaseAwaitSelfUpgrade StatusPhase = "awaitSelfUpgrade"
+	// StatusPhaseSelfUpgradeCompleted marks that the blueprint operator itself got successfully upgraded.
+	StatusPhaseSelfUpgradeCompleted StatusPhase = "selfUpgradeCompleted"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
 	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
@@ -122,8 +129,8 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, noDoguFoundError := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
-		if noDoguFoundError != nil {
+		dogu, found := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
+		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
 		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
@@ -207,9 +214,11 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 
 func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	effectiveDogu := Dogu{
-		Name:        dogu.Name,
-		Version:     dogu.Version,
-		TargetState: dogu.TargetState,
+		Name:               dogu.Name,
+		Version:            dogu.Version,
+		TargetState:        dogu.TargetState,
+		MinVolumeSize:      dogu.MinVolumeSize,
+		ReverseProxyConfig: dogu.ReverseProxyConfig,
 	}
 	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.SimpleName)
 	if noMaskDoguErr == nil {
@@ -261,7 +270,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
-		//FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
+		// FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
 		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
@@ -322,6 +331,34 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 		spec.Status = StatusPhaseBlueprintApplicationPreProcessed
 		spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
 	}
+}
+
+// HandleSelfUpgrade checks if a self upgrade is needed and sets the appropriate status.
+// if the operator is not installed in the usual way, the actualInstalledVersion can be nil.
+// Returns the ComponentDiff for the given component name so that it can be used to initiate further steps.
+func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleComponentName, actualInstalledVersion *semver.Version) ComponentDiff {
+	ownDiff := spec.StateDiff.ComponentDiffs.GetComponentDiffByName(ownComponentName)
+	// if already everything is as it should
+	if isExpectedVersionInstalled(ownDiff.Expected.Version, actualInstalledVersion) {
+		// no self upgrade planned
+		spec.Status = StatusPhaseSelfUpgradeCompleted
+		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
+		return ownDiff
+	}
+	// if self upgrade is not done yet
+	spec.Status = StatusPhaseAwaitSelfUpgrade
+	spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
+	return ownDiff
+}
+
+func isExpectedVersionInstalled(expected, actual *semver.Version) bool {
+	if expected == nil {
+		return true
+	}
+	if actual == nil {
+		return false
+	}
+	return expected.Equal(actual)
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
@@ -392,27 +429,47 @@ var notAllowedComponentActions = []Action{ActionSwitchComponentNamespace}
 var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 
 func (spec *BlueprintSpec) validateStateDiff() error {
-	dogusByAction := util.GroupBy(spec.StateDiff.DoguDiffs, func(doguDiff DoguDiff) Action {
-		return doguDiff.NeededAction
-	})
 	var invalidBlueprintErrors []error
 
-	for _, action := range notAllowedDoguActions {
-		if action == ActionSwitchDoguNamespace && spec.Config.AllowDoguNamespaceSwitch {
-			continue
-		}
-		invalidBlueprintErrors = evaluateInvalidAction(action, dogusByAction, invalidBlueprintErrors)
+	for _, diff := range spec.StateDiff.DoguDiffs {
+		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateDoguDiffActions(diff)...)
 	}
 
-	componentsByAction := util.GroupBy(spec.StateDiff.ComponentDiffs, func(componentDiff ComponentDiff) Action {
-		return componentDiff.NeededAction
-	})
-
-	for _, action := range notAllowedComponentActions {
-		invalidBlueprintErrors = evaluateInvalidAction(action, componentsByAction, invalidBlueprintErrors)
+	for _, diff := range spec.StateDiff.ComponentDiffs {
+		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateComponentDiffActions(diff)...)
 	}
 
 	return errors.Join(invalidBlueprintErrors...)
+}
+
+func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
+	return util.Map(diff.NeededActions, func(action Action) error {
+		if slices.Contains(notAllowedDoguActions, action) {
+			if action == ActionSwitchDoguNamespace && spec.Config.AllowDoguNamespaceSwitch {
+				return nil
+			}
+
+			return getActionNotAllowedError(action)
+		}
+
+		return nil
+	})
+}
+
+func (spec *BlueprintSpec) validateComponentDiffActions(diff ComponentDiff) []error {
+	return util.Map(diff.NeededActions, func(action Action) error {
+		if slices.Contains(notAllowedComponentActions, action) {
+			return getActionNotAllowedError(action)
+		}
+
+		return nil
+	})
+}
+
+func getActionNotAllowedError(action Action) *InvalidBlueprintError {
+	return &InvalidBlueprintError{
+		Message: fmt.Sprintf("action %q is not allowed", action),
+	}
 }
 
 func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {

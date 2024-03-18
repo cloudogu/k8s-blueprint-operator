@@ -27,10 +27,13 @@ Dogu-specific:
 - [#11] apply new dogu states based on blueprint
 - [#20] Add exception for `nginx` dogu dependency validation. Map this dependency to `nginx-ingress` and `nginx-static`.
 - [#30] Implement dogu namespace switch.
+- [#55] Add dogu specific config for the volume size and the reverse proxy.
 
 Component-specific:
 - [#19] Create component differences between effective blueprint and cluster state
 - [#14] Apply new component states based on blueprint.
+- [#61] Add process for safe self upgrades of the blueprint operator
+- [#62] Add component specific property map to configure attributes like deployNamespace or helm values in k8s.
 
 Config-specific:
 - [#42] Implement config repositories

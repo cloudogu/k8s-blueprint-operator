@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"golang.org/x/exp/maps"
 	"testing"
@@ -906,4 +907,153 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
 
+}
+
+func TestBlueprintSpec_HandleSelfUpgrade(t *testing.T) {
+	var blueprintOperatorName = common.SimpleComponentName("k8s-blueprint-operator")
+	oldVersion := semver.MustParse("1.0.0")
+	wantedVersion := semver.MustParse("1.0.1")
+	normalOwnDiff := ComponentDiff{
+		Name: blueprintOperatorName,
+		Actual: ComponentDiffState{
+			Namespace:         "official",
+			Version:           wantedVersion,
+			InstallationState: TargetStatePresent,
+		},
+		Expected: ComponentDiffState{
+			Namespace:         "official",
+			Version:           wantedVersion,
+			InstallationState: TargetStatePresent,
+		},
+		NeededActions: []Action{},
+	}
+	normalDiff := StateDiff{
+		ComponentDiffs: ComponentDiffs{
+			normalOwnDiff,
+		},
+	}
+
+	t.Run("no self upgrade needed", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			StateDiff: normalDiff,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, wantedVersion)
+
+		assert.Equal(t, normalOwnDiff, diff)
+		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
+	})
+	t.Run("component not installed for any reason", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			StateDiff: normalDiff,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, nil)
+
+		assert.Equal(t, normalOwnDiff, diff)
+		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
+	})
+	t.Run("no action in diff", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			StateDiff: normalDiff,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, wantedVersion)
+
+		assert.Equal(t, normalOwnDiff, diff)
+		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
+	})
+	t.Run("no action in diff but installed version is different", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			StateDiff: normalDiff,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, oldVersion)
+
+		assert.Equal(t, normalOwnDiff, diff)
+		// yes, we do a self upgrade even if the diff does not match the installed version.
+		// This is because we maybe need the features of the expected version
+		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
+	})
+
+	t.Run("needs upgrade", func(t *testing.T) {
+		stateDiff := normalDiff
+		UpgradeActionDiff := normalOwnDiff
+		UpgradeActionDiff.NeededActions = []Action{ActionUpgrade}
+		stateDiff.ComponentDiffs = ComponentDiffs{
+			UpgradeActionDiff,
+		}
+		blueprint := BlueprintSpec{
+			StateDiff: stateDiff,
+			Status:    StatusPhaseBlueprintApplicationPreProcessed,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, oldVersion)
+
+		assert.Equal(t, UpgradeActionDiff, diff)
+		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
+	})
+
+	t.Run("needs upgrade even after restart", func(t *testing.T) {
+		stateDiff := normalDiff
+		UpgradeActionDiff := normalOwnDiff
+		UpgradeActionDiff.NeededActions = []Action{ActionUpgrade}
+		stateDiff.ComponentDiffs = ComponentDiffs{
+			UpgradeActionDiff,
+		}
+		blueprint := BlueprintSpec{
+			StateDiff: stateDiff,
+			Status:    StatusPhaseAwaitSelfUpgrade,
+		}
+
+		diff := blueprint.HandleSelfUpgrade(blueprintOperatorName, oldVersion)
+
+		assert.Equal(t, UpgradeActionDiff, diff)
+		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
+	})
+}
+
+func Test_isExpectedVersionInstalled(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected *semver.Version
+		actual   *semver.Version
+		want     bool
+	}{
+		{
+			name:     "equal",
+			expected: semver.MustParse("1.0"),
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "higher expected",
+			expected: semver.MustParse("1.1"),
+			actual:   semver.MustParse("1.0"),
+			want:     false,
+		},
+		{
+			name:     "nothing expected",
+			expected: nil,
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "nothing installed",
+			expected: semver.MustParse("1.0"),
+			actual:   nil,
+			want:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, isExpectedVersionInstalled(tt.expected, tt.actual), "isExpectedVersionInstalled(%v, %v)", tt.expected, tt.actual)
+		})
+	}
 }

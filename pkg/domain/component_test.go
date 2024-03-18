@@ -9,69 +9,70 @@ import (
 	"testing"
 )
 
-var version1_2_3, _ = core.ParseVersion("1.2.3")
-
 var (
 	compVersion123 = semver.MustParse("1.2.3")
+	version123, _  = core.ParseVersion("1.2.3")
 )
 
-func Test_validateComponents_errorOnMissingComponentVersion(t *testing.T) {
-	component := Component{Name: testComponentName, TargetState: TargetStatePresent}
+func TestComponent_Validate(t *testing.T) {
+	t.Run("errorOnMissingComponentVersion", func(t *testing.T) {
+		component := Component{Name: testComponentName, TargetState: TargetStatePresent}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), `version of component "k8s/my-component" must not be empty`)
-}
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `version of component "k8s/my-component" must not be empty`)
+	})
 
-func Test_validateComponents_errorOnEmptyComponentVersion(t *testing.T) {
-	component := Component{Name: testComponentName, Version: nil, TargetState: TargetStatePresent}
+	t.Run("errorOnEmptyComponentVersion", func(t *testing.T) {
+		component := Component{Name: testComponentName, Version: nil, TargetState: TargetStatePresent}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "version of component \"k8s/my-component\" must not be empty")
-}
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "version of component \"k8s/my-component\" must not be empty")
+	})
 
-func Test_validateComponents_errorOnMissingComponentName(t *testing.T) {
-	component := Component{Version: compVersion123, TargetState: TargetStatePresent}
+	t.Run("errorOnMissingComponentName", func(t *testing.T) {
+		component := Component{Version: compVersion123, TargetState: TargetStatePresent}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "component name must not be empty")
-}
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "component name must not be empty")
+	})
 
-func Test_validateComponents_errorOnEmptyComponentNamespace(t *testing.T) {
-	component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
-	err := component.Validate()
+	t.Run("errorOnEmptyComponentNamespace", func(t *testing.T) {
+		component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
+		err := component.Validate()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "namespace of component \"test\" must not be empty")
-}
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "namespace of component \"test\" must not be empty")
+	})
 
-func Test_validateComponents_errorOnEmptyComponentName(t *testing.T) {
-	component := Component{Name: common.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, TargetState: TargetStatePresent}
+	t.Run("errorOnEmptyComponentName", func(t *testing.T) {
+		component := Component{Name: common.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, TargetState: TargetStatePresent}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "component name must not be empty")
-}
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "component name must not be empty")
+	})
 
-func Test_validateComponents_emptyComponentStateDefaultsToPresent(t *testing.T) {
-	component := Component{Name: testComponentName, Version: compVersion123}
+	t.Run("emptyComponentStateDefaultsToPresent", func(t *testing.T) {
+		component := Component{Name: testComponentName, Version: compVersion123}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.NoError(t, err)
-	assert.Equal(t, TargetState(TargetStatePresent), component.TargetState)
-}
+		require.NoError(t, err)
+		assert.Equal(t, TargetState(TargetStatePresent), component.TargetState)
+	})
 
-func Test_validateComponents_missingComponentVersionOkayForAbsent(t *testing.T) {
-	component := Component{Name: testComponentName, TargetState: TargetStateAbsent}
+	t.Run("missingComponentVersionOkayForAbsent", func(t *testing.T) {
+		component := Component{Name: testComponentName, TargetState: TargetStateAbsent}
 
-	err := component.Validate()
+		err := component.Validate()
 
-	require.NoError(t, err)
+		require.NoError(t, err)
+	})
 }

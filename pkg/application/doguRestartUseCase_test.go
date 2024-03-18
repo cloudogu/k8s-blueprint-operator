@@ -411,7 +411,7 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 	}
 	testDoguConfigDiffsActionNone := domain.CombinedDoguConfigDiffs{
 		DoguConfigDiff: []domain.DoguConfigEntryDiff{{
-			NeededAction: domain.ActionNone,
+			NeededAction: domain.ConfigActionNone,
 		}},
 		SensitiveDoguConfigDiff: nil,
 	}
@@ -516,7 +516,7 @@ func Test_checkForAllDoguRestart(t *testing.T) {
 								Key:          "testkey",
 								Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
 								Expected:     domain.GlobalConfigValueState{"initial", true},
-								NeededAction: domain.ActionNone,
+								NeededAction: domain.ConfigActionNone,
 							},
 						},
 					},

@@ -65,7 +65,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	//determine state diff
+	// determine state diff
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
 	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState)
 	var invalidError *domain.InvalidBlueprintError
@@ -87,8 +87,8 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) (ecosystem.EcosystemState, error) {
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.collectEcosystemState")
 
-	//TODO: collect ecosystem state in parallel (like for ecosystem health) if we have time
-	//load current dogus and components
+	// TODO: collect ecosystem state in parallel (like for ecosystem health) if we have time
+	// load current dogus and components
 	logger.Info("collect installed dogus")
 	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
 	logger.Info("collect installed components")

@@ -41,7 +41,7 @@ func TestConvertToDTO(t *testing.T) {
 					Version:           mustParseVersion("1.2.3-1"),
 					InstallationState: domain.TargetStatePresent,
 				},
-				NeededAction: domain.ActionUpgrade,
+				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
 			want: StateDiff{DoguDiffs: map[string]DoguDiff{
 				"ldap": {
@@ -55,7 +55,7 @@ func TestConvertToDTO(t *testing.T) {
 						Version:           "1.2.3-1",
 						InstallationState: "present",
 					},
-					NeededAction: "upgrade",
+					NeededActions: []DoguAction{"upgrade"},
 				},
 			}, ComponentDiffs: map[string]ComponentDiff{}},
 		},
@@ -73,7 +73,7 @@ func TestConvertToDTO(t *testing.T) {
 						Version:           mustParseVersion("1.2.3-1"),
 						InstallationState: domain.TargetStatePresent,
 					},
-					NeededAction: domain.ActionInstall,
+					NeededActions: []domain.Action{domain.ActionInstall},
 				},
 				{
 					DoguName: "nginx-ingress",
@@ -86,7 +86,7 @@ func TestConvertToDTO(t *testing.T) {
 						Namespace:         "k8s",
 						InstallationState: domain.TargetStateAbsent,
 					},
-					NeededAction: domain.ActionUninstall,
+					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			}},
 			want: StateDiff{DoguDiffs: map[string]DoguDiff{
@@ -100,7 +100,7 @@ func TestConvertToDTO(t *testing.T) {
 						Version:           "1.2.3-1",
 						InstallationState: "present",
 					},
-					NeededAction: "install",
+					NeededActions: []DoguAction{"install"},
 				},
 				"nginx-ingress": {
 					Actual: DoguDiffState{
@@ -112,7 +112,7 @@ func TestConvertToDTO(t *testing.T) {
 						Namespace:         "k8s",
 						InstallationState: "absent",
 					},
-					NeededAction: "uninstall",
+					NeededActions: []DoguAction{"uninstall"},
 				},
 			}, ComponentDiffs: map[string]ComponentDiff{}},
 		}, {
@@ -121,30 +121,30 @@ func TestConvertToDTO(t *testing.T) {
 				DoguDiffs: domain.DoguDiffs{},
 				ComponentDiffs: []domain.ComponentDiff{
 					{
-						Name:         testComponentName,
-						Actual:       domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
-						Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-						NeededAction: domain.ActionUpgrade,
+						Name:          testComponentName,
+						Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
+						Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+						NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionSwitchComponentNamespace},
 					},
 					{
-						Name:         "my-component-2",
-						Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-						Expected:     domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
-						NeededAction: domain.ActionUninstall,
+						Name:          "my-component-2",
+						Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+						Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+						NeededActions: []domain.Action{domain.ActionUninstall},
 					},
 				}},
 			want: StateDiff{
 				DoguDiffs: map[string]DoguDiff{},
 				ComponentDiffs: map[string]ComponentDiff{
 					testComponentName: {
-						Actual:       ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
-						Expected:     ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						NeededAction: "upgrade",
+						Actual:        ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededActions: []ComponentAction{"upgrade", "component namespace switch"},
 					},
 					"my-component-2": {
-						Actual:       ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						Expected:     ComponentDiffState{InstallationState: "absent"},
-						NeededAction: "uninstall",
+						Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:      ComponentDiffState{InstallationState: "absent"},
+						NeededActions: []ComponentAction{"uninstall"},
 					},
 				}},
 		}, {
@@ -238,7 +238,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 				},
 			},
@@ -263,7 +263,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						NeededAction: "downgrade",
+						NeededActions: []DoguAction{"downgrade"},
 					},
 				},
 			},
@@ -288,7 +288,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededAction: "install",
+						NeededActions: []DoguAction{"install"},
 					},
 				},
 			},
@@ -313,7 +313,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 				},
 			},
@@ -338,7 +338,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "a.b.c-d",
 							InstallationState: "invalid",
 						},
-						NeededAction: "none",
+						NeededActions: []DoguAction{"none"},
 					},
 				},
 			},
@@ -366,7 +366,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 					"ldap": {
 						Actual: DoguDiffState{
@@ -379,7 +379,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 				},
 			},
@@ -404,7 +404,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededAction: "none",
+						NeededActions: []DoguAction{"none"},
 					},
 					"ldap": {
 						Actual: DoguDiffState{
@@ -417,7 +417,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 				},
 			},
@@ -444,7 +444,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []DoguAction{"upgrade"},
 					},
 					"ldap": {
 						Actual: DoguDiffState{
@@ -456,7 +456,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Namespace:         "official",
 							InstallationState: "absent",
 						},
-						NeededAction: "uninstall",
+						NeededActions: []DoguAction{"uninstall"},
 					},
 				},
 			},
@@ -471,7 +471,7 @@ func TestConvertToDomainModel(t *testing.T) {
 					Expected: domain.DoguDiffState{
 						Namespace:         "official",
 						InstallationState: domain.TargetStateAbsent,
-					}, NeededAction: domain.ActionUninstall,
+					}, NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 				{
 					DoguName: "postfix",
@@ -484,7 +484,7 @@ func TestConvertToDomainModel(t *testing.T) {
 						Version:           mustParseVersion("2.3.4-5"),
 						InstallationState: domain.TargetStatePresent,
 					},
-					NeededAction: domain.ActionUpgrade,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
 				},
 			},
 				ComponentDiffs: []domain.ComponentDiff{},
@@ -551,29 +551,29 @@ func TestConvertToDomainModel(t *testing.T) {
 			dto: StateDiff{
 				ComponentDiffs: map[string]ComponentDiff{
 					testComponentName: {
-						Actual:       ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
-						Expected:     ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						NeededAction: "upgrade",
+						Actual:        ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededActions: []ComponentAction{"upgrade", "component namespace switch"},
 					},
 					"my-component-2": {
-						Actual:       ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						Expected:     ComponentDiffState{InstallationState: "absent"},
-						NeededAction: "uninstall",
+						Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:      ComponentDiffState{InstallationState: "absent"},
+						NeededActions: []ComponentAction{"uninstall"},
 					},
 				},
 			},
 			want: domain.StateDiff{ComponentDiffs: []domain.ComponentDiff{
 				{
-					Name:         testComponentName,
-					Actual:       domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
-					Expected:     domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-					NeededAction: domain.ActionUpgrade,
+					Name:          testComponentName,
+					Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
+					Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+					NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionSwitchComponentNamespace},
 				},
 				{
-					Name:         "my-component-2",
-					Actual:       domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-					Expected:     domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
-					NeededAction: domain.ActionUninstall,
+					Name:          "my-component-2",
+					Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+					Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			},
 				DoguDiffs: []domain.DoguDiff{}},
@@ -593,7 +593,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededAction: "none",
+						NeededActions: []ComponentAction{"none"},
 					},
 					"my-component-2": {
 						Actual: ComponentDiffState{
@@ -604,7 +604,7 @@ func TestConvertToDomainModel(t *testing.T) {
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededAction: "upgrade",
+						NeededActions: []ComponentAction{"upgrade"},
 					},
 				},
 			},

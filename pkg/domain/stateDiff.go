@@ -41,11 +41,19 @@ func (diff StateDiff) GetSensitiveDoguConfigDiffsByAction() map[ConfigAction]Sen
 type Action string
 
 const (
-	ActionNone                     = "none"
-	ActionInstall                  = "install"
-	ActionUninstall                = "uninstall"
-	ActionUpgrade                  = "upgrade"
-	ActionDowngrade                = "downgrade"
-	ActionSwitchDoguNamespace      = "dogu namespace switch"
-	ActionSwitchComponentNamespace = "component namespace switch"
+	ActionInstall                         = "install"
+	ActionUninstall                       = "uninstall"
+	ActionUpgrade                         = "upgrade"
+	ActionDowngrade                       = "downgrade"
+	ActionSwitchDoguNamespace             = "dogu namespace switch"
+	ActionUpdateDoguProxyBodySize         = "update proxy body size"
+	ActionUpdateDoguProxyRewriteTarget    = "update proxy rewrite target"
+	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
+	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
+	ActionSwitchComponentNamespace        = "component namespace switch"
+	ActionUpdateComponentDeployConfig     = "update component package config"
 )
+
+func (a Action) IsDoguProxyAction() bool {
+	return a == ActionUpdateDoguProxyBodySize || a == ActionUpdateDoguProxyAdditionalConfig || a == ActionUpdateDoguProxyRewriteTarget
+}

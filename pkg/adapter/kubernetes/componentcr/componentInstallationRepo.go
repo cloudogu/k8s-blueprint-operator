@@ -96,7 +96,11 @@ func (repo *componentInstallationRepo) Delete(ctx context.Context, componentName
 }
 
 func (repo *componentInstallationRepo) Create(ctx context.Context, component *ecosystem.ComponentInstallation) error {
-	_, err := repo.componentClient.Create(ctx, toComponentCR(component), metav1.CreateOptions{})
+	cr, err := toComponentCR(component)
+	if err != nil {
+		return domainservice.NewInternalError(err, "failed to convert component installation %q", component.Name)
+	}
+	_, err = repo.componentClient.Create(ctx, cr, metav1.CreateOptions{})
 	if err != nil {
 		return domainservice.NewInternalError(err, "failed to create component CR %q", component.Name.SimpleName)
 	}

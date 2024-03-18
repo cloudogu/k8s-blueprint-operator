@@ -80,7 +80,7 @@ func (useCase *DoguRestartUseCase) restartAllInstalledDogus(ctx context.Context,
 
 func checkForAllDoguRestart(blueprintSpec *domain.BlueprintSpec) bool {
 	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
-		if globalConfigDiff.NeededAction != domain.ActionNone {
+		if globalConfigDiff.NeededAction != domain.ConfigActionNone {
 			return true
 		}
 	}

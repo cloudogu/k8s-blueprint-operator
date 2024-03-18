@@ -252,8 +252,12 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 		componentInstallation := &ecosystem.ComponentInstallation{
 			Name:    testComponentName,
 			Version: testVersion1,
+			DeployConfig: map[string]interface{}{
+				"deployNamespace": "longhorn-system",
+				"overwriteConfig": map[string]interface{}{"key": "value"},
+			},
 		}
-		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
+		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\",\"deployNamespace\":\"longhorn-system\",\"valuesYamlOverwrite\":\"key: value\\n\"}}")
 		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, nil)
 
 		// when
@@ -273,7 +277,7 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			Name:    testComponentName,
 			Version: testVersion1,
 		}
-		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\"}}")
+		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\",\"deployNamespace\":null,\"valuesYamlOverwrite\":null}}")
 		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
 
 		// when
@@ -355,6 +359,29 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+
+	t.Run("should return error on convert component installation error", func(t *testing.T) {
+		// given
+		componentClientMock := newMockComponentRepo(t)
+		sut := componentInstallationRepo{
+			componentClient: componentClientMock,
+		}
+		componentInstallation := &ecosystem.ComponentInstallation{
+			Name:    testComponentName,
+			Version: testVersion1,
+			DeployConfig: map[string]interface{}{
+				"deployNamespace": map[string]string{"no": "string"},
+			},
+		}
+
+		// when
+		err := sut.Create(testCtx, componentInstallation)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "failed to convert component installation \"k8s/my-component\"")
+		assert.IsType(t, err, &domainservice.InternalError{})
 	})
 
 	t.Run("should return error on patch error", func(t *testing.T) {

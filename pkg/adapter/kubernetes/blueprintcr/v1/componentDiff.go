@@ -4,10 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 )
 
 // ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
@@ -17,8 +16,8 @@ type ComponentDiff struct {
 	Actual ComponentDiffState `json:"actual"`
 	// Expected contains the desired component's target state.
 	Expected ComponentDiffState `json:"expected"`
-	// NeededAction contains the refined action as decided by the application's state determination automaton.
-	NeededAction ComponentAction `json:"neededAction"`
+	// NeededActions contains the refined actions as decided by the application's state determination automaton.
+	NeededActions []ComponentAction `json:"neededActions"`
 }
 
 // ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
@@ -35,6 +34,10 @@ type ComponentDiffState struct {
 	//  - domain.ActionUninstall
 	//  - and so on
 	InstallationState string `json:"installationState"`
+	// DeployConfig contains generic properties for the component.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	// +kubebuilder:validation:Schemaless
+	DeployConfig map[string]interface{} `json:"deployConfig,omitempty"`
 }
 
 // ComponentAction is the action that needs to be done for a component
@@ -52,18 +55,26 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 		expectedVersion = domainModel.Expected.Version.String()
 	}
 
+	neededActions := domainModel.NeededActions
+	componentActions := make([]ComponentAction, 0, len(neededActions))
+	for _, action := range neededActions {
+		componentActions = append(componentActions, ComponentAction(action))
+	}
+
 	return ComponentDiff{
 		Actual: ComponentDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
+			DeployConfig:      domainModel.Actual.DeployConfig,
 		},
 		Expected: ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
+			DeployConfig:      domainModel.Expected.DeployConfig,
 		},
-		NeededAction: ComponentAction(domainModel.NeededAction),
+		NeededActions: componentActions,
 	}
 }
 
@@ -99,6 +110,12 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	actualDistributionNamespace := dto.Actual.Namespace
 	expectedDistributionNamespace := dto.Expected.Namespace
 
+	neededActions := dto.NeededActions
+	componentActions := make([]domain.Action, 0, len(neededActions))
+	for _, action := range neededActions {
+		componentActions = append(componentActions, domain.Action(action))
+	}
+
 	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr)
 	if err != nil {
 		return domain.ComponentDiff{}, fmt.Errorf("failed to convert component diff dto %q to domain model: %w", componentName, err)
@@ -110,12 +127,14 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
+			DeployConfig:      dto.Actual.DeployConfig,
 		},
 		Expected: domain.ComponentDiffState{
 			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
+			DeployConfig:      dto.Expected.DeployConfig,
 		},
-		NeededAction: domain.Action(dto.NeededAction),
+		NeededActions: componentActions,
 	}, nil
 }
