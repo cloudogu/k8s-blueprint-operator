@@ -6,8 +6,8 @@ import (
 )
 
 type CombinedDoguConfigDiff struct {
-	DoguConfigDiff          DoguConfigDiff          `json:"doguConfigDiff"`
-	SensitiveDoguConfigDiff SensitiveDoguConfigDiff `json:"sensitiveDoguConfigDiff"`
+	DoguConfigDiff          DoguConfigDiff          `json:"doguConfigDiff,omitempty"`
+	SensitiveDoguConfigDiff SensitiveDoguConfigDiff `json:"sensitiveDoguConfigDiff,omitempty"`
 }
 
 type DoguConfigValueState ConfigValueState
