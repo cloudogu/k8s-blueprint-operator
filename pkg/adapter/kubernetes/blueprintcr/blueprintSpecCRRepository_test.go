@@ -72,7 +72,6 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 
 		cr := &v1.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
@@ -83,6 +82,9 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			},
 			Status: v1.BlueprintStatus{},
 		}
+		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint mask: unsupported Blueprint Mask API Version: ")
+		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint: unsupported Blueprint API Version: ")
+		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
 		// when

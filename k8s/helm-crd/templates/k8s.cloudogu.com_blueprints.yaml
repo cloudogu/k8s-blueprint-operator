@@ -290,9 +290,6 @@ spec:
                                 - neededAction
                               type: object
                             type: array
-                        required:
-                          - doguConfigDiff
-                          - sensitiveDoguConfigDiff
                         type: object
                       description: DoguConfigDiffs maps simple dogu names to the determined config diff.
                       type: object
