@@ -25,7 +25,9 @@ func (d doguRestartRepository) RestartAll(ctx context.Context, names []common.Si
 			ObjectMeta: metav1.ObjectMeta{
 				Name: string(doguName) + fmt.Sprint(rand.Intn(99999)),
 			},
-			Spec:   v1.DoguRestartSpec{},
+			Spec: v1.DoguRestartSpec{
+				DoguName: string(doguName),
+			},
 			Status: v1.DoguRestartStatus{},
 		}, metav1.CreateOptions{})
 		if err != nil {
