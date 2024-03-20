@@ -5,8 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Added
 
+## [v0.1.0] - 2024-03-20
+### Added
 General:
 - [#1] Initially set up operator and Blueprint CRD
 - [#4] Set up domain model
@@ -45,5 +46,5 @@ Config-specific:
 - [#45] Set registry configuration for encrypted values.
 
 ### Fixed
-
 - [68] Make dogu config or sensitiveConfig not required if one of them is specified.
+
