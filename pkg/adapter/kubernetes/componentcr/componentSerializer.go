@@ -28,10 +28,8 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
 	}
 
-	actualVersion, err := semver.NewVersion(cr.Status.InstalledVersion)
-	if err != nil {
-		// ignore error as the actual version could be not set and a nil pointer as the version is exactly what we want then
-	}
+	// ignore error as the actual version could be not set and a nil pointer as the version is exactly what we want then
+	actualVersion, _ := semver.NewVersion(cr.Status.InstalledVersion)
 
 	persistenceContext := make(map[string]interface{}, 1)
 	persistenceContext[componentInstallationRepoContextKey] = componentInstallationRepoContext{
