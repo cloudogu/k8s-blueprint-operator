@@ -28,7 +28,7 @@ import (
 	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
-	//+kubebuilder:scaffold:imports
+	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -49,7 +49,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(k8sv1.AddToScheme(scheme))
-	//+kubebuilder:scaffold:scheme
+	// +kubebuilder:scaffold:scheme
 }
 
 func main() {
