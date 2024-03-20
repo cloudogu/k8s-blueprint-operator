@@ -15,6 +15,7 @@ const (
 	nginxDependencyName        = "nginx"
 	nginxStaticDependencyName  = "nginx-static"
 	nginxIngressDependencyName = "nginx-ingress"
+	registratorDependencyName  = "registrator"
 )
 
 type ValidateDependenciesDomainUseCase struct {
@@ -85,6 +86,11 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		logger.Info(fmt.Sprintf("check dependency %q in version %q...", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version))
 		if dependencyOfWantedDogu.Type != core.DependencyTypeDogu {
 			logger.Info(fmt.Sprintf("dogu has a dependency %q of type %q. At the moment only dogu dependencies are validated.", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Type))
+			continue
+		}
+
+		// Ignore registrator dogu because this is only needed in single node version of the Cloudogu EcoSystem.
+		if dependencyOfWantedDogu.Name == registratorDependencyName {
 			continue
 		}
 
