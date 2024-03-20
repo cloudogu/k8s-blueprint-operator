@@ -70,6 +70,15 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 				Version: "1.0.0-1",
 			},
 		},
+		ldapMapper: {
+			"1.0.0-1": &core.Dogu{
+				Name:    "official/ldap-mapper",
+				Version: "1.0.0-1",
+				Dependencies: []core.Dependency{
+					{Type: core.DependencyTypeDogu, Name: "registrator"},
+				},
+			},
+		},
 	},
 }
 
