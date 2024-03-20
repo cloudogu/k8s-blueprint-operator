@@ -23,9 +23,14 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		return nil, domainservice.NewInternalError(nil, "cannot parse component CR as it is nil")
 	}
 
-	version, err := semver.NewVersion(cr.Spec.Version)
+	expectedVersion, err := semver.NewVersion(cr.Spec.Version)
 	if err != nil {
 		return nil, domainservice.NewInternalError(err, "cannot load component CR as it cannot be parsed correctly")
+	}
+
+	actualVersion, err := semver.NewVersion(cr.Status.InstalledVersion)
+	if err != nil {
+		// ignore error as the actual version could be not set and a nil pointer as the version is exactly what we want then
 	}
 
 	persistenceContext := make(map[string]interface{}, 1)
@@ -45,7 +50,8 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 
 	return &ecosystem.ComponentInstallation{
 		Name:               name,
-		Version:            version,
+		ExpectedVersion:    expectedVersion,
+		ActualVersion:      actualVersion,
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		PersistenceContext: persistenceContext,
@@ -86,7 +92,7 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 	spec := compV1.ComponentSpec{
 		Namespace: string(componentInstallation.Name.Namespace),
 		Name:      string(componentInstallation.Name.SimpleName),
-		Version:   componentInstallation.Version.String(),
+		Version:   componentInstallation.ExpectedVersion.String(),
 	}
 	if deployNamespace != "" {
 		spec.DeployNamespace = deployNamespace
@@ -100,7 +106,7 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 			Name: string(componentInstallation.Name.SimpleName),
 			Labels: map[string]string{
 				ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-				ComponentVersionLabelKey: componentInstallation.Version.String(),
+				ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
 			},
 		},
 		Spec: spec,
@@ -159,7 +165,7 @@ func toComponentCRPatch(component *ecosystem.ComponentInstallation) (*componentC
 	spec := componentSpecPatch{
 		Namespace: string(component.Name.Namespace),
 		Name:      string(component.Name.SimpleName),
-		Version:   component.Version.String(),
+		Version:   component.ExpectedVersion.String(),
 	}
 	if deployNamespace != "" {
 		spec.DeployNamespace = &deployNamespace

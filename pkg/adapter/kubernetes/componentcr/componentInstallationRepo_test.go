@@ -23,12 +23,12 @@ import (
 var testCtx = context.Background()
 
 const (
-	testComponentNameRaw      = "my-component"
-	testDistributionNamespace = "k8s"
+	testComponentNameRaw = "my-component"
+	testNamespace        = "k8s"
 )
 
 var testComponentName = common.QualifiedComponentName{
-	Namespace:  testDistributionNamespace,
+	Namespace:  testNamespace,
 	SimpleName: testComponentNameRaw,
 }
 
@@ -53,7 +53,7 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		listWithErroneousElement := &compV1.ComponentList{Items: []compV1.Component{{
 			Spec: compV1.ComponentSpec{
 				Name:      string(testComponentName.SimpleName),
-				Namespace: testDistributionNamespace,
+				Namespace: testNamespace,
 				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
 		}}}
@@ -101,14 +101,14 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		version, _ := semver.NewVersion("1.2.3-4")
 		expected[testComponentName.SimpleName] = &ecosystem.ComponentInstallation{
 			Name:               testComponentName,
-			Version:            version,
+			ExpectedVersion:    version,
 			Status:             "installed",
 			Health:             "",
 			PersistenceContext: nil,
 		}
 		assert.Equal(t, expected[testComponentName.SimpleName].Name, actual[testComponentName.SimpleName].Name)
 		assert.Equal(t, expected[testComponentName.SimpleName].Status, actual[testComponentName.SimpleName].Status)
-		assert.Equal(t, expected[testComponentName.SimpleName].Version, actual[testComponentName.SimpleName].Version)
+		assert.Equal(t, expected[testComponentName.SimpleName].ExpectedVersion, actual[testComponentName.SimpleName].ExpectedVersion)
 		assert.Equal(t, expected[testComponentName.SimpleName].Health, actual[testComponentName.SimpleName].Health)
 		// map pointers are hard to compare, test each field individually
 		assert.Equal(t,
@@ -138,7 +138,7 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		erroneousComponent := &compV1.Component{
 			Spec: compV1.ComponentSpec{
 				Name:      string(testComponentName.SimpleName),
-				Namespace: testDistributionNamespace,
+				Namespace: testNamespace,
 				Version:   "a-b.c:d@1.2@parse-fail-here",
 			},
 		}
@@ -194,7 +194,7 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 			},
 			Spec: compV1.ComponentSpec{
 				Name:      string(testComponentName.SimpleName),
-				Namespace: testDistributionNamespace,
+				Namespace: testNamespace,
 				Version:   "1.2.3-4",
 			},
 			Status: compV1.ComponentStatus{
@@ -213,7 +213,7 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		version, _ := semver.NewVersion("1.2.3-4")
 		expected := ecosystem.ComponentInstallation{
 			Name:               testComponentName,
-			Version:            version,
+			ExpectedVersion:    version,
 			Status:             "installed",
 			Health:             "",
 			PersistenceContext: nil,
@@ -221,7 +221,7 @@ func Test_componentInstallationRepo_GetByName(t *testing.T) {
 		assert.Equal(t, expected.Name, actual.Name)
 		assert.Equal(t, expected.Name, testComponentName)
 		assert.Equal(t, expected.Status, actual.Status)
-		assert.Equal(t, expected.Version, actual.Version)
+		assert.Equal(t, expected.ExpectedVersion, actual.ExpectedVersion)
 		assert.Equal(t, expected.Health, actual.Health)
 		// map pointers are hard to compare, test each field individually
 		assert.Equal(t,
@@ -250,8 +250,8 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    testComponentName,
-			Version: testVersion1,
+			Name:            testComponentName,
+			ExpectedVersion: testVersion1,
 			DeployConfig: map[string]interface{}{
 				"deployNamespace": "longhorn-system",
 				"overwriteConfig": map[string]interface{}{"key": "value"},
@@ -274,8 +274,8 @@ func Test_componentInstallationRepo_Update(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    testComponentName,
-			Version: testVersion1,
+			Name:            testComponentName,
+			ExpectedVersion: testVersion1,
 		}
 		patch := []byte("{\"spec\":{\"namespace\":\"k8s\",\"name\":\"my-component\",\"version\":\"1.0.0-1\",\"deployNamespace\":null,\"valuesYamlOverwrite\":null}}")
 		componentClientMock.EXPECT().Patch(testCtx, string(testComponentName.SimpleName), types.MergePatchType, patch, metav1.PatchOptions{}).Return(nil, assert.AnError)
@@ -334,21 +334,21 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    testComponentName,
-			Version: testVersion1,
+			Name:            testComponentName,
+			ExpectedVersion: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: string(componentInstallation.Name.SimpleName),
 				Labels: map[string]string{
 					ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-					ComponentVersionLabelKey: componentInstallation.Version.String(),
+					ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
 				},
 			},
 			Spec: compV1.ComponentSpec{
 				Namespace: string(componentInstallation.Name.Namespace),
 				Name:      string(componentInstallation.Name.SimpleName),
-				Version:   componentInstallation.Version.String(),
+				Version:   componentInstallation.ExpectedVersion.String(),
 			},
 		}
 
@@ -368,8 +368,8 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    testComponentName,
-			Version: testVersion1,
+			Name:            testComponentName,
+			ExpectedVersion: testVersion1,
 			DeployConfig: map[string]interface{}{
 				"deployNamespace": map[string]string{"no": "string"},
 			},
@@ -391,21 +391,21 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 			componentClient: componentClientMock,
 		}
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    testComponentName,
-			Version: testVersion1,
+			Name:            testComponentName,
+			ExpectedVersion: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: string(componentInstallation.Name.SimpleName),
 				Labels: map[string]string{
 					ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-					ComponentVersionLabelKey: componentInstallation.Version.String(),
+					ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
 				},
 			},
 			Spec: compV1.ComponentSpec{
 				Namespace: string(componentInstallation.Name.Namespace),
 				Name:      string(componentInstallation.Name.SimpleName),
-				Version:   componentInstallation.Version.String(),
+				Version:   componentInstallation.ExpectedVersion.String(),
 			},
 		}
 
