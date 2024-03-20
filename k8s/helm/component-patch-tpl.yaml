@@ -1,0 +1,15 @@
+apiVersion: v1
+values:
+  images:
+    blueprintOperator: cloudogu/k8s-blueprint-operator:0.1.0
+    kubeRbacProxy: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
+patches:
+  values.yaml:
+    kubeRbacProxy:
+      image:
+        repository: "{{ registryFrom .images.kubeRbacProxy }}/{{ repositoryFrom .images.kubeRbacProxy }}"
+        tag: "{{ tagFrom .images.kubeRbacProxy }}"
+    manager:
+      image:
+        repository: "{{ registryFrom .images.blueprintOperator }}/{{ repositoryFrom .images.blueprintOperator }}"
+        tag: "{{ tagFrom .images.blueprintOperator }}"

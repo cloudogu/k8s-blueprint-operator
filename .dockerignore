@@ -1,0 +1,11 @@
+# Deny all
+*/**
+
+# Allow only resources
+!go.*
+!main.go
+!interfaces.go
+!pkg/**/*
+!build/**/*
+!hack/**/*.go
+!Makefile
