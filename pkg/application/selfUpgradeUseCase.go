@@ -135,7 +135,7 @@ func (useCase *SelfUpgradeUseCase) awaitInstallationConfirmation(ctx context.Con
 	})
 	if err != nil && !errors.Is(err, ctx.Err()) {
 		// ignore cancellation error as this can happen, if the operator is getting restarted more than once (e.g. maybe because of a cluster failure)
-		return fmt.Errorf("error while waiting for version confirmation")
+		return fmt.Errorf("error while waiting for version confirmation: %w", err)
 	}
 	return nil
 }
