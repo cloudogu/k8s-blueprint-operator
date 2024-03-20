@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v0.2.0] - 2024-03-20
 ### Added
-- [71] Add optional volume mount for self-signed certificate for the dogu registry.
+- [#71] Add optional volume mount for self-signed certificate for the dogu registry.
+
+### Fixed
+- [#74] Fix ldap-mapper dependency check by ignoring registrator Dogu.
 
 ## [v0.1.0] - 2024-03-20
 ### Added
