@@ -49,12 +49,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
-		component := &ecosystem.ComponentInstallation{
-			Version: version1,
-		}
-
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
-		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(component, nil)
 		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
 			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
 		})
@@ -64,59 +59,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("upgrade already done, but not completed", func(t *testing.T) {
-		blueprintRepo := newMockBlueprintSpecRepository(t)
-		componentRepo := newMockComponentInstallationRepository(t)
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
-
-		blueprint := &domain.BlueprintSpec{
-			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseAwaitSelfUpgrade,
-		}
-
-		component := &ecosystem.ComponentInstallation{
-			Version: version2,
-		}
-
-		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
-		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(component, nil)
-		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
-			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
-		})
-
-		err := useCase.HandleSelfUpgrade(testCtx, blueprintId)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("upgrade already completed and verified", func(t *testing.T) {
-		blueprintRepo := newMockBlueprintSpecRepository(t)
-		componentRepo := newMockComponentInstallationRepository(t)
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
-
-		blueprint := &domain.BlueprintSpec{
-			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseSelfUpgradeCompleted,
-		}
-
-		component := &ecosystem.ComponentInstallation{
-			Version: version2,
-		}
-
-		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
-		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(component, nil)
-		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
-			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
-		})
-
-		err := useCase.HandleSelfUpgrade(testCtx, blueprintId)
-
-		assert.NoError(t, err)
-	})
-
-	t.Run("apply upgrade", func(t *testing.T) {
+	t.Run("apply upgrade until termination", func(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
@@ -128,22 +71,88 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		}
 
 		component := &ecosystem.ComponentInstallation{
-			Version: version1,
+			ExpectedVersion: version1,
+			ActualVersion:   version1,
 		}
 
 		timeoutCtx, cancelCtx := context.WithTimeout(testCtx, time.Second) // but usually cancel
 		defer cancelCtx()
 
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
-		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(component, nil)
-		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
-			require.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
-		})
-		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(nil).Run(
-			func(_ context.Context, _ domain.ComponentDiff, _ *ecosystem.ComponentInstallation) {
+		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).
+			Return(nil).
+			Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
+				assert.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+			}).Once() // only once as the operator will terminate and will set status completed later.
+
+		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component, nil).Once()
+		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, component).Return(nil).
+			Run(func(_ context.Context, _ domain.ComponentDiff, _ *ecosystem.ComponentInstallation) {
+				// check that the status is set beforehand, as we cannot guarantee that we can set it afterward before termination
+				assert.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
 				cancelCtx()
-			},
-		)
+			})
+
+		err := useCase.HandleSelfUpgrade(timeoutCtx, blueprintId)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("verify installation after termination", func(t *testing.T) {
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		componentRepo := newMockComponentInstallationRepository(t)
+		componentUseCase := newMockComponentInstallationUseCase(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+
+		blueprint := &domain.BlueprintSpec{
+			StateDiff: upgradeToV2StateDiff,
+			Status:    domain.StatusPhaseAwaitSelfUpgrade,
+		}
+
+		component := &ecosystem.ComponentInstallation{
+			ExpectedVersion: version2,
+			ActualVersion:   version2,
+		}
+
+		blueprintRepo.EXPECT().GetById(testCtx, blueprintId).Return(blueprint, nil)
+		componentRepo.EXPECT().GetByName(testCtx, blueprintOperatorName).Return(component, nil).Once() // no reload for actual version check
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
+			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		})
+
+		err := useCase.HandleSelfUpgrade(testCtx, blueprintId)
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("await installation confirmation after termination", func(t *testing.T) {
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		componentRepo := newMockComponentInstallationRepository(t)
+		componentUseCase := newMockComponentInstallationUseCase(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+
+		blueprint := &domain.BlueprintSpec{
+			StateDiff: upgradeToV2StateDiff,
+			Status:    domain.StatusPhaseAwaitSelfUpgrade,
+		}
+
+		component1 := &ecosystem.ComponentInstallation{
+			ExpectedVersion: version2,
+			ActualVersion:   version1,
+		}
+		component2 := &ecosystem.ComponentInstallation{
+			ExpectedVersion: version2,
+			ActualVersion:   version2,
+		}
+		timeoutCtx, cancelCtx := context.WithTimeout(testCtx, time.Second) // no timeout should happen as
+		defer cancelCtx()
+
+		blueprintRepo.EXPECT().GetById(timeoutCtx, blueprintId).Return(blueprint, nil)
+		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component1, nil).Once()
+		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component2, nil).Once()
+		blueprintRepo.EXPECT().Update(timeoutCtx, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
+			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		})
 
 		err := useCase.HandleSelfUpgrade(timeoutCtx, blueprintId)
 
@@ -166,9 +175,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
 		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(nil, domainservice.NewNotFoundError(assert.AnError, "test-error"))
-		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
-			require.Equal(t, domain.StatusPhaseAwaitSelfUpgrade, blueprint.Status)
-		})
+		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(nil)
 		var nilComponent *ecosystem.ComponentInstallation
 		componentUseCase.EXPECT().applyComponentState(mock.Anything, UpgradeToV2ComponentDiff, nilComponent).Return(nil).Run(
 			func(_ context.Context, _ domain.ComponentDiff, _ *ecosystem.ComponentInstallation) {
@@ -227,12 +234,13 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
 
 		blueprint := &domain.BlueprintSpec{
+			Id:        blueprintId,
 			StateDiff: upgradeToV2StateDiff,
 			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		component := &ecosystem.ComponentInstallation{
-			Version: version1,
+			ExpectedVersion: version1,
 		}
 
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
@@ -242,7 +250,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		err := useCase.HandleSelfUpgrade(testCtx, blueprintId)
 
 		assert.ErrorIs(t, err, internalTestError)
-		assert.ErrorContains(t, err, "cannot save blueprint spec \""+blueprintId+"\" while possibly self upgrading the operator")
+		assert.ErrorContains(t, err, "cannot persist blueprint spec \""+blueprintId+"\" to mark it waiting for self upgrade")
 	})
 
 	t.Run("cannot apply self upgrade", func(t *testing.T) {
@@ -257,7 +265,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		}
 
 		component := &ecosystem.ComponentInstallation{
-			Version: version1,
+			ExpectedVersion: version1,
 		}
 
 		blueprintRepo.EXPECT().GetById(mock.Anything, blueprintId).Return(blueprint, nil)
