@@ -21,6 +21,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 	version1, _ := semver.NewVersion("1.0")
 	version2, _ := semver.NewVersion("2.0")
 	internalTestError := domainservice.NewInternalError(assert.AnError, "internal error")
+	waitConfig := ecosystem.WaitConfig{Interval: 5 * time.Second}
 
 	UpgradeToV2ComponentDiff := domain.ComponentDiff{
 		Name: blueprintOperatorName,
@@ -42,7 +43,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{},
@@ -63,7 +65,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -102,7 +105,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -129,7 +133,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -150,6 +155,7 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo.EXPECT().GetById(timeoutCtx, blueprintId).Return(blueprint, nil)
 		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component1, nil).Once()
 		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component2, nil).Once()
+		configProvider.EXPECT().GetWaitConfig(timeoutCtx).Return(waitConfig, nil)
 		blueprintRepo.EXPECT().Update(timeoutCtx, blueprint).Return(nil).Run(func(ctx context.Context, blueprintSpec *domain.BlueprintSpec) {
 			require.Equal(t, domain.StatusPhaseSelfUpgradeCompleted, blueprint.Status)
 		})
@@ -163,7 +169,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -192,7 +199,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -211,7 +219,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -231,7 +240,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			Id:        blueprintId,
@@ -257,7 +267,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -283,7 +294,8 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			Id:        blueprintId,
@@ -300,11 +312,12 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		assert.ErrorContains(t, err, "cannot save blueprint spec \""+blueprintId+"\" to skip self upgrade")
 	})
 
-	t.Run("error awaiting version confirmation", func(t *testing.T) {
+	t.Run("error awaiting version confirmation, cannot load component", func(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
@@ -321,18 +334,50 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprintRepo.EXPECT().GetById(timeoutCtx, blueprintId).Return(blueprint, nil)
 		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component, nil).Once()
 		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(nil, assert.AnError).Once()
+		configProvider.EXPECT().GetWaitConfig(timeoutCtx).Return(waitConfig, nil)
 
 		err := useCase.HandleSelfUpgrade(timeoutCtx, blueprintId)
 
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "error while waiting for version confirmation")
+		assert.ErrorContains(t, err, "could not reload component for version confirmation")
+	})
+
+	t.Run("error awaiting version confirmation, cannot load wait config", func(t *testing.T) {
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		componentRepo := newMockComponentInstallationRepository(t)
+		componentUseCase := newMockComponentInstallationUseCase(t)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
+
+		blueprint := &domain.BlueprintSpec{
+			StateDiff: upgradeToV2StateDiff,
+			Status:    domain.StatusPhaseAwaitSelfUpgrade,
+		}
+
+		component := &ecosystem.ComponentInstallation{
+			ExpectedVersion: version2,
+			ActualVersion:   version1,
+		}
+		timeoutCtx, cancelCtx := context.WithTimeout(testCtx, time.Second) // no timeout should happen as
+		defer cancelCtx()
+
+		blueprintRepo.EXPECT().GetById(timeoutCtx, blueprintId).Return(blueprint, nil)
+		componentRepo.EXPECT().GetByName(timeoutCtx, blueprintOperatorName).Return(component, nil).Once()
+		configProvider.EXPECT().GetWaitConfig(timeoutCtx).Return(waitConfig, assert.AnError)
+
+		err := useCase.HandleSelfUpgrade(timeoutCtx, blueprintId)
+
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not retrieve wait interval config for self upgrade")
 	})
 
 	t.Run("error saving blueprint after awaiting version confirmation", func(t *testing.T) {
 		blueprintRepo := newMockBlueprintSpecRepository(t)
 		componentRepo := newMockComponentInstallationRepository(t)
 		componentUseCase := newMockComponentInstallationUseCase(t)
-		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName)
+		configProvider := newMockHealthConfigProvider(t)
+		useCase := NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentUseCase, blueprintOperatorName, configProvider)
 
 		blueprint := &domain.BlueprintSpec{
 			Id:        blueprintId,

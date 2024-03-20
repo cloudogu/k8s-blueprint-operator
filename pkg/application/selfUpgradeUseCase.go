@@ -11,7 +11,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"time"
 )
 
 type SelfUpgradeUseCase struct {
@@ -19,6 +18,7 @@ type SelfUpgradeUseCase struct {
 	componentRepo         componentInstallationRepository
 	componentUseCase      componentInstallationUseCase
 	blueprintOperatorName common.SimpleComponentName
+	healthConfigProvider  healthConfigProvider
 }
 
 func NewSelfUpgradeUseCase(
@@ -26,12 +26,14 @@ func NewSelfUpgradeUseCase(
 	componentRepo componentInstallationRepository,
 	componentUseCase componentInstallationUseCase,
 	blueprintOperatorName common.SimpleComponentName,
+	healthConfigProvider healthConfigProvider,
 ) *SelfUpgradeUseCase {
 	return &SelfUpgradeUseCase{
 		blueprintRepo:         blueprintRepo,
 		componentRepo:         componentRepo,
 		componentUseCase:      componentUseCase,
 		blueprintOperatorName: blueprintOperatorName,
+		healthConfigProvider:  healthConfigProvider,
 	}
 }
 
@@ -124,11 +126,14 @@ func (useCase *SelfUpgradeUseCase) waitForTermination(ctx context.Context) {
 }
 
 func (useCase *SelfUpgradeUseCase) awaitInstallationConfirmation(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	//TODO: extract retryInterval
-	_, err := util.RetryUntilSuccessOrCancellation(ctx, 5*time.Second, func(ctx context.Context) (*interface{}, error, bool) {
+	config, err := useCase.healthConfigProvider.GetWaitConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("could not retrieve wait interval config for self upgrade: %w", err)
+	}
+	_, err = util.RetryUntilSuccessOrCancellation(ctx, config.Interval, func(ctx context.Context) (*interface{}, error, bool) {
 		ownComponent, err := useCase.componentRepo.GetByName(ctx, useCase.blueprintOperatorName)
 		if err != nil {
-			return nil, err, false
+			return nil, fmt.Errorf("could not reload component for version confirmation: %w", err), false
 		}
 		ownDiff := blueprintSpec.StateDiff.ComponentDiffs.GetComponentDiffByName(useCase.blueprintOperatorName)
 		return nil, nil, !ownDiff.IsExpectedVersion(ownComponent.ActualVersion) // retry if true
