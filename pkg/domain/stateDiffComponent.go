@@ -48,6 +48,19 @@ type ComponentDiffState struct {
 	DeployConfig ecosystem.DeployConfig
 }
 
+// IsExpectedVersion checks if the given version es equal to the expected version
+func (diff ComponentDiff) IsExpectedVersion(actualVersion *semver.Version) bool {
+	// expected is nil if the component is not in the blueprint, therefore no upgrade needs to happen
+	if diff.Expected.Version == nil {
+		return true
+	}
+	// actualVersion is nil if there is no component or no actual version in it yet.
+	if actualVersion == nil {
+		return false
+	}
+	return diff.Expected.Version.Equal(actualVersion)
+}
+
 func (diff ComponentDiff) HasChanges() bool {
 	return len(diff.NeededActions) != 0
 }
@@ -123,7 +136,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		componentName = installedComponent.Name.SimpleName
 		actualState = ComponentDiffState{
 			Namespace:         installedComponent.Name.Namespace,
-			Version:           installedComponent.Version,
+			Version:           installedComponent.ExpectedVersion,
 			InstallationState: TargetStatePresent,
 			DeployConfig:      installedComponent.DeployConfig,
 		}

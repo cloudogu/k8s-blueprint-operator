@@ -99,9 +99,18 @@ spec:
               drop:
                 - ALL
           imagePullPolicy: {{ .Values.manager.imagePullPolicy }}
+          volumeMounts:
+            - mountPath: /etc/ssl/certs/dogu-registry-cert.pem
+              name: dogu-registry-cert
+              subPath: dogu-registry-cert.pem
       securityContext:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
       serviceAccountName: {{ include "k8s-blueprint-operator.name" . }}-controller-manager
       terminationGracePeriodSeconds: 10
+      volumes:
+        - name: dogu-registry-cert
+          secret:
+            optional: true
+            secretName: {{ .Values.doguRegistry.certificate.secret }}

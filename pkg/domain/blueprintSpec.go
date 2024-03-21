@@ -3,9 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"slices"
@@ -333,32 +331,18 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 	}
 }
 
-// HandleSelfUpgrade checks if a self upgrade is needed and sets the appropriate status.
-// if the operator is not installed in the usual way, the actualInstalledVersion can be nil.
-// Returns the ComponentDiff for the given component name so that it can be used to initiate further steps.
-func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleComponentName, actualInstalledVersion *semver.Version) ComponentDiff {
-	ownDiff := spec.StateDiff.ComponentDiffs.GetComponentDiffByName(ownComponentName)
-	// if already everything is as it should
-	if isExpectedVersionInstalled(ownDiff.Expected.Version, actualInstalledVersion) {
-		// no self upgrade planned
-		spec.Status = StatusPhaseSelfUpgradeCompleted
-		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
-		return ownDiff
+func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
+	if spec.Status != StatusPhaseAwaitSelfUpgrade {
+		spec.Status = StatusPhaseAwaitSelfUpgrade
+		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	}
-	// if self upgrade is not done yet
-	spec.Status = StatusPhaseAwaitSelfUpgrade
-	spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
-	return ownDiff
 }
 
-func isExpectedVersionInstalled(expected, actual *semver.Version) bool {
-	if expected == nil {
-		return true
+func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
+	if spec.Status != StatusPhaseSelfUpgradeCompleted {
+		spec.Status = StatusPhaseSelfUpgradeCompleted
+		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 	}
-	if actual == nil {
-		return false
-	}
-	return expected.Equal(actual)
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
