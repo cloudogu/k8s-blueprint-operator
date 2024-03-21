@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	testNamespace       = "ecosystem"
+	testDeployNamespace = "ecosystem"
 	testStatus          = ecosystem.ComponentStatusNotInstalled
 	testHealthStatus    = compV1.AvailableHealthStatus
 	testResourceVersion = "1"
@@ -47,27 +47,29 @@ func Test_parseComponentCR(t *testing.T) {
 				cr: &compV1.Component{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:            testComponentNameRaw,
-						Namespace:       testNamespace,
+						Namespace:       testDeployNamespace,
 						ResourceVersion: testResourceVersion,
 					},
 					Spec: compV1.ComponentSpec{
-						Namespace:           testDistributionNamespace,
+						Namespace:           testNamespace,
 						Name:                testComponentNameRaw,
 						Version:             testVersion1.String(),
 						DeployNamespace:     "longhorn-system",
 						ValuesYamlOverwrite: string(valuesOverwriteYAMLBytes),
 					},
 					Status: compV1.ComponentStatus{
-						Status: testStatus,
-						Health: testHealthStatus,
+						Status:           testStatus,
+						Health:           testHealthStatus,
+						InstalledVersion: testVersion1.String(),
 					},
 				},
 			},
 			want: &ecosystem.ComponentInstallation{
-				Name:    testComponentName,
-				Version: testVersion1,
-				Status:  testStatus,
-				Health:  ecosystem.HealthStatus(testHealthStatus),
+				Name:            testComponentName,
+				ExpectedVersion: testVersion1,
+				ActualVersion:   testVersion1,
+				Status:          testStatus,
+				Health:          ecosystem.HealthStatus(testHealthStatus),
 				DeployConfig: map[string]interface{}{
 					"deployNamespace": "longhorn-system",
 					"overwriteConfig": expectedValuesOverwrite,
@@ -86,15 +88,49 @@ func Test_parseComponentCR(t *testing.T) {
 			wantErr: assert.Error,
 		},
 		{
-			name: "should return error version parse error",
+			name: "should return expected version parse error",
 			args: args{
 				cr: &compV1.Component{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: testComponentNameRaw,
+					},
 					Spec: compV1.ComponentSpec{
-						Version: "fsdfsd",
+						Namespace: testNamespace,
+						Name:      testComponentNameRaw,
+						Version:   "fsdfsd",
 					},
 				},
 			},
 			wantErr: assert.Error,
+		},
+		{
+			name: "should return actual version parse error",
+			args: args{
+				cr: &compV1.Component{
+					ObjectMeta: metav1.ObjectMeta{
+						Name:            testComponentNameRaw,
+						ResourceVersion: testResourceVersion,
+					},
+					Spec: compV1.ComponentSpec{
+						Namespace: testNamespace,
+						Name:      testComponentNameRaw,
+						Version:   testVersion1.String(),
+					},
+					Status: compV1.ComponentStatus{
+						InstalledVersion: "fsdfsd",
+					},
+				},
+			},
+			want: &ecosystem.ComponentInstallation{
+				Name:            testComponentName,
+				ExpectedVersion: testVersion1,
+				ActualVersion:   nil,
+				DeployConfig:    map[string]interface{}{},
+				PersistenceContext: map[string]interface{}{
+					componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
+				},
+			},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "should return error on missing resource name",
@@ -102,7 +138,7 @@ func Test_parseComponentCR(t *testing.T) {
 				cr: &compV1.Component{
 					ObjectMeta: metav1.ObjectMeta{},
 					Spec: compV1.ComponentSpec{
-						Namespace: testDistributionNamespace,
+						Namespace: testNamespace,
 						Name:      testComponentNameRaw,
 						Version:   testVersion1.String(),
 					},
@@ -118,7 +154,7 @@ func Test_parseComponentCR(t *testing.T) {
 						Name: "name",
 					},
 					Spec: compV1.ComponentSpec{
-						Namespace:           testDistributionNamespace,
+						Namespace:           testNamespace,
 						Name:                testComponentNameRaw,
 						Version:             testVersion1.String(),
 						DeployNamespace:     "longhorn-system",
@@ -154,10 +190,10 @@ func Test_toComponentCR(t *testing.T) {
 			name: "success",
 			args: args{
 				componentInstallation: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
-					Status:  testStatus,
-					Health:  ecosystem.HealthStatus(testHealthStatus),
+					Name:            testComponentName,
+					ExpectedVersion: testVersion1,
+					Status:          testStatus,
+					Health:          ecosystem.HealthStatus(testHealthStatus),
 					PersistenceContext: map[string]interface{}{
 						componentInstallationRepoContextKey: componentInstallationRepoContext{testResourceVersion},
 					},
@@ -176,7 +212,7 @@ func Test_toComponentCR(t *testing.T) {
 					},
 				},
 				Spec: compV1.ComponentSpec{
-					Namespace:           testDistributionNamespace,
+					Namespace:           testNamespace,
 					Name:                testComponentNameRaw,
 					Version:             testVersion1.String(),
 					DeployNamespace:     "longhorn-system",
@@ -213,8 +249,8 @@ func Test_toComponentCRPatch(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
+					Name:            testComponentName,
+					ExpectedVersion: testVersion1,
 					DeployConfig: map[string]interface{}{
 						"deployNamespace": "longhorn-system",
 						"overwriteConfig": map[string]interface{}{"key": "value"},
@@ -223,7 +259,7 @@ func Test_toComponentCRPatch(t *testing.T) {
 			},
 			want: &componentCRPatch{
 				Spec: componentSpecPatch{
-					Namespace:           testDistributionNamespace,
+					Namespace:           testNamespace,
 					Name:                testComponentNameRaw,
 					Version:             testVersion1.String(),
 					DeployNamespace:     &testDeployNamespace,
@@ -236,8 +272,8 @@ func Test_toComponentCRPatch(t *testing.T) {
 			name: "should return error on wrong package config type",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
+					Name:            testComponentName,
+					ExpectedVersion: testVersion1,
 					DeployConfig: map[string]interface{}{
 						"deployNamespace": map[string]interface{}{"no": "string"},
 					},
@@ -271,8 +307,8 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 			name: "success",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
+					Name:            testComponentName,
+					ExpectedVersion: testVersion1,
 					DeployConfig: map[string]interface{}{
 						"deployNamespace": "longhorn-system",
 						"overwriteConfig": map[string]interface{}{"key": "value"},
@@ -286,8 +322,8 @@ func Test_toComponentCRPatchBytes(t *testing.T) {
 			name: "should return error on error creating patch",
 			args: args{
 				component: &ecosystem.ComponentInstallation{
-					Name:    testComponentName,
-					Version: testVersion1,
+					Name:            testComponentName,
+					ExpectedVersion: testVersion1,
 					DeployConfig: map[string]interface{}{
 						"deployNamespace": map[string]interface{}{"no": "string"},
 					},

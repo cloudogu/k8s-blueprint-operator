@@ -37,9 +37,9 @@ func TestInstallComponent(t *testing.T) {
 				deployConfig:  map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 			want: &ComponentInstallation{
-				Name:         testComponentName,
-				Version:      testVersion1,
-				DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system"},
+				Name:            testComponentName,
+				ExpectedVersion: testVersion1,
+				DeployConfig:    map[string]interface{}{"deployNamespace": "longhorn-system"},
 			},
 		},
 	}
@@ -80,13 +80,13 @@ func TestComponentInstallation_Upgrade(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			ci := &ComponentInstallation{
 				Name:               tt.fields.Name,
-				Version:            tt.fields.Version,
+				ExpectedVersion:    tt.fields.Version,
 				Status:             tt.fields.Status,
 				PersistenceContext: tt.fields.PersistenceContext,
 				Health:             tt.fields.Health,
 			}
 			ci.Upgrade(tt.args.version)
-			assert.Equal(t, tt.args.version, ci.Version)
+			assert.Equal(t, tt.args.version, ci.ExpectedVersion)
 		})
 	}
 }
