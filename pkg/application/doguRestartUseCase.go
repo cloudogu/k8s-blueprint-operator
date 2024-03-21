@@ -12,7 +12,7 @@ import (
 type DoguRestartUseCase struct {
 	doguInstallationRepository doguInstallationRepository
 	blueprintSpecRepo          blueprintSpecRepository
-	restartRepository          domainservice.DoguRestartRepository
+	restartRepository          doguRestartRepository
 }
 
 func NewDoguRestartUseCase(doguInstallationRepository doguInstallationRepository, blueprintSpecRepo blueprintSpecRepository, restartRepository doguRestartRepository) *DoguRestartUseCase {
