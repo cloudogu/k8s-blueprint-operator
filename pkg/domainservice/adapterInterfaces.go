@@ -135,7 +135,7 @@ type ConfigEncryptionAdapter interface {
 }
 
 type DoguRestartRepository interface {
-	//RestartAll restarts all provided Dogus
+	// RestartAll restarts all provided Dogus
 	RestartAll(context.Context, []common.SimpleDoguName) error
 }
 

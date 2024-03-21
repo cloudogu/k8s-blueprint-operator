@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
@@ -58,7 +57,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
-				Expected:     domain.GlobalConfigValueState{"initial", true},
+				Expected:     domain.GlobalConfigValueState{Value: "initial", Exists: true},
 				NeededAction: domain.ConfigActionSet,
 			}},
 		}
@@ -113,7 +112,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
-				Expected:     domain.GlobalConfigValueState{"initial", true},
+				Expected:     domain.GlobalConfigValueState{Value: "initial", Exists: true},
 				NeededAction: domain.ConfigActionSet,
 			}},
 		}
@@ -132,7 +131,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
 		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
-		installationRepository.EXPECT().GetAll(testContext).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, errors.New("testerror"))
+		installationRepository.EXPECT().GetAll(testContext).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, assert.AnError)
 
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
 
@@ -141,7 +140,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "could not get all installed Dogus: \"testerror\"", err.Error())
+		assert.ErrorContains(t, err, "could not restart all installed Dogus: could not get all installed Dogus:")
 	})
 
 	t.Run("fail on repository restart all error", func(t *testing.T) {
@@ -154,7 +153,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
-				Expected:     domain.GlobalConfigValueState{"initial", true},
+				Expected:     domain.GlobalConfigValueState{Value: "initial", Exists: true},
 				NeededAction: domain.ConfigActionSet,
 			}},
 		}
@@ -187,7 +186,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		restartRepository := newMockDoguRestartRepository(t)
 		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
 		installationRepository.EXPECT().GetAll(testContext).Return(installedDogus, nil)
-		restartRepository.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(errors.New("testerror"))
+		restartRepository.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(assert.AnError)
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
 
 		// when
@@ -195,7 +194,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "testerror", err.Error())
+		assert.ErrorContains(t, err, "could not restart all installed Dogus")
 	})
 
 	t.Run("restart some dogus", func(t *testing.T) {
@@ -205,7 +204,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{"initial", true},
+			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 			NeededAction: domain.ConfigActionSet}},
 		}
 		testContext := context.Background()
@@ -254,7 +253,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{"initial", true},
+			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 			NeededAction: domain.ConfigActionSet}},
 		}
 		testContext := context.Background()
@@ -285,7 +284,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
 		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
-		restartRepository.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(errors.New("testerror"))
+		restartRepository.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(assert.AnError)
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
 
 		// when
@@ -293,7 +292,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "testerror", err.Error())
+		assert.ErrorContains(t, err, "could not restart Dogus")
 	})
 
 	t.Run("fail on error in blueprint spec update", func(t *testing.T) {
@@ -303,7 +302,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{"initial", true},
+			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 			NeededAction: domain.ConfigActionSet}},
 		}
 		testContext := context.Background()
@@ -336,14 +335,14 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
 		restartRepository.EXPECT().RestartAll(testContext, dogusThatNeedARestart).Return(nil)
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
-		blueprintSpecRepo.EXPECT().Update(testContext, &testBlueprint).Return(errors.New("testerror"))
+		blueprintSpecRepo.EXPECT().Update(testContext, &testBlueprint).Return(assert.AnError)
 
 		// when
 		err := restartUseCase.TriggerDoguRestarts(testContext, testBlueprintId)
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "testerror", err.Error())
+		assert.ErrorContains(t, err, "could not update blueprint spec")
 	})
 
 	t.Run("fail on error when getting blueprint", func(t *testing.T) {
@@ -353,7 +352,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{"initial", true},
+			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 			NeededAction: domain.ConfigActionSet}},
 		}
 		testContext := context.Background()
@@ -382,7 +381,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
-		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, errors.New("testerror"))
+		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, assert.AnError)
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
 
 		// when
@@ -390,7 +389,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.Equal(t, "could not get blueprint spec by id: \"testerror\"", err.Error())
+		assert.ErrorContains(t, err, "could not get blueprint spec by id")
 	})
 }
 
@@ -403,8 +402,8 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 	testBlueprint1 := domain.Blueprint{Dogus: []domain.Dogu{testdogu1}}
 	testDoguConfigDiffsChanged := domain.CombinedDoguConfigDiffs{
 		DoguConfigDiff: []domain.DoguConfigEntryDiff{{
-			Actual:       domain.DoguConfigValueState{"", false},
-			Expected:     domain.DoguConfigValueState{"testvalue", true},
+			Actual:       domain.DoguConfigValueState{},
+			Expected:     domain.DoguConfigValueState{Value: "testvalue", Exists: true},
 			NeededAction: domain.ConfigActionSet,
 		}},
 		SensitiveDoguConfigDiff: nil,
@@ -437,12 +436,12 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 		{
 			name: "return nothing on empty blueprint",
 			args: args{blueprintSpec: &domain.BlueprintSpec{}},
-			want: []common.SimpleDoguName{},
+			want: nil,
 		},
 		{
 			name: "return nothing on no config change",
 			args: args{blueprintSpec: &domain.BlueprintSpec{Blueprint: testBlueprint1}},
-			want: []common.SimpleDoguName{},
+			want: nil,
 		},
 		{
 			name: "return dogu on dogu config change",
@@ -464,7 +463,7 @@ func Test_getDogusThatNeedARestart(t *testing.T) {
 					StateDiff:          testDoguConfigChangeDiffActionNone,
 				},
 			},
-			want: []common.SimpleDoguName{},
+			want: nil,
 		},
 	}
 	for _, tt := range tests {
@@ -497,7 +496,7 @@ func Test_checkForAllDoguRestart(t *testing.T) {
 							{
 								Key:          "testkey",
 								Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
-								Expected:     domain.GlobalConfigValueState{"initial", true},
+								Expected:     domain.GlobalConfigValueState{Value: "initial", Exists: true},
 								NeededAction: domain.ConfigActionSet,
 							},
 						},
@@ -515,7 +514,7 @@ func Test_checkForAllDoguRestart(t *testing.T) {
 							{
 								Key:          "testkey",
 								Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
-								Expected:     domain.GlobalConfigValueState{"initial", true},
+								Expected:     domain.GlobalConfigValueState{Value: "initial", Exists: true},
 								NeededAction: domain.ConfigActionNone,
 							},
 						},
