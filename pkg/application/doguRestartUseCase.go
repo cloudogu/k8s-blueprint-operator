@@ -28,16 +28,15 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 
 	logger.Info("searching for Dogus that need a restart...")
 	var dogusThatNeedARestart []common.SimpleDoguName
-	allDogusNeedARestart := checkForAllDoguRestart(blueprintSpec)
 
-	if allDogusNeedARestart {
+	if blueprintSpec.StateDiff.GlobalConfigDiffs.HasChanges() {
 		logger.Info("restarting all installed Dogus...")
 		err = useCase.restartAllInstalledDogus(ctx)
 		if err != nil {
 			return domainservice.NewInternalError(err, "could not restart all installed Dogus")
 		}
 	} else {
-		dogusThatNeedARestart = getDogusThatNeedARestart(blueprintSpec)
+		dogusThatNeedARestart = blueprintSpec.GetDogusThatNeedARestart()
 		if len(dogusThatNeedARestart) > 0 {
 			logger.Info("restarting Dogus...")
 			restartError := useCase.restartRepository.RestartAll(ctx, dogusThatNeedARestart)
@@ -67,24 +66,4 @@ func (useCase *DoguRestartUseCase) restartAllInstalledDogus(ctx context.Context)
 		installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
 	}
 	return useCase.restartRepository.RestartAll(ctx, installedDogusSimpleNames)
-}
-
-func checkForAllDoguRestart(blueprintSpec *domain.BlueprintSpec) bool {
-	for _, globalConfigDiff := range blueprintSpec.StateDiff.GlobalConfigDiffs {
-		if globalConfigDiff.NeededAction != domain.ConfigActionNone {
-			return true
-		}
-	}
-	return false
-}
-
-func getDogusThatNeedARestart(blueprintSpec *domain.BlueprintSpec) []common.SimpleDoguName {
-	var dogusThatNeedRestart []common.SimpleDoguName
-	dogusInEffectiveBlueprint := blueprintSpec.EffectiveBlueprint.Dogus
-	for _, dogu := range dogusInEffectiveBlueprint {
-		if blueprintSpec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
-			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
-		}
-	}
-	return dogusThatNeedRestart
 }
