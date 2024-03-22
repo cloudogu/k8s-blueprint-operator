@@ -202,8 +202,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
-			Version: semVer3212,
+			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			ExpectedVersion: semVer3212,
 		}
 
 		componentRepoMock.EXPECT().Create(testCtx, componentInstallation).Return(nil)
@@ -263,8 +263,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
-			Version: semVer3212,
+			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			ExpectedVersion: semVer3212,
 		}
 
 		componentRepoMock.EXPECT().Update(testCtx, componentInstallation).Return(nil)
@@ -302,8 +302,8 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:    common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
-			Version: semVer3212,
+			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			ExpectedVersion: semVer3212,
 			DeployConfig: map[string]interface{}{
 				"deployNamespace": "longhorn-system",
 				"overwriteConfig": map[string]string{

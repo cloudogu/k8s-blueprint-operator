@@ -412,6 +412,63 @@ func (_c *MockDoguInterface_Update_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// UpdateSpecWithRetry provides a mock function with given fields: ctx, dogu, modifySpecFn, opts
+func (_m *MockDoguInterface) UpdateSpecWithRetry(ctx context.Context, dogu *v1.Dogu, modifySpecFn func(v1.DoguSpec) v1.DoguSpec, opts metav1.UpdateOptions) (*v1.Dogu, error) {
+	ret := _m.Called(ctx, dogu, modifySpecFn, opts)
+
+	var r0 *v1.Dogu
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Dogu, func(v1.DoguSpec) v1.DoguSpec, metav1.UpdateOptions) (*v1.Dogu, error)); ok {
+		return rf(ctx, dogu, modifySpecFn, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Dogu, func(v1.DoguSpec) v1.DoguSpec, metav1.UpdateOptions) *v1.Dogu); ok {
+		r0 = rf(ctx, dogu, modifySpecFn, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Dogu)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Dogu, func(v1.DoguSpec) v1.DoguSpec, metav1.UpdateOptions) error); ok {
+		r1 = rf(ctx, dogu, modifySpecFn, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDoguInterface_UpdateSpecWithRetry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateSpecWithRetry'
+type MockDoguInterface_UpdateSpecWithRetry_Call struct {
+	*mock.Call
+}
+
+// UpdateSpecWithRetry is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dogu *v1.Dogu
+//   - modifySpecFn func(v1.DoguSpec) v1.DoguSpec
+//   - opts metav1.UpdateOptions
+func (_e *MockDoguInterface_Expecter) UpdateSpecWithRetry(ctx interface{}, dogu interface{}, modifySpecFn interface{}, opts interface{}) *MockDoguInterface_UpdateSpecWithRetry_Call {
+	return &MockDoguInterface_UpdateSpecWithRetry_Call{Call: _e.mock.On("UpdateSpecWithRetry", ctx, dogu, modifySpecFn, opts)}
+}
+
+func (_c *MockDoguInterface_UpdateSpecWithRetry_Call) Run(run func(ctx context.Context, dogu *v1.Dogu, modifySpecFn func(v1.DoguSpec) v1.DoguSpec, opts metav1.UpdateOptions)) *MockDoguInterface_UpdateSpecWithRetry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v1.Dogu), args[2].(func(v1.DoguSpec) v1.DoguSpec), args[3].(metav1.UpdateOptions))
+	})
+	return _c
+}
+
+func (_c *MockDoguInterface_UpdateSpecWithRetry_Call) Return(result *v1.Dogu, err error) *MockDoguInterface_UpdateSpecWithRetry_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockDoguInterface_UpdateSpecWithRetry_Call) RunAndReturn(run func(context.Context, *v1.Dogu, func(v1.DoguSpec) v1.DoguSpec, metav1.UpdateOptions) (*v1.Dogu, error)) *MockDoguInterface_UpdateSpecWithRetry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateStatus provides a mock function with given fields: ctx, dogu, opts
 func (_m *MockDoguInterface) UpdateStatus(ctx context.Context, dogu *v1.Dogu, opts metav1.UpdateOptions) (*v1.Dogu, error) {
 	ret := _m.Called(ctx, dogu, opts)
@@ -464,6 +521,63 @@ func (_c *MockDoguInterface_UpdateStatus_Call) Return(_a0 *v1.Dogu, _a1 error) *
 }
 
 func (_c *MockDoguInterface_UpdateStatus_Call) RunAndReturn(run func(context.Context, *v1.Dogu, metav1.UpdateOptions) (*v1.Dogu, error)) *MockDoguInterface_UpdateStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateStatusWithRetry provides a mock function with given fields: ctx, dogu, modifyStatusFn, opts
+func (_m *MockDoguInterface) UpdateStatusWithRetry(ctx context.Context, dogu *v1.Dogu, modifyStatusFn func(v1.DoguStatus) v1.DoguStatus, opts metav1.UpdateOptions) (*v1.Dogu, error) {
+	ret := _m.Called(ctx, dogu, modifyStatusFn, opts)
+
+	var r0 *v1.Dogu
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Dogu, func(v1.DoguStatus) v1.DoguStatus, metav1.UpdateOptions) (*v1.Dogu, error)); ok {
+		return rf(ctx, dogu, modifyStatusFn, opts)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *v1.Dogu, func(v1.DoguStatus) v1.DoguStatus, metav1.UpdateOptions) *v1.Dogu); ok {
+		r0 = rf(ctx, dogu, modifyStatusFn, opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Dogu)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *v1.Dogu, func(v1.DoguStatus) v1.DoguStatus, metav1.UpdateOptions) error); ok {
+		r1 = rf(ctx, dogu, modifyStatusFn, opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDoguInterface_UpdateStatusWithRetry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateStatusWithRetry'
+type MockDoguInterface_UpdateStatusWithRetry_Call struct {
+	*mock.Call
+}
+
+// UpdateStatusWithRetry is a helper method to define mock.On call
+//   - ctx context.Context
+//   - dogu *v1.Dogu
+//   - modifyStatusFn func(v1.DoguStatus) v1.DoguStatus
+//   - opts metav1.UpdateOptions
+func (_e *MockDoguInterface_Expecter) UpdateStatusWithRetry(ctx interface{}, dogu interface{}, modifyStatusFn interface{}, opts interface{}) *MockDoguInterface_UpdateStatusWithRetry_Call {
+	return &MockDoguInterface_UpdateStatusWithRetry_Call{Call: _e.mock.On("UpdateStatusWithRetry", ctx, dogu, modifyStatusFn, opts)}
+}
+
+func (_c *MockDoguInterface_UpdateStatusWithRetry_Call) Run(run func(ctx context.Context, dogu *v1.Dogu, modifyStatusFn func(v1.DoguStatus) v1.DoguStatus, opts metav1.UpdateOptions)) *MockDoguInterface_UpdateStatusWithRetry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*v1.Dogu), args[2].(func(v1.DoguStatus) v1.DoguStatus), args[3].(metav1.UpdateOptions))
+	})
+	return _c
+}
+
+func (_c *MockDoguInterface_UpdateStatusWithRetry_Call) Return(result *v1.Dogu, err error) *MockDoguInterface_UpdateStatusWithRetry_Call {
+	_c.Call.Return(result, err)
+	return _c
+}
+
+func (_c *MockDoguInterface_UpdateStatusWithRetry_Call) RunAndReturn(run func(context.Context, *v1.Dogu, func(v1.DoguStatus) v1.DoguStatus, metav1.UpdateOptions) (*v1.Dogu, error)) *MockDoguInterface_UpdateStatusWithRetry_Call {
 	_c.Call.Return(run)
 	return _c
 }

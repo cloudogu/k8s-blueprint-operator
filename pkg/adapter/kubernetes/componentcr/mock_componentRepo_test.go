@@ -524,6 +524,62 @@ func (_c *mockComponentRepo_Update_Call) RunAndReturn(run func(context.Context, 
 	return _c
 }
 
+// UpdateExpectedComponentVersion provides a mock function with given fields: ctx, componentName, version
+func (_m *mockComponentRepo) UpdateExpectedComponentVersion(ctx context.Context, componentName string, version string) (*v1.Component, error) {
+	ret := _m.Called(ctx, componentName, version)
+
+	var r0 *v1.Component
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Component, error)); ok {
+		return rf(ctx, componentName, version)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *v1.Component); ok {
+		r0 = rf(ctx, componentName, version)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.Component)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, componentName, version)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockComponentRepo_UpdateExpectedComponentVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateExpectedComponentVersion'
+type mockComponentRepo_UpdateExpectedComponentVersion_Call struct {
+	*mock.Call
+}
+
+// UpdateExpectedComponentVersion is a helper method to define mock.On call
+//   - ctx context.Context
+//   - componentName string
+//   - version string
+func (_e *mockComponentRepo_Expecter) UpdateExpectedComponentVersion(ctx interface{}, componentName interface{}, version interface{}) *mockComponentRepo_UpdateExpectedComponentVersion_Call {
+	return &mockComponentRepo_UpdateExpectedComponentVersion_Call{Call: _e.mock.On("UpdateExpectedComponentVersion", ctx, componentName, version)}
+}
+
+func (_c *mockComponentRepo_UpdateExpectedComponentVersion_Call) Run(run func(ctx context.Context, componentName string, version string)) *mockComponentRepo_UpdateExpectedComponentVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *mockComponentRepo_UpdateExpectedComponentVersion_Call) Return(_a0 *v1.Component, _a1 error) *mockComponentRepo_UpdateExpectedComponentVersion_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *mockComponentRepo_UpdateExpectedComponentVersion_Call) RunAndReturn(run func(context.Context, string, string) (*v1.Component, error)) *mockComponentRepo_UpdateExpectedComponentVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateStatus provides a mock function with given fields: ctx, component, opts
 func (_m *mockComponentRepo) UpdateStatus(ctx context.Context, component *v1.Component, opts metav1.UpdateOptions) (*v1.Component, error) {
 	ret := _m.Called(ctx, component, opts)

@@ -69,7 +69,12 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 	return waitForHealthResult(doguHealthChan, doguErrChan, componentHealthChan, componentErrChan)
 }
 
-func waitForHealthResult(doguHealthChan chan ecosystem.DoguHealthResult, doguErrChan chan error, componentHealthChan chan ecosystem.ComponentHealthResult, componentErrChan chan error) (ecosystem.HealthResult, error) {
+func waitForHealthResult(
+	doguHealthChan chan ecosystem.DoguHealthResult,
+	doguErrChan chan error,
+	componentHealthChan chan ecosystem.ComponentHealthResult,
+	componentErrChan chan error,
+) (ecosystem.HealthResult, error) {
 	var doguHealth ecosystem.DoguHealthResult
 	var doguErr error
 	var componentHealth ecosystem.ComponentHealthResult

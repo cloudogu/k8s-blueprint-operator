@@ -3,7 +3,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -72,6 +71,9 @@ const (
 	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
 	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
 	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
+	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
+	// Restarts are needed when the Dogu config changes.
+	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
 // censorValue is the value for censoring sensitive blueprint configuration data.
@@ -330,32 +332,18 @@ func (spec *BlueprintSpec) CompletePreProcessing() {
 	}
 }
 
-// HandleSelfUpgrade checks if a self upgrade is needed and sets the appropriate status.
-// if the operator is not installed in the usual way, the actualInstalledVersion can be nil.
-// Returns the ComponentDiff for the given component name so that it can be used to initiate further steps.
-func (spec *BlueprintSpec) HandleSelfUpgrade(ownComponentName common.SimpleComponentName, actualInstalledVersion *semver.Version) ComponentDiff {
-	ownDiff := spec.StateDiff.ComponentDiffs.GetComponentDiffByName(ownComponentName)
-	// if already everything is as it should
-	if isExpectedVersionInstalled(ownDiff.Expected.Version, actualInstalledVersion) {
-		// no self upgrade planned
-		spec.Status = StatusPhaseSelfUpgradeCompleted
-		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
-		return ownDiff
+func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
+	if spec.Status != StatusPhaseAwaitSelfUpgrade {
+		spec.Status = StatusPhaseAwaitSelfUpgrade
+		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	}
-	// if self upgrade is not done yet
-	spec.Status = StatusPhaseAwaitSelfUpgrade
-	spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
-	return ownDiff
 }
 
-func isExpectedVersionInstalled(expected, actual *semver.Version) bool {
-	if expected == nil {
-		return true
+func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
+	if spec.Status != StatusPhaseSelfUpgradeCompleted {
+		spec.Status = StatusPhaseSelfUpgradeCompleted
+		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 	}
-	if actual == nil {
-		return false
-	}
-	return expected.Equal(actual)
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
@@ -469,16 +457,15 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	}
 }
 
-func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {
-	invalidElement := mapByAction[action]
-	if len(invalidElement) != 0 {
-		err := &InvalidBlueprintError{
-			Message: fmt.Sprintf("action %q is not allowed: %v", action, invalidElement),
+func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
+	var dogusThatNeedRestart []common.SimpleDoguName
+	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
+	for _, dogu := range dogusInEffectiveBlueprint {
+		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
+			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
 		}
-		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
 	}
-
-	return invalidBlueprintErrors
+	return dogusThatNeedRestart
 }
 
 func (spec *BlueprintSpec) StartApplyRegistryConfig() {

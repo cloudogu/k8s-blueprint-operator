@@ -207,8 +207,8 @@ func mockTargetComponent(version *semver.Version, state TargetState, deployConfi
 
 func mockComponentInstallation(version *semver.Version) *ecosystem.ComponentInstallation {
 	return &ecosystem.ComponentInstallation{
-		Name:    testComponentName,
-		Version: version,
+		Name:            testComponentName,
+		ExpectedVersion: version,
 	}
 }
 
@@ -273,8 +273,8 @@ func Test_determineComponentDiffs(t *testing.T) {
 				blueprintComponents: nil,
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 					testComponentName.SimpleName: {
-						Name:    testComponentName,
-						Version: compVersion3211,
+						Name:            testComponentName,
+						ExpectedVersion: compVersion3211,
 					},
 				},
 			},
@@ -307,8 +307,8 @@ func Test_determineComponentDiffs(t *testing.T) {
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 					testComponentName.SimpleName: {
-						Name:    common.QualifiedComponentName{Namespace: "k8s", SimpleName: "my-component"},
-						Version: compVersion3211,
+						Name:            common.QualifiedComponentName{Namespace: "k8s", SimpleName: "my-component"},
+						ExpectedVersion: compVersion3211,
 					},
 				},
 			},
@@ -341,8 +341,8 @@ func Test_determineComponentDiffs(t *testing.T) {
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 					testComponentName.SimpleName: {
-						Name:    testComponentName,
-						Version: compVersion3211,
+						Name:            testComponentName,
+						ExpectedVersion: compVersion3211,
 					},
 				},
 			},
@@ -454,4 +454,50 @@ func TestComponentDiff_HasChanges(t *testing.T) {
 		}
 		assert.True(t, diff.HasChanges())
 	})
+}
+
+func TestComponentDiff_IsExpectedVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		expected *semver.Version
+		actual   *semver.Version
+		want     bool
+	}{
+		{
+			name:     "equal",
+			expected: semver.MustParse("1.0"),
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "equal dev versions",
+			expected: semver.MustParse("0.2.0-dev"),
+			actual:   semver.MustParse("0.2.0-dev"),
+			want:     true,
+		},
+		{
+			name:     "higher expected",
+			expected: semver.MustParse("1.1"),
+			actual:   semver.MustParse("1.0"),
+			want:     false,
+		},
+		{
+			name:     "nothing expected",
+			expected: nil,
+			actual:   semver.MustParse("1.0"),
+			want:     true,
+		},
+		{
+			name:     "nothing installed",
+			expected: semver.MustParse("1.0"),
+			actual:   nil,
+			want:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			diff := ComponentDiff{Expected: ComponentDiffState{Version: tt.expected}}
+			assert.Equalf(t, tt.want, diff.IsExpectedVersion(tt.actual), "{version:%v}.IsExpectedVersion(%v)", tt.expected, tt.actual)
+		})
+	}
 }

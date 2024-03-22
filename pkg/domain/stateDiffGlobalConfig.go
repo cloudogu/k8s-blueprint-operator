@@ -8,6 +8,15 @@ import (
 
 type GlobalConfigDiffs []GlobalConfigEntryDiff
 
+func (diffs GlobalConfigDiffs) HasChanges() bool {
+	for _, globalConfigDiff := range diffs {
+		if globalConfigDiff.NeededAction != ConfigActionNone {
+			return true
+		}
+	}
+	return false
+}
+
 func (diffs GlobalConfigDiffs) GetGlobalConfigDiffsByAction() map[ConfigAction][]GlobalConfigEntryDiff {
 	return util.GroupBy(diffs, func(diff GlobalConfigEntryDiff) ConfigAction {
 		return diff.NeededAction

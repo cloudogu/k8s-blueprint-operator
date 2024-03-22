@@ -9,8 +9,10 @@ import (
 type ComponentInstallation struct {
 	// Name identifies the component by simple dogu name and namespace, e.g 'k8s/k8s-dogu-operator'.
 	Name common.QualifiedComponentName
-	// Version is the version of the component
-	Version *semver.Version
+	// ExpectedVersion is the version of the component which should be installed
+	ExpectedVersion *semver.Version
+	// ActualVersion is the version of the component which is actually installed
+	ActualVersion *semver.Version
 	// Status is the installation status of the component in the ecosystem
 	Status string
 	// Health is the current health status of the component in the ecosystem
@@ -45,16 +47,20 @@ const (
 )
 
 // InstallComponent is a factory for new ComponentInstallation's.
-func InstallComponent(componentName common.QualifiedComponentName, version *semver.Version, deployConfig DeployConfig) *ComponentInstallation {
+func InstallComponent(
+	componentName common.QualifiedComponentName,
+	expectedVersion *semver.Version,
+	deployConfig DeployConfig,
+) *ComponentInstallation {
 	return &ComponentInstallation{
-		Name:         componentName,
-		Version:      version,
-		DeployConfig: deployConfig,
+		Name:            componentName,
+		ExpectedVersion: expectedVersion,
+		DeployConfig:    deployConfig,
 	}
 }
 
-func (ci *ComponentInstallation) Upgrade(version *semver.Version) {
-	ci.Version = version
+func (ci *ComponentInstallation) Upgrade(expectedVersion *semver.Version) {
+	ci.ExpectedVersion = expectedVersion
 }
 
 func (ci *ComponentInstallation) UpdateDeployConfig(deployConfig DeployConfig) {

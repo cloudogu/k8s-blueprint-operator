@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.0] - 2024-03-22
+### Added
+- [#59] Restart dogus if needed by config changes.
+
 ## [v0.2.1] - 2024-03-20
 ### Fixed
 - [#74] Fix ldap-mapper dependency check by ignoring registrator Dogu.
