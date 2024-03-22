@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.2.1
 	github.com/cloudogu/cesapp-lib v0.12.2
 	github.com/cloudogu/k8s-component-operator v1.0.0
-	github.com/cloudogu/k8s-dogu-operator v0.41.0
+	github.com/cloudogu/k8s-dogu-operator v1.0.0
 	github.com/go-logr/logr v1.4.1
 	github.com/onsi/ginkgo/v2 v2.15.0
 	github.com/onsi/gomega v1.31.1

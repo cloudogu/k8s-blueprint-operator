@@ -54,8 +54,8 @@ github.com/cloudogu/k8s-apply-lib v0.4.2 h1:D5hTYvIZya+tAyGCUGaZ1T83otvpQwzrZXz5
 github.com/cloudogu/k8s-apply-lib v0.4.2/go.mod h1:jR/+7q47O5gb++4gVsmEElT8/EJoi+Msw2dVzArTPW0=
 github.com/cloudogu/k8s-component-operator v1.0.0 h1:b+9JBgXi2z9iLyWoLmxerT7mxosirg3uEolmaA9WFY8=
 github.com/cloudogu/k8s-component-operator v1.0.0/go.mod h1:ZSbmD66OvpexDUqgNArW5SQsfIX4A93PEjuuEzLrWw4=
-github.com/cloudogu/k8s-dogu-operator v0.41.0 h1:Xsw3yhb2W6sMHibJ8u/ho1Gf84XDVo906kKV+atfm9w=
-github.com/cloudogu/k8s-dogu-operator v0.41.0/go.mod h1:uj3IY4z1MvU6hHdifANbfMVOfoD8wbfMfNaaXDqpGvw=
+github.com/cloudogu/k8s-dogu-operator v1.0.0 h1:BEki75xwR71UCtcy5+n4ybc8vBH45k2O9acTRYokU/A=
+github.com/cloudogu/k8s-dogu-operator v1.0.0/go.mod h1:M5GyLzcwlt4TpLI7uNrSgTSx44jpW1nyx6HlS1GRDQQ=
 github.com/cloudogu/k8s-host-change v0.3.0 h1:mbNiT/82yYHGaIg1mDDCpuUvePcOhF3ZHKnDxQ4owb8=
 github.com/cloudogu/k8s-host-change v0.3.0/go.mod h1:lQrjNzcYsXkfJVur+EupKf2G6F9q3JLRGQZhksCI3Bc=
 github.com/containerd/cgroups v1.1.0 h1:v8rEWFl6EoqHB+swVNjVoCJE8o3jX7e8nqBGPLaDFBM=

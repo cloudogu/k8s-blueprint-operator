@@ -26,6 +26,10 @@ type doguInstallationUseCase interface {
 	ApplyDoguStates(ctx context.Context, blueprintId string) error
 }
 
+type doguRestartUseCase interface {
+	TriggerDoguRestarts(ctx context.Context, blueprintid string) error
+}
+
 type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprintId string) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
@@ -108,4 +112,8 @@ type sensitiveDoguConfigEntryRepository interface {
 
 type configEncryptionAdapter interface {
 	domainservice.ConfigEncryptionAdapter
+}
+
+type doguRestartRepository interface {
+	domainservice.DoguRestartRepository
 }

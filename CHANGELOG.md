@@ -52,6 +52,7 @@ Config-specific:
 - [#36] Set registry configuration for dogu and global config.
 - [#38] Censor all sensitive configuration data after applying the blueprint
 - [#45] Set registry configuration for encrypted values.
+- [#59] Restart dogus if needed by config changes.
 
 ### Fixed
 - [68] Make dogu config or sensitiveConfig not required if one of them is specified.
