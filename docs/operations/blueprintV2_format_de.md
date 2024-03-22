@@ -194,7 +194,7 @@ Eine Component kann folgende Felder beinhaltet:
 
 #### DeployConfig
 
-Das Feld `platformConfig` bietet die Möglichkeit für das Deployment einer Component spezifische Konfigurationen zu übergeben.
+Das Feld `deployConfig` bietet die Möglichkeit für das Deployment einer Component spezifische Konfigurationen zu übergeben.
 Mit dieser Konfiguration können zum Beispiel die Component-CR oder beliebige Helm-Values definiert werden.
 
 ##### deployConfig.deployNamespace
