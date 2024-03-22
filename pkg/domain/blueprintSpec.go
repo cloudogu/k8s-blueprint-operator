@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"slices"
@@ -70,6 +71,9 @@ const (
 	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
 	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
 	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
+	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
+	// Restarts are needed when the Dogu config changes.
+	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
 // censorValue is the value for censoring sensitive blueprint configuration data.
@@ -453,16 +457,15 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	}
 }
 
-func evaluateInvalidAction[T any](action Action, mapByAction map[Action][]T, invalidBlueprintErrors []error) []error {
-	invalidElement := mapByAction[action]
-	if len(invalidElement) != 0 {
-		err := &InvalidBlueprintError{
-			Message: fmt.Sprintf("action %q is not allowed: %v", action, invalidElement),
+func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
+	var dogusThatNeedRestart []common.SimpleDoguName
+	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
+	for _, dogu := range dogusInEffectiveBlueprint {
+		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
+			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
 		}
-		invalidBlueprintErrors = append(invalidBlueprintErrors, err)
 	}
-
-	return invalidBlueprintErrors
+	return dogusThatNeedRestart
 }
 
 func (spec *BlueprintSpec) StartApplyRegistryConfig() {

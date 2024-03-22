@@ -953,3 +953,77 @@ func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
 	})
 }
+
+func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
+	testdogu1 := Dogu{Name: common.QualifiedDoguName{Namespace: "testnamespace", SimpleName: "testdogu1"}}
+	testBlueprint1 := Blueprint{Dogus: []Dogu{testdogu1}}
+	testDoguConfigDiffsChanged := CombinedDoguConfigDiffs{
+		DoguConfigDiff: []DoguConfigEntryDiff{{
+			Actual:       DoguConfigValueState{},
+			Expected:     DoguConfigValueState{Value: "testvalue", Exists: true},
+			NeededAction: ConfigActionSet,
+		}},
+	}
+	testDoguConfigDiffsActionNone := CombinedDoguConfigDiffs{
+		DoguConfigDiff: []DoguConfigEntryDiff{{
+			NeededAction: ConfigActionNone,
+		}},
+	}
+
+	testDoguConfigChangeDiffChanged := StateDiff{
+		DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsChanged},
+	}
+	testDoguConfigChangeDiffActionNone := StateDiff{
+		DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
+	}
+
+	type fields struct {
+		Blueprint          Blueprint
+		EffectiveBlueprint EffectiveBlueprint
+		StateDiff          StateDiff
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []common.SimpleDoguName
+	}{
+		{
+			name:   "return nothing on empty blueprint",
+			fields: fields{},
+			want:   nil,
+		},
+		{
+			name:   "return nothing on no config change",
+			fields: fields{Blueprint: testBlueprint1},
+			want:   nil,
+		},
+		{
+			name: "return dogu on dogu config change",
+			fields: fields{
+				Blueprint:          testBlueprint1,
+				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
+				StateDiff:          testDoguConfigChangeDiffChanged,
+			},
+			want: []common.SimpleDoguName{testdogu1.Name.SimpleName},
+		},
+		{
+			name: "return nothing on dogu config unchanged",
+			fields: fields{
+				Blueprint:          testBlueprint1,
+				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
+				StateDiff:          testDoguConfigChangeDiffActionNone,
+			},
+			want: nil,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			spec := &BlueprintSpec{
+				Blueprint:          tt.fields.Blueprint,
+				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
+				StateDiff:          tt.fields.StateDiff,
+			}
+			assert.Equalf(t, tt.want, spec.GetDogusThatNeedARestart(), "GetDogusThatNeedARestart()")
+		})
+	}
+}

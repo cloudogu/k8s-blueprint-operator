@@ -5,6 +5,9 @@ import (
 	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 	adapterconfigkubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
+
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
+
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
 	"k8s.io/client-go/kubernetes"
@@ -88,6 +91,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace), ecosystemClientSet.CoreV1().PersistentVolumeClaims(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := adapterhealthconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	doguRestartAdapter := dogusInterface.DoguRestarts(namespace)
+	restartRepository := restartcr.NewDoguRestartRepository(doguRestartAdapter)
 
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
@@ -98,6 +103,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
 	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
+	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName, healthConfigRepo)
 
@@ -105,6 +111,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, registryConfigUseCase,
+		doguRestartUseCase,
 		selfUpgradeUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
