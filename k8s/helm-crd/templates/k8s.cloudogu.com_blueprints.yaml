@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.13.0
+    controller-gen.kubebuilder.io/version: v0.14.0
   name: blueprints.k8s.cloudogu.com
   labels:
     app: ces
@@ -23,10 +23,19 @@ spec:
           description: Blueprint is the Schema for the blueprints API
           properties:
             apiVersion:
-              description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
               type: string
             kind:
-              description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
               type: string
             metadata:
               type: object
@@ -34,7 +43,9 @@ spec:
               description: Spec defines the desired state of the Blueprint.
               properties:
                 allowDoguNamespaceSwitch:
-                  description: AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask in comparison to the blueprint.
+                  description: |-
+                    AllowDoguNamespaceSwitch lets the user switch the namespace of dogus in the blueprint mask
+                    in comparison to the blueprint.
                   type: boolean
                 blueprint:
                   description: Blueprint json with the desired state of the ecosystem.
@@ -61,7 +72,9 @@ spec:
                   description: EffectiveBlueprint is the blueprint after applying the blueprint mask.
                   properties:
                     components:
-                      description: Components contains a set of exact component versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
+                      description: |-
+                        Components contains a set of exact component versions which should be present or absent in the CES instance after which
+                        this blueprint was applied. Optional.
                       items:
                         properties:
                           deployConfig:
@@ -74,7 +87,9 @@ spec:
                             description: TargetState defines a state of installation of this component. Optional field, but defaults to "TargetStatePresent"
                             type: string
                           version:
-                            description: Version defines the version of the component that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
+                            description: |-
+                              Version defines the version of the component that is to be installed. Must not be empty if the targetState is "present";
+                              otherwise it is optional and is not going to be interpreted.
                             type: string
                         required:
                           - name
@@ -83,7 +98,9 @@ spec:
                         type: object
                       type: array
                     config:
-                      description: Config is used for ecosystem configuration to be applied. Optional.
+                      description: |-
+                        Config is used for ecosystem configuration to be applied.
+                        Optional.
                       properties:
                         dogus:
                           additionalProperties:
@@ -125,9 +142,13 @@ spec:
                           type: object
                       type: object
                     dogus:
-                      description: Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this blueprint was applied. Optional.
+                      description: |-
+                        Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
+                        blueprint was applied. Optional.
                       items:
-                        description: TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint was applied.
+                        description: |-
+                          TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
+                          was applied.
                         properties:
                           name:
                             description: Name defines the name of the dogu including its namespace, f. i. "official/nginx". Must not be empty.
@@ -153,7 +174,9 @@ spec:
                             description: TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
                             type: string
                           version:
-                            description: Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present"; otherwise it is optional and is not going to be interpreted.
+                            description: |-
+                              Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
+                              otherwise it is optional and is not going to be interpreted.
                             type: string
                         required:
                           - name
@@ -166,11 +189,15 @@ spec:
                   description: Phase represents the processing state of the blueprint
                   type: string
                 stateDiff:
-                  description: StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state. It describes what operations need to be done to achieve the desired state of the blueprint.
+                  description: |-
+                    StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
+                    It describes what operations need to be done to achieve the desired state of the blueprint.
                   properties:
                     componentDiffs:
                       additionalProperties:
-                        description: ComponentDiff is the comparison of a Component's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                        description: |-
+                          ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
+                          It contains the operation that needs to be done to achieve this desired state.
                         properties:
                           actual:
                             description: Actual contains the component's state in the current system.
@@ -179,10 +206,18 @@ spec:
                                 description: DeployConfig contains generic properties for the component.
                                 x-kubernetes-preserve-unknown-fields: true
                               distributionNamespace:
-                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
+                                description: |-
+                                  Namespace is part of the address under which the component will be obtained. This namespace must NOT
+                                  to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
-                                description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
+                                description: |-
+                                  InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
+
+
+                                   - domain.ActionInstall
+                                   - domain.ActionUninstall
+                                   - and so on
                                 type: string
                               version:
                                 description: Version contains the component's version.
@@ -197,10 +232,18 @@ spec:
                                 description: DeployConfig contains generic properties for the component.
                                 x-kubernetes-preserve-unknown-fields: true
                               distributionNamespace:
-                                description: Namespace is part of the address under which the component will be obtained. This namespace must NOT to be confused with the K8s cluster namespace.
+                                description: |-
+                                  Namespace is part of the address under which the component will be obtained. This namespace must NOT
+                                  to be confused with the K8s cluster namespace.
                                 type: string
                               installationState:
-                                description: "InstallationState contains the component's installation state. Such a state correlate with the domain Actions: \n - domain.ActionInstall - domain.ActionUninstall - and so on"
+                                description: |-
+                                  InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
+
+
+                                   - domain.ActionInstall
+                                   - domain.ActionUninstall
+                                   - and so on
                                 type: string
                               version:
                                 description: Version contains the component's version.
@@ -211,7 +254,9 @@ spec:
                           neededActions:
                             description: NeededActions contains the refined actions as decided by the application's state determination automaton.
                             items:
-                              description: ComponentAction is the action that needs to be done for a component to achieve the desired state in the cluster.
+                              description: |-
+                                ComponentAction is the action that needs to be done for a component
+                                to achieve the desired state in the cluster.
                               type: string
                             type: array
                         required:
@@ -295,7 +340,9 @@ spec:
                       type: object
                     doguDiffs:
                       additionalProperties:
-                        description: DoguDiff is the comparison of a Dogu's desired state vs. its cluster state. It contains the operation that needs to be done to achieve this desired state.
+                        description: |-
+                          DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
+                          It contains the operation that needs to be done to achieve this desired state.
                         properties:
                           actual:
                             description: DoguDiffState is either the actual or desired state of a dogu in the cluster.
@@ -351,7 +398,9 @@ spec:
                             type: object
                           neededActions:
                             items:
-                              description: DoguAction is the action that needs to be done for a dogu to achieve the desired state in the cluster.
+                              description: |-
+                                DoguAction is the action that needs to be done for a dogu
+                                to achieve the desired state in the cluster.
                               type: string
                             type: array
                         required:
