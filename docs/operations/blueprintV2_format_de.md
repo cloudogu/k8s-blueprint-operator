@@ -8,14 +8,14 @@ Folgend werden alle Felder des Blueprint beschrieben und mit Beispielen veransch
 
 ## BlueprintApi
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: string
 * Inhalt: Das Feld `blueprintApi` gibt die API-Version des Blueprints an.
 * Beispiel: `"blueprintApi": "v2"`
 
 ## Dogus
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: Array<dogu>
 * Inhalt: Das Feld `dogus` ist eine Liste von Dogus und beschreibt den Zustand der Dogus im System.
 * Beispiel: 
@@ -31,25 +31,25 @@ Folgend werden alle Felder des Blueprint beschrieben und mit Beispielen veransch
 
 ### Dogu
 
-Ein Dogu kann folgende Felder beinhaltet:
+Ein Dogu kann folgende Felder beinhalten:
 
 #### Name
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: string
 * Inhalt: Gibt den Namen inklusive Namespace des Dogus an.
 * Beispiel: `"name": "official/cas"`
 
 #### TargetState
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: string
 * Inhalt: Gibt an, ob ein Dogu vorhanden oder nicht vorhanden sein soll.
 * Beispiel: `"targetState": "present"` oder `"targetState": "absent"`
 
 #### Version
 
-* Bei `targetState=absent` optional. Bei `targetState=present` nicht optional.
+* Bei `targetState=absent` optional. Bei `targetState=present` is die Version ein Pflichtfeld.
 * Datentyp: string
 * Inhalt: Gibt die Version des Dogus an.
 * Beispiel: `"version": "12.15-2"`
@@ -82,6 +82,8 @@ Mit dieser Konfiguration können Ressourcen und Reverse-Proxy-Konfigurationen de
 
 > Der Dogu-Operator erstellt Dogus mit 2Gi Volumes. Das Nexus-Dogu benötigt ein größeres Volume und muss
 > über diesen Eintrag konfiguriert werden.
+
+> Das Verkleinern von Volumes wird nicht unterstützt.
 
 ##### ReverseProxy.maxBodySize
 
@@ -148,7 +150,7 @@ Mit dieser Konfiguration können Ressourcen und Reverse-Proxy-Konfigurationen de
 
 ## Components
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: Array
 * Inhalt: Das Feld `components` ist eine Liste von Components und beschreibt den Zustand der Components im System.
 * Beispiel:
@@ -169,33 +171,32 @@ Mit dieser Konfiguration können Ressourcen und Reverse-Proxy-Konfigurationen de
 
 ### Component
 
-Eine Component kann folgende Felder beinhaltet:
+Eine Component kann folgende Felder beinhalten:
 
 #### Name
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: string
 * Inhalt: Gibt den Namen inklusive Namespace der Component an.
 * Beispiel: `"name": "k8s/k8s-dogu-operator"`
 
 #### TargetState
 
-* Nicht Optional
+* Pflichtfeld
 * Datentyp: string
 * Inhalt: Gibt an, ob eine Component vorhanden oder nicht vorhanden sein soll.
 * Beispiel: `"targetState": "present"` oder `"targetState": "absent"`
 
 #### Version
 
-* Bei `targetState=absent` optional. Bei `targetState=present` nicht optional.
+* Bei `targetState=absent` optional. Bei `targetState=present` ist die Version ein Pflichtfeld.
 * Datentyp: string
 * Inhalt: Gibt die Version der Component an.
 * Beispiel: `"version": "12.15-2"`
 
 #### DeployConfig
 
-Das Feld `deployConfig` bietet die Möglichkeit für das Deployment einer Component spezifische Konfigurationen zu übergeben.
-Mit dieser Konfiguration können zum Beispiel die Component-CR oder beliebige Helm-Values definiert werden.
+Mit dieser Konfiguration können bestimmte Felder der Component-CR, und somit unter anderem Helm-Values definiert werden.
 
 ##### deployConfig.deployNamespace
 
@@ -218,7 +219,7 @@ Mit dieser Konfiguration können zum Beispiel die Component-CR oder beliebige He
 
 ##### deployConfig.overwriteConfig
 
-* Nicht Optional
+* Optional
 * Datentyp: string
 * Inhalt: Definiert zusätzliche Konfigurationen (Helm-Values) für die Component.
 * Beispiel:

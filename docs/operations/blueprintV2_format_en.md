@@ -8,14 +8,14 @@ All fields of the blueprint are described below and illustrated with examples.
 
 ## BlueprintApi
 
-* Not optional
+* Required
 * Data type: string
 * Content: The `blueprintApi` field specifies the API version of the blueprint.
 * Example: `"blueprintApi": "v2"`
 
 ## Dogus
 
-* Not optional
+* Required
 * Data type: Array<Dogu>
 * Content: The `dogus` field is a list of Dogus and describes the status of the Dogus in the system.
 * Example:
@@ -35,21 +35,21 @@ A Dogu can contain the following fields:
 
 #### Name
 
-* Not optional
+* Required
 * Data type: string
-* Content: Specifies the name including namespace of the Dogu.
+* Content: Specifies the name including the namespace of the Dogu.
 * Example: `"name": "official/cas"`
 
 #### TargetState
 
-* Not optional
+* Required
 * Data type: string
 * Content: Specifies whether a Dogu should be present or not.
 * Example: `"targetState": "present"` or `"targetState": "absent"`
 
 #### Version
 
-* Optional for `targetState=absent`. Not optional for `targetState=present`.
+* Optional for `targetState=absent`. Required for `targetState=present`.
 * Data type: string
 * Content: Specifies the version of the Dogu.
 * Example: `"version": "12.15-2"`
@@ -81,6 +81,8 @@ This configuration can be used to define resources and reverse proxy configurati
 ```
 
 > The Dogu-Operator creates Dogus with 2Gi volumes. The Nexus Dogu requires a larger volume and must be configured via this entry.
+
+> Shrinking volumes is not supported.
 
 ##### ReverseProxy.maxBodySize
 
@@ -147,7 +149,7 @@ This configuration can be used to define resources and reverse proxy configurati
 
 ## Components
 
-* Not optional
+* Required
 * Data type: Array
 * Contents: The `components` field is a list of components and describes the status of the components in the system.
 * Example:
@@ -172,29 +174,28 @@ A component can contain the following fields:
 
 #### Name
 
-* Not optional
+* Required
 * Data type: string
-* Content: Specifies the name including namespace of the component.
+* Content: Specifies the name including the namespace of the component.
 * Example: `"name": "k8s/k8s-dogu-operator"`
 
 #### TargetState
 
-* Not optional
+* Required
 * Data type: string
 * Content: Specifies whether a component should be present or not.
 * Example: `"targetState": "present"` or `"targetState": "absent"`
 
 #### Version
 
-* Optional for `targetState=absent`. Not optional for `targetState=present`.
+* Optional for `targetState=absent`. Required for `targetState=present`.
 * Data type: string
 * Content: Specifies the version of the component.
 * Example: `"version": "12.15-2"`
 
 #### DeployConfig
 
-The `deployConfig` field offers the option of transferring specific configurations for the deployment of a component.
-This configuration can be used, for example, to define the component CR or any helm values.
+This configuration can be used to define certain fields of the component CR and among others it is therefore possible to set helm values.
 
 ##### deployConfig.deployNamespace
 
@@ -217,7 +218,7 @@ This configuration can be used, for example, to define the component CR or any h
 
 ##### deployConfig.overwriteConfig
 
-* Not optional
+* Required
 * Data type: string
 * Content: Defines additional configurations (Helm values) for the component.
 * Example:
