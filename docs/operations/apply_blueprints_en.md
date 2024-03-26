@@ -12,12 +12,12 @@ spec:
   blueprint: |
     {
       "blueprintApi": "v2",
-      "blueprintId": "my-blueprint",
       "dogus": [ ... ],
       "components": [ ... ],
-      "registryConfig": { ... },
-      "registryConfigEncrypted": { ... },
-      "registryConfigAbsent": [ ... ]
+      "config": {
+        "global": { ... },
+        "dogus": { ... }
+      }
     }
   # put your blueprint-mask.json here
   blueprintMask: |
@@ -27,7 +27,7 @@ spec:
       "dogus": [ ... ]
     }
 ```
-
+The document [blueprint format](./blueprint_format_en.md) describes the structure of the Blueprint in detail.
 You may see [examples](../../samples/k8s_v1_blueprint.yaml) of Blueprint-CRs in the [Sample directory](../../samples/). With `k8s-blueprint-operator` properly being installed, you can apply it to the cluster like this:
 
 ```bash
