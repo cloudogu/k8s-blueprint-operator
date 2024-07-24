@@ -3,7 +3,7 @@ kind: Service
 metadata:
   labels:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
-  name: {{ include "k8s-blueprint-operator.name" . }}-controller-manager-metrics-service
+  name: {{ include "k8s-blueprint-operator.name" . }}-metrics-service
 spec:
   ports:
     - name: https
