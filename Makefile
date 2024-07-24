@@ -83,7 +83,7 @@ print-debug-info: ## Generates info and the list of environment variables requir
 	@echo "STAGE=$(STAGE);LOG_LEVEL=$(LOG_LEVEL);KUBECONFIG=$(KUBECONFIG);NAMESPACE=$(NAMESPACE);DOGU_REGISTRY_ENDPOINT=$(DOGU_REGISTRY_ENDPOINT);DOGU_REGISTRY_USERNAME=$(DOGU_REGISTRY_USERNAME);DOGU_REGISTRY_PASSWORD=$(DOGU_REGISTRY_PASSWORD);DOCKER_REGISTRY={\"auths\":{\"$(docker_registry_server)\":{\"username\":\"$(docker_registry_username)\",\"password\":\"$(docker_registry_password)\",\"email\":\"ignore@me.com\",\"auth\":\"ignoreMe\"}}}"
 
 .PHONY: upload-to-k8s-testing
-upload-to-k8s-testing: helm-package helm-lint compile
+upload-to-k8s-testing: clean helm-package helm-lint compile
 	gcloud auth configure-docker europe-west3-docker.pkg.dev -q
 	#helm push target/k8s/helm/$(ARTIFACT_ID)-$(VERSION).tgz oci://europe-west3-docker.pkg.dev/ces-coder-workspaces/ces-test-docker-helm-repo/charts
 	helm push target/k8s/helm/$(ARTIFACT_ID)-$(VERSION).tgz oci://registry.cloudogu.com/k8s-testing
