@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=k8s-blueprint-operator
-VERSION=1.0.0
+VERSION=1.0.100
 IMAGE=cloudogu/${ARTIFACT_ID}:${VERSION}
 GOTAG=1.22
 MAKEFILES_VERSION=9.0.3
@@ -81,3 +81,11 @@ kill-operator-pod:
 print-debug-info: ## Generates info and the list of environment variables required to start the operator in debug mode.
 	@echo "The target generates a list of env variables required to start the operator in debug mode. These can be pasted directly into the 'go build' run configuration in IntelliJ to run and debug the operator on-demand."
 	@echo "STAGE=$(STAGE);LOG_LEVEL=$(LOG_LEVEL);KUBECONFIG=$(KUBECONFIG);NAMESPACE=$(NAMESPACE);DOGU_REGISTRY_ENDPOINT=$(DOGU_REGISTRY_ENDPOINT);DOGU_REGISTRY_USERNAME=$(DOGU_REGISTRY_USERNAME);DOGU_REGISTRY_PASSWORD=$(DOGU_REGISTRY_PASSWORD);DOCKER_REGISTRY={\"auths\":{\"$(docker_registry_server)\":{\"username\":\"$(docker_registry_username)\",\"password\":\"$(docker_registry_password)\",\"email\":\"ignore@me.com\",\"auth\":\"ignoreMe\"}}}"
+
+.PHONY: upload-to-k8s-testing
+upload-to-k8s-testing: helm-package helm-lint compile
+	gcloud auth configure-docker europe-west3-docker.pkg.dev -q
+	#helm push target/k8s/helm/$(ARTIFACT_ID)-$(VERSION).tgz oci://europe-west3-docker.pkg.dev/ces-coder-workspaces/ces-test-docker-helm-repo/charts
+	helm push target/k8s/helm/$(ARTIFACT_ID)-$(VERSION).tgz oci://registry.cloudogu.com/k8s-testing
+	docker build . -t europe-west3-docker.pkg.dev/ces-coder-workspaces/ces-test-docker-helm-repo/images/$(ARTIFACT_ID):$(VERSION)
+	docker push europe-west3-docker.pkg.dev/ces-coder-workspaces/ces-test-docker-helm-repo/images/$(ARTIFACT_ID):$(VERSION)

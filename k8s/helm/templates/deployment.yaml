@@ -107,7 +107,7 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      serviceAccountName: {{ include "k8s-blueprint-operator.name" . }}-controller-manager
+      serviceAccountName: {{ include "k8s-blueprint-operator.name" . }}-sa
       terminationGracePeriodSeconds: 10
       volumes:
         - name: dogu-registry-cert
