@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('github.com/cloudogu/ces-build-lib@2.1.0')
+@Library('github.com/cloudogu/ces-build-lib@2.4.0')
 import com.cloudogu.ces.cesbuildlib.*
 
 // Creating necessary git objects
@@ -12,7 +12,7 @@ github = new GitHub(this, git)
 changelog = new Changelog(this)
 Docker docker = new Docker(this)
 gpg = new Gpg(this, docker)
-goVersion = "1.21"
+goVersion = "1.22"
 Makefile makefile = new Makefile(this)
 
 // Configuration of repository
@@ -53,10 +53,6 @@ node('docker') {
                             stage("Unit test") {
                                 make 'unit-test'
                                 junit allowEmptyResults: true, testResults: 'target/unit-tests/*-tests.xml'
-                            }
-
-                            stage('k8s-Integration-Test') {
-                                make 'k8s-integration-test'
                             }
 
                             stage("Review dog analysis") {

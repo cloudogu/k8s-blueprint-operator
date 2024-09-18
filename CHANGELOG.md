@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0] - 2024-09-18
+### Changed
+- [#79] Relicense to AGPL-3.0-only
+
 ## [v1.0.0] - 2024-03-22
 ### Added
 - [#59] Restart dogus if needed by config changes.
