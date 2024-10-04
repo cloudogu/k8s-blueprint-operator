@@ -96,8 +96,6 @@ import (
 
 	v1alpha1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
 
-	v1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
-
 	v1beta1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 
 	v1beta2 "k8s.io/client-go/kubernetes/typed/apps/v1beta2"
@@ -2102,22 +2100,6 @@ func (_c *mockClientSet_RbacV1beta1_Call) RunAndReturn(run func() rbacv1beta1.Rb
 	return _c
 }
 
-// ResourceV1alpha2 provides a mock function with given fields:
-func (_m *mockClientSet) ResourceV1alpha2() v1alpha2.ResourceV1alpha2Interface {
-	ret := _m.Called()
-
-	var r0 v1alpha2.ResourceV1alpha2Interface
-	if rf, ok := ret.Get(0).(func() v1alpha2.ResourceV1alpha2Interface); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(v1alpha2.ResourceV1alpha2Interface)
-		}
-	}
-
-	return r0
-}
-
 // mockClientSet_ResourceV1alpha2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceV1alpha2'
 type mockClientSet_ResourceV1alpha2_Call struct {
 	*mock.Call
@@ -2132,16 +2114,6 @@ func (_c *mockClientSet_ResourceV1alpha2_Call) Run(run func()) *mockClientSet_Re
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
-	return _c
-}
-
-func (_c *mockClientSet_ResourceV1alpha2_Call) Return(_a0 v1alpha2.ResourceV1alpha2Interface) *mockClientSet_ResourceV1alpha2_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *mockClientSet_ResourceV1alpha2_Call) RunAndReturn(run func() v1alpha2.ResourceV1alpha2Interface) *mockClientSet_ResourceV1alpha2_Call {
-	_c.Call.Return(run)
 	return _c
 }
 

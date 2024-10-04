@@ -32,6 +32,8 @@ import (
 
 	coordinationv1 "k8s.io/client-go/kubernetes/typed/coordination/v1"
 
+	coordinationv1alpha1 "k8s.io/client-go/kubernetes/typed/coordination/v1alpha1"
+
 	coordinationv1beta1 "k8s.io/client-go/kubernetes/typed/coordination/v1beta1"
 
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -96,7 +98,7 @@ import (
 
 	v1alpha1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1alpha1"
 
-	v1alpha2 "k8s.io/client-go/kubernetes/typed/resource/v1alpha2"
+	v1alpha3 "k8s.io/client-go/kubernetes/typed/resource/v1alpha3"
 
 	v1beta1 "k8s.io/client-go/kubernetes/typed/admissionregistration/v1beta1"
 
@@ -1107,6 +1109,53 @@ func (_c *MockInterface_CoordinationV1_Call) Return(_a0 coordinationv1.Coordinat
 }
 
 func (_c *MockInterface_CoordinationV1_Call) RunAndReturn(run func() coordinationv1.CoordinationV1Interface) *MockInterface_CoordinationV1_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CoordinationV1alpha1 provides a mock function with given fields:
+func (_m *MockInterface) CoordinationV1alpha1() coordinationv1alpha1.CoordinationV1alpha1Interface {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for CoordinationV1alpha1")
+	}
+
+	var r0 coordinationv1alpha1.CoordinationV1alpha1Interface
+	if rf, ok := ret.Get(0).(func() coordinationv1alpha1.CoordinationV1alpha1Interface); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(coordinationv1alpha1.CoordinationV1alpha1Interface)
+		}
+	}
+
+	return r0
+}
+
+// MockInterface_CoordinationV1alpha1_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CoordinationV1alpha1'
+type MockInterface_CoordinationV1alpha1_Call struct {
+	*mock.Call
+}
+
+// CoordinationV1alpha1 is a helper method to define mock.On call
+func (_e *MockInterface_Expecter) CoordinationV1alpha1() *MockInterface_CoordinationV1alpha1_Call {
+	return &MockInterface_CoordinationV1alpha1_Call{Call: _e.mock.On("CoordinationV1alpha1")}
+}
+
+func (_c *MockInterface_CoordinationV1alpha1_Call) Run(run func()) *MockInterface_CoordinationV1alpha1_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MockInterface_CoordinationV1alpha1_Call) Return(_a0 coordinationv1alpha1.CoordinationV1alpha1Interface) *MockInterface_CoordinationV1alpha1_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockInterface_CoordinationV1alpha1_Call) RunAndReturn(run func() coordinationv1alpha1.CoordinationV1alpha1Interface) *MockInterface_CoordinationV1alpha1_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2286,49 +2335,49 @@ func (_c *MockInterface_RbacV1beta1_Call) RunAndReturn(run func() rbacv1beta1.Rb
 	return _c
 }
 
-// ResourceV1alpha2 provides a mock function with given fields:
-func (_m *MockInterface) ResourceV1alpha2() v1alpha2.ResourceV1alpha2Interface {
+// ResourceV1alpha3 provides a mock function with given fields:
+func (_m *MockInterface) ResourceV1alpha3() v1alpha3.ResourceV1alpha3Interface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for ResourceV1alpha2")
+		panic("no return value specified for ResourceV1alpha3")
 	}
 
-	var r0 v1alpha2.ResourceV1alpha2Interface
-	if rf, ok := ret.Get(0).(func() v1alpha2.ResourceV1alpha2Interface); ok {
+	var r0 v1alpha3.ResourceV1alpha3Interface
+	if rf, ok := ret.Get(0).(func() v1alpha3.ResourceV1alpha3Interface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(v1alpha2.ResourceV1alpha2Interface)
+			r0 = ret.Get(0).(v1alpha3.ResourceV1alpha3Interface)
 		}
 	}
 
 	return r0
 }
 
-// MockInterface_ResourceV1alpha2_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceV1alpha2'
-type MockInterface_ResourceV1alpha2_Call struct {
+// MockInterface_ResourceV1alpha3_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ResourceV1alpha3'
+type MockInterface_ResourceV1alpha3_Call struct {
 	*mock.Call
 }
 
-// ResourceV1alpha2 is a helper method to define mock.On call
-func (_e *MockInterface_Expecter) ResourceV1alpha2() *MockInterface_ResourceV1alpha2_Call {
-	return &MockInterface_ResourceV1alpha2_Call{Call: _e.mock.On("ResourceV1alpha2")}
+// ResourceV1alpha3 is a helper method to define mock.On call
+func (_e *MockInterface_Expecter) ResourceV1alpha3() *MockInterface_ResourceV1alpha3_Call {
+	return &MockInterface_ResourceV1alpha3_Call{Call: _e.mock.On("ResourceV1alpha3")}
 }
 
-func (_c *MockInterface_ResourceV1alpha2_Call) Run(run func()) *MockInterface_ResourceV1alpha2_Call {
+func (_c *MockInterface_ResourceV1alpha3_Call) Run(run func()) *MockInterface_ResourceV1alpha3_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run()
 	})
 	return _c
 }
 
-func (_c *MockInterface_ResourceV1alpha2_Call) Return(_a0 v1alpha2.ResourceV1alpha2Interface) *MockInterface_ResourceV1alpha2_Call {
+func (_c *MockInterface_ResourceV1alpha3_Call) Return(_a0 v1alpha3.ResourceV1alpha3Interface) *MockInterface_ResourceV1alpha3_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MockInterface_ResourceV1alpha2_Call) RunAndReturn(run func() v1alpha2.ResourceV1alpha2Interface) *MockInterface_ResourceV1alpha2_Call {
+func (_c *MockInterface_ResourceV1alpha3_Call) RunAndReturn(run func() v1alpha3.ResourceV1alpha3Interface) *MockInterface_ResourceV1alpha3_Call {
 	_c.Call.Return(run)
 	return _c
 }
