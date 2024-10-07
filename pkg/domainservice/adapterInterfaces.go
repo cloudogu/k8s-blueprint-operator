@@ -110,31 +110,6 @@ type MaintenancePageModel struct {
 	Text  string
 }
 
-type ConfigEncryptionAdapter interface {
-	// Encrypt encrypts the given value for a dogu.
-	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	Encrypt(context.Context, common.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
-	// EncryptAll encrypts the given values for a dogu.
-	// If the encryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been encrypted.
-	// It can throw an InternalError if the encryption did not succeed or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	EncryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error)
-	// Decrypt decrypts sensitive dogu values.
-	// It can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	Decrypt(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)
-	// DecryptAll decrypts a map of sensitive dogu values.
-	// If the decryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been decrypted.
-	// This method can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	DecryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)
-}
-
 type DoguRestartRepository interface {
 	// RestartAll restarts all provided Dogus
 	RestartAll(context.Context, []common.SimpleDoguName) error

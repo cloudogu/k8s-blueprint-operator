@@ -48,7 +48,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, nil, nil, nil, nil)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -75,9 +75,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -105,9 +104,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -137,9 +135,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -171,9 +168,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, domainservice.NewInternalError(assert.AnError, "internal error"))
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -205,9 +201,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveDoguConfigRepoMock.EXPECT().
 			GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).
 			Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, domainservice.NewInternalError(assert.AnError, "internal error"))
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -237,10 +232,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -267,10 +260,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -279,36 +270,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot save blueprint spec \"testBlueprint1\" after determining the state diff to the ecosystem")
-	})
-	t.Run("should fail to decrypt config", func(t *testing.T) {
-		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
-		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
-		componentInstallRepoMock := newMockComponentInstallationRepository(t)
-		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
-		globalConfigRepoMock := newMockGlobalConfigEntryRepository(t)
-		globalConfigRepoMock.EXPECT().GetAllByKey(testCtx, blueprint.EffectiveBlueprint.Config.Global.GetGlobalConfigKeys()).Return(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{}, nil)
-		doguConfigRepoMock := newMockDoguConfigEntryRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
-		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, internalTestError)
-
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
-
-		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, internalTestError)
-		assert.ErrorContains(t, err, "could not decrypt sensitive dogu config")
 	})
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
@@ -360,10 +321,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -463,10 +422,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		doguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.DoguConfigKey(nil)).Return(map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigEntryRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -548,10 +505,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveDoguConfigRepoMock.EXPECT().
 			GetAllByKey(testCtx, []common.SensitiveDoguConfigKey(nil)).
 			Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}).Return(nil, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -628,25 +583,15 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Return(map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				nginxStaticSensitiveConfigKeyNginxKey1: {
 					Key:   nginxStaticSensitiveConfigKeyNginxKey1,
-					Value: "encrypted",
+					Value: "val1",
 				},
 				nginxStaticSensitiveConfigKeyNginxKey2: {
 					Key:   nginxStaticSensitiveConfigKeyNginxKey2,
-					Value: "encrypted",
+					Value: "val2",
 				},
 			}, nil)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().
-			DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{
-				nginxStaticSensitiveConfigKeyNginxKey1: "encrypted",
-				nginxStaticSensitiveConfigKeyNginxKey2: "encrypted",
-			}).
-			Return(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				nginxStaticSensitiveConfigKeyNginxKey1: "val1",
-				nginxStaticSensitiveConfigKeyNginxKey2: "val2",
-			}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
@@ -661,7 +606,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						Key:                  nginxStaticSensitiveConfigKeyNginxKey1,
 						Actual:               domain.DoguConfigValueState{Value: "val1", Exists: true},
 						Expected:             domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
-						NeededAction:         domain.ConfigActionSetEncrypted,
+						NeededAction:         domain.ConfigActionSet,
 						DoguAlreadyInstalled: true,
 					},
 					{
@@ -727,7 +672,7 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 
 		encryptedEntry := &ecosystem.SensitiveDoguConfigEntry{
 			Key:   nginxStaticSensitiveConfigKeyNginxKey1,
-			Value: "encrypted",
+			Value: "val1",
 		}
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -757,16 +702,8 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 				},
 				sensitiveConfigNotFoundError,
 			)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
-		encryptionAdapterMock.EXPECT().
-			DecryptAll(testCtx, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{
-				nginxStaticSensitiveConfigKeyNginxKey1: "encrypted",
-			}).
-			Return(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				nginxStaticSensitiveConfigKeyNginxKey1: "val1",
-			}, nil)
 
-		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)
@@ -848,9 +785,8 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 				map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 				internalTestError,
 			)
-		encryptionAdapterMock := newMockConfigEncryptionAdapter(t)
 
-		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, encryptionAdapterMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock)
 
 		// when
 		ecosystemState, err := sut.collectEcosystemState(testCtx, effectiveBlueprint)

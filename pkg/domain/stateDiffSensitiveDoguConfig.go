@@ -49,7 +49,7 @@ func newSensitiveDoguConfigEntryDiff(
 		Actual:               actual,
 		Expected:             expected,
 		DoguAlreadyInstalled: doguAlreadyInstalled,
-		NeededAction:         getNeededSensitiveConfigAction(ConfigValueState(expected), ConfigValueState(actual), doguAlreadyInstalled),
+		NeededAction:         getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }
 
@@ -70,16 +70,4 @@ func determineSensitiveDoguConfigDiffs(
 		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, "", false, doguAlreadyInstalled))
 	}
 	return doguConfigDiff
-}
-
-func getNeededSensitiveConfigAction(expected ConfigValueState, actual ConfigValueState, doguAlreadyInstalled bool) ConfigAction {
-	action := getNeededConfigAction(expected, actual)
-	if action == ConfigActionSet {
-		if !doguAlreadyInstalled {
-			return ConfigActionSetToEncrypt
-		} else {
-			return ConfigActionSetEncrypted
-		}
-	}
-	return action
 }

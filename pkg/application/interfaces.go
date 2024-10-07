@@ -120,11 +120,6 @@ type sensitiveDoguConfigRepository interface {
 	domainservice.SensitiveDoguConfigRepository
 }
 
-// TODO: remove this when refactoring is done
-type configEncryptionAdapter interface {
-	domainservice.ConfigEncryptionAdapter
-}
-
 type doguRestartRepository interface {
 	domainservice.DoguRestartRepository
 }

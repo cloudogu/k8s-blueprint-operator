@@ -16,22 +16,20 @@ type EcosystemConfigUseCase struct {
 	doguConfigRepository          doguConfigEntryRepository
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
 	globalConfigRepository        globalConfigEntryRepository
-	encryptionAdapter             configEncryptionAdapter
 }
 
 var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
-func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository, encryptionAdapter configEncryptionAdapter) *EcosystemConfigUseCase {
+func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository) *EcosystemConfigUseCase {
 	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
 		globalConfigRepository:        globalConfigRepository,
-		encryptionAdapter:             encryptionAdapter,
 	}
 }
 
-// ApplyConfig fetches the dogu and global config statediff of the blueprint and applies these keys to the repositories.
+// ApplyConfig fetches the dogu and global config stateDiff of the blueprint and applies these keys to the repositories.
 func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("EcosystemConfigUseCase.ApplyConfig").
 		WithValues("blueprintId", blueprintId)
@@ -126,54 +124,22 @@ func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(ctx context.Context,
 func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, sensitiveDoguConfigDiffsByAction map[domain.ConfigAction]domain.SensitiveDoguConfigDiffs) error {
 	var errs []error
 
-	var encryptedEntriesToSet []*ecosystem.SensitiveDoguConfigEntry
-	var entriesToEncrypt []*ecosystem.SensitiveDoguConfigEntry
+	var keysToSet []*ecosystem.SensitiveDoguConfigEntry
 	var keysToDelete []common.SensitiveDoguConfigKey
 
-	encryptedEntryValues, err := useCase.encryptSensitiveDoguDiffs(ctx, sensitiveDoguConfigDiffsByAction)
-	if err != nil {
-		errs = append(errs, err)
-	}
-
-	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetEncrypted] {
-		entry, createEncryptedEntryErr := getSensitiveDoguConfigEntryWithEncryption(diff.Key.DoguName, diff, encryptedEntryValues)
-		if createEncryptedEntryErr != nil {
-			errs = append(errs, createEncryptedEntryErr)
-			continue
-		}
-		entriesToEncrypt = append(entriesToEncrypt, entry)
-	}
-
-	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetToEncrypt] {
+	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSet] {
 		entry := getSensitiveDoguConfigEntry(diff.Key.DoguName, diff)
-		encryptedEntriesToSet = append(encryptedEntriesToSet, entry)
+		keysToSet = append(keysToSet, entry)
 	}
 
 	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionRemove] {
 		keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: diff.Key.DoguName, Key: diff.Key.Key}})
 	}
 
-	errs = append(errs, callIfNotEmpty(ctx, entriesToEncrypt, useCase.doguSensitiveConfigRepository.SaveAll))
-	errs = append(errs, callIfNotEmpty(ctx, encryptedEntriesToSet, useCase.doguSensitiveConfigRepository.SaveAllForNotInstalledDogus))
+	errs = append(errs, callIfNotEmpty(ctx, keysToSet, useCase.doguSensitiveConfigRepository.SaveAll))
 	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
-}
-
-// Only encrypt diffs with action domain.ConfigActionSetEncrypted. Diffs with action domain.ConfigActionSetToEncrypt will
-// be encrypted by other components in further procedure.
-func (useCase *EcosystemConfigUseCase) encryptSensitiveDoguDiffs(ctx context.Context, sensitiveDoguConfigDiffsByAction map[domain.ConfigAction]domain.SensitiveDoguConfigDiffs) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error) {
-	valuesToEncrypt := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-
-	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSetEncrypted] {
-		valuesToEncrypt[diff.Key] = common.SensitiveDoguConfigValue(diff.Expected.Value)
-	}
-
-	if len(valuesToEncrypt) > 0 {
-		return useCase.encryptionAdapter.EncryptAll(ctx, valuesToEncrypt)
-	}
-
-	return map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}, nil
 }
 
 func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {

@@ -19,7 +19,6 @@ type StateDiffUseCase struct {
 	globalConfigRepo          globalConfigEntryRepository
 	doguConfigRepo            doguConfigEntryRepository
 	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
-	encryptionAdapter         configEncryptionAdapter
 }
 
 func NewStateDiffUseCase(
@@ -29,7 +28,6 @@ func NewStateDiffUseCase(
 	globalConfigRepo domainservice.GlobalConfigEntryRepository,
 	doguConfigRepo domainservice.DoguConfigEntryRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
-	encryptionAdapter configEncryptionAdapter,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -38,7 +36,6 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
-		encryptionAdapter:         encryptionAdapter,
 	}
 }
 
@@ -110,19 +107,9 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		return ecosystem.EcosystemState{}, fmt.Errorf("could not collect ecosystem state: %w", joinedError)
 	}
 
-	encryptedConfig := map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}
+	sensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
 	for key, entry := range sensitiveDoguConfig {
-		encryptedConfig[key] = entry.Value
-	}
-
-	logger.Info("decrypt sensitive dogu config")
-	decryptedConfig, err := useCase.encryptionAdapter.DecryptAll(ctx, encryptedConfig)
-	if err != nil {
-		// we cannot ignore any error type here:
-		// - InternalError -> there could be a network error -> retry by reconciliation
-		// - NotFoundError -> we only have encrypted values to decrypt, therefore the encryption key pair should be present
-		//                    if the key pair is not present, we could have a serious problem or there is config for a not installed dogu
-		return ecosystem.EcosystemState{}, fmt.Errorf("could not decrypt sensitive dogu config: %w", err)
+		sensitiveConfig[key] = common.SensitiveDoguConfigValue(entry.Value)
 	}
 
 	return ecosystem.EcosystemState{
@@ -131,6 +118,6 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		GlobalConfig:                 globalConfig,
 		DoguConfig:                   doguConfig,
 		EncryptedDoguConfig:          sensitiveDoguConfig,
-		DecryptedSensitiveDoguConfig: decryptedConfig,
+		DecryptedSensitiveDoguConfig: sensitiveConfig,
 	}, nil
 }

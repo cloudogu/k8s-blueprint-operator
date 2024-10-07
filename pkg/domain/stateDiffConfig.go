@@ -18,11 +18,6 @@ const (
 	ConfigActionNone ConfigAction = "none"
 	// ConfigActionSet means that the config key needs to be set as given
 	ConfigActionSet ConfigAction = "set"
-	// ConfigActionSetEncrypted means that the config key needs to be encrypted
-	ConfigActionSetEncrypted ConfigAction = "setEncrypted"
-	// ConfigActionSetToEncrypt means that the config key needs to be encrypted but another service needs to do this.
-	// This can happen if a dogu is not yet installed and therefore no encryption key pair is available.
-	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
 	// ConfigActionRemove means that the config key needs to be deleted
 	ConfigActionRemove ConfigAction = "remove"
 )

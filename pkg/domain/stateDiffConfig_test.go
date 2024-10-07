@@ -285,7 +285,7 @@ func Test_determineConfigDiff(t *testing.T) {
 					Value:  "updated value",
 					Exists: true,
 				},
-				NeededAction: ConfigActionSetEncrypted,
+				NeededAction: ConfigActionSet,
 			},
 			{
 				Key:                  sensitiveDogu1Key3,
@@ -326,7 +326,7 @@ func Test_determineConfigDiff(t *testing.T) {
 					Value:  "value",
 					Exists: true,
 				},
-				NeededAction: ConfigActionSetToEncrypt,
+				NeededAction: ConfigActionSet,
 			},
 		}
 		assert.ElementsMatch(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, entriesDogu1)
@@ -367,7 +367,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value",
 				Exists: true,
 			},
-			NeededAction: ConfigActionSetToEncrypt,
+			NeededAction: ConfigActionSet,
 		})
 
 	})
