@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 
 	"github.com/cloudogu/cesapp-lib/core"
 
@@ -168,6 +169,12 @@ type GlobalConfigEntryRepository interface {
 	// It can throw an InternalError if any error happens.
 	// If any key is not existent, no error will be returned for that case.
 	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
+}
+
+// DoguConfigRepository TODO: add go doc, especially for errors
+type DoguConfigRepository interface {
+	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error)
 }
 
 type DoguConfigEntryRepository interface {
