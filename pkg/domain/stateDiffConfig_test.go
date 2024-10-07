@@ -40,9 +40,8 @@ func Test_determineConfigDiff(t *testing.T) {
 				"key3": {Key: "key3", Value: "value3"}, // for action delete
 				// key4 is absent -> action none
 			},
-			DoguConfig:                   map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
-			EncryptedDoguConfig:          map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
-			DecryptedSensitiveDoguConfig: nil,
+			DoguConfig:          map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 		}
 		//given blueprint config
 		config := Config{
@@ -122,9 +121,8 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1Key3: {Key: dogu1Key3, Value: "value"}, //action delete
 				//dogu1Key4 -> absent, so action none
 			},
-			EncryptedDoguConfig:          map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
-			DecryptedSensitiveDoguConfig: nil,
-			InstalledDogus:               map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
+			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
 		}
 
 		//given blueprint config
@@ -208,18 +206,11 @@ func Test_determineConfigDiff(t *testing.T) {
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
 		clusterState := ecosystem.EcosystemState{
-			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				sensitiveDogu1Key1: {Key: sensitiveDogu1Key1, Value: "value"}, //action none
 				sensitiveDogu1Key2: {Key: sensitiveDogu1Key2, Value: "value"}, //action set
 				sensitiveDogu1Key3: {Key: sensitiveDogu1Key3, Value: "value"}, //action setEncrypted
 				//sensitiveDogu1Key4 absent, action none
-				//sensitiveDogu2Key1 absent, action setToEncrypt
-			},
-			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				sensitiveDogu1Key1: "value",
-				sensitiveDogu1Key2: "value",
-				sensitiveDogu1Key3: "value",
-				//sensitiveDogu1Key4 absent
 				//sensitiveDogu2Key1 absent, action setToEncrypt
 			},
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},

@@ -52,7 +52,13 @@ func determineConfigDiffs(
 	blueprintConfig Config,
 	clusterState ecosystem.EcosystemState,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, clusterState.DecryptedSensitiveDoguConfig, clusterState.GetInstalledDoguNames()),
+
+	sensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+	for key, entry := range clusterState.SensitiveDoguConfig {
+		sensitiveConfig[key] = entry.Value
+	}
+
+	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, sensitiveConfig, clusterState.GetInstalledDoguNames()),
 		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)
 }
 

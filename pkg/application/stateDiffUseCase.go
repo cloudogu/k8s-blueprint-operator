@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
@@ -107,17 +106,11 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		return ecosystem.EcosystemState{}, fmt.Errorf("could not collect ecosystem state: %w", joinedError)
 	}
 
-	sensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-	for key, entry := range sensitiveDoguConfig {
-		sensitiveConfig[key] = common.SensitiveDoguConfigValue(entry.Value)
-	}
-
 	return ecosystem.EcosystemState{
-		InstalledDogus:               installedDogus,
-		InstalledComponents:          installedComponents,
-		GlobalConfig:                 globalConfig,
-		DoguConfig:                   doguConfig,
-		EncryptedDoguConfig:          sensitiveDoguConfig,
-		DecryptedSensitiveDoguConfig: sensitiveConfig,
+		InstalledDogus:      installedDogus,
+		InstalledComponents: installedComponents,
+		GlobalConfig:        globalConfig,
+		DoguConfig:          doguConfig,
+		SensitiveDoguConfig: sensitiveDoguConfig,
 	}, nil
 }

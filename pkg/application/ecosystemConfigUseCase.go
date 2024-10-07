@@ -7,7 +7,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -150,24 +149,10 @@ func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](
 	return nil
 }
 
-func getSensitiveDoguConfigEntryWithEncryption(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff, encryptedEntryValues map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (*ecosystem.SensitiveDoguConfigEntry, error) {
-	entry := getSensitiveDoguConfigEntry(doguName, diff)
-	if encryptedEntryValues == nil {
-		return nil, domainservice.NewInternalError(errSensitiveDoguConfigEntry, "encrypted entry value map is nil")
-	}
-	value, ok := encryptedEntryValues[entry.Key]
-	if !ok {
-		return nil, domainservice.NewNotFoundError(errSensitiveDoguConfigEntry, "did not find encrypted value for key %s", entry.Key.Key)
-	}
-	entry.Value = value
-
-	return entry, nil
-}
-
 func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff) *ecosystem.SensitiveDoguConfigEntry {
 	return &ecosystem.SensitiveDoguConfigEntry{
 		Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
-		Value: common.EncryptedDoguConfigValue(diff.Expected.Value),
+		Value: common.SensitiveDoguConfigValue(diff.Expected.Value),
 	}
 }
 

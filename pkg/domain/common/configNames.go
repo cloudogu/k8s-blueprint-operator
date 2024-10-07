@@ -44,6 +44,3 @@ type DoguConfigValue string
 
 // SensitiveDoguConfigValue is a single unencrypted sensitive dogu config value
 type SensitiveDoguConfigValue string
-
-// EncryptedDoguConfigValue is a single encrypted sensitive dogu config value
-type EncryptedDoguConfigValue string

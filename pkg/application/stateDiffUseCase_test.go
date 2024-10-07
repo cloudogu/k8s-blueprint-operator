@@ -713,11 +713,8 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 		assert.Equal(t, ecosystem.EcosystemState{
 			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
 			DoguConfig:   map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
-			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				nginxStaticSensitiveConfigKeyNginxKey1: encryptedEntry,
-			},
-			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				nginxStaticSensitiveConfigKeyNginxKey1: "val1",
 			},
 		}, ecosystemState)
 	})

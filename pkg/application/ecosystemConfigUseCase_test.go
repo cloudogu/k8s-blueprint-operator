@@ -336,11 +336,11 @@ func TestEcosystemConfigUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 
 		expectedEntry1 := &ecosystem.SensitiveDoguConfigEntry{
 			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff1.Key.Key}},
-			Value: common.EncryptedDoguConfigValue("value1"),
+			Value: common.SensitiveDoguConfigValue("value1"),
 		}
 		expectedEntry2 := &ecosystem.SensitiveDoguConfigEntry{
 			Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: testSimpleDoguNameRedmine, Key: diff2.Key.Key}},
-			Value: common.EncryptedDoguConfigValue("value2"),
+			Value: common.SensitiveDoguConfigValue("value2"),
 		}
 
 		sensitiveDoguConfigMock.EXPECT().SaveAll(testCtx, []*ecosystem.SensitiveDoguConfigEntry{expectedEntry1, expectedEntry2}).Return(nil).Times(1)
