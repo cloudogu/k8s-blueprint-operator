@@ -14,16 +14,24 @@ type EcosystemConfigUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
-	globalConfigRepository        globalConfigEntryRepository
+	globalConfigEntryRepository   globalConfigEntryRepository
+	globalConfigRepository        globalConfigRepository
 }
 
 var errSensitiveDoguConfigEntry = fmt.Errorf("sensitive dogu config error")
 
-func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigEntryRepository, doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository, globalConfigRepository globalConfigEntryRepository) *EcosystemConfigUseCase {
+func NewEcosystemConfigUseCase(
+	blueprintRepository blueprintSpecRepository,
+	doguConfigRepository doguConfigEntryRepository,
+	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository,
+	globalConfigEntryRepository globalConfigEntryRepository,
+	globalConfigRepository globalConfigRepository,
+) *EcosystemConfigUseCase {
 	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
+		globalConfigEntryRepository:   globalConfigEntryRepository,
 		globalConfigRepository:        globalConfigRepository,
 	}
 }
@@ -91,8 +99,8 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 		keysToDelete = append(keysToDelete, diff.Key)
 	}
 
-	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigRepository.SaveAll))
-	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.globalConfigRepository.DeleteAllByKeys))
+	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigEntryRepository.SaveAll))
+	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.globalConfigEntryRepository.DeleteAllByKeys))
 
 	return errors.Join(errs...)
 }

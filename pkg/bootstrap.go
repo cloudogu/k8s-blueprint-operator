@@ -3,7 +3,9 @@ package pkg
 import (
 	"fmt"
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
+	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 
@@ -80,7 +82,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 
 	doguConfigAdapter := adapterconfigetcd.NewDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := adapterconfigetcd.NewSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
+	globalConfigEntryRepoAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
+	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace), ecosystemClientSet.CoreV1().PersistentVolumeClaims(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
@@ -91,12 +95,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigEntryRepoAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigAdapter)
+	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, sensitiveDoguConfigAdapter, globalConfigEntryRepoAdapter, globalConfigRepoAdapter)
 	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName, healthConfigRepo)
@@ -104,7 +108,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
-		applyBlueprintSpecUseCase, registryConfigUseCase,
+		applyBlueprintSpecUseCase, ConfigUseCase,
 		doguRestartUseCase,
 		selfUpgradeUseCase,
 	)
