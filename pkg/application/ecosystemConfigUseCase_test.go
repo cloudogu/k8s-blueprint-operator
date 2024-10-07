@@ -4,6 +4,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -532,7 +533,7 @@ func TestNewEcosystemConfigUseCase(t *testing.T) {
 func getSetDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
-			Key:      key,
+			Key:      config.Key(key),
 			DoguName: doguName,
 		},
 		Expected: domain.DoguConfigValueState{
@@ -545,7 +546,7 @@ func getSetDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName
 func getRemoveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
-			Key:      key,
+			Key:      config.Key(key),
 			DoguName: doguName,
 		},
 		NeededAction: domain.ConfigActionRemove,
@@ -556,7 +557,7 @@ func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName common
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
 			DoguConfigKey: common.DoguConfigKey{
-				Key:      key,
+				Key:      config.Key(key),
 				DoguName: doguName,
 			},
 		},
@@ -571,7 +572,7 @@ func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName common.SimpleDog
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
 			DoguConfigKey: common.DoguConfigKey{
-				Key:      key,
+				Key:      config.Key(key),
 				DoguName: doguName,
 			},
 		},

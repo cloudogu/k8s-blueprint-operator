@@ -450,7 +450,7 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		require.Len(t, result.DoguConfigDiff, 1)
 
 		assert.Equal(t, "ldap", string(result.DoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", result.DoguConfigDiff[0].Key.Key)
+		assert.Equal(t, "logging/root", string(result.DoguConfigDiff[0].Key.Key))
 		assert.Equal(t, "ERROR", result.DoguConfigDiff[0].Actual.Value)
 		assert.Equal(t, false, result.DoguConfigDiff[0].Actual.Exists)
 		assert.Equal(t, "DEBUG", result.DoguConfigDiff[0].Expected.Value)
@@ -486,7 +486,7 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		require.Len(t, result.SensitiveDoguConfigDiff, 1)
 
 		assert.Equal(t, "ldap", string(result.SensitiveDoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", result.SensitiveDoguConfigDiff[0].Key.Key)
+		assert.Equal(t, "logging/root", string(result.SensitiveDoguConfigDiff[0].Key.Key))
 		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Actual.Value)
 		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Actual.Exists)
 		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Expected.Value)

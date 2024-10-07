@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type Config struct {
@@ -82,7 +83,7 @@ func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 	if len(config.Present) != 0 {
 		present = make(map[string]string, len(config.Present))
 		for key, value := range config.Present {
-			present[key.Key] = string(value)
+			present[string(key.Key)] = string(value)
 		}
 	}
 
@@ -92,7 +93,7 @@ func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 	if len(config.Absent) != 0 {
 		absent = make([]string, len(config.Absent))
 		for i, key := range config.Absent {
-			absent[i] = key.Key
+			absent[i] = string(key.Key)
 		}
 	}
 
@@ -132,7 +133,7 @@ func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguCo
 func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
 	return common.DoguConfigKey{
 		DoguName: common.SimpleDoguName(doguName),
-		Key:      key,
+		Key:      config.Key(key),
 	}
 }
 
@@ -143,7 +144,7 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) Sensitiv
 	if len(config.Present) != 0 {
 		present = make(map[string]string, len(config.Present))
 		for key, value := range config.Present {
-			present[key.Key] = string(value)
+			present[string(key.Key)] = string(value)
 		}
 	}
 
@@ -153,7 +154,7 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) Sensitiv
 	if len(config.Absent) != 0 {
 		absent = make([]string, len(config.Absent))
 		for i, key := range config.Absent {
-			absent[i] = key.Key
+			absent[i] = string(key.Key)
 		}
 	}
 
@@ -193,7 +194,7 @@ func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguCon
 func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.SensitiveDoguConfigKey {
 	return common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
 		DoguName: common.SimpleDoguName(doguName),
-		Key:      key,
+		Key:      config.Key(key),
 	},
 	}
 }

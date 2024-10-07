@@ -25,7 +25,7 @@ func TestEtcdDoguConfigRepository_Delete(t *testing.T) {
 
 		key := common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
-		configurationContextMock.EXPECT().Delete(key.Key).Return(nil)
+		configurationContextMock.EXPECT().Delete(string(key.Key)).Return(nil)
 
 		// when
 		err := sut.Delete(testCtx, key)
@@ -42,7 +42,7 @@ func TestEtcdDoguConfigRepository_Delete(t *testing.T) {
 
 		key := common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
-		configurationContextMock.EXPECT().Delete(key.Key).Return(etcdNotFoundError)
+		configurationContextMock.EXPECT().Delete(string(key.Key)).Return(etcdNotFoundError)
 
 		// when
 		err := sut.Delete(testCtx, key)
@@ -59,7 +59,7 @@ func TestEtcdDoguConfigRepository_Delete(t *testing.T) {
 
 		key := common.DoguConfigKey{Key: "key", DoguName: testSimpleDoguNameRedmine}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
-		configurationContextMock.EXPECT().Delete(key.Key).Return(assert.AnError)
+		configurationContextMock.EXPECT().Delete(string(key.Key)).Return(assert.AnError)
 
 		// when
 		err := sut.Delete(testCtx, key)
@@ -228,7 +228,7 @@ func TestEtcdDoguConfigRepository_Save(t *testing.T) {
 			PersistenceContext: nil,
 		}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
-		configurationContextMock.EXPECT().Set(entry.Key.Key, string(entry.Value)).Return(nil)
+		configurationContextMock.EXPECT().Set(string(entry.Key.Key), string(entry.Value)).Return(nil)
 
 		// when
 		err := sut.Save(testCtx, entry)
@@ -249,7 +249,7 @@ func TestEtcdDoguConfigRepository_Save(t *testing.T) {
 			PersistenceContext: nil,
 		}
 		etcdMock.EXPECT().DoguConfig(string(testSimpleDoguNameRedmine)).Return(configurationContextMock)
-		configurationContextMock.EXPECT().Set(entry.Key.Key, string(entry.Value)).Return(assert.AnError)
+		configurationContextMock.EXPECT().Set(string(entry.Key.Key), string(entry.Value)).Return(assert.AnError)
 
 		// when
 		err := sut.Save(testCtx, entry)
