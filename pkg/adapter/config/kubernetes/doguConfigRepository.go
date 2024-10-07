@@ -18,7 +18,7 @@ func NewDoguConfigRepository(repo repository.DoguConfigRepository) *DoguConfigRe
 
 func (e DoguConfigRepository) Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error) {
 	// TODO: There seems to be no way to know, if we have a NotFoundError or a connection error.
-	return e.repo.Get(ctx, config.SimpleDoguName(doguName))
+	return e.repo.Get(ctx, doguName)
 }
 
 func (e DoguConfigRepository) Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error) {
