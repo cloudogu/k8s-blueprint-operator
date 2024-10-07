@@ -98,8 +98,14 @@ type remoteDoguRegistry interface {
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
 }
+
+// TODO: remove this when refactoring is done
 type globalConfigEntryRepository interface {
 	domainservice.GlobalConfigEntryRepository
+}
+
+type globalConfigRepository interface {
+	domainservice.GlobalConfigRepository
 }
 
 // TODO: remove this when refactoring is done

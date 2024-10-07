@@ -21,13 +21,13 @@ func (e SensitiveDoguConfigRepository) Get(ctx context.Context, doguName common.
 	return e.repo.Get(ctx, doguName)
 }
 
-func (e SensitiveDoguConfigRepository) Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error) {
-	mergedConfig, err := e.repo.Update(ctx, entry)
+func (e SensitiveDoguConfigRepository) Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
+	updatedConfig, err := e.repo.Update(ctx, config)
 	// TODO: we cannot see here, if there is a real conflict or there was a connection error.
 	//  With a conflict, we can immediately restart the business process
 	//  With an connection error we need a longer backoff (internalError)
 	if err != nil {
-		return entry, domainservice.NewInternalError(err, "failed to save or merge config for %s", entry.DoguName)
+		return config, domainservice.NewInternalError(err, "failed to update sensitive config for %s", config.DoguName)
 	}
-	return mergedConfig, nil
+	return updatedConfig, nil
 }

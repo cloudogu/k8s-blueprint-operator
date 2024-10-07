@@ -146,16 +146,22 @@ type GlobalConfigEntryRepository interface {
 	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
 }
 
+// GlobalConfigRepository TODO: add go doc, especially for errors
+type GlobalConfigRepository interface {
+	Get(ctx context.Context) (config.GlobalConfig, error)
+	Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error)
+}
+
 // DoguConfigRepository TODO: add go doc, especially for errors
 type DoguConfigRepository interface {
 	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
-	Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error)
+	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 // SensitiveDoguConfigRepository TODO: add go doc, especially for errors
 type SensitiveDoguConfigRepository interface {
 	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
-	Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error)
+	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 type DoguConfigEntryRepository interface {
