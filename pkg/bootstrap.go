@@ -73,6 +73,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, err
 	}
 
+	//TODO: move maintenance mode adapter to registry lib
 	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
@@ -82,7 +83,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 
 	doguConfigAdapter := adapterconfigetcd.NewDoguConfigRepository(configRegistry)
 	sensitiveDoguConfigAdapter := adapterconfigetcd.NewSensitiveDoguConfigRepository(configRegistry)
-	globalConfigEntryRepoAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
 	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
@@ -95,7 +95,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigEntryRepoAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigAdapter, sensitiveDoguConfigAdapter)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)

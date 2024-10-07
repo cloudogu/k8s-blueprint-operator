@@ -6,16 +6,15 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
-	globalConfigRepo          globalConfigEntryRepository
+	globalConfigRepo          globalConfigRepository
 	doguConfigRepo            doguConfigEntryRepository
 	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
 }
@@ -24,7 +23,7 @@ func NewStateDiffUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguInstallationRepo domainservice.DoguInstallationRepository,
 	componentInstallationRepo domainservice.ComponentInstallationRepository,
-	globalConfigRepo domainservice.GlobalConfigEntryRepository,
+	globalConfigRepo domainservice.GlobalConfigRepository,
 	doguConfigRepo domainservice.DoguConfigEntryRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
 ) *StateDiffUseCase {
@@ -91,7 +90,7 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
 	logger.Info("collect needed global config")
-	globalConfig, globalConfigErr := useCase.globalConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.Global.GetGlobalConfigKeys())
+	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
 	logger.Info("collect needed dogu config")
 	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
 	logger.Info("collect needed sensitive dogu config")
