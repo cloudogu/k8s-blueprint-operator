@@ -15,7 +15,6 @@ type EcosystemConfigUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigEntryRepository
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
-	globalConfigEntryRepository   globalConfigEntryRepository
 	globalConfigRepository        globalConfigRepository
 }
 
@@ -25,14 +24,12 @@ func NewEcosystemConfigUseCase(
 	blueprintRepository blueprintSpecRepository,
 	doguConfigRepository doguConfigEntryRepository,
 	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository,
-	globalConfigEntryRepository globalConfigEntryRepository,
 	globalConfigRepository globalConfigRepository,
 ) *EcosystemConfigUseCase {
 	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
-		globalConfigEntryRepository:   globalConfigEntryRepository,
 		globalConfigRepository:        globalConfigRepository,
 	}
 }
