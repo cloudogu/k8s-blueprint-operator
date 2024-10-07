@@ -23,7 +23,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
-		globalConfigMock := newMockGlobalConfigEntryRepository(t)
+		globalConfigRepoMock := newMockGlobalConfigRepository(t)
 
 		redmineDiffToEncrypt := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameRedmine, domain.ConfigActionSet)
 		casDiffToEncrypt := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameCas, domain.ConfigActionSet)
@@ -63,13 +63,16 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		doguConfigMock.EXPECT().DeleteAllByKeys(testCtx, mock.Anything).Return(nil).Times(1)
 		sensitiveDoguConfigMock.EXPECT().SaveAll(testCtx, mock.Anything).Return(nil).Times(1)
 		sensitiveDoguConfigMock.EXPECT().DeleteAllByKeys(testCtx, mock.Anything).Return(nil).Times(1)
-		globalConfigMock.EXPECT().SaveAll(testCtx, mock.Anything).Return(nil).Times(1)
-		globalConfigMock.EXPECT().DeleteAllByKeys(testCtx, mock.Anything).Return(nil).Times(1)
+
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
+		globalConfigRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(globalConfig, nil)
 
 		blueprintRepoMock.EXPECT().GetById(testCtx, testBlueprintID).Return(spec, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil).Times(2)
 
-		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock, doguConfigRepository: doguConfigMock, doguSensitiveConfigRepository: sensitiveDoguConfigMock, globalConfigEntryRepository: globalConfigMock}
+		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock, doguConfigRepository: doguConfigMock, doguSensitiveConfigRepository: sensitiveDoguConfigMock, globalConfigRepository: globalConfigRepoMock}
 
 		// when
 		err := sut.ApplyConfig(testCtx, testBlueprintID)
@@ -119,7 +122,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseRegistryConfigApplied, spec.Status)
 	})
 
-	t.Run("should return on mark  apply config start error", func(t *testing.T) {
+	t.Run("should return on mark apply config start error", func(t *testing.T) {
 		// given
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
@@ -151,7 +154,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 		doguConfigMock := newMockDoguConfigEntryRepository(t)
 		sensitiveDoguConfigMock := newMockSensitiveDoguConfigEntryRepository(t)
-		globalConfigMock := newMockGlobalConfigEntryRepository(t)
+		globalConfigMock := newMockGlobalConfigRepository(t)
 
 		casDiffToEncrypt := getSensitiveDoguConfigEntryDiffForAction("key", "value", testSimpleDoguNameCas, domain.ConfigActionSet)
 		spec := &domain.BlueprintSpec{
@@ -184,12 +187,16 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		doguConfigMock.EXPECT().SaveAll(testCtx, mock.Anything).Return(assert.AnError).Times(1)
 
 		sensitiveDoguConfigMock.EXPECT().SaveAll(testCtx, mock.Anything).Return(assert.AnError).Times(1)
-		globalConfigMock.EXPECT().SaveAll(testCtx, mock.Anything).Return(assert.AnError).Times(1)
+
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
+		globalConfigMock.EXPECT().Update(testCtx, mock.Anything).Return(globalConfig, assert.AnError)
 
 		blueprintRepoMock.EXPECT().GetById(testCtx, testBlueprintID).Return(spec, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil).Times(2)
 
-		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock, doguConfigRepository: doguConfigMock, doguSensitiveConfigRepository: sensitiveDoguConfigMock, globalConfigEntryRepository: globalConfigMock}
+		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock, doguConfigRepository: doguConfigMock, doguSensitiveConfigRepository: sensitiveDoguConfigMock, globalConfigRepository: globalConfigMock}
 
 		// when
 		err := sut.ApplyConfig(testCtx, testBlueprintID)
@@ -269,25 +276,25 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
-		globalConfigMock := newMockGlobalConfigEntryRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
-		diff1 := getSetGlobalConfigEntryDiff("/key", "value")
-		diff2 := getSetGlobalConfigEntryDiff("/key1", "value1")
+		globalConfigMock := newMockGlobalConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, globalConfigMock)
+		diff1 := getSetGlobalConfigEntryDiff("/key1", "value1")
+		diff2 := getSetGlobalConfigEntryDiff("/key2", "value2")
 		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionSet: {diff1, diff2}}
 
-		expectedEntry1 := &ecosystem.GlobalConfigEntry{
-			Key:   diff1.Key,
-			Value: common.GlobalConfigValue(diff1.Expected.Value),
-		}
-		expectedEntry2 := &ecosystem.GlobalConfigEntry{
-			Key:   diff2.Key,
-			Value: common.GlobalConfigValue(diff2.Expected.Value),
-		}
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
 
-		globalConfigMock.EXPECT().SaveAll(testCtx, []*ecosystem.GlobalConfigEntry{expectedEntry1, expectedEntry2}).Return(nil).Times(1)
+		updatedEntries, err := globalConfig.Set(diff1.Key, common.GlobalConfigValue(diff1.Expected.Value))
+		require.NoError(t, err)
+		updatedEntries, err = updatedEntries.Set(diff2.Key, common.GlobalConfigValue(diff2.Expected.Value))
+		require.NoError(t, err)
+
+		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
+		globalConfigMock.EXPECT().Update(testCtx, config.GlobalConfig{Config: updatedEntries}).Return(globalConfig, nil)
 
 		// when
-		err := sut.applyGlobalConfigDiffs(testCtx, byAction)
+		err = sut.applyGlobalConfigDiffs(testCtx, byAction)
 
 		// then
 		require.NoError(t, err)
@@ -295,13 +302,20 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
-		globalConfigMock := newMockGlobalConfigEntryRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
+		globalConfigMock := newMockGlobalConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, globalConfigMock)
 		diff1 := getRemoveGlobalConfigEntryDiff("/key")
 		diff2 := getRemoveGlobalConfigEntryDiff("/key1")
 		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionRemove: {diff1, diff2}}
 
-		globalConfigMock.EXPECT().DeleteAllByKeys(testCtx, []common.GlobalConfigKey{diff1.Key, diff2.Key}).Return(nil).Times(1)
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+
+		updatedEntries := globalConfig.Delete(diff1.Key)
+		updatedEntries = updatedEntries.Delete(diff2.Key)
+
+		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
+		globalConfigMock.EXPECT().Update(testCtx, config.GlobalConfig{Config: updatedEntries}).Return(globalConfig, nil)
 
 		// when
 		err := sut.applyGlobalConfigDiffs(testCtx, byAction)
@@ -312,11 +326,17 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 	t.Run("should return nil on action none", func(t *testing.T) {
 		// given
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, newMockGlobalConfigEntryRepository(t), nil)
+		globalConfigMock := newMockGlobalConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, globalConfigMock)
 		diff1 := domain.GlobalConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}
 		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionNone: {diff1}}
+
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+
+		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
 
 		// when
 		err := sut.applyGlobalConfigDiffs(testCtx, byAction)

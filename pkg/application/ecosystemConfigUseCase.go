@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -83,24 +84,28 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Context, globalConfigDiffsByAction map[domain.ConfigAction][]domain.GlobalConfigEntryDiff) error {
 	var errs []error
 
+	globalConfig, err := useCase.globalConfigRepository.Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	updatedEntries := globalConfig.Config
 	entryDiffsToSet := globalConfigDiffsByAction[domain.ConfigActionSet]
-	var entriesToSet = make([]*ecosystem.GlobalConfigEntry, 0, len(entryDiffsToSet))
 	for _, diff := range entryDiffsToSet {
-		entry := &ecosystem.GlobalConfigEntry{
-			Key:   diff.Key,
-			Value: common.GlobalConfigValue(diff.Expected.Value),
-		}
-		entriesToSet = append(entriesToSet, entry)
+		var err error
+		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(diff.Expected.Value))
+		errs = append(errs, err)
 	}
 
 	entryDiffsToRemove := globalConfigDiffsByAction[domain.ConfigActionRemove]
-	var keysToDelete = make([]common.GlobalConfigKey, 0, len(entryDiffsToRemove))
 	for _, diff := range entryDiffsToRemove {
-		keysToDelete = append(keysToDelete, diff.Key)
+		updatedEntries = updatedEntries.Delete(diff.Key)
 	}
 
-	errs = append(errs, callIfNotEmpty(ctx, entriesToSet, useCase.globalConfigEntryRepository.SaveAll))
-	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.globalConfigEntryRepository.DeleteAllByKeys))
+	if len(entryDiffsToSet) != 0 || len(entryDiffsToRemove) != 0 {
+		_, err = useCase.globalConfigRepository.Update(ctx, config.GlobalConfig{Config: updatedEntries})
+		errs = append(errs, err)
+	}
 
 	return errors.Join(errs...)
 }

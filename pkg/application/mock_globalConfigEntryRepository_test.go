@@ -5,7 +5,7 @@ package application
 import (
 	context "context"
 
-	common "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	config "github.com/cloudogu/k8s-registry-lib/config"
 
 	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 
@@ -26,7 +26,7 @@ func (_m *mockGlobalConfigEntryRepository) EXPECT() *mockGlobalConfigEntryReposi
 }
 
 // Delete provides a mock function with given fields: _a0, _a1
-func (_m *mockGlobalConfigEntryRepository) Delete(_a0 context.Context, _a1 common.GlobalConfigKey) error {
+func (_m *mockGlobalConfigEntryRepository) Delete(_a0 context.Context, _a1 config.Key) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -34,7 +34,7 @@ func (_m *mockGlobalConfigEntryRepository) Delete(_a0 context.Context, _a1 commo
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, config.Key) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -50,14 +50,14 @@ type mockGlobalConfigEntryRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 common.GlobalConfigKey
+//   - _a1 config.Key
 func (_e *mockGlobalConfigEntryRepository_Expecter) Delete(_a0 interface{}, _a1 interface{}) *mockGlobalConfigEntryRepository_Delete_Call {
 	return &mockGlobalConfigEntryRepository_Delete_Call{Call: _e.mock.On("Delete", _a0, _a1)}
 }
 
-func (_c *mockGlobalConfigEntryRepository_Delete_Call) Run(run func(_a0 context.Context, _a1 common.GlobalConfigKey)) *mockGlobalConfigEntryRepository_Delete_Call {
+func (_c *mockGlobalConfigEntryRepository_Delete_Call) Run(run func(_a0 context.Context, _a1 config.Key)) *mockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.GlobalConfigKey))
+		run(args[0].(context.Context), args[1].(config.Key))
 	})
 	return _c
 }
@@ -67,13 +67,13 @@ func (_c *mockGlobalConfigEntryRepository_Delete_Call) Return(_a0 error) *mockGl
 	return _c
 }
 
-func (_c *mockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, common.GlobalConfigKey) error) *mockGlobalConfigEntryRepository_Delete_Call {
+func (_c *mockGlobalConfigEntryRepository_Delete_Call) RunAndReturn(run func(context.Context, config.Key) error) *mockGlobalConfigEntryRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteAllByKeys provides a mock function with given fields: _a0, _a1
-func (_m *mockGlobalConfigEntryRepository) DeleteAllByKeys(_a0 context.Context, _a1 []common.GlobalConfigKey) error {
+func (_m *mockGlobalConfigEntryRepository) DeleteAllByKeys(_a0 context.Context, _a1 []config.Key) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -81,7 +81,7 @@ func (_m *mockGlobalConfigEntryRepository) DeleteAllByKeys(_a0 context.Context, 
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []config.Key) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -97,14 +97,14 @@ type mockGlobalConfigEntryRepository_DeleteAllByKeys_Call struct {
 
 // DeleteAllByKeys is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 []common.GlobalConfigKey
+//   - _a1 []config.Key
 func (_e *mockGlobalConfigEntryRepository_Expecter) DeleteAllByKeys(_a0 interface{}, _a1 interface{}) *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
 	return &mockGlobalConfigEntryRepository_DeleteAllByKeys_Call{Call: _e.mock.On("DeleteAllByKeys", _a0, _a1)}
 }
 
-func (_c *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call) Run(run func(_a0 context.Context, _a1 []common.GlobalConfigKey)) *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+func (_c *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call) Run(run func(_a0 context.Context, _a1 []config.Key)) *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]common.GlobalConfigKey))
+		run(args[0].(context.Context), args[1].([]config.Key))
 	})
 	return _c
 }
@@ -114,13 +114,13 @@ func (_c *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call) Return(_a0 error
 	return _c
 }
 
-func (_c *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call) RunAndReturn(run func(context.Context, []common.GlobalConfigKey) error) *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
+func (_c *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call) RunAndReturn(run func(context.Context, []config.Key) error) *mockGlobalConfigEntryRepository_DeleteAllByKeys_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Get provides a mock function with given fields: _a0, _a1
-func (_m *mockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error) {
+func (_m *mockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 config.Key) (*ecosystem.GlobalConfigEntry, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -129,10 +129,10 @@ func (_m *mockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 common.G
 
 	var r0 *ecosystem.GlobalConfigEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, config.Key) (*ecosystem.GlobalConfigEntry, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, common.GlobalConfigKey) *ecosystem.GlobalConfigEntry); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, config.Key) *ecosystem.GlobalConfigEntry); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -140,7 +140,7 @@ func (_m *mockGlobalConfigEntryRepository) Get(_a0 context.Context, _a1 common.G
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, common.GlobalConfigKey) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, config.Key) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -156,14 +156,14 @@ type mockGlobalConfigEntryRepository_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 common.GlobalConfigKey
+//   - _a1 config.Key
 func (_e *mockGlobalConfigEntryRepository_Expecter) Get(_a0 interface{}, _a1 interface{}) *mockGlobalConfigEntryRepository_Get_Call {
 	return &mockGlobalConfigEntryRepository_Get_Call{Call: _e.mock.On("Get", _a0, _a1)}
 }
 
-func (_c *mockGlobalConfigEntryRepository_Get_Call) Run(run func(_a0 context.Context, _a1 common.GlobalConfigKey)) *mockGlobalConfigEntryRepository_Get_Call {
+func (_c *mockGlobalConfigEntryRepository_Get_Call) Run(run func(_a0 context.Context, _a1 config.Key)) *mockGlobalConfigEntryRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(common.GlobalConfigKey))
+		run(args[0].(context.Context), args[1].(config.Key))
 	})
 	return _c
 }
@@ -173,33 +173,33 @@ func (_c *mockGlobalConfigEntryRepository_Get_Call) Return(_a0 *ecosystem.Global
 	return _c
 }
 
-func (_c *mockGlobalConfigEntryRepository_Get_Call) RunAndReturn(run func(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)) *mockGlobalConfigEntryRepository_Get_Call {
+func (_c *mockGlobalConfigEntryRepository_Get_Call) RunAndReturn(run func(context.Context, config.Key) (*ecosystem.GlobalConfigEntry, error)) *mockGlobalConfigEntryRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllByKey provides a mock function with given fields: _a0, _a1
-func (_m *mockGlobalConfigEntryRepository) GetAllByKey(_a0 context.Context, _a1 []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error) {
+func (_m *mockGlobalConfigEntryRepository) GetAllByKey(_a0 context.Context, _a1 []config.Key) (map[config.Key]*ecosystem.GlobalConfigEntry, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllByKey")
 	}
 
-	var r0 map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry
+	var r0 map[config.Key]*ecosystem.GlobalConfigEntry
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []config.Key) (map[config.Key]*ecosystem.GlobalConfigEntry, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []common.GlobalConfigKey) map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []config.Key) map[config.Key]*ecosystem.GlobalConfigEntry); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry)
+			r0 = ret.Get(0).(map[config.Key]*ecosystem.GlobalConfigEntry)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []common.GlobalConfigKey) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []config.Key) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -215,24 +215,24 @@ type mockGlobalConfigEntryRepository_GetAllByKey_Call struct {
 
 // GetAllByKey is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 []common.GlobalConfigKey
+//   - _a1 []config.Key
 func (_e *mockGlobalConfigEntryRepository_Expecter) GetAllByKey(_a0 interface{}, _a1 interface{}) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
 	return &mockGlobalConfigEntryRepository_GetAllByKey_Call{Call: _e.mock.On("GetAllByKey", _a0, _a1)}
 }
 
-func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) Run(run func(_a0 context.Context, _a1 []common.GlobalConfigKey)) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
+func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) Run(run func(_a0 context.Context, _a1 []config.Key)) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]common.GlobalConfigKey))
+		run(args[0].(context.Context), args[1].([]config.Key))
 	})
 	return _c
 }
 
-func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) Return(_a0 map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, _a1 error) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
+func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) Return(_a0 map[config.Key]*ecosystem.GlobalConfigEntry, _a1 error) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) RunAndReturn(run func(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
+func (_c *mockGlobalConfigEntryRepository_GetAllByKey_Call) RunAndReturn(run func(context.Context, []config.Key) (map[config.Key]*ecosystem.GlobalConfigEntry, error)) *mockGlobalConfigEntryRepository_GetAllByKey_Call {
 	_c.Call.Return(run)
 	return _c
 }
