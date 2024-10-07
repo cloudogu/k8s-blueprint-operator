@@ -177,6 +177,12 @@ type DoguConfigRepository interface {
 	Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error)
 }
 
+// SensitiveDoguConfigRepository TODO: add go doc, especially for errors
+type SensitiveDoguConfigRepository interface {
+	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	Update(ctx context.Context, entry config.DoguConfig) (config.DoguConfig, error)
+}
+
 type DoguConfigEntryRepository interface {
 	// Get retrieves a key from the dogu's config.
 	// It can throw the following errors:
