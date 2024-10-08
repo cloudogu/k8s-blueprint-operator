@@ -80,6 +80,65 @@ func (_c *MockDoguConfigRepository_Get_Call) RunAndReturn(run func(context.Conte
 	return _c
 }
 
+// GetAll provides a mock function with given fields: ctx, doguNames
+func (_m *MockDoguConfigRepository) GetAll(ctx context.Context, doguNames []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error) {
+	ret := _m.Called(ctx, doguNames)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAll")
+	}
+
+	var r0 map[config.SimpleDoguName]config.DoguConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)); ok {
+		return rf(ctx, doguNames)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) map[config.SimpleDoguName]config.DoguConfig); ok {
+		r0 = rf(ctx, doguNames)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[config.SimpleDoguName]config.DoguConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []config.SimpleDoguName) error); ok {
+		r1 = rf(ctx, doguNames)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDoguConfigRepository_GetAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAll'
+type MockDoguConfigRepository_GetAll_Call struct {
+	*mock.Call
+}
+
+// GetAll is a helper method to define mock.On call
+//   - ctx context.Context
+//   - doguNames []config.SimpleDoguName
+func (_e *MockDoguConfigRepository_Expecter) GetAll(ctx interface{}, doguNames interface{}) *MockDoguConfigRepository_GetAll_Call {
+	return &MockDoguConfigRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx, doguNames)}
+}
+
+func (_c *MockDoguConfigRepository_GetAll_Call) Run(run func(ctx context.Context, doguNames []config.SimpleDoguName)) *MockDoguConfigRepository_GetAll_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]config.SimpleDoguName))
+	})
+	return _c
+}
+
+func (_c *MockDoguConfigRepository_GetAll_Call) Return(_a0 map[config.SimpleDoguName]config.DoguConfig, _a1 error) *MockDoguConfigRepository_GetAll_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockDoguConfigRepository_GetAll_Call) RunAndReturn(run func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)) *MockDoguConfigRepository_GetAll_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, _a1
 func (_m *MockDoguConfigRepository) Update(ctx context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
 	ret := _m.Called(ctx, _a1)

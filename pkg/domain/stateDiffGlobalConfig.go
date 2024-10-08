@@ -2,7 +2,6 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
@@ -30,17 +29,6 @@ type GlobalConfigEntryDiff struct {
 	Actual       GlobalConfigValueState
 	Expected     GlobalConfigValueState
 	NeededAction ConfigAction
-}
-
-func NewGlobalConfigValueStateFromEntry(actualEntry *ecosystem.GlobalConfigEntry) GlobalConfigValueState {
-	actualValue := common.GlobalConfigValue("")
-	if actualEntry != nil {
-		actualValue = actualEntry.Value
-	}
-	return GlobalConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualEntry != nil,
-	}
 }
 
 func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
@@ -76,18 +64,18 @@ func newGlobalConfigEntryDiff(
 
 func determineGlobalConfigDiffs(
 	config GlobalConfig,
-	actualDoguConfig config.GlobalConfig,
+	actualConfig config.GlobalConfig,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualDoguConfig.Get(key)
+		actualEntry, actualExists := actualConfig.Get(key)
 		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, expectedValue, true))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry, actualExists := actualDoguConfig.Get(key)
+		actualEntry, actualExists := actualConfig.Get(key)
 		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, "", false))
 	}
 	return configDiffs

@@ -2,8 +2,7 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"slices"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type CombinedDoguConfigDiffs struct {
@@ -50,29 +49,28 @@ func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDo
 
 func determineConfigDiffs(
 	blueprintConfig Config,
-	clusterState ecosystem.EcosystemState,
+	globalConfig config.GlobalConfig,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+	SensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-
-	sensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
-	for key, entry := range clusterState.SensitiveDoguConfig {
-		sensitiveConfig[key] = entry.Value
-	}
-
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, sensitiveConfig, clusterState.GetInstalledDoguNames()),
-		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)
+	return determineDogusConfigDiffs(
+			blueprintConfig.Dogus,
+			configByDogu,
+			SensitiveConfigByDogu,
+		),
+		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
 }
 
 func determineDogusConfigDiffs(
 	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
-	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
-	installedDogus []common.SimpleDoguName,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+	sensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
 ) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
 	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = CombinedDoguConfigDiffs{
-			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, actualDoguConfig),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, actualSensitiveDoguConfig, slices.Contains(installedDogus, doguName)),
+			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu),
+			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, sensitiveConfigByDogu),
 		}
 	}
 	return diffsPerDogu

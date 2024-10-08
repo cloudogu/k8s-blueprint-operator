@@ -3,6 +3,7 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
@@ -14,21 +15,10 @@ func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[C
 }
 
 type SensitiveDoguConfigEntryDiff struct {
-	Key                  common.SensitiveDoguConfigKey
-	Actual               DoguConfigValueState
-	Expected             DoguConfigValueState
-	DoguAlreadyInstalled bool
-	NeededAction         ConfigAction
-}
-
-func NewDoguConfigValueStateFromSensitiveValue(actualValue common.SensitiveDoguConfigValue, actualExists bool) DoguConfigValueState {
-	if !actualExists {
-		actualValue = ""
-	}
-	return DoguConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualExists,
-	}
+	Key          common.SensitiveDoguConfigKey
+	Actual       DoguConfigValueState
+	Expected     DoguConfigValueState
+	NeededAction ConfigAction
 }
 
 func newSensitiveDoguConfigEntryDiff(
@@ -37,37 +27,37 @@ func newSensitiveDoguConfigEntryDiff(
 	actualExists bool,
 	expectedValue common.SensitiveDoguConfigValue,
 	expectedExists bool,
-	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigEntryDiff {
-	actual := NewDoguConfigValueStateFromSensitiveValue(actualValue, actualExists)
+	actual := DoguConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualExists,
+	}
 	expected := DoguConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
 	}
 	return SensitiveDoguConfigEntryDiff{
-		Key:                  key,
-		Actual:               actual,
-		Expected:             expected,
-		DoguAlreadyInstalled: doguAlreadyInstalled,
-		NeededAction:         getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
+		Key:          key,
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }
 
 func determineSensitiveDoguConfigDiffs(
-	config SensitiveDoguConfig,
-	actualDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
-	doguAlreadyInstalled bool,
+	wantedConfig SensitiveDoguConfig,
+	actualConfig map[common.SimpleDoguName]config.DoguConfig,
 ) SensitiveDoguConfigDiffs {
 	var doguConfigDiff []SensitiveDoguConfigEntryDiff
 	// present entries
-	for key, expectedValue := range config.Present {
-		actualValue, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, expectedValue, true, doguAlreadyInstalled))
+	for key, expectedValue := range wantedConfig.Present {
+		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, exists, expectedValue, true))
 	}
 	// absent entries
-	for _, key := range config.Absent {
-		actualValue, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, "", false, doguAlreadyInstalled))
+	for _, key := range wantedConfig.Absent {
+		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, exists, "", false))
 	}
 	return doguConfigDiff
 }

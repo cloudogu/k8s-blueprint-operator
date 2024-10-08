@@ -23,11 +23,10 @@ type DoguConfigEntryDiff struct {
 
 type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
 type SensitiveDoguConfigEntryDiff struct {
-	Key              string               `json:"key"`
-	Actual           DoguConfigValueState `json:"actual"`
-	Expected         DoguConfigValueState `json:"expected"`
-	DoguNotInstalled bool                 `json:"doguNotInstalled,omitempty"`
-	NeededAction     ConfigAction         `json:"neededAction"`
+	Key          string               `json:"key"`
+	Actual       DoguConfigValueState `json:"actual"`
+	Expected     DoguConfigValueState `json:"expected"`
+	NeededAction ConfigAction         `json:"neededAction"`
 }
 
 func convertToCombinedDoguConfigDiffDomain(doguName string, dto CombinedDoguConfigDiff) domain.CombinedDoguConfigDiffs {
@@ -87,8 +86,7 @@ func convertToSensitiveDoguConfigEntryDiffDomain(doguName string, dto SensitiveD
 			Value:  dto.Expected.Value,
 			Exists: dto.Expected.Exists,
 		},
-		DoguAlreadyInstalled: !dto.DoguNotInstalled,
-		NeededAction:         domain.ConfigAction(dto.NeededAction),
+		NeededAction: domain.ConfigAction(dto.NeededAction),
 	}
 }
 
@@ -141,7 +139,6 @@ func convertToSensitiveDoguConfigEntryDiffDTO(domainModel domain.SensitiveDoguCo
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},
-		DoguNotInstalled: !domainModel.DoguAlreadyInstalled,
-		NeededAction:     ConfigAction(domainModel.NeededAction),
+		NeededAction: ConfigAction(domainModel.NeededAction),
 	}
 }

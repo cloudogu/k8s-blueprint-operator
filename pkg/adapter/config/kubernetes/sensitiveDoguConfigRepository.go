@@ -12,6 +12,11 @@ type SensitiveDoguConfigRepository struct {
 	repo repository.DoguConfigRepository
 }
 
+func (e SensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewSensitiveDoguConfigRepository(repo repository.DoguConfigRepository) *SensitiveDoguConfigRepository {
 	return &SensitiveDoguConfigRepository{repo: repo}
 }

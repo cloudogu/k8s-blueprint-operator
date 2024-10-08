@@ -15,8 +15,8 @@ type StateDiffUseCase struct {
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
 	globalConfigRepo          globalConfigRepository
-	doguConfigRepo            doguConfigEntryRepository
-	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
+	doguConfigRepo            doguConfigRepository
+	sensitiveDoguConfigRepo   sensitiveDoguConfigRepository
 }
 
 func NewStateDiffUseCase(
@@ -24,8 +24,8 @@ func NewStateDiffUseCase(
 	doguInstallationRepo domainservice.DoguInstallationRepository,
 	componentInstallationRepo domainservice.ComponentInstallationRepository,
 	globalConfigRepo domainservice.GlobalConfigRepository,
-	doguConfigRepo domainservice.DoguConfigEntryRepository,
-	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
+	doguConfigRepo domainservice.DoguConfigRepository,
+	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -92,9 +92,9 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	logger.Info("collect needed global config")
 	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
 	logger.Info("collect needed dogu config")
-	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
+	configByDogu, doguConfigErr := useCase.doguConfigRepo.GetAll(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
 	logger.Info("collect needed sensitive dogu config")
-	sensitiveDoguConfig, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
+	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAll(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 
@@ -106,10 +106,10 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	}
 
 	return ecosystem.EcosystemState{
-		InstalledDogus:      installedDogus,
-		InstalledComponents: installedComponents,
-		GlobalConfig:        globalConfig,
-		DoguConfig:          doguConfig,
-		SensitiveDoguConfig: sensitiveDoguConfig,
+		InstalledDogus:        installedDogus,
+		InstalledComponents:   installedComponents,
+		GlobalConfig:          globalConfig,
+		ConfigByDogu:          configByDogu,
+		SensitiveConfigByDogu: sensitiveConfigByDogu,
 	}, nil
 }
