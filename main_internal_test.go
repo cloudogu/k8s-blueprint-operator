@@ -237,7 +237,7 @@ func Test_startOperator(t *testing.T) {
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
 		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
+		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{SkipNameValidation: newTrue()})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
 		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
@@ -285,7 +285,7 @@ func Test_startOperator(t *testing.T) {
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
 		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
+		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{SkipNameValidation: newTrue()})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
 		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
@@ -336,7 +336,7 @@ func Test_startOperator(t *testing.T) {
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
 		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
+		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{SkipNameValidation: newTrue()})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
 		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
@@ -391,7 +391,7 @@ func Test_startOperator(t *testing.T) {
 		recorderMock := newMockEventRecorder(t)
 		ctrlManMock := newMockControllerManager(t)
 		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
+		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{SkipNameValidation: newTrue()})
 		ctrlManMock.EXPECT().GetScheme().Return(createScheme(t))
 		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
 		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
@@ -429,4 +429,9 @@ func createScheme(t *testing.T) *runtime.Scheme {
 
 	scheme.AddKnownTypes(gv, &v1.Blueprint{})
 	return scheme
+}
+
+func newTrue() *bool {
+	b := true
+	return &b
 }
