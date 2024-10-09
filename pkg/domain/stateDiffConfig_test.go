@@ -3,6 +3,7 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -23,29 +24,31 @@ var (
 
 func Test_determineConfigDiff(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		config := Config{}
+		emptyConfig := Config{}
 
 		clusterState := ecosystem.EcosystemState{}
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(config, clusterState)
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(emptyConfig, clusterState)
 
 		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
 		//given ecosystem config
+
+		entries, _ := config.MapToEntries(map[string]any{
+			"key1": "value1", // for action none
+			"key2": "value2", // for action set
+			"key3": "value3", // for action delete
+			// key4 is absent -> action none
+		})
+		globalConfig := config.CreateGlobalConfig(entries)
 		clusterState := ecosystem.EcosystemState{
-			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{
-				"key1": {Key: "key1", Value: "value1"}, // for action none
-				"key2": {Key: "key2", Value: "value2"}, // for action set
-				"key3": {Key: "key3", Value: "value3"}, // for action delete
-				// key4 is absent -> action none
-			},
-			DoguConfig:                   map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
-			EncryptedDoguConfig:          map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
-			DecryptedSensitiveDoguConfig: nil,
+			GlobalConfig:        globalConfig,
+			DoguConfig:          map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{},
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
 		}
 		//given blueprint config
-		config := Config{
+		givenConfig := Config{
 			Global: GlobalConfig{
 				Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 					"key1": "value1",
@@ -58,7 +61,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(config, clusterState)
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(givenConfig, clusterState)
 
 		//then
 		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
@@ -113,22 +116,24 @@ func Test_determineConfigDiff(t *testing.T) {
 		})
 	})
 	t.Run("all actions normal dogu config", func(t *testing.T) {
+
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
 		//given ecosystem config
 		clusterState := ecosystem.EcosystemState{
-			GlobalConfig: map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry{},
+			GlobalConfig: globalConfig,
 			DoguConfig: map[common.DoguConfigKey]*ecosystem.DoguConfigEntry{
 				dogu1Key1: {Key: dogu1Key1, Value: "value"}, //action none
 				dogu1Key2: {Key: dogu1Key2, Value: "value"}, //action set
 				dogu1Key3: {Key: dogu1Key3, Value: "value"}, //action delete
 				//dogu1Key4 -> absent, so action none
 			},
-			EncryptedDoguConfig:          map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
-			DecryptedSensitiveDoguConfig: nil,
-			InstalledDogus:               map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{},
+			InstalledDogus:      map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
 		}
 
 		//given blueprint config
-		config := Config{
+		givenConfig := Config{
 			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
@@ -146,7 +151,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(config, clusterState)
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(givenConfig, clusterState)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
@@ -208,25 +213,18 @@ func Test_determineConfigDiff(t *testing.T) {
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
 		clusterState := ecosystem.EcosystemState{
-			EncryptedDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
+			SensitiveDoguConfig: map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry{
 				sensitiveDogu1Key1: {Key: sensitiveDogu1Key1, Value: "value"}, //action none
 				sensitiveDogu1Key2: {Key: sensitiveDogu1Key2, Value: "value"}, //action set
 				sensitiveDogu1Key3: {Key: sensitiveDogu1Key3, Value: "value"}, //action setEncrypted
 				//sensitiveDogu1Key4 absent, action none
 				//sensitiveDogu2Key1 absent, action setToEncrypt
 			},
-			DecryptedSensitiveDoguConfig: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				sensitiveDogu1Key1: "value",
-				sensitiveDogu1Key2: "value",
-				sensitiveDogu1Key3: "value",
-				//sensitiveDogu1Key4 absent
-				//sensitiveDogu2Key1 absent, action setToEncrypt
-			},
 			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{"dogu1": {}},
 		}
 
 		//given blueprint config
-		config := Config{
+		givenConfig := Config{
 			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
@@ -252,7 +250,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(config, clusterState)
+		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(givenConfig, clusterState)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
@@ -285,7 +283,7 @@ func Test_determineConfigDiff(t *testing.T) {
 					Value:  "updated value",
 					Exists: true,
 				},
-				NeededAction: ConfigActionSetEncrypted,
+				NeededAction: ConfigActionSet,
 			},
 			{
 				Key:                  sensitiveDogu1Key3,
@@ -326,7 +324,7 @@ func Test_determineConfigDiff(t *testing.T) {
 					Value:  "value",
 					Exists: true,
 				},
-				NeededAction: ConfigActionSetToEncrypt,
+				NeededAction: ConfigActionSet,
 			},
 		}
 		assert.ElementsMatch(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, entriesDogu1)
@@ -337,7 +335,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		clusterState := ecosystem.EcosystemState{}
 
 		//given blueprint config
-		config := Config{
+		givenConfig := Config{
 			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
@@ -352,7 +350,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, _ := determineConfigDiffs(config, clusterState)
+		dogusConfigDiffs, _ := determineConfigDiffs(givenConfig, clusterState)
 		//then
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		require.Equal(t, 1, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
@@ -367,7 +365,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				Value:  "value",
 				Exists: true,
 			},
-			NeededAction: ConfigActionSetToEncrypt,
+			NeededAction: ConfigActionSet,
 		})
 
 	})
@@ -459,7 +457,7 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		require.Len(t, result.DoguConfigDiff, 1)
 
 		assert.Equal(t, "ldap", string(result.DoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", result.DoguConfigDiff[0].Key.Key)
+		assert.Equal(t, "logging/root", string(result.DoguConfigDiff[0].Key.Key))
 		assert.Equal(t, "ERROR", result.DoguConfigDiff[0].Actual.Value)
 		assert.Equal(t, false, result.DoguConfigDiff[0].Actual.Exists)
 		assert.Equal(t, "DEBUG", result.DoguConfigDiff[0].Expected.Value)
@@ -495,7 +493,7 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		require.Len(t, result.SensitiveDoguConfigDiff, 1)
 
 		assert.Equal(t, "ldap", string(result.SensitiveDoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", result.SensitiveDoguConfigDiff[0].Key.Key)
+		assert.Equal(t, "logging/root", string(result.SensitiveDoguConfigDiff[0].Key.Key))
 		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Actual.Value)
 		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Actual.Exists)
 		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Expected.Value)

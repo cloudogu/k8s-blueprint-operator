@@ -18,11 +18,6 @@ const (
 	ConfigActionNone ConfigAction = "none"
 	// ConfigActionSet means that the config key needs to be set as given
 	ConfigActionSet ConfigAction = "set"
-	// ConfigActionSetEncrypted means that the config key needs to be encrypted
-	ConfigActionSetEncrypted ConfigAction = "setEncrypted"
-	// ConfigActionSetToEncrypt means that the config key needs to be encrypted but another service needs to do this.
-	// This can happen if a dogu is not yet installed and therefore no encryption key pair is available.
-	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
 	// ConfigActionRemove means that the config key needs to be deleted
 	ConfigActionRemove ConfigAction = "remove"
 )
@@ -57,7 +52,13 @@ func determineConfigDiffs(
 	blueprintConfig Config,
 	clusterState ecosystem.EcosystemState,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, clusterState.DecryptedSensitiveDoguConfig, clusterState.GetInstalledDoguNames()),
+
+	sensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+	for key, entry := range clusterState.SensitiveDoguConfig {
+		sensitiveConfig[key] = entry.Value
+	}
+
+	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, sensitiveConfig, clusterState.GetInstalledDoguNames()),
 		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)
 }
 

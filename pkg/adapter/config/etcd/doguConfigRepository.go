@@ -17,7 +17,7 @@ func NewDoguConfigRepository(etcdStore etcdStore) *DoguConfigRepository {
 }
 
 func (e DoguConfigRepository) Get(_ context.Context, key common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error) {
-	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(key.Key)
+	entry, err := e.etcdStore.DoguConfig(string(key.DoguName)).Get(string(key.Key))
 	if registry.IsKeyNotFoundError(err) {
 		return nil, domainservice.NewNotFoundError(err, "could not find %s in etcd", key)
 	} else if err != nil {
@@ -33,7 +33,7 @@ func (e DoguConfigRepository) Get(_ context.Context, key common.DoguConfigKey) (
 func (e DoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfigEntry) error {
 	strDoguName := string(entry.Key.DoguName)
 	strValue := string(entry.Value)
-	err := setEtcdKey(entry.Key.Key, strValue, e.etcdStore.DoguConfig(strDoguName))
+	err := setEtcdKey(string(entry.Key.Key), strValue, e.etcdStore.DoguConfig(strDoguName))
 	if err != nil {
 		return domainservice.NewInternalError(err, "failed to set %s with value %q in etcd", entry.Key, strValue)
 	}
@@ -43,7 +43,7 @@ func (e DoguConfigRepository) Save(_ context.Context, entry *ecosystem.DoguConfi
 
 func (e DoguConfigRepository) Delete(_ context.Context, key common.DoguConfigKey) error {
 	strDoguName := string(key.DoguName)
-	err := deleteEtcdKey(key.Key, e.etcdStore.DoguConfig(strDoguName))
+	err := deleteEtcdKey(string(key.Key), e.etcdStore.DoguConfig(strDoguName))
 	if err != nil && !registry.IsKeyNotFoundError(err) {
 		return domainservice.NewInternalError(err, "failed to delete %s from etcd", key)
 	}
