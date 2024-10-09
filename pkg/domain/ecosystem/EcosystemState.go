@@ -6,12 +6,11 @@ import (
 )
 
 type EcosystemState struct {
-	InstalledDogus               map[common.SimpleDoguName]*DoguInstallation
-	InstalledComponents          map[common.SimpleComponentName]*ComponentInstallation
-	GlobalConfig                 map[common.GlobalConfigKey]*GlobalConfigEntry
-	DoguConfig                   map[common.DoguConfigKey]*DoguConfigEntry
-	EncryptedDoguConfig          map[common.SensitiveDoguConfigKey]*SensitiveDoguConfigEntry
-	DecryptedSensitiveDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
+	InstalledDogus      map[common.SimpleDoguName]*DoguInstallation
+	InstalledComponents map[common.SimpleComponentName]*ComponentInstallation
+	GlobalConfig        map[common.GlobalConfigKey]*GlobalConfigEntry
+	DoguConfig          map[common.DoguConfigKey]*DoguConfigEntry
+	SensitiveDoguConfig map[common.SensitiveDoguConfigKey]*SensitiveDoguConfigEntry
 }
 
 func (state EcosystemState) GetInstalledDoguNames() []common.SimpleDoguName {

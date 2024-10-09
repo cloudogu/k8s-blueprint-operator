@@ -27,7 +27,7 @@ func (e SensitiveDoguConfigRepository) Get(_ context.Context, key common.Sensiti
 
 	return &ecosystem.SensitiveDoguConfigEntry{
 		Key:   key,
-		Value: common.EncryptedDoguConfigValue(entry),
+		Value: common.SensitiveDoguConfigValue(entry),
 	}, nil
 }
 

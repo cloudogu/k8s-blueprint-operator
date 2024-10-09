@@ -102,16 +102,22 @@ type globalConfigEntryRepository interface {
 	domainservice.GlobalConfigEntryRepository
 }
 
+// TODO: remove this when refactoring is done
 type doguConfigEntryRepository interface {
 	domainservice.DoguConfigEntryRepository
 }
 
+type doguConfigRepository interface {
+	domainservice.DoguConfigRepository
+}
+
+// TODO: remove this when refactoring is done
 type sensitiveDoguConfigEntryRepository interface {
 	domainservice.SensitiveDoguConfigEntryRepository
 }
 
-type configEncryptionAdapter interface {
-	domainservice.ConfigEncryptionAdapter
+type sensitiveDoguConfigRepository interface {
+	domainservice.SensitiveDoguConfigRepository
 }
 
 type doguRestartRepository interface {
