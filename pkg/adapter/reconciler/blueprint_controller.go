@@ -79,6 +79,10 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if mgr == nil {
+		return errors.New("must provide a non-nil Manager")
+	}
+
 	controllerOptions := mgr.GetControllerOptions()
 	options := controller.TypedOptions[reconcile.Request]{
 		SkipNameValidation: controllerOptions.SkipNameValidation,
