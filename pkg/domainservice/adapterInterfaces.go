@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 
 	"github.com/cloudogu/cesapp-lib/core"
 
@@ -109,31 +110,6 @@ type MaintenancePageModel struct {
 	Text  string
 }
 
-type ConfigEncryptionAdapter interface {
-	// Encrypt encrypts the given value for a dogu.
-	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	Encrypt(context.Context, common.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
-	// EncryptAll encrypts the given values for a dogu.
-	// If the encryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been encrypted.
-	// It can throw an InternalError if the encryption did not succeed or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	EncryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error)
-	// Decrypt decrypts sensitive dogu values.
-	// It can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	Decrypt(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)
-	// DecryptAll decrypts a map of sensitive dogu values.
-	// If the decryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been decrypted.
-	// This method can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	DecryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)
-}
-
 type DoguRestartRepository interface {
 	// RestartAll restarts all provided Dogus
 	RestartAll(context.Context, []common.SimpleDoguName) error
@@ -168,6 +144,26 @@ type GlobalConfigEntryRepository interface {
 	// It can throw an InternalError if any error happens.
 	// If any key is not existent, no error will be returned for that case.
 	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
+}
+
+// GlobalConfigRepository TODO: add go doc, especially for errors
+type GlobalConfigRepository interface {
+	Get(ctx context.Context) (config.GlobalConfig, error)
+	Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error)
+}
+
+// DoguConfigRepository TODO: add go doc, especially for errors
+type DoguConfigRepository interface {
+	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+}
+
+// SensitiveDoguConfigRepository TODO: add go doc, especially for errors
+type SensitiveDoguConfigRepository interface {
+	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 type DoguConfigEntryRepository interface {
@@ -217,18 +213,6 @@ type SensitiveDoguConfigEntryRepository interface {
 	//	- ConflictError if there were concurrent write accesses.
 	//	- InternalError if any other error happens.
 	Save(context.Context, *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveForNotInstalledDogu persists the config for the given dogu. In contrast to Save or SaveAll the dogu is not
-	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
-	SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAllForNotInstalledDogu persists all given configs for the given dogu. In contrast to Save or SaveAll the dogu is not
-	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
-	// It can throw the following errors:
-	//  - InternalError if any error happens.
-	SaveAllForNotInstalledDogu(context.Context, common.SimpleDoguName, []*ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAllForNotInstalledDogus persists all given configs for the given sensitive dogu entries.
-	// It can throw the following errors:
-	//  - InternalError if any error happens.
-	SaveAllForNotInstalledDogus(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
 	// SaveAll persists all given sensitive config keys. sensitive configs can be set even if the dogus are not installed.
 	// It can throw the following errors:
 	//	- ConflictError if there were concurrent write accesses.

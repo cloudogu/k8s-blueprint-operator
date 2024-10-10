@@ -60,6 +60,28 @@ func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKe
 	return keys
 }
 
+// GetDogusWithChangedConfig returns a list of dogus for which possible config changes are needed.
+func (config Config) GetDogusWithChangedConfig() []common.SimpleDoguName {
+	var dogus []common.SimpleDoguName
+	for dogu, doguConfig := range config.Dogus {
+		if len(doguConfig.Config.Present) != 0 || len(doguConfig.Config.Absent) != 0 {
+			dogus = append(dogus, dogu)
+		}
+	}
+	return dogus
+}
+
+// GetDogusWithChangedSensitiveConfig returns a list of dogus for which possible sensitive config changes are needed.
+func (config Config) GetDogusWithChangedSensitiveConfig() []common.SimpleDoguName {
+	var dogus []common.SimpleDoguName
+	for dogu, doguConfig := range config.Dogus {
+		if len(doguConfig.SensitiveConfig.Present) != 0 || len(doguConfig.SensitiveConfig.Absent) != 0 {
+			dogus = append(dogus, dogu)
+		}
+	}
+	return dogus
+}
+
 // censorValues censors all sensitive configuration data to make them unrecognisable.
 func (config Config) censorValues() Config {
 	for _, doguConfig := range config.Dogus {
