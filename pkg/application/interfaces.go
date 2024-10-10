@@ -103,11 +103,6 @@ type globalConfigRepository interface {
 	domainservice.GlobalConfigRepository
 }
 
-// TODO: remove this when refactoring is done
-type doguConfigEntryRepository interface {
-	domainservice.DoguConfigEntryRepository
-}
-
 type doguConfigRepository interface {
 	domainservice.DoguConfigRepository
 }

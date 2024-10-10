@@ -14,6 +14,15 @@ func (diffs DoguConfigDiffs) GetDoguConfigDiffByAction() map[ConfigAction][]Dogu
 	})
 }
 
+func (diffs DoguConfigDiffs) HasChangesForDogu(dogu common.SimpleDoguName) bool {
+	for _, diff := range diffs {
+		if diff.Key.DoguName == dogu && diff.NeededAction != ConfigActionNone {
+			return true
+		}
+	}
+	return false
+}
+
 type DoguConfigValueState ConfigValueState
 
 type ConfigValueState struct {
