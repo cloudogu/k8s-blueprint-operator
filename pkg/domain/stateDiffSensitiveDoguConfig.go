@@ -6,7 +6,7 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
+type SensitiveDoguConfigDiffs = DoguConfigDiffs
 
 func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
 	return util.GroupBy(diffs, func(diff SensitiveDoguConfigEntryDiff) ConfigAction {
@@ -14,12 +14,7 @@ func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[C
 	})
 }
 
-type SensitiveDoguConfigEntryDiff struct {
-	Key          common.SensitiveDoguConfigKey
-	Actual       DoguConfigValueState
-	Expected     DoguConfigValueState
-	NeededAction ConfigAction
-}
+type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newSensitiveDoguConfigEntryDiff(
 	key common.SensitiveDoguConfigKey,

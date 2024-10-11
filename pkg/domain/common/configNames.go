@@ -7,7 +7,7 @@ import (
 )
 
 type RegistryConfigKey interface {
-	GlobalConfigKey | DoguConfigKey | SensitiveDoguConfigKey
+	GlobalConfigKey | DoguConfigKey
 }
 
 type GlobalConfigKey = config.Key
@@ -33,9 +33,7 @@ func (k DoguConfigKey) String() string {
 	return fmt.Sprintf("key %q of dogu %q", k.Key, k.DoguName)
 }
 
-type SensitiveDoguConfigKey struct {
-	DoguConfigKey
-}
+type SensitiveDoguConfigKey = DoguConfigKey
 
 // GlobalConfigValue is a single global config value
 type GlobalConfigValue = config.Value

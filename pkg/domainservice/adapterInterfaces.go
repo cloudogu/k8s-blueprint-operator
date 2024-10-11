@@ -166,68 +166,6 @@ type SensitiveDoguConfigRepository interface {
 	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
-type DoguConfigEntryRepository interface {
-	// Get retrieves a key from the dogu's config.
-	// It can throw the following errors:
-	// 	- NotFoundError if the key is not found.
-	// 	- InternalError if any other error happens.
-	Get(context.Context, common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error)
-	// GetAllByKey retrieves all ecosystem.DoguConfigEntry's for the given ecosystem.DoguConfigKey's config.
-	// It can trow the following errors:
-	// 	- NotFoundError if there is no config for the dogu.
-	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error)
-	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	Save(context.Context, *ecosystem.DoguConfigEntry) error
-	// SaveAll persists all given config keys. Configs can be set even if the dogus are not installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.DoguConfigEntry) error
-	// Delete deletes a dogu config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(context.Context, common.DoguConfigKey) error
-	// DeleteAllByKeys deletes all given dogu config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.DoguConfigKey) error
-}
-
-type SensitiveDoguConfigEntryRepository interface {
-	// Get retrieves a key from the dogu's sensitive config.
-	// It can throw the following errors:
-	// 	- NotFoundError if the key is not found.
-	// 	- InternalError if any other error happens.
-	Get(context.Context, common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error)
-	// GetAllByKey retrieves a dogu's sensitive config for the given keys.
-	// It can trow the following errors:
-	// 	- NotFoundError if there is no config for the dogu.
-	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error)
-	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	Save(context.Context, *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAll persists all given sensitive config keys. sensitive configs can be set even if the dogus are not installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
-	// Delete deletes a sensitive dogu config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(context.Context, common.SensitiveDoguConfigKey) error
-	// DeleteAllByKeys deletes all given sensitive dogu config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.SensitiveDoguConfigKey) error
-}
-
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
 func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {

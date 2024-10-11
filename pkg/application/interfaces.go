@@ -107,11 +107,6 @@ type doguConfigRepository interface {
 	domainservice.DoguConfigRepository
 }
 
-// TODO: remove this when refactoring is done
-type sensitiveDoguConfigEntryRepository interface {
-	domainservice.SensitiveDoguConfigEntryRepository
-}
-
 type sensitiveDoguConfigRepository interface {
 	domainservice.SensitiveDoguConfigRepository
 }

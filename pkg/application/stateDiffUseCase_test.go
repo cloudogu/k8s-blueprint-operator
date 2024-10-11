@@ -45,8 +45,8 @@ var (
 	internalTestError                      = domainservice.NewInternalError(assert.AnError, "internal error")
 	nginxStaticConfigKeyNginxKey1          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey1"}
 	nginxStaticConfigKeyNginxKey2          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey2"}
-	nginxStaticSensitiveConfigKeyNginxKey1 = common.SensitiveDoguConfigKey{DoguConfigKey: nginxStaticConfigKeyNginxKey1}
-	nginxStaticSensitiveConfigKeyNginxKey2 = common.SensitiveDoguConfigKey{DoguConfigKey: nginxStaticConfigKeyNginxKey2}
+	nginxStaticSensitiveConfigKeyNginxKey1 = nginxStaticConfigKeyNginxKey1
+	nginxStaticSensitiveConfigKeyNginxKey2 = nginxStaticConfigKeyNginxKey2
 )
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {

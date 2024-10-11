@@ -113,19 +113,19 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 						"redmine": {
 							SensitiveConfig: domain.SensitiveDoguConfig{
 								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-									{DoguConfigKey: common.DoguConfigKey{
+									{
 										DoguName: "redmine",
 										Key:      "my-secret-password",
-									}}: "password-value",
-									{DoguConfigKey: common.DoguConfigKey{
+									}: "password-value",
+									{
 										DoguName: "redmine",
 										Key:      "my-secret-password-2",
-									}}: "password-value-2",
+									}: "password-value-2",
 								},
-								Absent: []common.SensitiveDoguConfigKey{{DoguConfigKey: common.DoguConfigKey{
+								Absent: []common.SensitiveDoguConfigKey{{
 									DoguName: "redmine",
 									Key:      "my-secret-password-3",
-								}}},
+								}},
 							},
 						},
 					},
@@ -285,19 +285,19 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 							DoguName: "redmine",
 							SensitiveConfig: domain.SensitiveDoguConfig{
 								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-									{DoguConfigKey: common.DoguConfigKey{
+									{
 										DoguName: "redmine",
 										Key:      "my-secret-password",
-									}}: "password-value",
-									{DoguConfigKey: common.DoguConfigKey{
+									}: "password-value",
+									{
 										DoguName: "redmine",
 										Key:      "my-secret-password-2",
-									}}: "password-value-2",
+									}: "password-value-2",
 								},
-								Absent: []common.SensitiveDoguConfigKey{{DoguConfigKey: common.DoguConfigKey{
+								Absent: []common.SensitiveDoguConfigKey{{
 									DoguName: "redmine",
 									Key:      "my-secret-password-3",
-								}}},
+								}},
 							},
 						},
 					},

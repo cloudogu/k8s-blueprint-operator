@@ -73,10 +73,8 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff
 func convertToSensitiveDoguConfigEntryDiffDomain(doguName string, dto SensitiveDoguConfigEntryDiff) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
-			DoguConfigKey: common.DoguConfigKey{
-				DoguName: common.SimpleDoguName(doguName),
-				Key:      config.Key(dto.Key),
-			},
+			DoguName: common.SimpleDoguName(doguName),
+			Key:      config.Key(dto.Key),
 		},
 		Actual: domain.DoguConfigValueState{
 			Value:  dto.Actual.Value,

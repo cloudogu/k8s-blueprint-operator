@@ -164,13 +164,13 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) Sensitiv
 	}
 }
 
-func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguConfig) domain.SensitiveDoguConfig {
+func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDoguConfig) domain.SensitiveDoguConfig {
 	var present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(config.Present))
-		for key, value := range config.Present {
+	if len(doguConfig.Present) != 0 {
+		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(doguConfig.Present))
+		for key, value := range doguConfig.Present {
 			present[convertToSensitiveDoguConfigKeyDomain(doguName, key)] = common.SensitiveDoguConfigValue(value)
 		}
 	}
@@ -178,10 +178,13 @@ func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguCon
 	var absent []common.SensitiveDoguConfigKey
 	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]common.SensitiveDoguConfigKey, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = convertToSensitiveDoguConfigKeyDomain(doguName, key)
+	if len(doguConfig.Absent) != 0 {
+		absent = make([]common.SensitiveDoguConfigKey, len(doguConfig.Absent))
+		for i, key := range doguConfig.Absent {
+			absent[i] = common.SensitiveDoguConfigKey{
+				DoguName: common.SimpleDoguName(doguName),
+				Key:      config.Key(key),
+			}
 		}
 	}
 
@@ -192,10 +195,9 @@ func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguCon
 }
 
 func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.SensitiveDoguConfigKey {
-	return common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+	return common.SensitiveDoguConfigKey{
 		DoguName: common.SimpleDoguName(doguName),
 		Key:      config.Key(key),
-	},
 	}
 }
 

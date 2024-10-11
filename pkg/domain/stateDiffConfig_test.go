@@ -10,17 +10,13 @@ import (
 
 var (
 	dogu1              = common.SimpleDoguName("dogu1")
-	dogu2              = common.SimpleDoguName("dogu2")
 	dogu1Key1          = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
 	dogu1Key2          = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
 	dogu1Key3          = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
 	dogu1Key4          = common.DoguConfigKey{DoguName: dogu1, Key: "key4"}
-	dogu2Key1          = common.DoguConfigKey{DoguName: dogu2, Key: "key1"}
-	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key1}
-	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key2}
-	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key3}
-	sensitiveDogu1Key4 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu1Key4}
-	sensitiveDogu2Key1 = common.SensitiveDoguConfigKey{DoguConfigKey: dogu2Key1}
+	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key1"}
+	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key2"}
+	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key3"}
 )
 
 func Test_determineConfigDiff(t *testing.T) {
@@ -458,10 +454,10 @@ func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
 		configDiff := CombinedDoguConfigDiffs{
 			SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
 				{
-					Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+					Key: common.SensitiveDoguConfigKey{
 						DoguName: "ldap",
 						Key:      "logging/root",
-					}},
+					},
 					Actual: DoguConfigValueState{
 						Value:  "ERROR",
 						Exists: false,
@@ -549,7 +545,7 @@ func TestCombinedDoguConfigDiffs_HasChanges(t *testing.T) {
 			fields: fields{
 				DoguConfigDiff: []DoguConfigEntryDiff{},
 				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{{
-					Key:          common.SensitiveDoguConfigKey{common.DoguConfigKey{DoguName: "testdogu", Key: "testkey"}},
+					Key:          common.SensitiveDoguConfigKey{DoguName: "testdogu", Key: "testkey"},
 					Actual:       DoguConfigValueState{Value: "changed", Exists: true},
 					Expected:     DoguConfigValueState{"initial", true},
 					NeededAction: ConfigActionSet}},

@@ -15,20 +15,20 @@ import (
 type EcosystemConfigUseCase struct {
 	blueprintRepository           blueprintSpecRepository
 	doguConfigRepository          doguConfigRepository
-	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository
+	sensitiveDoguConfigRepository sensitiveDoguConfigRepository
 	globalConfigRepository        globalConfigRepository
 }
 
 func NewEcosystemConfigUseCase(
 	blueprintRepository blueprintSpecRepository,
 	doguConfigRepository doguConfigRepository,
-	doguSensitiveConfigRepository sensitiveDoguConfigEntryRepository,
+	sensitiveDoguConfigRepository sensitiveDoguConfigRepository,
 	globalConfigRepository globalConfigRepository,
 ) *EcosystemConfigUseCase {
 	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
-		doguSensitiveConfigRepository: doguSensitiveConfigRepository,
+		sensitiveDoguConfigRepository: sensitiveDoguConfigRepository,
 		globalConfigRepository:        globalConfigRepository,
 	}
 }
@@ -69,7 +69,7 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 	if err != nil {
 		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
 	}
-	err = useCase.applySensitiveDoguConfigDiffs(ctx, blueprintSpec.StateDiff.GetSensitiveDoguConfigDiffsByAction())
+	err = useCase.applySensitiveDoguConfigDiffs(ctx, blueprintSpec.StateDiff.DoguConfigDiffs)
 	if err != nil {
 		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
 	}
@@ -151,6 +151,47 @@ func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(
 	return errors.Join(errs...)
 }
 
+func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(
+	ctx context.Context,
+	diffsByDogu map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs,
+) error {
+	var errs []error
+
+	var doguNames []common.SimpleDoguName
+	for dogu, diff := range diffsByDogu {
+		if diff.SensitiveDoguConfigDiff.HasChangesForDogu(dogu) {
+			doguNames = append(doguNames, dogu)
+		}
+	}
+	slices.Sort(doguNames)
+
+	if len(doguNames) == 0 {
+		// no changes to dogu config needed
+		return nil
+	}
+
+	configByDogu, err := useCase.sensitiveDoguConfigRepository.GetAll(ctx, doguNames)
+	if err != nil {
+		return err
+	}
+
+	for _, dogu := range doguNames {
+		updatedConfig, applyError := useCase.applyDiff(configByDogu[dogu], diffsByDogu[dogu].SensitiveDoguConfigDiff)
+		if applyError != nil {
+			return applyError
+		}
+		_, applyError = useCase.sensitiveDoguConfigRepository.Update(ctx, config.DoguConfig{
+			DoguName: dogu,
+			Config:   updatedConfig,
+		})
+		if applyError != nil {
+			return applyError
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
 func (useCase *EcosystemConfigUseCase) applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff) (config.Config, error) {
 	var errs []error
 	updatedEntries := doguConfig.Config
@@ -171,40 +212,12 @@ func (useCase *EcosystemConfigUseCase) applyDiff(doguConfig config.DoguConfig, d
 	return updatedEntries, errors.Join(errs...)
 }
 
-func (useCase *EcosystemConfigUseCase) applySensitiveDoguConfigDiffs(ctx context.Context, sensitiveDoguConfigDiffsByAction map[domain.ConfigAction]domain.SensitiveDoguConfigDiffs) error {
-	var errs []error
-
-	var keysToSet []*ecosystem.SensitiveDoguConfigEntry
-	var keysToDelete []common.SensitiveDoguConfigKey
-
-	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionSet] {
-		entry := getSensitiveDoguConfigEntry(diff.Key.DoguName, diff)
-		keysToSet = append(keysToSet, entry)
-	}
-
-	for _, diff := range sensitiveDoguConfigDiffsByAction[domain.ConfigActionRemove] {
-		keysToDelete = append(keysToDelete, common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: diff.Key.DoguName, Key: diff.Key.Key}})
-	}
-
-	errs = append(errs, callIfNotEmpty(ctx, keysToSet, useCase.doguSensitiveConfigRepository.SaveAll))
-	errs = append(errs, callIfNotEmpty(ctx, keysToDelete, useCase.doguSensitiveConfigRepository.DeleteAllByKeys))
-
-	return errors.Join(errs...)
-}
-
 func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
 	if len(collection) > 0 {
 		return fn(ctx, collection)
 	}
 
 	return nil
-}
-
-func getSensitiveDoguConfigEntry(doguName common.SimpleDoguName, diff domain.SensitiveDoguConfigEntryDiff) *ecosystem.SensitiveDoguConfigEntry {
-	return &ecosystem.SensitiveDoguConfigEntry{
-		Key:   common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: doguName, Key: diff.Key.Key}},
-		Value: common.SensitiveDoguConfigValue(diff.Expected.Value),
-	}
 }
 
 func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {

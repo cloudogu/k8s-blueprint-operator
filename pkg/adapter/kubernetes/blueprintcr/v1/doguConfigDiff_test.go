@@ -86,10 +86,10 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 			domainModel: domain.CombinedDoguConfigDiffs{
 				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/memory_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Value:  "512m",
 							Exists: true,
@@ -101,10 +101,10 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 						NeededAction: domain.ConfigActionSet,
 					},
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/swap_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Exists: false,
 						},
@@ -258,10 +258,10 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 			want: domain.CombinedDoguConfigDiffs{
 				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/memory_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Value:  "512m",
 							Exists: true,
@@ -273,10 +273,10 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 						NeededAction: domain.ConfigActionSet,
 					},
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/swap_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Exists: false,
 						},

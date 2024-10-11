@@ -1,7 +1,9 @@
 package etcd
 
 import (
+	"context"
 	"fmt"
+	"go.etcd.io/etcd/client/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,6 +17,10 @@ import (
 var internalErr = &domainservice.InternalError{}
 var notFoundErr = &domainservice.NotFoundError{}
 var anotherErr = fmt.Errorf("another error for testing")
+var testCtx = context.Background()
+var etcdNotFoundError = client.Error{Code: client.ErrorCodeKeyNotFound}
+
+const testSimpleDoguNameRedmine = common.SimpleDoguName("redmine")
 
 func TestEtcdGlobalConfigRepository_Delete(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
