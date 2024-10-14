@@ -115,6 +115,7 @@ type DoguRestartRepository interface {
 	RestartAll(context.Context, []common.SimpleDoguName) error
 }
 
+// TODO: Remove this after replacing the maintenance mode adapter
 type GlobalConfigEntryRepository interface {
 	// Get retrieves a key from the global config.
 	// It can throw the following errors:
@@ -161,17 +162,43 @@ type GlobalConfigRepository interface {
 	Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error)
 }
 
-// DoguConfigRepository TODO: add go doc, especially for errors
+// DoguConfigRepository to get and update normal dogu config. The config is always handled as a whole.
 type DoguConfigRepository interface {
+	// Get retrieves the normal config for the given dogu.
+	// It can throw the following errors:
+	// 	- NotFoundError if the dogu config was not found.
+	// 	- InternalError if any other error happens.
 	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	// GetAll retrieves the normal config for all given dogus as a map from doguName to config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the dogu config was not found.
+	// 	- InternalError if any other error happens.
 	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	// Update persists the whole given config.
+	// It can throw the following errors:
+	//  - NotFoundError if the dogu config was not found to update it.
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
 	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
-// SensitiveDoguConfigRepository TODO: add go doc, especially for errors
+// SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.
 type SensitiveDoguConfigRepository interface {
+	// Get retrieves the sensitive config for the given dogu.
+	// It can throw the following errors:
+	// 	- NotFoundError if the dogu config was not found.
+	// 	- InternalError if any other error happens.
 	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	// GetAll retrieves the sensitive config for all given dogus as a map from doguName to config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the dogu config was not found.
+	// 	- InternalError if any other error happens.
 	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	// Update persists the whole given config.
+	// It can throw the following errors:
+	//  - NotFoundError if the dogu config was not found to update it.
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
 	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
