@@ -4,34 +4,45 @@ import (
 	"context"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	"github.com/cloudogu/k8s-registry-lib/repository"
+	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
 )
 
 type GlobalConfigRepository struct {
-	repo repository.GlobalConfigRepository
+	repo k8sGlobalConfigRepo
 }
 
-func NewGlobalConfigRepository(repo repository.GlobalConfigRepository) *GlobalConfigRepository {
+func NewGlobalConfigRepository(repo k8sGlobalConfigRepo) *GlobalConfigRepository {
 	return &GlobalConfigRepository{repo: repo}
 }
 
 func (e GlobalConfigRepository) Get(ctx context.Context) (config.GlobalConfig, error) {
-	return e.repo.Get(ctx)
-	//TODO: add own error types again
-	//if registry.IsKeyNotFoundError(err) {
-	//	return nil, domainservice.NewNotFoundError(err, "could not find key %q from global config in etcd", key)
-	//} else if err != nil {
-	//	return nil, domainservice.NewInternalError(err, "failed to get value for key %q from global config in etcd", key)
-	//}
+	loadedConfig, err := e.repo.Get(ctx)
+	if err != nil {
+		if liberrors.IsNotFoundError(err) {
+			return loadedConfig, domainservice.NewNotFoundError(err, "could not find global config. Check if your ecosystem is ready for operation")
+		} else if liberrors.IsConnectionError(err) {
+			return loadedConfig, domainservice.NewInternalError(err, "could not load global config due to connection problems")
+		} else {
+			// GenericError and fallback if even that would not match the error
+			return loadedConfig, domainservice.NewInternalError(err, "could not load global config due to an unknown problem")
+		}
+	}
+	return loadedConfig, nil
 }
 
 func (e GlobalConfigRepository) Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error) {
 	updatedConfig, err := e.repo.Update(ctx, config)
-	// TODO: we cannot see here, if there is a real conflict or there was a connection error.
-	//  With a conflict, we can immediately restart the business process
-	//  With an connection error we need a longer backoff (internalError)
 	if err != nil {
-		return config, domainservice.NewInternalError(err, "failed to update global config")
+		if liberrors.IsNotFoundError(err) {
+			return updatedConfig, domainservice.NewNotFoundError(err, "could not update global config. Check if your ecosystem is ready for operation")
+		} else if liberrors.IsConnectionError(err) {
+			return updatedConfig, domainservice.NewInternalError(err, "could not update global config due to connection problems")
+		} else if liberrors.IsConflictError(err) {
+			return updatedConfig, domainservice.NewInternalError(err, "could not update global config due to conflicting changes")
+		} else {
+			// GenericError and fallback if even that would not match the error
+			return updatedConfig, domainservice.NewInternalError(err, "could not update global config due to an unknown problem")
+		}
 	}
 	return updatedConfig, nil
 }

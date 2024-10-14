@@ -146,9 +146,18 @@ type GlobalConfigEntryRepository interface {
 	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
 }
 
-// GlobalConfigRepository TODO: add go doc, especially for errors
+// GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
 type GlobalConfigRepository interface {
+	// Get retrieves the whole global config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the global config was not found.
+	// 	- InternalError if any other error happens.
 	Get(ctx context.Context) (config.GlobalConfig, error)
+	// Update persists the whole global config.
+	// It can throw the following errors:
+	//  - NotFoundError if the global config was not found to update it.
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
 	Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error)
 }
 
@@ -281,10 +290,21 @@ func (e *InternalError) Unwrap() error {
 	return e.WrappedError
 }
 
+func IsInternalError(err error) bool {
+	var internalError *InternalError
+	return errors.As(err, &internalError)
+}
+
 // ConflictError is a common error indicating that the aggregate was modified in the meantime.
 type ConflictError struct {
 	WrappedError error
 	Message      string
+}
+
+// NewConflictError creates an ConflictError with a given message. The wrapped error may be nil. The error message must
+// omit the fmt.Errorf verb %w because this is done by ConflictError.Error().
+func NewConflictError(wrappedError error, message string, msgArgs ...any) *InternalError {
+	return &InternalError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
 // Error marks the struct as an error.
@@ -298,4 +318,9 @@ func (e *ConflictError) Error() string {
 // Unwrap is used to make it work with errors.Is, errors.As.
 func (e *ConflictError) Unwrap() error {
 	return e.WrappedError
+}
+
+func IsConflictError(err error) bool {
+	var internalError *InternalError
+	return errors.As(err, &internalError)
 }
