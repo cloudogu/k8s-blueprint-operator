@@ -24,25 +24,16 @@ func New(globalConfig registry.ConfigurationContext) *Mode {
 func (m *Mode) Activate(content domainservice.MaintenancePageModel) error {
 	isActive, isOurs, err := m.lock.isActiveAndOurs()
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to check if maintenance mode is already active and ours",
-		}
+		return domainservice.NewInternalError(err, "failed to check if maintenance mode is already active and ours")
 	}
 
 	if isActive && !isOurs {
-		return &domainservice.ConflictError{
-			WrappedError: nil,
-			Message:      "cannot activate maintenance mode as it was already activated by another party",
-		}
+		return domainservice.NewConflictError(nil, "cannot activate maintenance mode as it was already activated by another party")
 	}
 
 	err = m.switcher.activate(content)
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to activate maintenance mode",
-		}
+		return domainservice.NewInternalError(err, "failed to activate maintenance mode")
 	}
 
 	return nil
@@ -52,10 +43,7 @@ func (m *Mode) Activate(content domainservice.MaintenancePageModel) error {
 func (m *Mode) Deactivate() error {
 	isActive, isOurs, err := m.lock.isActiveAndOurs()
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to check if maintenance mode is already active and ours",
-		}
+		return domainservice.NewInternalError(err, "failed to check if maintenance mode is already active and ours")
 	}
 
 	if !isActive {
@@ -64,18 +52,12 @@ func (m *Mode) Deactivate() error {
 	}
 
 	if !isOurs {
-		return &domainservice.ConflictError{
-			WrappedError: nil,
-			Message:      "cannot deactivate maintenance mode as it was activated by another party",
-		}
+		return domainservice.NewConflictError(nil, "cannot deactivate maintenance mode as it was activated by another party")
 	}
 
 	err = m.switcher.deactivate()
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to deactivate maintenance mode",
-		}
+		return domainservice.NewInternalError(err, "failed to deactivate maintenance mode")
 	}
 
 	return nil

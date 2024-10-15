@@ -270,8 +270,8 @@ type ConflictError struct {
 
 // NewConflictError creates an ConflictError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by ConflictError.Error().
-func NewConflictError(wrappedError error, message string, msgArgs ...any) *InternalError {
-	return &InternalError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
+func NewConflictError(wrappedError error, message string, msgArgs ...any) *ConflictError {
+	return &ConflictError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
 // Error marks the struct as an error.
@@ -288,6 +288,6 @@ func (e *ConflictError) Unwrap() error {
 }
 
 func IsConflictError(err error) bool {
-	var internalError *InternalError
-	return errors.As(err, &internalError)
+	var conflictError *ConflictError
+	return errors.As(err, &conflictError)
 }

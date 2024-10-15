@@ -118,3 +118,10 @@ func TestIsConflictError(t *testing.T) {
 	assert.True(t, IsConflictError(fmt.Errorf("test: %w", NewConflictError(assert.AnError, "test"))))
 	assert.False(t, IsConflictError(assert.AnError))
 }
+
+func TestNewConflictError(t *testing.T) {
+	assert.Equal(t,
+		&ConflictError{assert.AnError, "message"},
+		NewConflictError(assert.AnError, "message"),
+	)
+}
