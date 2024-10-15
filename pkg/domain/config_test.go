@@ -406,3 +406,65 @@ func TestCombinedDoguConfig_validate(t *testing.T) {
 
 	assert.ErrorContains(t, err, "dogu config key key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
 }
+
+func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
+	presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+		dogu1Key1: "val",
+	}
+	AbsentConfig := []common.DoguConfigKey{
+		dogu1Key1,
+	}
+
+	normalConfig := DoguConfig{
+		Present: presentConfig,
+		Absent:  AbsentConfig,
+	}
+
+	combinedConfig := CombinedDoguConfig{
+		DoguName: dogu1,
+		Config:   normalConfig,
+		SensitiveConfig: struct {
+			Present map[common.DoguConfigKey]common.DoguConfigValue
+			Absent  []common.DoguConfigKey
+		}{},
+	}
+
+	config := Config{
+		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			dogu1: combinedConfig,
+		},
+		Global: GlobalConfig{},
+	}
+	assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+}
+
+func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
+	presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+		dogu1Key1: "val",
+	}
+	AbsentConfig := []common.DoguConfigKey{
+		dogu1Key1,
+	}
+
+	normalConfig := DoguConfig{
+		Present: presentConfig,
+		Absent:  AbsentConfig,
+	}
+
+	combinedConfig := CombinedDoguConfig{
+		DoguName: dogu1,
+		Config:   normalConfig,
+		SensitiveConfig: struct {
+			Present map[common.DoguConfigKey]common.DoguConfigValue
+			Absent  []common.DoguConfigKey
+		}{},
+	}
+
+	config := Config{
+		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			dogu1: combinedConfig,
+		},
+		Global: GlobalConfig{},
+	}
+	assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+}

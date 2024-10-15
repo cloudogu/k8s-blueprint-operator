@@ -25,10 +25,7 @@ type DoguConfig struct {
 	Absent  []common.DoguConfigKey
 }
 
-type SensitiveDoguConfig struct {
-	Present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
-	Absent  []common.SensitiveDoguConfigKey
-}
+type SensitiveDoguConfig = DoguConfig
 
 type GlobalConfig struct {
 	Present map[common.GlobalConfigKey]common.GlobalConfigValue
@@ -145,46 +142,6 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 func (config DoguConfig) validate(referencedDoguName common.SimpleDoguName) error {
 	var errs []error
 
-	for configKey := range config.Present {
-		err := configKey.Validate()
-		if err != nil {
-			errs = append(errs, fmt.Errorf("present dogu config key invalid: %w", err))
-		}
-
-		// validate that all keys are of the same dogu
-		if referencedDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("present %s does not match superordinate dogu name %q", configKey, referencedDoguName))
-		}
-	}
-
-	for _, configKey := range config.Absent {
-		err := configKey.Validate()
-		if err != nil {
-			errs = append(errs, fmt.Errorf("absent dogu config key invalid: %w", err))
-		}
-
-		// absent keys cannot be present
-		_, isPresent := config.Present[configKey]
-		if isPresent {
-			errs = append(errs, fmt.Errorf("%s cannot be present and absent at the same time", configKey))
-		}
-
-		// validate that all keys are of the same dogu
-		if referencedDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("absent %s does not match superordinate dogu name %q", configKey, referencedDoguName))
-		}
-	}
-
-	absentDuplicates := util.GetDuplicates(config.Absent)
-	if len(absentDuplicates) > 0 {
-		errs = append(errs, fmt.Errorf("absent dogu config should not contain duplicate keys: %v", absentDuplicates))
-	}
-
-	return errors.Join(errs...)
-}
-
-func (config SensitiveDoguConfig) validate(referencedDoguName common.SimpleDoguName) error {
-	var errs []error
 	for configKey := range config.Present {
 		err := configKey.Validate()
 		if err != nil {
