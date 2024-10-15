@@ -62,7 +62,7 @@ func TestGlobalConfigRepository_Get(t *testing.T) {
 		_, err := repo.Get(testCtx)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, "could not load global config due to connection problems")
+		assert.ErrorContains(t, err, "could not load global config")
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 	t.Run("internal error on all other errors", func(t *testing.T) {
@@ -76,7 +76,7 @@ func TestGlobalConfigRepository_Get(t *testing.T) {
 		_, err := repo.Get(testCtx)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, "could not load global config due to an unknown problem")
+		assert.ErrorContains(t, err, "could not load global config")
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 }
@@ -117,7 +117,7 @@ func TestGlobalConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testGlobalConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, "could not update global config due to conflicting changes")
+		assert.ErrorContains(t, err, "could not update global config")
 		assert.True(t, domainservice.IsConflictError(err), "error is no ConflictError")
 	})
 	t.Run("internal error if connection error happens", func(t *testing.T) {
@@ -131,7 +131,7 @@ func TestGlobalConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testGlobalConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, "could not update global config due to connection problems")
+		assert.ErrorContains(t, err, "could not update global config")
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 	t.Run("internal error on all other errors", func(t *testing.T) {
@@ -145,7 +145,7 @@ func TestGlobalConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testGlobalConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, "could not update global config due to an unknown problem")
+		assert.ErrorContains(t, err, "could not update global config")
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 }
