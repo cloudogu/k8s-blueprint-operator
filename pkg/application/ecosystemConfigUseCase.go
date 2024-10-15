@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"slices"
@@ -210,14 +209,6 @@ func (useCase *EcosystemConfigUseCase) applyDiff(doguConfig config.DoguConfig, d
 		}
 	}
 	return updatedEntries, errors.Join(errs...)
-}
-
-func callIfNotEmpty[T ecosystem.RegistryConfigEntry | common.RegistryConfigKey](ctx context.Context, collection []T, fn func(context.Context, []T) error) error {
-	if len(collection) > 0 {
-		return fn(ctx, collection)
-	}
-
-	return nil
 }
 
 func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
