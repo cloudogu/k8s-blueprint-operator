@@ -2,8 +2,8 @@ package kubernetes
 
 import (
 	"context"
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 )
@@ -13,8 +13,15 @@ type DoguConfigRepository struct {
 }
 
 func (e DoguConfigRepository) GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error) {
-	//TODO implement me
-	panic("implement me")
+	var configByDogus map[common.SimpleDoguName]config.DoguConfig
+	for _, doguName := range doguNames {
+		loaded, err := e.Get(ctx, doguName)
+		if err != nil {
+			return nil, fmt.Errorf("could not load config for all given dogus: %w", err)
+		}
+		configByDogus[doguName] = loaded
+	}
+	return configByDogus, nil
 }
 
 func NewDoguConfigRepository(repo repository.DoguConfigRepository) *DoguConfigRepository {
@@ -22,17 +29,17 @@ func NewDoguConfigRepository(repo repository.DoguConfigRepository) *DoguConfigRe
 }
 
 func (e DoguConfigRepository) Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error) {
-	// TODO: There seems to be no way to know, if we have a NotFoundError or a connection error.
-	return e.repo.Get(ctx, doguName)
+	loadedConfig, err := e.repo.Get(ctx, doguName)
+	if err != nil {
+		return loadedConfig, fmt.Errorf("could not load dogu config: %w", mapToBlueprintError(err))
+	}
+	return loadedConfig, nil
 }
 
 func (e DoguConfigRepository) Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
 	updatedConfig, err := e.repo.Update(ctx, config)
-	// TODO: we cannot see here, if there is a real conflict or there was a connection error.
-	//  With a conflict, we can immediately restart the business process
-	//  With an connection error we need a longer backoff (internalError)
 	if err != nil {
-		return config, domainservice.NewInternalError(err, "failed to update config for %s", config.DoguName)
+		return updatedConfig, fmt.Errorf("could not update dogu config: %w", mapToBlueprintError(err))
 	}
 	return updatedConfig, nil
 }

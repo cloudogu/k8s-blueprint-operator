@@ -14,7 +14,7 @@ func mapToBlueprintError(err error) error {
 		} else if liberrors.IsConnectionError(err) {
 			return domainservice.NewInternalError(err, "could not load/update config due to connection problems")
 		} else if liberrors.IsAlreadyExistsError(err) {
-			return domainservice.NewInternalError(err, "could not create config as it already exists")
+			return domainservice.NewConflictError(err, "could not create config as it already exists")
 		} else {
 			// GenericError and fallback if even that would not match the error
 			return domainservice.NewInternalError(err, "could not load/update config due to an unknown problem")
