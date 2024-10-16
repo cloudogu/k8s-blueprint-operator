@@ -23,6 +23,63 @@ func (_m *MockSensitiveDoguConfigRepository) EXPECT() *MockSensitiveDoguConfigRe
 	return &MockSensitiveDoguConfigRepository_Expecter{mock: &_m.Mock}
 }
 
+// Create provides a mock function with given fields: ctx, _a1
+func (_m *MockSensitiveDoguConfigRepository) Create(ctx context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
+	ret := _m.Called(ctx, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 config.DoguConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) (config.DoguConfig, error)); ok {
+		return rf(ctx, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) config.DoguConfig); ok {
+		r0 = rf(ctx, _a1)
+	} else {
+		r0 = ret.Get(0).(config.DoguConfig)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, config.DoguConfig) error); ok {
+		r1 = rf(ctx, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockSensitiveDoguConfigRepository_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type MockSensitiveDoguConfigRepository_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - ctx context.Context
+//   - _a1 config.DoguConfig
+func (_e *MockSensitiveDoguConfigRepository_Expecter) Create(ctx interface{}, _a1 interface{}) *MockSensitiveDoguConfigRepository_Create_Call {
+	return &MockSensitiveDoguConfigRepository_Create_Call{Call: _e.mock.On("Create", ctx, _a1)}
+}
+
+func (_c *MockSensitiveDoguConfigRepository_Create_Call) Run(run func(ctx context.Context, _a1 config.DoguConfig)) *MockSensitiveDoguConfigRepository_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(config.DoguConfig))
+	})
+	return _c
+}
+
+func (_c *MockSensitiveDoguConfigRepository_Create_Call) Return(_a0 config.DoguConfig, _a1 error) *MockSensitiveDoguConfigRepository_Create_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockSensitiveDoguConfigRepository_Create_Call) RunAndReturn(run func(context.Context, config.DoguConfig) (config.DoguConfig, error)) *MockSensitiveDoguConfigRepository_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function with given fields: ctx, doguName
 func (_m *MockSensitiveDoguConfigRepository) Get(ctx context.Context, doguName config.SimpleDoguName) (config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguName)

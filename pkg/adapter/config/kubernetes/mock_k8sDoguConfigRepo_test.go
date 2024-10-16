@@ -23,9 +23,66 @@ func (_m *mockK8sDoguConfigRepo) EXPECT() *mockK8sDoguConfigRepo_Expecter {
 	return &mockK8sDoguConfigRepo_Expecter{mock: &_m.Mock}
 }
 
-// Get provides a mock function with given fields: ctx, doguName
-func (_m *mockK8sDoguConfigRepo) Get(ctx context.Context, doguName config.SimpleDoguName) (config.DoguConfig, error) {
-	ret := _m.Called(ctx, doguName)
+// Create provides a mock function with given fields: _a0, _a1
+func (_m *mockK8sDoguConfigRepo) Create(_a0 context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 config.DoguConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) (config.DoguConfig, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) config.DoguConfig); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Get(0).(config.DoguConfig)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, config.DoguConfig) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockK8sDoguConfigRepo_Create_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Create'
+type mockK8sDoguConfigRepo_Create_Call struct {
+	*mock.Call
+}
+
+// Create is a helper method to define mock.On call
+//   - _a0 context.Context
+//   - _a1 config.DoguConfig
+func (_e *mockK8sDoguConfigRepo_Expecter) Create(_a0 interface{}, _a1 interface{}) *mockK8sDoguConfigRepo_Create_Call {
+	return &mockK8sDoguConfigRepo_Create_Call{Call: _e.mock.On("Create", _a0, _a1)}
+}
+
+func (_c *mockK8sDoguConfigRepo_Create_Call) Run(run func(_a0 context.Context, _a1 config.DoguConfig)) *mockK8sDoguConfigRepo_Create_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(config.DoguConfig))
+	})
+	return _c
+}
+
+func (_c *mockK8sDoguConfigRepo_Create_Call) Return(_a0 config.DoguConfig, _a1 error) *mockK8sDoguConfigRepo_Create_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *mockK8sDoguConfigRepo_Create_Call) RunAndReturn(run func(context.Context, config.DoguConfig) (config.DoguConfig, error)) *mockK8sDoguConfigRepo_Create_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Get provides a mock function with given fields: _a0, _a1
+func (_m *mockK8sDoguConfigRepo) Get(_a0 context.Context, _a1 config.SimpleDoguName) (config.DoguConfig, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -34,16 +91,16 @@ func (_m *mockK8sDoguConfigRepo) Get(ctx context.Context, doguName config.Simple
 	var r0 config.DoguConfig
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, config.SimpleDoguName) (config.DoguConfig, error)); ok {
-		return rf(ctx, doguName)
+		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, config.SimpleDoguName) config.DoguConfig); ok {
-		r0 = rf(ctx, doguName)
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(config.DoguConfig)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, config.SimpleDoguName) error); ok {
-		r1 = rf(ctx, doguName)
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -57,13 +114,13 @@ type mockK8sDoguConfigRepo_Get_Call struct {
 }
 
 // Get is a helper method to define mock.On call
-//   - ctx context.Context
-//   - doguName config.SimpleDoguName
-func (_e *mockK8sDoguConfigRepo_Expecter) Get(ctx interface{}, doguName interface{}) *mockK8sDoguConfigRepo_Get_Call {
-	return &mockK8sDoguConfigRepo_Get_Call{Call: _e.mock.On("Get", ctx, doguName)}
+//   - _a0 context.Context
+//   - _a1 config.SimpleDoguName
+func (_e *mockK8sDoguConfigRepo_Expecter) Get(_a0 interface{}, _a1 interface{}) *mockK8sDoguConfigRepo_Get_Call {
+	return &mockK8sDoguConfigRepo_Get_Call{Call: _e.mock.On("Get", _a0, _a1)}
 }
 
-func (_c *mockK8sDoguConfigRepo_Get_Call) Run(run func(ctx context.Context, doguName config.SimpleDoguName)) *mockK8sDoguConfigRepo_Get_Call {
+func (_c *mockK8sDoguConfigRepo_Get_Call) Run(run func(_a0 context.Context, _a1 config.SimpleDoguName)) *mockK8sDoguConfigRepo_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(config.SimpleDoguName))
 	})
@@ -80,9 +137,9 @@ func (_c *mockK8sDoguConfigRepo_Get_Call) RunAndReturn(run func(context.Context,
 	return _c
 }
 
-// Update provides a mock function with given fields: ctx, _a1
-func (_m *mockK8sDoguConfigRepo) Update(ctx context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
-	ret := _m.Called(ctx, _a1)
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *mockK8sDoguConfigRepo) Update(_a0 context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
@@ -91,16 +148,16 @@ func (_m *mockK8sDoguConfigRepo) Update(ctx context.Context, _a1 config.DoguConf
 	var r0 config.DoguConfig
 	var r1 error
 	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) (config.DoguConfig, error)); ok {
-		return rf(ctx, _a1)
+		return rf(_a0, _a1)
 	}
 	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) config.DoguConfig); ok {
-		r0 = rf(ctx, _a1)
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(config.DoguConfig)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, config.DoguConfig) error); ok {
-		r1 = rf(ctx, _a1)
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -114,13 +171,13 @@ type mockK8sDoguConfigRepo_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx context.Context
+//   - _a0 context.Context
 //   - _a1 config.DoguConfig
-func (_e *mockK8sDoguConfigRepo_Expecter) Update(ctx interface{}, _a1 interface{}) *mockK8sDoguConfigRepo_Update_Call {
-	return &mockK8sDoguConfigRepo_Update_Call{Call: _e.mock.On("Update", ctx, _a1)}
+func (_e *mockK8sDoguConfigRepo_Expecter) Update(_a0 interface{}, _a1 interface{}) *mockK8sDoguConfigRepo_Update_Call {
+	return &mockK8sDoguConfigRepo_Update_Call{Call: _e.mock.On("Update", _a0, _a1)}
 }
 
-func (_c *mockK8sDoguConfigRepo_Update_Call) Run(run func(ctx context.Context, _a1 config.DoguConfig)) *mockK8sDoguConfigRepo_Update_Call {
+func (_c *mockK8sDoguConfigRepo_Update_Call) Run(run func(_a0 context.Context, _a1 config.DoguConfig)) *mockK8sDoguConfigRepo_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(config.DoguConfig))
 	})

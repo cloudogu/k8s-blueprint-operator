@@ -180,6 +180,11 @@ type DoguConfigRepository interface {
 	//  - ConflictError if there were concurrent write accesses.
 	//  - InternalError if any other error happens.
 	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	// Create creates the data structure for the config and persists the given entries.
+	// It can throw the following errors:
+	//  - ConflictError if there already is a config.
+	//  - InternalError if any other error happens.
+	Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 // SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.
@@ -200,6 +205,11 @@ type SensitiveDoguConfigRepository interface {
 	//  - ConflictError if there were concurrent write accesses.
 	//  - InternalError if any other error happens.
 	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	// Create creates the data structure for the sensitive config and persists the given entries.
+	// It can throw the following errors:
+	//  - ConflictError if there already is a config.
+	//  - InternalError if any other error happens.
+	Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must

@@ -12,6 +12,7 @@ type k8sGlobalConfigRepo interface {
 }
 
 type k8sDoguConfigRepo interface {
-	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
-	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	Get(context.Context, common.SimpleDoguName) (config.DoguConfig, error)
+	Update(context.Context, config.DoguConfig) (config.DoguConfig, error)
+	Create(context.Context, config.DoguConfig) (config.DoguConfig, error)
 }

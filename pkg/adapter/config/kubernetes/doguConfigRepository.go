@@ -42,3 +42,11 @@ func (repo *DoguConfigRepository) Update(ctx context.Context, config config.Dogu
 	}
 	return updatedConfig, nil
 }
+
+func (repo *DoguConfigRepository) Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
+	createdConfig, err := repo.repo.Create(ctx, config)
+	if err != nil {
+		return createdConfig, fmt.Errorf("could not create dogu config for %s: %w", config.DoguName, mapToBlueprintError(err))
+	}
+	return createdConfig, nil
+}

@@ -15,7 +15,7 @@ func NewSensitiveDoguConfigRepository(repo k8sDoguConfigRepo) *SensitiveDoguConf
 	return &SensitiveDoguConfigRepository{repo: repo}
 }
 
-func (repo SensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error) {
+func (repo *SensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error) {
 	var configByDogus = map[common.SimpleDoguName]config.DoguConfig{}
 	for _, doguName := range doguNames {
 		loaded, err := repo.Get(ctx, doguName)
@@ -27,7 +27,7 @@ func (repo SensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames 
 	return configByDogus, nil
 }
 
-func (repo SensitiveDoguConfigRepository) Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error) {
+func (repo *SensitiveDoguConfigRepository) Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error) {
 	loadedConfig, err := repo.repo.Get(ctx, doguName)
 	if err != nil {
 		return loadedConfig, fmt.Errorf("could not load sensitive dogu config for %s: %w", doguName, mapToBlueprintError(err))
@@ -35,10 +35,18 @@ func (repo SensitiveDoguConfigRepository) Get(ctx context.Context, doguName comm
 	return loadedConfig, nil
 }
 
-func (repo SensitiveDoguConfigRepository) Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
+func (repo *SensitiveDoguConfigRepository) Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
 	updatedConfig, err := repo.repo.Update(ctx, config)
 	if err != nil {
 		return updatedConfig, fmt.Errorf("could not update sensitive dogu config for %s: %w", config.DoguName, mapToBlueprintError(err))
 	}
 	return updatedConfig, nil
+}
+
+func (repo *SensitiveDoguConfigRepository) Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
+	createdConfig, err := repo.repo.Create(ctx, config)
+	if err != nil {
+		return createdConfig, fmt.Errorf("could not create sensitive dogu config for %s: %w", config.DoguName, mapToBlueprintError(err))
+	}
+	return createdConfig, nil
 }

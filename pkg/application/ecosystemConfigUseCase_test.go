@@ -29,6 +29,16 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		sensitiveCasDiff := getSensitiveDoguConfigEntryDiffForAction("key", "value", cas, domain.ConfigActionSet)
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
+				DoguDiffs: []domain.DoguDiff{
+					{
+						DoguName:      redmine,
+						NeededActions: []domain.Action{},
+					},
+					{
+						DoguName:      cas,
+						NeededActions: []domain.Action{},
+					},
+				},
 				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					redmine: {
 						DoguConfigDiff: []domain.DoguConfigEntryDiff{
@@ -324,7 +334,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			Return(config.DoguConfig{}, nil)
 
 		// when
-		err = sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err = sut.applyDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
@@ -360,7 +370,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			Return(config.DoguConfig{}, nil)
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
@@ -378,7 +388,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		}
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
@@ -488,7 +498,7 @@ func TestEcosystemConfigUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 			Return(config.DoguConfig{}, nil)
 
 		// when
-		err = sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu)
+		err = sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
@@ -524,7 +534,7 @@ func TestEcosystemConfigUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 			Return(config.DoguConfig{}, nil)
 
 		// when
-		err := sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu)
+		err := sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
@@ -541,7 +551,7 @@ func TestEcosystemConfigUseCase_applySensitiveDoguConfigDiffs(t *testing.T) {
 		}
 
 		// when
-		err := sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu)
+		err := sut.applySensitiveDoguConfigDiffs(testCtx, diffsByDogu, nil)
 
 		// then
 		require.NoError(t, err)
