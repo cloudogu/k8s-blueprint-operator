@@ -11,7 +11,7 @@ rules:
       - secrets # for sensitive dogu config
     verbs:
       - get
-      #- list
+      - list # needed, as the registry-lib seems to need that for a normal get command
       #- watch
       - create
       - update
@@ -23,7 +23,7 @@ rules:
       - configmaps # for normal dogu config
     verbs:
       - get
-      #- list
+      - list # needed, as the registry-lib seems to need that for a normal get command
       #- watch
       - create
       - update
