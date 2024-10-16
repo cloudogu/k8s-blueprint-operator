@@ -16,8 +16,3 @@ type switcher interface {
 	// Deactivate disables the maintenance mode.
 	deactivate() error
 }
-
-type lock interface {
-	// isActiveAndOurs returns two bools that determine if the maintenance mode is active and ours.
-	isActiveAndOurs() (bool, bool, error)
-}
