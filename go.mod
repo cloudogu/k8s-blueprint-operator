@@ -2,6 +2,8 @@ module github.com/cloudogu/k8s-blueprint-operator
 
 go 1.23.0
 
+replace github.com/cloudogu/k8s-registry-lib => github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241017114742-3175c7a1ca91
+
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/cloudogu/cesapp-lib v0.14.0
@@ -14,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.etcd.io/etcd/client/v2 v2.305.16
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0
+	golang.org/x/net v0.29.0
 	gopkg.in/yaml.v2 v2.4.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.1
@@ -142,7 +145,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.26.0 // indirect
 	golang.org/x/crypto v0.27.0 // indirect
-	golang.org/x/net v0.29.0 // indirect
 	golang.org/x/oauth2 v0.22.0 // indirect
 	golang.org/x/sync v0.8.0 // indirect
 	golang.org/x/sys v0.25.0 // indirect

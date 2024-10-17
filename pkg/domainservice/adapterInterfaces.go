@@ -189,27 +189,7 @@ type DoguConfigRepository interface {
 
 // SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.
 type SensitiveDoguConfigRepository interface {
-	// Get retrieves the sensitive config for the given dogu.
-	// It can throw the following errors:
-	// 	- NotFoundError if the dogu config was not found.
-	// 	- InternalError if any other error happens.
-	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
-	// GetAll retrieves the sensitive config for all given dogus as a map from doguName to config.
-	// It can throw the following errors:
-	// 	- NotFoundError if the dogu config was not found.
-	// 	- InternalError if any other error happens.
-	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
-	// Update persists the whole given config.
-	// It can throw the following errors:
-	//  - NotFoundError if the dogu config was not found to update it.
-	//  - ConflictError if there were concurrent write accesses.
-	//  - InternalError if any other error happens.
-	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
-	// Create creates the data structure for the sensitive config and persists the given entries.
-	// It can throw the following errors:
-	//  - ConflictError if there already is a config.
-	//  - InternalError if any other error happens.
-	Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	DoguConfigRepository //interfaces are the same yet. Don't hesitate to split them if they diverge
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
