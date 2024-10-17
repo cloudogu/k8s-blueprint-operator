@@ -1,0 +1,31 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+  {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
+  name: {{ include "k8s-blueprint-operator.name" . }}-dogu-config-role
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - secrets # for sensitive dogu config
+    verbs:
+      - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      #- watch
+      - create
+      - update
+      # - patch # no patch as we always override as a whole and handle the conflicts
+      # - delete # no delete as dogu config gets deleted by the dogu operator
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps # for normal dogu config
+    verbs:
+      - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      #- watch
+      - create
+      - update
+      # - patch # no patch as we always override as a whole and handle the conflicts
+      # - delete # no delete as dogu config gets deleted by the dogu operator

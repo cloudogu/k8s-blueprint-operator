@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
@@ -61,4 +62,35 @@ func (e GlobalConfigRepository) SaveAll(ctx context.Context, entries []*ecosyste
 
 func (e GlobalConfigRepository) DeleteAllByKeys(ctx context.Context, keys []common.GlobalConfigKey) error {
 	return mapKeyOrEntry(ctx, keys, e.Delete, "failed to delete given global config keys in etcd")
+}
+
+func getAllByKeyOrEntry[T common.RegistryConfigKey, K ecosystem.RegistryConfigEntry](ctx context.Context, collection []T, fn func(context.Context, T) (K, error)) (map[T]K, error) {
+	var errs []error
+	entries := make(map[T]K)
+	for _, key := range collection {
+		entry, err := fn(ctx, key)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		entries[key] = entry
+	}
+
+	return entries, errors.Join(errs...)
+}
+
+func mapKeyOrEntry[T common.RegistryConfigKey | ecosystem.RegistryConfigEntry](ctx context.Context, collection []T, fn func(context.Context, T) error, errorMsg string) error {
+	var errs []error
+	for _, key := range collection {
+		err := fn(ctx, key)
+		errs = append(errs, err)
+	}
+
+	err := errors.Join(errs...)
+	if err != nil {
+		return domainservice.NewInternalError(err, errorMsg)
+	}
+
+	return nil
 }
