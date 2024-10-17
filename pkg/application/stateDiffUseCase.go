@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -91,12 +93,10 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	// load current config
 	logger.Info("collect needed global config")
 	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
-	logger.Info("collect needed dogu config")
-	configByDogu, doguConfigErr := useCase.doguConfigRepo.GetAll(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
-	logger.Info("collect needed sensitive dogu config")
-	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAll(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
-	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
+	configByDogu, sensitiveConfigByDogu, doguConfigError := useCase.collectDoguConfigState(ctx, effectiveBlueprint)
+
+	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigError)
 
 	var internalErrorType *domainservice.InternalError
 	if errors.As(joinedError, &internalErrorType) {
@@ -112,4 +112,38 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		ConfigByDogu:          configByDogu,
 		SensitiveConfigByDogu: sensitiveConfigByDogu,
 	}, nil
+}
+
+func (useCase *StateDiffUseCase) collectDoguConfigState(
+	ctx context.Context,
+	effectiveBlueprint domain.EffectiveBlueprint,
+) (configByDogu, sensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig, err error) {
+	logger := log.FromContext(ctx).WithName("StateDiffUseCase.collectEcosystemState")
+
+	logger.Info("collect needed dogu config")
+	configByDogu, configErr := collectDoguConfigWithRepo(ctx, useCase.doguConfigRepo, effectiveBlueprint.Config.GetDogusWithChangedConfig())
+
+	logger.Info("collect needed sensitive dogu config")
+	sensitiveConfigByDogu, sensitiveconfigErr := collectDoguConfigWithRepo(ctx, useCase.sensitiveDoguConfigRepo, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
+	err = errors.Join(configErr, sensitiveconfigErr)
+	return
+}
+
+func collectDoguConfigWithRepo(
+	ctx context.Context,
+	repo doguConfigRepository,
+	dogusToLoad []common.SimpleDoguName,
+) (map[common.SimpleDoguName]config.DoguConfig, error) {
+	configByDogu := map[common.SimpleDoguName]config.DoguConfig{}
+	for _, doguName := range dogusToLoad {
+		loadedConfig, err := repo.Get(ctx, doguName)
+		if domainservice.IsNotFoundError(err) {
+			// if notFoundError happens, the dogu is not yet installed. Therefore, the config is empty
+			loadedConfig = config.CreateDoguConfig(doguName, map[config.Key]config.Value{})
+		} else if err != nil {
+			return nil, err
+		}
+		configByDogu[doguName] = loadedConfig
+	}
+	return configByDogu, nil
 }
