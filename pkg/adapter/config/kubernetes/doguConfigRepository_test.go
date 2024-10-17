@@ -64,7 +64,7 @@ func TestDoguConfigRepository_Get(t *testing.T) {
 		_, err := repo.Get(testCtx, doguCas)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, fmt.Sprintf("could not load dogu config for %s", doguCas.String()))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not load normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 	t.Run("internal error on all other errors", func(t *testing.T) {
@@ -78,7 +78,7 @@ func TestDoguConfigRepository_Get(t *testing.T) {
 		_, err := repo.Get(testCtx, doguCas)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, fmt.Sprintf("could not load dogu config for %s", doguCas.String()))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not load normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 }
@@ -119,7 +119,7 @@ func TestDoguConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testCasConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, fmt.Sprintf("could not update dogu config for %s", doguCas.String()))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not update normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsConflictError(err), "error is no ConflictError")
 	})
 	t.Run("internal error if connection error happens", func(t *testing.T) {
@@ -133,7 +133,7 @@ func TestDoguConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testCasConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, fmt.Sprintf("could not update dogu config for %s", doguCas.String()))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not update normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 	t.Run("internal error on all other errors", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestDoguConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testCasConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
-		assert.ErrorContains(t, err, fmt.Sprintf("could not update dogu config for %s", doguCas.String()))
+		assert.ErrorContains(t, err, fmt.Sprintf("could not update normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 }

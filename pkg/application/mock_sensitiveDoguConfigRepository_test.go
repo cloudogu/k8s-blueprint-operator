@@ -196,6 +196,65 @@ func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// GetAllExisting provides a mock function with given fields: ctx, doguNames
+func (_m *mockSensitiveDoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error) {
+	ret := _m.Called(ctx, doguNames)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetAllExisting")
+	}
+
+	var r0 map[config.SimpleDoguName]config.DoguConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)); ok {
+		return rf(ctx, doguNames)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) map[config.SimpleDoguName]config.DoguConfig); ok {
+		r0 = rf(ctx, doguNames)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[config.SimpleDoguName]config.DoguConfig)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, []config.SimpleDoguName) error); ok {
+		r1 = rf(ctx, doguNames)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockSensitiveDoguConfigRepository_GetAllExisting_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetAllExisting'
+type mockSensitiveDoguConfigRepository_GetAllExisting_Call struct {
+	*mock.Call
+}
+
+// GetAllExisting is a helper method to define mock.On call
+//   - ctx context.Context
+//   - doguNames []config.SimpleDoguName
+func (_e *mockSensitiveDoguConfigRepository_Expecter) GetAllExisting(ctx interface{}, doguNames interface{}) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+	return &mockSensitiveDoguConfigRepository_GetAllExisting_Call{Call: _e.mock.On("GetAllExisting", ctx, doguNames)}
+}
+
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Run(run func(ctx context.Context, doguNames []config.SimpleDoguName)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]config.SimpleDoguName))
+	})
+	return _c
+}
+
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Return(_a0 map[config.SimpleDoguName]config.DoguConfig, _a1 error) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) RunAndReturn(run func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, _a1
 func (_m *mockSensitiveDoguConfigRepository) Update(ctx context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
 	ret := _m.Called(ctx, _a1)

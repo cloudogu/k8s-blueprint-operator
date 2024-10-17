@@ -174,6 +174,11 @@ type DoguConfigRepository interface {
 	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
 	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	// GetAll retrieves the normal config for all given dogus as a map from doguName to config and
+	// includes not found configs as empty configs.
+	// It can throw the following errors:
+	// 	- InternalError if any other error happens.
+	GetAllExisting(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
 	// Update persists the whole given config.
 	// It can throw the following errors:
 	//  - NotFoundError if the dogu config was not found to update it.
