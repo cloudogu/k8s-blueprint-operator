@@ -12,8 +12,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/cesapp-lib/registry"
 	"github.com/cloudogu/cesapp-lib/remote"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
@@ -115,18 +113,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	return &ApplicationContext{
 		Reconciler: blueprintReconciler,
 	}, nil
-}
-
-func createConfigRegistry(namespace string) (registry.Registry, error) {
-	configRegistry, err := registry.New(core.Registry{
-		Type:      "etcd",
-		Endpoints: []string{fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CES configuration registry: %w", err)
-	}
-
-	return configRegistry, nil
 }
 
 func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
