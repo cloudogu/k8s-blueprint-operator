@@ -1,18 +1,12 @@
 package maintenance
 
 import (
-	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"context"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 )
 
-type globalConfig interface {
-	registry.ConfigurationContext
-}
-
-// switcher provides ways to activate and deactivate the maintenance mode.
-type switcher interface {
-	// Activate enables the maintenance mode.
-	activate(content domainservice.MaintenancePageModel) error
-	// Deactivate disables the maintenance mode.
-	deactivate() error
+// mock for repository.MaintenanceModeAdapter
+type libMaintenanceModeAdapter interface {
+	Activate(ctx context.Context, content repository.MaintenanceModeDescription) error
+	Deactivate(ctx context.Context) error
 }

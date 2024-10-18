@@ -43,6 +43,8 @@ var blueprintOperatorName = common.QualifiedComponentName{
 	SimpleName: "k8s-blueprint-operator",
 }
 
+var maintenanceModeOwner = "blueprint-operator"
+
 // Bootstrap creates the ApplicationContext.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
 	blueprintSerializer := blueprintV2.Serializer{}
@@ -67,13 +69,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		eventRecorder,
 	)
 
-	configRegistry, err := createConfigRegistry(namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	//TODO: move maintenance mode adapter to registry lib
-	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
+	libMaintenanceAdapter := repository.NewMaintenanceModeAdapter(maintenanceModeOwner, ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	maintenanceMode := maintenance.NewMaintenanceModeAdapter(libMaintenanceAdapter)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {

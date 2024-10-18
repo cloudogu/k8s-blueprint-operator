@@ -15,25 +15,25 @@ import (
 
 type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
-	// a NotFoundError if the dogu is not installed or
-	// an InternalError if there is any other error.
+	//  - a NotFoundError if the dogu is not installed or
+	//  - an InternalError if there is any other error.
 	GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
-	// an InternalError if there is any other error.
+	//  - an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
-	// a ConflictError if there is already a DoguInstallation with this name or
-	// an InternalError if there is any error while saving the DoguInstallation
+	//  - a ConflictError if there is already a DoguInstallation with this name or
+	//  - an InternalError if there is any error while saving the DoguInstallation
 	Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error
 	// Update updates an ecosystem.DoguInstallation in the ecosystem.
-	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
-	// TODO: also return NotFoundErrors? Does k8s supply this error to us?
-	// returns an InternalError if there is any other error
+	//  - returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	//  - returns a NotFoundError if the DoguInstallation was not found or
+	//  - returns an InternalError if there is any other error
 	Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error
 	// Delete removes the given ecosystem.DoguInstallation completely from the ecosystem.
 	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
-	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
-	// returns an InternalError if there is any other error
+	//  - returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	//  - returns an InternalError if there is any other error
 	Delete(ctx context.Context, doguName common.SimpleDoguName) error
 }
 
@@ -96,55 +96,19 @@ type DoguToLoad struct {
 }
 
 type MaintenanceMode interface {
-	// Activate enables the maintenance mode with the given page model.
-	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
-	Activate(content MaintenancePageModel) error
+	// Activate enables the maintenance mode with the given title and text.
+	// May throw
+	//  - a ConflictError if another party activated the maintenance mode or
+	//  - a generic InternalError due to a connection error or an unknown error.
+	Activate(ctx context.Context, title, text string) error
 	// Deactivate disables the maintenance mode if it is active.
-	// May throw a generic InternalError or a ConflictError if another party holds the maintenance mode lock.
-	Deactivate() error
-}
-
-// MaintenancePageModel contains data that gets displayed when the maintenance mode is active.
-type MaintenancePageModel struct {
-	Title string
-	Text  string
+	// May throw a generic InternalError or a ConflictError if another party initially activated the maintenance mode.
+	Deactivate(ctx context.Context) error
 }
 
 type DoguRestartRepository interface {
 	// RestartAll restarts all provided Dogus
 	RestartAll(context.Context, []common.SimpleDoguName) error
-}
-
-// TODO: Remove this after replacing the maintenance mode adapter
-type GlobalConfigEntryRepository interface {
-	// Get retrieves a key from the global config.
-	// It can throw the following errors:
-	// 	- NotFoundError if the key or the global config is not found.
-	// 	- InternalError if any other error happens.
-	Get(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)
-	// GetAllByKey retrieves entries for the given keys from the global config.
-	// It can throw the following errors:
-	// 	- NotFoundError if a key or the global config is not found.
-	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)
-	// Save persists the global config.
-	// It can throw the following errors:
-	//  - ConflictError if there were concurrent write accesses.
-	//  - InternalError if any other error happens.
-	Save(context.Context, *ecosystem.GlobalConfigEntry) error
-	// SaveAll persists all given config keys.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.GlobalConfigEntry) error
-	// Delete deletes a global config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent, no error will be returned.
-	Delete(context.Context, common.GlobalConfigKey) error
-	// DeleteAllByKeys deletes all given global config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
 }
 
 // GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
@@ -174,7 +138,7 @@ type DoguConfigRepository interface {
 	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
 	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
-	// GetAll retrieves the normal config for all given dogus as a map from doguName to config and
+	// GetAllExisting retrieves the normal config for all given dogus as a map from doguName to config and
 	// includes not found configs as empty configs.
 	// It can throw the following errors:
 	// 	- InternalError if any other error happens.
