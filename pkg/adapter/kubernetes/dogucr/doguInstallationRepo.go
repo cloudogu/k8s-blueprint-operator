@@ -7,8 +7,8 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -103,7 +103,7 @@ func (repo *doguInstallationRepo) getEcosystemPVCs(ctx context.Context) (*corev1
 	return pvcList, nil
 }
 
-func (repo *doguInstallationRepo) appendVolumeSizeIfNotSet(cr *v1.Dogu, list *corev1.PersistentVolumeClaimList) {
+func (repo *doguInstallationRepo) appendVolumeSizeIfNotSet(cr *v2.Dogu, list *corev1.PersistentVolumeClaimList) {
 	crResources := cr.Spec.Resources
 	if crResources.DataVolumeSize != "" {
 		// VolumeSize is specified in spec.

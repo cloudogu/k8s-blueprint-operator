@@ -3,7 +3,9 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -77,8 +79,19 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if mgr == nil {
+		return errors.New("must provide a non-nil Manager")
+	}
+
+	controllerOptions := mgr.GetControllerOptions()
+	options := controller.TypedOptions[reconcile.Request]{
+		SkipNameValidation: controllerOptions.SkipNameValidation,
+		RecoverPanic:       controllerOptions.RecoverPanic,
+		NeedLeaderElection: controllerOptions.NeedLeaderElection,
+	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&k8sv1.Blueprint{}).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
+		WithOptions(options).
+		For(&k8sv1.Blueprint{}).
 		Complete(r)
 }

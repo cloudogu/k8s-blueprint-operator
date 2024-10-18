@@ -3,6 +3,7 @@ package v1
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type Config struct {
@@ -28,7 +29,7 @@ type presentAbsentConfig struct {
 
 func ConvertToConfigDTO(config domain.Config) Config {
 	var dogus map[string]CombinedDoguConfig
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
 		dogus = make(map[string]CombinedDoguConfig, len(config.Dogus))
@@ -45,7 +46,7 @@ func ConvertToConfigDTO(config domain.Config) Config {
 
 func ConvertToConfigDomain(config Config) domain.Config {
 	var dogus map[common.SimpleDoguName]domain.CombinedDoguConfig
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
 		dogus = make(map[common.SimpleDoguName]domain.CombinedDoguConfig, len(config.Dogus))
@@ -77,22 +78,22 @@ func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfi
 
 func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 	var present map[string]string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
 		present = make(map[string]string, len(config.Present))
 		for key, value := range config.Present {
-			present[key.Key] = string(value)
+			present[string(key.Key)] = string(value)
 		}
 	}
 
 	var absent []string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
 		absent = make([]string, len(config.Absent))
 		for i, key := range config.Absent {
-			absent[i] = key.Key
+			absent[i] = string(key.Key)
 		}
 	}
 
@@ -104,7 +105,7 @@ func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 
 func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguConfig {
 	var present map[common.DoguConfigKey]common.DoguConfigValue
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
 		present = make(map[common.DoguConfigKey]common.DoguConfigValue, len(config.Present))
@@ -114,7 +115,7 @@ func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguCo
 	}
 
 	var absent []common.DoguConfigKey
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
 		absent = make([]common.DoguConfigKey, len(config.Absent))
@@ -132,28 +133,28 @@ func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguCo
 func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
 	return common.DoguConfigKey{
 		DoguName: common.SimpleDoguName(doguName),
-		Key:      key,
+		Key:      config.Key(key),
 	}
 }
 
 func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) SensitiveDoguConfig {
 	var present map[string]string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
 		present = make(map[string]string, len(config.Present))
 		for key, value := range config.Present {
-			present[key.Key] = string(value)
+			present[string(key.Key)] = string(value)
 		}
 	}
 
 	var absent []string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
 		absent = make([]string, len(config.Absent))
 		for i, key := range config.Absent {
-			absent[i] = key.Key
+			absent[i] = string(key.Key)
 		}
 	}
 
@@ -163,24 +164,27 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) Sensitiv
 	}
 }
 
-func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguConfig) domain.SensitiveDoguConfig {
+func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDoguConfig) domain.SensitiveDoguConfig {
 	var present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(config.Present))
-		for key, value := range config.Present {
+	if len(doguConfig.Present) != 0 {
+		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(doguConfig.Present))
+		for key, value := range doguConfig.Present {
 			present[convertToSensitiveDoguConfigKeyDomain(doguName, key)] = common.SensitiveDoguConfigValue(value)
 		}
 	}
 
 	var absent []common.SensitiveDoguConfigKey
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]common.SensitiveDoguConfigKey, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = convertToSensitiveDoguConfigKeyDomain(doguName, key)
+	if len(doguConfig.Absent) != 0 {
+		absent = make([]common.SensitiveDoguConfigKey, len(doguConfig.Absent))
+		for i, key := range doguConfig.Absent {
+			absent[i] = common.SensitiveDoguConfigKey{
+				DoguName: common.SimpleDoguName(doguName),
+				Key:      config.Key(key),
+			}
 		}
 	}
 
@@ -191,16 +195,15 @@ func convertToSensitiveDoguConfigDomain(doguName string, config SensitiveDoguCon
 }
 
 func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.SensitiveDoguConfigKey {
-	return common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+	return common.SensitiveDoguConfigKey{
 		DoguName: common.SimpleDoguName(doguName),
-		Key:      key,
-	},
+		Key:      config.Key(key),
 	}
 }
 
 func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
 	var present map[string]string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
 		present = make(map[string]string, len(config.Present))
@@ -210,7 +213,7 @@ func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
 	}
 
 	var absent []string
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
 		absent = make([]string, len(config.Absent))
@@ -227,7 +230,7 @@ func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
 
 func convertToGlobalConfigDomain(config GlobalConfig) domain.GlobalConfig {
 	var present map[common.GlobalConfigKey]common.GlobalConfigValue
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
 		present = make(map[common.GlobalConfigKey]common.GlobalConfigValue, len(config.Present))
@@ -237,7 +240,7 @@ func convertToGlobalConfigDomain(config GlobalConfig) domain.GlobalConfig {
 	}
 
 	var absent []common.GlobalConfigKey
-	// we check for emtpy values to make good use of default values
+	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
 		absent = make([]common.GlobalConfigKey, len(config.Absent))

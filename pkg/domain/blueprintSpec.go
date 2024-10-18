@@ -275,7 +275,9 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	}
 	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
-		ecosystemState,
+		ecosystemState.GlobalConfig,
+		ecosystemState.ConfigByDogu,
+		ecosystemState.SensitiveConfigByDogu,
 	)
 
 	spec.StateDiff = StateDiff{

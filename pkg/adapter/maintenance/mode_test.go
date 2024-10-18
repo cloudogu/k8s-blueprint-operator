@@ -1,203 +1,135 @@
 package maintenance
 
 import (
-	"testing"
-
+	"context"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-registry-lib/errors"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"testing"
+)
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+var (
+	testCtx   = context.TODO()
+	testTitle = "title"
+	testText  = "text"
 )
 
 func TestMode_Activate(t *testing.T) {
-	t.Run("should fail to check if active and ours", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(false, false, assert.AnError)
+	t.Run("all ok", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
 
-		switcherMock := newMockSwitcher(t)
+		mock.EXPECT().
+			Activate(testCtx, repository.MaintenanceModeDescription{
+				Title: testTitle,
+				Text:  testText,
+			}).Return(nil)
 
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		content := domainservice.MaintenancePageModel{
-			Title: "myTitle",
-			Text:  "myText",
-		}
-
-		// when
-		err := sut.Activate(content)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
-		assert.ErrorContains(t, err, "failed to check if maintenance mode is already active and ours")
-	})
-	t.Run("should fail if maintenance mode is active and not ours", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(true, false, nil)
-
-		switcherMock := newMockSwitcher(t)
-
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		content := domainservice.MaintenancePageModel{
-			Title: "myTitle",
-			Text:  "myText",
-		}
-
-		// when
-		err := sut.Activate(content)
-
-		// then
-		require.Error(t, err)
-		conflictError := &domainservice.ConflictError{}
-		assert.ErrorAs(t, err, &conflictError)
-		assert.ErrorContains(t, err, "cannot activate maintenance mode as it was already activated by another party")
-	})
-	t.Run("should fail to activate maintenance mode", func(t *testing.T) {
-		// given
-		content := domainservice.MaintenancePageModel{
-			Title: "myTitle",
-			Text:  "myText",
-		}
-
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(true, true, nil)
-
-		switcherMock := newMockSwitcher(t)
-		switcherMock.EXPECT().activate(content).Return(assert.AnError)
-
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		// when
-		err := sut.Activate(content)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
-		assert.ErrorContains(t, err, "failed to activate maintenance mode")
-	})
-	t.Run("should succeed to activate maintenance mode", func(t *testing.T) {
-		// given
-		content := domainservice.MaintenancePageModel{
-			Title: "myTitle",
-			Text:  "myText",
-		}
-
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(false, false, nil)
-
-		switcherMock := newMockSwitcher(t)
-		switcherMock.EXPECT().activate(content).Return(nil)
-
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		// when
-		err := sut.Activate(content)
-
-		// then
+		err := mode.Activate(testCtx, testTitle, testText)
 		require.NoError(t, err)
+	})
+
+	t.Run("conflict with maintenance lock", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
+
+		givenErr := errors.NewConflictError(assert.AnError)
+		mock.EXPECT().
+			Activate(testCtx, repository.MaintenanceModeDescription{
+				Title: testTitle,
+				Text:  testText,
+			}).Return(givenErr)
+
+		err := mode.Activate(testCtx, testTitle, testText)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsConflictError(err))
+	})
+
+	t.Run("connection error", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
+
+		givenErr := errors.NewConnectionError(assert.AnError)
+		mock.EXPECT().
+			Activate(testCtx, repository.MaintenanceModeDescription{
+				Title: testTitle,
+				Text:  testText,
+			}).Return(givenErr)
+
+		err := mode.Activate(testCtx, testTitle, testText)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
+	})
+
+	t.Run("unknown error", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
+
+		givenErr := assert.AnError
+		mock.EXPECT().
+			Activate(testCtx, repository.MaintenanceModeDescription{
+				Title: testTitle,
+				Text:  testText,
+			}).Return(givenErr)
+
+		err := mode.Activate(testCtx, testTitle, testText)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
 	})
 }
 
 func TestMode_Deactivate(t *testing.T) {
-	t.Run("should fail to check if active and ours", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(false, false, assert.AnError)
+	t.Run("all ok", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
 
-		switcherMock := newMockSwitcher(t)
+		mock.EXPECT().Deactivate(testCtx).Return(nil)
 
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		// when
-		err := sut.Deactivate()
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
-		assert.ErrorContains(t, err, "failed to check if maintenance mode is already active")
-	})
-	t.Run("should do nothing if maintenance mode is not active", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(false, false, nil)
-
-		switcherMock := newMockSwitcher(t)
-
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
-
-		// when
-		err := sut.Deactivate()
-
-		// then
+		err := mode.Deactivate(testCtx)
 		require.NoError(t, err)
 	})
-	t.Run("should fail if maintenance mode was not activated by us", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(true, false, nil)
 
-		switcherMock := newMockSwitcher(t)
+	t.Run("conflict with maintenance lock", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
 
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
+		givenErr := errors.NewConflictError(assert.AnError)
+		mock.EXPECT().Deactivate(testCtx).Return(givenErr)
 
-		// when
-		err := sut.Deactivate()
-
-		// then
+		err := mode.Deactivate(testCtx)
 		require.Error(t, err)
-		conflictError := &domainservice.ConflictError{}
-		assert.ErrorAs(t, err, &conflictError)
-		assert.ErrorContains(t, err, "cannot deactivate maintenance mode as it was activated by another party")
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsConflictError(err))
 	})
-	t.Run("should fail to deactivate maintenance mode", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(true, true, nil)
 
-		switcherMock := newMockSwitcher(t)
-		switcherMock.EXPECT().deactivate().Return(assert.AnError)
+	t.Run("connection error", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
 
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
+		givenErr := errors.NewConnectionError(assert.AnError)
+		mock.EXPECT().Deactivate(testCtx).Return(givenErr)
 
-		// when
-		err := sut.Deactivate()
-
-		// then
+		err := mode.Deactivate(testCtx)
 		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		internalError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &internalError)
-		assert.ErrorContains(t, err, "failed to deactivate maintenance mode")
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
 	})
-	t.Run("should succeed to deactivate maintenance mode", func(t *testing.T) {
-		// given
-		lockMock := newMockLock(t)
-		lockMock.EXPECT().isActiveAndOurs().Return(true, true, nil)
 
-		switcherMock := newMockSwitcher(t)
-		switcherMock.EXPECT().deactivate().Return(nil)
+	t.Run("unknown error", func(t *testing.T) {
+		mock := newMockLibMaintenanceModeAdapter(t)
+		mode := NewMaintenanceModeAdapter(mock)
 
-		sut := &Mode{lock: lockMock, switcher: switcherMock}
+		givenErr := assert.AnError
+		mock.EXPECT().Deactivate(testCtx).Return(givenErr)
 
-		// when
-		err := sut.Deactivate()
-
-		// then
-		require.NoError(t, err)
+		err := mode.Deactivate(testCtx)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, givenErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
 	})
-}
-
-func TestNew(t *testing.T) {
-	globalConfigMock := newMockGlobalConfig(t)
-	actual := New(globalConfigMock)
-	assert.NotEmpty(t, actual)
 }
