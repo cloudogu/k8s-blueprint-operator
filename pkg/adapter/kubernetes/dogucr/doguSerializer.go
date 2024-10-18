@@ -8,12 +8,12 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
+func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	if cr == nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: nil,
@@ -53,7 +53,7 @@ func parseDoguCR(cr *v1.Dogu) (*ecosystem.DoguInstallation, error) {
 	}, nil
 }
 
-func parseDoguAdditionalIngressAnnotationsCR(annotations v1.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
+func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
 	reverseProxyConfig := ecosystem.ReverseProxyConfig{}
 
 	reverseProxyBodySize, ok := annotations[ecosystem.NginxIngressAnnotationBodySize]
@@ -75,8 +75,8 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v1.IngressAnnotations) 
 	return reverseProxyConfig, nil
 }
 
-func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
-	return &v1.Dogu{
+func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
+	return &v2.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: string(dogu.Name.SimpleName),
@@ -85,25 +85,25 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v1.Dogu {
 				"dogu.name": string(dogu.Name.SimpleName),
 			},
 		},
-		Spec: v1.DoguSpec{
+		Spec: v2.DoguSpec{
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
-			Resources: v1.DoguResources{
+			Resources: v2.DoguResources{
 				DataVolumeSize: ecosystem.GetQuantityString(dogu.MinVolumeSize),
 			},
 			SupportMode: false,
-			UpgradeConfig: v1.UpgradeConfig{
+			UpgradeConfig: v2.UpgradeConfig{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 		},
-		Status: v1.DoguStatus{},
+		Status: v2.DoguStatus{},
 	}
 }
 
 func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {
-	annotations := v1.IngressAnnotations{}
+	annotations := v2.IngressAnnotations{}
 	maxBodySize := config.MaxBodySize
 	if maxBodySize != nil {
 		annotations[ecosystem.NginxIngressAnnotationBodySize] = maxBodySize.String()

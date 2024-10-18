@@ -30,7 +30,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
 )
 
 // ApplicationContext contains vital application parts for this operator.

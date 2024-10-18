@@ -56,8 +56,8 @@ github.com/cloudogu/cesapp-lib v0.14.0 h1:955cU7ivgiSJGPJ36/YHhbrT0d7Km+7BwOITPr
 github.com/cloudogu/cesapp-lib v0.14.0/go.mod h1:PTQqI3xs1ReJMXYE6BGTF33yAfmS4J7P8UiE4AwDMDY=
 github.com/cloudogu/k8s-component-operator v0.0.0-20241004095002-ad1baebc82a1 h1:iH4L5DapCvHaHgPyybbn0K5MxMreb3+Z7oEMjLphNp8=
 github.com/cloudogu/k8s-component-operator v0.0.0-20241004095002-ad1baebc82a1/go.mod h1:0VRXYDON8+r55q/4hWtAxp42/Ar1u6aFX4aFfyBYSBs=
-github.com/cloudogu/k8s-dogu-operator v1.2.1-0.20240925111508-39ba1c79c71a h1:WV86Jo7SeDuwWnspFd7nMcg49A+ViSqCL/lrX2BYpp0=
-github.com/cloudogu/k8s-dogu-operator v1.2.1-0.20240925111508-39ba1c79c71a/go.mod h1:6Hhngo8tQM1ksAjbuJQeWZAbgVdXv0cM1L+ZW/JlRkc=
+github.com/cloudogu/k8s-dogu-operator/v2 v2.2.1 h1:/fMddoTvhBtr7QD9oyryszQ1DLm55a/o27MggOjRCkQ=
+github.com/cloudogu/k8s-dogu-operator/v2 v2.2.1/go.mod h1:yfvaFn951pWxFMapJmEz2ZPpT5unEOcTwEhspGehNYQ=
 github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241017114742-3175c7a1ca91 h1:/7ibSjvxEieuh3t7IijgA3seRY4ytqBAaOBAMa+nSJY=
 github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241017114742-3175c7a1ca91/go.mod h1:OHIrWCAOcc4nlmBK8G+vdHHJ8vo5QQvKCKIGTiFwYBo=
 github.com/containerd/cgroups v1.1.0 h1:v8rEWFl6EoqHB+swVNjVoCJE8o3jX7e8nqBGPLaDFBM=

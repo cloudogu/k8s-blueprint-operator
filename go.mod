@@ -1,6 +1,6 @@
 module github.com/cloudogu/k8s-blueprint-operator
 
-go 1.23.0
+go 1.23.2
 
 replace github.com/cloudogu/k8s-registry-lib => github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241017114742-3175c7a1ca91
 
@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/cloudogu/cesapp-lib v0.14.0
 	github.com/cloudogu/k8s-component-operator v0.0.0-20241004095002-ad1baebc82a1
-	github.com/cloudogu/k8s-dogu-operator v1.2.1-0.20240925111508-39ba1c79c71a
+	github.com/cloudogu/k8s-dogu-operator/v2 v2.2.1
 	github.com/cloudogu/k8s-registry-lib v0.4.1
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.20.2
