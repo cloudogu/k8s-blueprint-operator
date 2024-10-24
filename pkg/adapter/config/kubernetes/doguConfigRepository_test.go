@@ -27,6 +27,14 @@ func TestNewDoguConfigRepository(t *testing.T) {
 	assert.Equal(t, repoMock, repo.repo)
 }
 
+func TestNewSensitiveDoguConfigRepository(t *testing.T) {
+	repoMock := newMockK8sDoguConfigRepo(t)
+	//given
+	repo := NewSensitiveDoguConfigRepository(repoMock)
+	//when
+	assert.Equal(t, repoMock, repo.repo)
+}
+
 func TestDoguConfigRepository_Get(t *testing.T) {
 
 	t.Run("get", func(t *testing.T) {
@@ -182,4 +190,61 @@ func TestDoguConfigRepository_GetAll(t *testing.T) {
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
 	})
+}
+
+func TestDoguConfigRepository_GetAllExisting(t *testing.T) {
+	t.Run("all ok", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		dogus := []common.SimpleDoguName{doguCas, doguScm}
+		//given
+		repoMock.EXPECT().Get(testCtx, doguCas).Return(testCasConfig, nil)
+		repoMock.EXPECT().Get(testCtx, doguScm).Return(testScmConfig, nil)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		configByDogu, err := repo.GetAllExisting(testCtx, dogus)
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, map[common.SimpleDoguName]config.DoguConfig{
+			doguCas: testCasConfig,
+			doguScm: testScmConfig,
+		}, configByDogu)
+	})
+	t.Run("with NotFoundError", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		dogus := []common.SimpleDoguName{doguCas, doguScm}
+		//given
+		repoMock.EXPECT().Get(testCtx, doguCas).Return(testCasConfig, nil)
+		givenError := errors.NewNotFoundError(assert.AnError)
+		repoMock.EXPECT().Get(testCtx, doguScm).Return(
+			config.CreateDoguConfig(doguScm, map[config.Key]config.Value{}),
+			givenError,
+		)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.GetAllExisting(testCtx, dogus)
+		//then
+		assert.Equal(t, map[config.SimpleDoguName]config.DoguConfig{
+			doguCas: testCasConfig,
+			doguScm: config.CreateDoguConfig(doguScm, map[config.Key]config.Value{}),
+		}, result)
+		assert.NoError(t, err, "should not throw an error if it is only a NotFoundError")
+	})
+	t.Run("with ConnectionError", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		dogus := []common.SimpleDoguName{doguCas, doguScm}
+		//given
+		repoMock.EXPECT().Get(testCtx, doguCas).Return(testCasConfig, nil).Maybe()
+		givenError := errors.NewConnectionError(assert.AnError)
+		repoMock.EXPECT().Get(testCtx, doguScm).Return(
+			config.CreateDoguConfig(doguScm, map[config.Key]config.Value{}),
+			givenError,
+		)
+
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		_, err := repo.GetAllExisting(testCtx, dogus)
+		//then
+		assert.ErrorContains(t, err, err.Error())
+	})
+
 }
