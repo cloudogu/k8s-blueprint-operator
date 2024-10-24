@@ -3,7 +3,7 @@ package restartcr
 import (
 	"context"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,7 +17,7 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 		testDoguSimpleName := common.SimpleDoguName("testdogu")
 		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
-		expectedDoguRestartToCreate := &v1.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v1.DoguRestartSpec{DoguName: "testdogu"}}
+		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 
 		mockDoguRestartInterface.EXPECT().Create(testContext, expectedDoguRestartToCreate, metav1.CreateOptions{}).Return(nil, nil)
 
@@ -51,7 +51,7 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 		testDoguSimpleName := common.SimpleDoguName("testdogu")
 		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
-		expectedDoguRestartToCreate := &v1.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v1.DoguRestartSpec{DoguName: "testdogu"}}
+		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 
 		mockDoguRestartInterface.EXPECT().Create(testContext, expectedDoguRestartToCreate, metav1.CreateOptions{}).Return(nil, assert.AnError)
 

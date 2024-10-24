@@ -3,17 +3,18 @@ package common
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type RegistryConfigKey interface {
-	GlobalConfigKey | DoguConfigKey | SensitiveDoguConfigKey
+	GlobalConfigKey | DoguConfigKey
 }
 
-type GlobalConfigKey string
+type GlobalConfigKey = config.Key
 
 type DoguConfigKey struct {
 	DoguName SimpleDoguName
-	Key      string
+	Key      config.Key
 }
 
 func (k DoguConfigKey) Validate() error {
@@ -32,18 +33,13 @@ func (k DoguConfigKey) String() string {
 	return fmt.Sprintf("key %q of dogu %q", k.Key, k.DoguName)
 }
 
-type SensitiveDoguConfigKey struct {
-	DoguConfigKey
-}
+type SensitiveDoguConfigKey = DoguConfigKey
 
 // GlobalConfigValue is a single global config value
-type GlobalConfigValue string
+type GlobalConfigValue = config.Value
 
 // DoguConfigValue  is a single dogu config value, which is no sensitive configuration
-type DoguConfigValue string
+type DoguConfigValue = config.Value
 
 // SensitiveDoguConfigValue is a single unencrypted sensitive dogu config value
-type SensitiveDoguConfigValue string
-
-// EncryptedDoguConfigValue is a single encrypted sensitive dogu config value
-type EncryptedDoguConfigValue string
+type SensitiveDoguConfigValue = config.Value

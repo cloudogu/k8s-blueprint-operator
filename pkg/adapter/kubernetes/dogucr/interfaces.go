@@ -1,8 +1,8 @@
 package dogucr
 
 import (
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
+	v2 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 // interface replication for generating mocks
@@ -13,5 +13,5 @@ type DoguInterface interface {
 }
 
 type PvcInterface interface {
-	v1.PersistentVolumeClaimInterface
+	v2.PersistentVolumeClaimInterface
 }

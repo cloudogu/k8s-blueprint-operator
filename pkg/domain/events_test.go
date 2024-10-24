@@ -131,13 +131,13 @@ func TestEvents(t *testing.T) {
 					},
 					SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
-						{NeededAction: ConfigActionSetToEncrypt},
+						{NeededAction: ConfigActionSet},
 						{NeededAction: ConfigActionRemove},
 					},
 				},
 			}},
 			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 6 actions (\"none\": 2, \"remove\": 2, \"set\": 1, \"setToEncrypt\": 1)",
+			expectedMessage: "dogu config diff determined: 6 actions (\"none\": 2, \"remove\": 2, \"set\": 2)",
 		},
 		{
 			name:            "blueprint application pre-processed",

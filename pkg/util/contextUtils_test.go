@@ -32,7 +32,7 @@ func TestRetryUntilSuccessOrCancellation(t *testing.T) {
 	})
 
 	t.Run("ok after retry", func(t *testing.T) {
-		testCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		testCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 
 		callCounter := 0

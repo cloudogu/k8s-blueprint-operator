@@ -106,3 +106,22 @@ func TestIsNotFoundError(t *testing.T) {
 	assert.True(t, IsNotFoundError(fmt.Errorf("test: %w", NewNotFoundError(assert.AnError, "test"))))
 	assert.False(t, IsNotFoundError(assert.AnError))
 }
+
+func TestIsInternalError(t *testing.T) {
+	assert.True(t, IsInternalError(NewInternalError(assert.AnError, "test")))
+	assert.True(t, IsInternalError(fmt.Errorf("test: %w", NewInternalError(assert.AnError, "test"))))
+	assert.False(t, IsInternalError(assert.AnError))
+}
+
+func TestIsConflictError(t *testing.T) {
+	assert.True(t, IsConflictError(NewConflictError(assert.AnError, "test")))
+	assert.True(t, IsConflictError(fmt.Errorf("test: %w", NewConflictError(assert.AnError, "test"))))
+	assert.False(t, IsConflictError(assert.AnError))
+}
+
+func TestNewConflictError(t *testing.T) {
+	assert.Equal(t,
+		&ConflictError{assert.AnError, "message"},
+		NewConflictError(assert.AnError, "message"),
+	)
+}

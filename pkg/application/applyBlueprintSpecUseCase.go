@@ -5,8 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+)
+
+var (
+	maintenanceTitle = "Blueprint getting applied"
+	maintenanceText  = "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied."
 )
 
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
@@ -107,10 +111,7 @@ func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx con
 		logger.Info("stop before activating maintenance mode as blueprint should not be applied")
 	} else {
 		logger.Info("activate maintenance mode")
-		err = useCase.maintenanceModeAdapter.Activate(domainservice.MaintenancePageModel{
-			Title: "Blueprint getting applied",
-			Text:  "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied.",
-		})
+		err = useCase.maintenanceModeAdapter.Activate(ctx, maintenanceTitle, maintenanceText)
 		if err != nil {
 			return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
 		}
@@ -142,7 +143,7 @@ func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx co
 	blueprintSpec.CensorSensitiveData()
 
 	logger.Info("deactivate maintenance mode")
-	err = useCase.maintenanceModeAdapter.Deactivate()
+	err = useCase.maintenanceModeAdapter.Deactivate(ctx)
 	if err != nil {
 		return fmt.Errorf("could not deactivate maintenance mode after applying the blueprint: %w", err)
 	}

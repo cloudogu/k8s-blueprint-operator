@@ -2,8 +2,8 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type GlobalConfigDiffs []GlobalConfigEntryDiff
@@ -31,17 +31,6 @@ type GlobalConfigEntryDiff struct {
 	NeededAction ConfigAction
 }
 
-func NewGlobalConfigValueStateFromEntry(actualEntry *ecosystem.GlobalConfigEntry) GlobalConfigValueState {
-	actualValue := common.GlobalConfigValue("")
-	if actualEntry != nil {
-		actualValue = actualEntry.Value
-	}
-	return GlobalConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualEntry != nil,
-	}
-}
-
 func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, diff := range diffs {
@@ -52,11 +41,15 @@ func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 
 func newGlobalConfigEntryDiff(
 	key common.GlobalConfigKey,
-	actualEntry *ecosystem.GlobalConfigEntry,
+	actualValue common.GlobalConfigValue,
+	actualExists bool,
 	expectedValue common.GlobalConfigValue,
 	expectedExists bool,
 ) GlobalConfigEntryDiff {
-	actual := NewGlobalConfigValueStateFromEntry(actualEntry)
+	actual := GlobalConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualExists,
+	}
 	expected := GlobalConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
@@ -71,19 +64,19 @@ func newGlobalConfigEntryDiff(
 
 func determineGlobalConfigDiffs(
 	config GlobalConfig,
-	actualDoguConfig map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry,
+	actualConfig config.GlobalConfig,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
 	// present entries
 	for key, expectedValue := range config.Present {
-		actualEntry := actualDoguConfig[key]
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, expectedValue, true))
+		actualEntry, actualExists := actualConfig.Get(key)
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, expectedValue, true))
 	}
 	// absent entries
 	for _, key := range config.Absent {
-		actualEntry := actualDoguConfig[key]
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, "", false))
+		actualEntry, actualExists := actualConfig.Get(key)
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, "", false))
 	}
 	return configDiffs
 }

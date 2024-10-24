@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"golang.org/x/exp/maps"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"golang.org/x/exp/maps"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.

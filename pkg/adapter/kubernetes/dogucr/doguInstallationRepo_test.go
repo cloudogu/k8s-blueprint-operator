@@ -7,7 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -38,28 +38,28 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 		// when
 		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
-			&v1.Dogu{
+			&v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "postgresql",
 					ResourceVersion: crResourceVersion,
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:      "official/postgresql",
 					Version:   version3214.Raw,
-					Resources: v1.DoguResources{},
-					UpgradeConfig: v1.UpgradeConfig{
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: false,
 					},
-					AdditionalIngressAnnotations: v1.IngressAnnotations{
+					AdditionalIngressAnnotations: v2.IngressAnnotations{
 						"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
 						"nginx.ingress.kubernetes.io/rewrite-target":        "/",
 						"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
 					},
 				},
-				Status: v1.DoguStatus{
-					Status: v1.DoguStatusInstalled,
-					Health: v1.AvailableHealthStatus,
+				Status: v2.DoguStatus{
+					Status: v2.DoguStatusInstalled,
+					Health: v2.AvailableHealthStatus,
 				},
 			}, nil)
 		quantity2 := resource.MustParse("2Gi")
@@ -140,7 +140,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		pvcClientMock := NewMockPvcInterface(t)
 		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
 		// when
-		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(&v1.Dogu{}, nil)
+		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(&v2.Dogu{}, nil)
 		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(nil, assert.AnError)
 
 		_, err := repo.GetByName(testCtx, "postgresql")
@@ -195,12 +195,12 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 	t.Run("should fail for multiple dogus", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
-		doguList := &v1.DoguList{Items: []v1.Dogu{
+		doguList := &v2.DoguList{Items: []v2.Dogu{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:    "official/postgresql",
 					Version: "invalid",
 				},
@@ -209,7 +209,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "ldap",
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:    "official/ldap",
 					Version: "invalid",
 				},
@@ -239,12 +239,12 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 	t.Run("should succeed for multiple dogus", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
-		doguList := &v1.DoguList{Items: []v1.Dogu{
+		doguList := &v2.DoguList{Items: []v2.Dogu{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:    "official/postgresql",
 					Version: "1.2.3-1",
 				},
@@ -253,7 +253,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "ldap",
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:    "official/ldap",
 					Version: "3.2.1-3",
 				},
@@ -300,7 +300,7 @@ func Test_doguInstallationRepo_appendVolumeSize(t *testing.T) {
 	t.Run("should set volume size from pvc in dogu cr", func(t *testing.T) {
 		// given
 		sut := doguInstallationRepo{}
-		cr := &v1.Dogu{}
+		cr := &v2.Dogu{}
 		size := resource.MustParse("2Gi")
 		pvcList := corev1.PersistentVolumeClaimList{
 			Items: []corev1.PersistentVolumeClaim{{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: size}}}},
@@ -316,9 +316,9 @@ func Test_doguInstallationRepo_appendVolumeSize(t *testing.T) {
 	t.Run("should do nothing if the volume size is already defined in dogu cr", func(t *testing.T) {
 		// given
 		sut := doguInstallationRepo{}
-		cr := &v1.Dogu{
-			Spec: v1.DoguSpec{
-				Resources: v1.DoguResources{
+		cr := &v2.Dogu{
+			Spec: v2.DoguSpec{
+				Resources: v2.DoguResources{
 					DataVolumeSize: "2Gi",
 				},
 			},
@@ -334,9 +334,9 @@ func Test_doguInstallationRepo_appendVolumeSize(t *testing.T) {
 	t.Run("should do nothing if volume size is not defined and no volume exists", func(t *testing.T) {
 		// given
 		sut := doguInstallationRepo{}
-		cr := &v1.Dogu{
-			Spec: v1.DoguSpec{
-				Resources: v1.DoguResources{
+		cr := &v2.Dogu{
+			Spec: v2.DoguSpec{
+				Resources: v2.DoguResources{
 					DataVolumeSize: "",
 				},
 			},
@@ -392,7 +392,7 @@ func Test_doguInstallationRepo_Create(t *testing.T) {
 		doguClientMock := NewMockDoguInterface(t)
 		repo := &doguInstallationRepo{doguClient: doguClientMock}
 
-		expectedDoguCr := &v1.Dogu{
+		expectedDoguCr := &v2.Dogu{
 			ObjectMeta: metav1.ObjectMeta{
 				Name: string(postgresDoguName.SimpleName),
 				Labels: map[string]string{
@@ -400,7 +400,7 @@ func Test_doguInstallationRepo_Create(t *testing.T) {
 					"dogu.name": string(postgresDoguName.SimpleName),
 				},
 			},
-			Spec: v1.DoguSpec{
+			Spec: v2.DoguSpec{
 				Name:    postgresDoguName.String(),
 				Version: version3214.Raw,
 			},
