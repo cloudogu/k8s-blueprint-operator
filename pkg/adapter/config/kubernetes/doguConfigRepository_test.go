@@ -248,3 +248,83 @@ func TestDoguConfigRepository_GetAllExisting(t *testing.T) {
 	})
 
 }
+
+func TestDoguConfigRepository_Create(t *testing.T) {
+	t.Run("all ok", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		repoMock.EXPECT().Create(testCtx, testCasConfig).Return(testCasConfig, nil)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.Create(testCtx, testCasConfig)
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, testCasConfig, result)
+	})
+	t.Run("notFoundError", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		expectedErr := errors.NewNotFoundError(assert.AnError)
+		repoMock.EXPECT().Create(testCtx, testCasConfig).Return(testCasConfig, expectedErr)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.Create(testCtx, testCasConfig)
+		//then
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.True(t, domainservice.IsNotFoundError(err))
+		assert.Equal(t, testCasConfig, result)
+	})
+}
+
+func TestDoguConfigRepository_UpdateOrCreate(t *testing.T) {
+	t.Run("update", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		repoMock.EXPECT().Update(testCtx, testCasConfig).Return(testCasConfig, nil)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.UpdateOrCreate(testCtx, testCasConfig)
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, testCasConfig, result)
+	})
+	t.Run("create", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		repoMock.EXPECT().Update(testCtx, testCasConfig).Return(testCasConfig, errors.NewNotFoundError(assert.AnError))
+		repoMock.EXPECT().Create(testCtx, testCasConfig).Return(testCasConfig, nil)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.UpdateOrCreate(testCtx, testCasConfig)
+		//then
+		assert.NoError(t, err)
+		assert.Equal(t, testCasConfig, result)
+	})
+	t.Run("update connectionError", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		expectedErr := errors.NewConnectionError(assert.AnError)
+		repoMock.EXPECT().Update(testCtx, testCasConfig).Return(testCasConfig, expectedErr)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.UpdateOrCreate(testCtx, testCasConfig)
+		//then
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
+		assert.Equal(t, testCasConfig, result)
+	})
+	t.Run("create connectionError", func(t *testing.T) {
+		repoMock := newMockK8sDoguConfigRepo(t)
+		//given
+		expectedErr := errors.NewConnectionError(assert.AnError)
+		repoMock.EXPECT().Update(testCtx, testCasConfig).Return(testCasConfig, errors.NewNotFoundError(assert.AnError))
+		repoMock.EXPECT().Create(testCtx, testCasConfig).Return(testCasConfig, expectedErr)
+		repo := NewDoguConfigRepository(repoMock)
+		//when
+		result, err := repo.UpdateOrCreate(testCtx, testCasConfig)
+		//then
+		assert.ErrorContains(t, err, expectedErr.Error())
+		assert.True(t, domainservice.IsInternalError(err))
+		assert.Equal(t, testCasConfig, result)
+	})
+}
