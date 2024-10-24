@@ -4,24 +4,12 @@ import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"golang.org/x/exp/maps"
-	"slices"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"golang.org/x/exp/maps"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
 type DoguDiffs []DoguDiff
-
-func (diffs DoguDiffs) GetDogusToInstall() []common.SimpleDoguName {
-	var dogusToInstall []common.SimpleDoguName
-	for _, doguDiff := range diffs {
-		if slices.Contains(doguDiff.NeededActions, ActionInstall) {
-			dogusToInstall = append(dogusToInstall, doguDiff.DoguName)
-		}
-	}
-	return dogusToInstall
-}
 
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {

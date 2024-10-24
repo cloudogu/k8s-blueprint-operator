@@ -13,18 +13,6 @@ type StateDiff struct {
 	GlobalConfigDiffs GlobalConfigDiffs
 }
 
-func HasCombinedConfigChanges(combinedDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs) bool {
-	//TODO: write test for this
-	hasChanges := false
-	for _, combinedDiff := range combinedDiffs {
-		if combinedDiff.HasChanges() {
-			hasChanges = true
-			break
-		}
-	}
-	return hasChanges
-}
-
 func (diff StateDiff) GetDoguConfigDiffsByAction() map[ConfigAction]DoguConfigDiffs {
 	configDiffsByAction := map[ConfigAction]DoguConfigDiffs{}
 
