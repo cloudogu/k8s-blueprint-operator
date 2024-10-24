@@ -143,6 +143,8 @@ func saveDoguConfigs(
 	repo doguConfigRepository,
 	diffsByDogu map[common.SimpleDoguName]domain.DoguConfigDiffs,
 ) error {
+	// sort to simplify tests
+	// this has no real performance impact as we only have a very limited amount of dogus
 	dogus := slices.Sorted(maps.Keys(diffsByDogu))
 	// has an entry even for not yet existing dogu configs
 	configByDogu, err := repo.GetAllExisting(ctx, dogus)
@@ -152,16 +154,16 @@ func saveDoguConfigs(
 
 	for dogu, doguDiff := range diffsByDogu {
 		newConfig := configByDogu[dogu]
-		updatedConfig, applyError := applyDiff(newConfig, doguDiff)
-		if applyError != nil {
-			return applyError
+		updatedConfig, err := applyDiff(newConfig, doguDiff)
+		if err != nil {
+			return err
 		}
-		_, applyError = repo.UpdateOrCreate(ctx, config.DoguConfig{
+		_, err = repo.UpdateOrCreate(ctx, config.DoguConfig{
 			DoguName: dogu,
 			Config:   updatedConfig,
 		})
-		if applyError != nil {
-			return applyError
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -204,7 +206,6 @@ func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, bl
 // applyDiff merges the given changes from the doguConfigDiff in the DoguConfig.
 // Works with normal dogu config and with sensitive config as well.
 func applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff) (config.Config, error) {
-	var errs []error
 	updatedEntries := doguConfig.Config
 
 	for _, diff := range diffs {
@@ -216,9 +217,8 @@ func applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff)
 		}
 
 		if err != nil {
-			errs = append(errs, err)
-			break
+			return config.Config{}, err
 		}
 	}
-	return updatedEntries, errors.Join(errs...)
+	return updatedEntries, nil
 }

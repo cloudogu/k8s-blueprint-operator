@@ -4,6 +4,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
+	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -401,7 +402,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			"key2": "val2",
 		})
 
-		//TODO: this fixes a bug in the lib: Delete modifies redmineConfig and updatedConfig as well. The structs are not really immutable at the moment.
+		//TODO: this fixes a bug #50007 in the lib: Delete modifies redmineConfig and updatedConfig as well. The structs are not really immutable at the moment.
 		updatedConfig := config.CreateConfig(maps.Clone(redmineConfig.GetAll()))
 
 		updatedConfig = updatedConfig.
@@ -425,7 +426,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("should return nil on action none", func(t *testing.T) {
+	t.Run("should apply nothing on action none", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
 		sensitiveConfigMock := newMockDoguConfigRepository(t)
@@ -449,6 +450,56 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+
+	t.Run("err when GetAllExisting fails", func(t *testing.T) {
+		// given
+		doguConfigMock := newMockDoguConfigRepository(t)
+		sensitiveConfigMock := newMockDoguConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
+		diff1 := getSetDoguConfigEntryDiff("key1", "value", redmine)
+		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
+		}
+
+		expectedError := liberrors.NewConnectionError(assert.AnError)
+		doguConfigMock.EXPECT().
+			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
+			Return(map[config.SimpleDoguName]config.DoguConfig{}, expectedError)
+
+		// when
+		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, expectedError.Error())
+	})
+
+	t.Run("error while applying key", func(t *testing.T) {
+		// given
+		doguConfigMock := newMockDoguConfigRepository(t)
+		sensitiveConfigMock := newMockDoguConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
+		diff1 := getSetDoguConfigEntryDiff("key1/key1_1", "value", redmine)
+		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
+		}
+
+		redmineConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
+			"key1": "val1",
+			"key2": "val2",
+		})
+
+		doguConfigMock.EXPECT().
+			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
+			Return(map[config.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
+
+		// when
+		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+
+		// then
+		assert.Error(t, err, "should throw an error when trying to create a sub key for an existing key")
+		require.ErrorContains(t, err, "key key1 already has Value set") //error msg from registry-lib
 	})
 }
 
@@ -522,6 +573,29 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+
+	t.Run("err when get fails", func(t *testing.T) {
+		// given
+		globalConfigMock := newMockGlobalConfigRepository(t)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock)
+		diff1 := domain.GlobalConfigEntryDiff{
+			NeededAction: domain.ConfigActionSet,
+		}
+		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionNone: {diff1}}
+
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+
+		expectedError := liberrors.NewConnectionError(assert.AnError)
+		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, expectedError)
+
+		// when
+		err := sut.applyGlobalConfigDiffs(testCtx, byAction)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, expectedError.Error())
 	})
 }
 
