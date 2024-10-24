@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type ConfigRepoType string
@@ -77,4 +78,20 @@ func (repo *DoguConfigRepository) Create(ctx context.Context, config config.Dogu
 		return createdConfig, fmt.Errorf("could not create %s for %s: %w", repo.repoType, config.DoguName, mapToBlueprintError(err))
 	}
 	return createdConfig, nil
+}
+
+func (repo *DoguConfigRepository) UpdateOrCreate(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error) {
+	logger := log.FromContext(ctx).
+		WithName("DoguConfigRepository.UpdateOrCreate").
+		WithValues("dogu", config.DoguName)
+
+	updatedConfig, err := repo.repo.Update(ctx, config)
+	if err != nil {
+		if liberrors.IsNotFoundError(err) {
+			logger.Info("dogu config is not present, try to create it", "error", err)
+			return repo.Create(ctx, config)
+		}
+		return updatedConfig, fmt.Errorf("could not update %s for %s: %w", repo.repoType, config.DoguName, mapToBlueprintError(err))
+	}
+	return updatedConfig, nil
 }

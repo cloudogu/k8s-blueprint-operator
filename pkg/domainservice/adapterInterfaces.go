@@ -154,6 +154,11 @@ type DoguConfigRepository interface {
 	//  - ConflictError if there already is a config.
 	//  - InternalError if any other error happens.
 	Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	// UpdateOrCreate updates the config if it already exists, otherwise creates it with the given content.
+	// It can throw the following errors:
+	//  - ConflictError if there already is a config.
+	//  - InternalError if any other error happens.
+	UpdateOrCreate(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
 // SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.

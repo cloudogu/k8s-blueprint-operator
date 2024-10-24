@@ -312,6 +312,63 @@ func (_c *MockDoguConfigRepository_Update_Call) RunAndReturn(run func(context.Co
 	return _c
 }
 
+// UpdateOrCreate provides a mock function with given fields: ctx, _a1
+func (_m *MockDoguConfigRepository) UpdateOrCreate(ctx context.Context, _a1 config.DoguConfig) (config.DoguConfig, error) {
+	ret := _m.Called(ctx, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateOrCreate")
+	}
+
+	var r0 config.DoguConfig
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) (config.DoguConfig, error)); ok {
+		return rf(ctx, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, config.DoguConfig) config.DoguConfig); ok {
+		r0 = rf(ctx, _a1)
+	} else {
+		r0 = ret.Get(0).(config.DoguConfig)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, config.DoguConfig) error); ok {
+		r1 = rf(ctx, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockDoguConfigRepository_UpdateOrCreate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateOrCreate'
+type MockDoguConfigRepository_UpdateOrCreate_Call struct {
+	*mock.Call
+}
+
+// UpdateOrCreate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - _a1 config.DoguConfig
+func (_e *MockDoguConfigRepository_Expecter) UpdateOrCreate(ctx interface{}, _a1 interface{}) *MockDoguConfigRepository_UpdateOrCreate_Call {
+	return &MockDoguConfigRepository_UpdateOrCreate_Call{Call: _e.mock.On("UpdateOrCreate", ctx, _a1)}
+}
+
+func (_c *MockDoguConfigRepository_UpdateOrCreate_Call) Run(run func(ctx context.Context, _a1 config.DoguConfig)) *MockDoguConfigRepository_UpdateOrCreate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(config.DoguConfig))
+	})
+	return _c
+}
+
+func (_c *MockDoguConfigRepository_UpdateOrCreate_Call) Return(_a0 config.DoguConfig, _a1 error) *MockDoguConfigRepository_UpdateOrCreate_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockDoguConfigRepository_UpdateOrCreate_Call) RunAndReturn(run func(context.Context, config.DoguConfig) (config.DoguConfig, error)) *MockDoguConfigRepository_UpdateOrCreate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // NewMockDoguConfigRepository creates a new instance of MockDoguConfigRepository. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMockDoguConfigRepository(t interface {
