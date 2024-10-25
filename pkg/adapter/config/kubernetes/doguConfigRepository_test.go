@@ -114,6 +114,7 @@ func TestDoguConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testCasConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
+		assert.ErrorContains(t, err, fmt.Sprintf("could not update normal dogu config for %s", doguCas.String()))
 		assert.True(t, domainservice.IsNotFoundError(err), "error is no NotFoundError")
 	})
 	t.Run("conflicts while updating dogu config", func(t *testing.T) {

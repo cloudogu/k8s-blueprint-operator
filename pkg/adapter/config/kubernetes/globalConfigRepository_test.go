@@ -49,6 +49,7 @@ func TestGlobalConfigRepository_Get(t *testing.T) {
 		_, err := repo.Get(testCtx)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
+		assert.ErrorContains(t, err, "could not load global config")
 		assert.True(t, domainservice.IsNotFoundError(err), "error is no NotFoundError")
 	})
 	t.Run("internal error if connection error happens", func(t *testing.T) {
@@ -104,6 +105,7 @@ func TestGlobalConfigRepository_Update(t *testing.T) {
 		_, err := repo.Update(testCtx, testGlobalConfig)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
+		assert.ErrorContains(t, err, "could not update global config")
 		assert.True(t, domainservice.IsNotFoundError(err), "error is no NotFoundError")
 	})
 	t.Run("conflicts while updating global config", func(t *testing.T) {
