@@ -4,6 +4,7 @@ global:
 manager:
   replicas: 1
   image:
+    registry: docker.io
     repository: cloudogu/k8s-blueprint-operator
     tag: 1.1.0
   imagePullPolicy: IfNotPresent
@@ -18,6 +19,7 @@ manager:
     memory: 64Mi
 kubeRbacProxy:
   image:
+    registry: gcr.io
     repository: gcr.io/kubebuilder/kube-rbac-proxy
     tag: v0.15.0
   resourceLimits:
