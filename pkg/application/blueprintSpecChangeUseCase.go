@@ -91,6 +91,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return useCase.applyRegistryConfig(ctx, blueprintId)
 	case domain.StatusPhaseRegistryConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
+	case domain.StatusPhaseApplyRegistryConfigFailed:
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
@@ -110,7 +112,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return nil
 	case domain.StatusPhaseFailed:
 		return nil
-		//FIXME: add StatusPhaseApplyRegistryConfigFailed
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}

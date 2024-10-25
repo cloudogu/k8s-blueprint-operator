@@ -397,6 +397,9 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	case StatusPhaseEcosystemHealthyAfterwards:
 		spec.Status = StatusPhaseCompleted
 		spec.Events = append(spec.Events, CompletedEvent{})
+	case StatusPhaseApplyRegistryConfigFailed:
+		spec.Status = StatusPhaseFailed
+		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
 	case StatusPhaseInProgress:
 		spec.Status = StatusPhaseFailed
 		err := errors.New(handleInProgressMsg)
