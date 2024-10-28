@@ -72,7 +72,7 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 	}
 	err = useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction())
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, fmt.Errorf("could not apply global config: %w", err))
 	}
 
 	return useCase.markConfigApplied(ctx, blueprintSpec)
@@ -111,7 +111,6 @@ func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(
 	ctx context.Context,
 	diffsByDogu map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs,
 ) error {
-
 	var doguConfigDiffs = map[common.SimpleDoguName]domain.DoguConfigDiffs{}
 	var sensitiveDoguConfigDiffs = map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
 
@@ -127,12 +126,12 @@ func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(
 
 	err := saveDoguConfigs(ctx, useCase.doguConfigRepository, doguConfigDiffs)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not apply normal dogu config: %w", err)
 	}
 
 	err = saveDoguConfigs(ctx, useCase.sensitiveDoguConfigRepository, sensitiveDoguConfigDiffs)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not apply sensitive dogu config: %w", err)
 	}
 
 	return nil
@@ -163,7 +162,7 @@ func saveDoguConfigs(
 			Config:   updatedConfig,
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("could not persist config for dogu %s: %w", dogu, err)
 		}
 	}
 	return nil
