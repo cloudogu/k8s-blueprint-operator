@@ -398,15 +398,15 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 		spec.Status = StatusPhaseCompleted
 		spec.Events = append(spec.Events, CompletedEvent{})
 	case StatusPhaseApplyEcosystemConfigFailed:
+		fallthrough
+	case StatusPhaseEcosystemUnhealthyAfterwards:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
 	case StatusPhaseInProgress:
 		spec.Status = StatusPhaseFailed
 		err := errors.New(handleInProgressMsg)
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-	case StatusPhaseEcosystemUnhealthyAfterwards:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
+
 	case StatusPhaseBlueprintApplicationFailed:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
