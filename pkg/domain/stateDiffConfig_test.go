@@ -10,6 +10,7 @@ import (
 
 var (
 	dogu1              = common.SimpleDoguName("dogu1")
+	dogu2              = common.SimpleDoguName("dogu2")
 	dogu1Key1          = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
 	dogu1Key2          = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
 	dogu1Key3          = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
