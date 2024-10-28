@@ -61,18 +61,18 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 
 	err = useCase.markApplyConfigStart(ctx, blueprintSpec)
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, err)
 	}
 
 	// do not apply further configs if error happens, we don't want to corrupt the system more than needed
 	// apply normal and sensitive config with this
 	err = useCase.applyDoguConfigDiffs(ctx, blueprintSpec.StateDiff.DoguConfigDiffs)
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, err)
 	}
 	err = useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction())
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, fmt.Errorf("could not apply global config: %w", err))
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply global config: %w", err))
 	}
 
 	return useCase.markConfigApplied(ctx, blueprintSpec)
@@ -177,9 +177,9 @@ func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context,
 	return nil
 }
 
-func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
+func (useCase *EcosystemConfigUseCase) handleFailedApplyEcosystemConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
-		WithName("EcosystemConfigUseCase.handleFailedApplyRegistryConfig").
+		WithName("EcosystemConfigUseCase.handleFailedApplyEcosystemConfig").
 		WithValues("blueprintId", blueprintSpec.Id)
 
 	blueprintSpec.MarkApplyEcosystemConfigFailed(err)
@@ -197,7 +197,7 @@ func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, bl
 	blueprintSpec.MarkEcosystemConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("failed to mark registry config applied: %w", err)
+		return fmt.Errorf("failed to mark ecosystem config applied: %w", err)
 	}
 	return nil
 }
