@@ -26,9 +26,8 @@ func (m *Mode) Activate(ctx context.Context, title, text string) error {
 		Title: title,
 		Text:  text,
 	})
-	err = mapToBlueprintError(err)
 	if err != nil {
-		return fmt.Errorf("could not activate maintenance mode: %w", err)
+		return fmt.Errorf("could not activate maintenance mode: %w", mapToBlueprintError(err))
 	}
 	return nil
 }
@@ -36,9 +35,8 @@ func (m *Mode) Activate(ctx context.Context, title, text string) error {
 // Deactivate disables the maintenance mode.
 func (m *Mode) Deactivate(ctx context.Context) error {
 	err := m.libAdapter.Deactivate(ctx)
-	err = mapToBlueprintError(err)
 	if err != nil {
-		return fmt.Errorf("could not activate maintenance mode: %w", err)
+		return fmt.Errorf("could not activate maintenance mode: %w", mapToBlueprintError(err))
 	}
 	return nil
 }
