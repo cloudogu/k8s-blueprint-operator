@@ -217,8 +217,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
-		assert.Len(t, spec.Events, 2)
-		assert.Contains(t, spec.Events[0].Message(), "apply registry config")
+		require.Len(t, spec.Events, 2)
+		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply normal dogu config")
 		// cannot check for dogu name here as the order of the events is not fixed. It could be either redmine or cas
 		assert.Contains(t, spec.Events[1].Message(), "could not persist config for dogu")
@@ -272,8 +272,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
-		assert.Len(t, spec.Events, 2)
-		assert.Contains(t, spec.Events[0].Message(), "apply registry config")
+		require.Len(t, spec.Events, 2)
+		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply sensitive dogu config")
 		// cannot check for dogu name here as the order of the events is not fixed. It could be either redmine or cas
 		assert.Contains(t, spec.Events[1].Message(), "could not persist config for dogu")
@@ -320,8 +320,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
-		assert.Len(t, spec.Events, 2)
-		assert.Contains(t, spec.Events[0].Message(), "apply registry config")
+		require.Len(t, spec.Events, 2)
+		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply global config")
 		assert.Contains(t, spec.Events[1].Message(), "assert.AnError general error for testing")
 	})
