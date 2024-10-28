@@ -102,7 +102,9 @@ type MaintenanceMode interface {
 	//  - a generic InternalError due to a connection error or an unknown error.
 	Activate(ctx context.Context, title, text string) error
 	// Deactivate disables the maintenance mode if it is active.
-	// May throw a generic InternalError or a ConflictError if another party initially activated the maintenance mode.
+	// May throw
+	//  - a ConflictError if another party initially activated the maintenance mode or
+	//  - a generic InternalError due to a connection error or an unknown error.
 	Deactivate(ctx context.Context) error
 }
 
