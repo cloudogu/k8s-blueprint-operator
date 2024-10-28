@@ -555,8 +555,12 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 					SensitiveConfig: tt.args.doguConfig,
 				}
 			}
+			result := config.GetDogusWithChangedSensitiveConfig()
+			assert.Equal(t, len(tt.want), len(result))
+			for _, doguName := range tt.want {
+				assert.Contains(t, result, doguName)
+			}
 
-			assert.Equal(t, tt.want, config.GetDogusWithChangedSensitiveConfig())
 		})
 	}
 }

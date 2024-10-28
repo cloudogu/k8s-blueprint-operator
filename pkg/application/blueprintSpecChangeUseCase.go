@@ -89,9 +89,9 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return useCase.handleSelfUpgrade(ctx, blueprintId)
 	case domain.StatusPhaseSelfUpgradeCompleted:
 		return useCase.applyRegistryConfig(ctx, blueprintId)
-	case domain.StatusPhaseRegistryConfigApplied:
+	case domain.StatusPhaseEcosystemConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
-	case domain.StatusPhaseApplyRegistryConfigFailed:
+	case domain.StatusPhaseApplyEcosystemConfigFailed:
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed

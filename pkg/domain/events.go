@@ -292,36 +292,36 @@ func (e CompletedEvent) Message() string {
 	return "maintenance mode deactivated"
 }
 
-type ApplyRegistryConfigEvent struct{}
+type ApplyEcosystemConfigEvent struct{}
 
-func (e ApplyRegistryConfigEvent) Name() string {
-	return "ApplyRegistryConfig"
+func (e ApplyEcosystemConfigEvent) Name() string {
+	return "ApplyEcosystemConfig"
 }
 
-func (e ApplyRegistryConfigEvent) Message() string {
-	return "apply registry config"
+func (e ApplyEcosystemConfigEvent) Message() string {
+	return "apply ecosystem config"
 }
 
-type ApplyRegistryConfigFailedEvent struct {
+type ApplyEcosystemConfigFailedEvent struct {
 	err error
 }
 
-func (e ApplyRegistryConfigFailedEvent) Name() string {
-	return "ApplyDoguConfigFailed"
+func (e ApplyEcosystemConfigFailedEvent) Name() string {
+	return "ApplyEcosystemConfigFailed"
 }
 
-func (e ApplyRegistryConfigFailedEvent) Message() string {
+func (e ApplyEcosystemConfigFailedEvent) Message() string {
 	return e.err.Error()
 }
 
-type RegistryConfigAppliedEvent struct{}
+type EcosystemConfigAppliedEvent struct{}
 
-func (e RegistryConfigAppliedEvent) Name() string {
-	return "RegistryConfigApplied"
+func (e EcosystemConfigAppliedEvent) Name() string {
+	return "EcosystemConfigApplied"
 }
 
-func (e RegistryConfigAppliedEvent) Message() string {
-	return "registry config applied"
+func (e EcosystemConfigAppliedEvent) Message() string {
+	return "ecosystem config applied"
 }
 
 type AwaitSelfUpgradeEvent struct{}

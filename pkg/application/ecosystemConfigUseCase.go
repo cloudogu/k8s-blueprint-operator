@@ -169,7 +169,7 @@ func saveDoguConfigs(
 }
 
 func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.StartApplyRegistryConfig()
+	blueprintSpec.StartApplyEcosystemConfig()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("cannot mark blueprint as applying config: %w", err)
@@ -182,7 +182,7 @@ func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx conte
 		WithName("EcosystemConfigUseCase.handleFailedApplyRegistryConfig").
 		WithValues("blueprintId", blueprintSpec.Id)
 
-	blueprintSpec.MarkApplyRegistryConfigFailed(err)
+	blueprintSpec.MarkApplyEcosystemConfigFailed(err)
 	repoErr := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 
 	if repoErr != nil {
@@ -194,7 +194,7 @@ func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx conte
 }
 
 func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.MarkRegistryConfigApplied()
+	blueprintSpec.MarkEcosystemConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("failed to mark registry config applied: %w", err)

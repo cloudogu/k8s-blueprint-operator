@@ -60,7 +60,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 				blueprintSpec.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
 			})
 		registryConfigUseCaseMock.EXPECT().ApplyConfig(testCtx, testBlueprintId).Return(nil).Run(func(ctx context.Context, blueprintId string) {
-			blueprintSpec.Status = domain.StatusPhaseRegistryConfigApplied
+			blueprintSpec.Status = domain.StatusPhaseEcosystemConfigApplied
 		})
 		selfUpgradeUseCase.EXPECT().HandleSelfUpgrade(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprintId string) {
 			blueprintSpec.Status = domain.StatusPhaseSelfUpgradeCompleted

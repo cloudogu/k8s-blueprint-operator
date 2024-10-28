@@ -65,12 +65,12 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseApplyRegistryConfig indicates that the apply registry config phase is active.
-	StatusPhaseApplyRegistryConfig StatusPhase = "applyRegistryConfig"
-	// StatusPhaseApplyRegistryConfigFailed indicates that the phase to apply registry config phase failed.
-	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
-	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
-	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
+	// StatusPhaseApplyEcosystemConfig indicates that the apply ecosystem config phase is active.
+	StatusPhaseApplyEcosystemConfig StatusPhase = "applyEcosystemConfig"
+	// StatusPhaseApplyEcosystemConfigFailed indicates that the phase to apply ecosystem config failed.
+	StatusPhaseApplyEcosystemConfigFailed StatusPhase = "applyEcosystemConfigFailed"
+	// StatusPhaseEcosystemConfigApplied indicates that the phase to apply ecosystem config succeeded.
+	StatusPhaseEcosystemConfigApplied StatusPhase = "ecosystemConfigApplied"
 	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
 	// Restarts are needed when the Dogu config changes.
 	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
@@ -397,7 +397,7 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	case StatusPhaseEcosystemHealthyAfterwards:
 		spec.Status = StatusPhaseCompleted
 		spec.Events = append(spec.Events, CompletedEvent{})
-	case StatusPhaseApplyRegistryConfigFailed:
+	case StatusPhaseApplyEcosystemConfigFailed:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
 	case StatusPhaseInProgress:
@@ -473,19 +473,19 @@ func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
 	return dogusThatNeedRestart
 }
 
-func (spec *BlueprintSpec) StartApplyRegistryConfig() {
-	spec.Status = StatusPhaseApplyRegistryConfig
-	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
+func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
+	spec.Status = StatusPhaseApplyEcosystemConfig
+	spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
 }
 
-func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyRegistryConfigFailed
-	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
+func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyEcosystemConfigFailed
+	spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
 }
 
-func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
-	spec.Status = StatusPhaseRegistryConfigApplied
-	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
+func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
+	spec.Status = StatusPhaseEcosystemConfigApplied
+	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
