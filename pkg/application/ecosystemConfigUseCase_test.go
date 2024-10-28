@@ -170,7 +170,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, spec.Status, domain.StatusPhaseApplyEcosystemConfigFailed)
+		assert.Equal(t, spec.Status, domain.StatusPhaseApplyRegistryConfigFailed)
 	})
 
 	t.Run("error applying dogu config", func(t *testing.T) {
@@ -614,8 +614,8 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
+		expectedSpec.Status = domain.StatusPhaseRegistryConfigApplied
+		expectedSpec.Events = append(spec.Events, domain.RegistryConfigAppliedEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
@@ -633,8 +633,8 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
+		expectedSpec.Status = domain.StatusPhaseRegistryConfigApplied
+		expectedSpec.Events = append(spec.Events, domain.RegistryConfigAppliedEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
@@ -656,8 +656,8 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
+		expectedSpec.Status = domain.StatusPhaseApplyRegistryConfig
+		expectedSpec.Events = append(spec.Events, domain.ApplyRegistryConfigEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
@@ -675,8 +675,8 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
+		expectedSpec.Status = domain.StatusPhaseApplyRegistryConfig
+		expectedSpec.Events = append(spec.Events, domain.ApplyRegistryConfigEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
@@ -708,8 +708,8 @@ func TestEcosystemConfigUseCase_handleFailedApplyRegistryConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
-		assert.IsType(t, domain.ApplyEcosystemConfigFailedEvent{}, spec.Events[0])
+		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
+		assert.IsType(t, domain.ApplyRegistryConfigFailedEvent{}, spec.Events[0])
 	})
 
 	t.Run("should return error on update error", func(t *testing.T) {
@@ -726,7 +726,7 @@ func TestEcosystemConfigUseCase_handleFailedApplyRegistryConfig(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed while handling \"applyEcosystemConfigFailed\" status")
+		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed while handling \"applyRegistryConfigFailed\" status")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }
