@@ -190,6 +190,8 @@ func TestDoguConfigRepository_GetAll(t *testing.T) {
 		_, err := repo.GetAll(testCtx, dogus)
 		//then
 		assert.ErrorContains(t, err, givenError.Error())
+		assert.ErrorContains(t, err, "could not load normal dogu config for all given dogus")
+		assert.True(t, domainservice.IsNotFoundError(err), "error is no NotFoundError")
 	})
 }
 
@@ -246,6 +248,8 @@ func TestDoguConfigRepository_GetAllExisting(t *testing.T) {
 		_, err := repo.GetAllExisting(testCtx, dogus)
 		//then
 		assert.ErrorContains(t, err, err.Error())
+		assert.ErrorContains(t, err, fmt.Sprintf("could not load %s for all given dogus", repo.repoType))
+		assert.True(t, domainservice.IsInternalError(err), "error is no InternalError")
 	})
 
 }
