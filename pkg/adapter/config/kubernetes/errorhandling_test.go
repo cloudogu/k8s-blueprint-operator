@@ -20,6 +20,7 @@ func Test_mapToBlueprintError(t *testing.T) {
 		{"conflictError", liberrors.NewConflictError(assert.AnError), domainservice.IsConflictError},
 		{"alreadyExistsError", liberrors.NewAlreadyExistsError(assert.AnError), domainservice.IsConflictError},
 		{"genericError", liberrors.NewGenericError(assert.AnError), domainservice.IsInternalError},
+		{"otherError", assert.AnError, domainservice.IsInternalError},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
