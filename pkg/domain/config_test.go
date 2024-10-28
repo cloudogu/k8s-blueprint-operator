@@ -408,63 +408,324 @@ func TestCombinedDoguConfig_validate(t *testing.T) {
 }
 
 func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
-	presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
-		dogu1Key1: "val",
-	}
-	AbsentConfig := []common.DoguConfigKey{
-		dogu1Key1,
-	}
+	t.Run("should get multiple Dogus", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
 
-	normalConfig := DoguConfig{
-		Present: presentConfig,
-		Absent:  AbsentConfig,
-	}
+		normalConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
 
-	combinedConfig := CombinedDoguConfig{
-		DoguName: dogu1,
-		Config:   normalConfig,
-		SensitiveConfig: struct {
-			Present map[common.DoguConfigKey]common.DoguConfigValue
-			Absent  []common.DoguConfigKey
-		}{},
-	}
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
 
-	config := Config{
-		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
-			dogu1: combinedConfig,
-		},
-		Global: GlobalConfig{},
-	}
-	assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+		combinedConfig2 := CombinedDoguConfig{
+			DoguName: dogu2,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+				dogu2: combinedConfig2,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		assert.Equal(t, []common.SimpleDoguName{dogu1, dogu2}, config.GetDogusWithChangedConfig())
+	})
+	t.Run("should get Dogus with changed present and absent config", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
+
+		normalConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+	})
+	t.Run("should get Dogus with changed present config", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		var AbsentConfig []common.DoguConfigKey
+
+		normalConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+	})
+	t.Run("should get Dogus with changed absent config", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
+
+		normalConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+	})
+	t.Run("should not get Dogu when config has no changes", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+		var AbsentConfig []common.DoguConfigKey
+
+		normalConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config:   normalConfig,
+			SensitiveConfig: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		var expected []common.SimpleDoguName
+		assert.Equal(t, expected, config.GetDogusWithChangedConfig())
+	})
 }
 
 func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
-	presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
-		dogu1Key1: "val",
-	}
-	AbsentConfig := []common.DoguConfigKey{
-		dogu1Key1,
-	}
+	t.Run("should get multiple Dogus", func(t *testing.T) {
+		// given
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
 
-	normalConfig := DoguConfig{
-		Present: presentConfig,
-		Absent:  AbsentConfig,
-	}
+		sensitiveConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
 
-	combinedConfig := CombinedDoguConfig{
-		DoguName: dogu1,
-		Config:   normalConfig,
-		SensitiveConfig: struct {
-			Present map[common.DoguConfigKey]common.DoguConfigValue
-			Absent  []common.DoguConfigKey
-		}{},
-	}
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
 
-	config := Config{
-		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
-			dogu1: combinedConfig,
-		},
-		Global: GlobalConfig{},
-	}
-	assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedConfig())
+		combinedConfig2 := CombinedDoguConfig{
+			DoguName: dogu2,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+				dogu2: combinedConfig2,
+			},
+			Global: GlobalConfig{},
+		}
+		// then
+		assert.Equal(t, []common.SimpleDoguName{dogu1, dogu2}, config.GetDogusWithChangedSensitiveConfig())
+	})
+	t.Run("should get Dogus with changed present and absent config", func(t *testing.T) {
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
+
+		sensitiveConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedSensitiveConfig())
+	})
+	t.Run("should get Dogus with changed present config", func(t *testing.T) {
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
+			dogu1Key1: "val",
+		}
+		var AbsentConfig []common.DoguConfigKey
+		sensitiveConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedSensitiveConfig())
+	})
+	t.Run("should get Dogus with changed absent config", func(t *testing.T) {
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+		AbsentConfig := []common.DoguConfigKey{
+			dogu1Key1,
+		}
+
+		sensitiveConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		assert.Equal(t, []common.SimpleDoguName{dogu1}, config.GetDogusWithChangedSensitiveConfig())
+	})
+	t.Run("should not get Dogus with no config changes", func(t *testing.T) {
+		presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+		var AbsentConfig []common.DoguConfigKey
+
+		sensitiveConfig := DoguConfig{
+			Present: presentConfig,
+			Absent:  AbsentConfig,
+		}
+
+		combinedConfig := CombinedDoguConfig{
+			DoguName: dogu1,
+			Config: struct {
+				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Absent  []common.DoguConfigKey
+			}{},
+			SensitiveConfig: sensitiveConfig,
+		}
+
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				dogu1: combinedConfig,
+			},
+			Global: GlobalConfig{},
+		}
+		var expected []common.SimpleDoguName
+		assert.Equal(t, expected, config.GetDogusWithChangedSensitiveConfig())
+	})
 }
