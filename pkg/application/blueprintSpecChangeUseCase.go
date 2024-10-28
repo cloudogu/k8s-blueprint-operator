@@ -11,14 +11,14 @@ import (
 )
 
 type BlueprintSpecChangeUseCase struct {
-	repo                  blueprintSpecRepository
-	validation            blueprintSpecValidationUseCase
-	effectiveBlueprint    effectiveBlueprintUseCase
-	stateDiff             stateDiffUseCase
-	applyUseCase          applyBlueprintSpecUseCase
-	registryConfigUseCase registryConfigUseCase
-	doguRestartUseCase    doguRestartUseCase
-	selfUpgradeUseCase    selfUpgradeUseCase
+	repo                   blueprintSpecRepository
+	validation             blueprintSpecValidationUseCase
+	effectiveBlueprint     effectiveBlueprintUseCase
+	stateDiff              stateDiffUseCase
+	applyUseCase           applyBlueprintSpecUseCase
+	ecosystemConfigUseCase ecosystemConfigUseCase
+	doguRestartUseCase     doguRestartUseCase
+	selfUpgradeUseCase     selfUpgradeUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -27,20 +27,20 @@ func NewBlueprintSpecChangeUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
-	doguConfigUseCase registryConfigUseCase,
+	ecosystemConfigUseCase ecosystemConfigUseCase,
 	doguRestartUseCase doguRestartUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
 
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
-		repo:                  repo,
-		validation:            validation,
-		effectiveBlueprint:    effectiveBlueprint,
-		stateDiff:             stateDiff,
-		applyUseCase:          applyUseCase,
-		registryConfigUseCase: doguConfigUseCase,
-		doguRestartUseCase:    doguRestartUseCase,
-		selfUpgradeUseCase:    selfUpgradeUseCase,
+		repo:                   repo,
+		validation:             validation,
+		effectiveBlueprint:     effectiveBlueprint,
+		stateDiff:              stateDiff,
+		applyUseCase:           applyUseCase,
+		ecosystemConfigUseCase: ecosystemConfigUseCase,
+		doguRestartUseCase:     doguRestartUseCase,
+		selfUpgradeUseCase:     selfUpgradeUseCase,
 	}
 }
 
@@ -88,7 +88,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	case domain.StatusPhaseAwaitSelfUpgrade:
 		return useCase.handleSelfUpgrade(ctx, blueprintId)
 	case domain.StatusPhaseSelfUpgradeCompleted:
-		return useCase.applyRegistryConfig(ctx, blueprintId)
+		return useCase.applyEcosystemConfig(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemConfigApplied:
 		return useCase.applyBlueprintSpec(ctx, blueprintId)
 	case domain.StatusPhaseApplyEcosystemConfigFailed:
@@ -204,8 +204,8 @@ func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx co
 	return useCase.HandleChange(ctx, blueprintId)
 }
 
-func (useCase *BlueprintSpecChangeUseCase) applyRegistryConfig(ctx context.Context, blueprintId string) error {
-	err := useCase.registryConfigUseCase.ApplyConfig(ctx, blueprintId)
+func (useCase *BlueprintSpecChangeUseCase) applyEcosystemConfig(ctx context.Context, blueprintId string) error {
+	err := useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprintId)
 	if err != nil {
 		return err
 	}
