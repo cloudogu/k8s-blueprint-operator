@@ -20,7 +20,7 @@ manager:
 kubeRbacProxy:
   image:
     registry: gcr.io
-    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    repository: kubebuilder/kube-rbac-proxy
     tag: v0.15.0
   resourceLimits:
     cpu: 500m
