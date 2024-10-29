@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"strings"
 )
 
@@ -12,7 +13,7 @@ type QualifiedDoguName struct {
 }
 
 type DoguNamespace string
-type SimpleDoguName string
+type SimpleDoguName = config.SimpleDoguName
 
 func NewQualifiedDoguName(namespace DoguNamespace, simpleName SimpleDoguName) (QualifiedDoguName, error) {
 	doguName := QualifiedDoguName{Namespace: namespace, SimpleName: simpleName}

@@ -2,8 +2,7 @@ package domain
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"slices"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type CombinedDoguConfigDiffs struct {
@@ -18,11 +17,6 @@ const (
 	ConfigActionNone ConfigAction = "none"
 	// ConfigActionSet means that the config key needs to be set as given
 	ConfigActionSet ConfigAction = "set"
-	// ConfigActionSetEncrypted means that the config key needs to be encrypted
-	ConfigActionSetEncrypted ConfigAction = "setEncrypted"
-	// ConfigActionSetToEncrypt means that the config key needs to be encrypted but another service needs to do this.
-	// This can happen if a dogu is not yet installed and therefore no encryption key pair is available.
-	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
 	// ConfigActionRemove means that the config key needs to be deleted
 	ConfigActionRemove ConfigAction = "remove"
 )
@@ -55,23 +49,28 @@ func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDo
 
 func determineConfigDiffs(
 	blueprintConfig Config,
-	clusterState ecosystem.EcosystemState,
+	globalConfig config.GlobalConfig,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+	SensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
 ) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, clusterState.DecryptedSensitiveDoguConfig, clusterState.GetInstalledDoguNames()),
-		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)
+	return determineDogusConfigDiffs(
+			blueprintConfig.Dogus,
+			configByDogu,
+			SensitiveConfigByDogu,
+		),
+		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
 }
 
 func determineDogusConfigDiffs(
 	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
-	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
-	installedDogus []common.SimpleDoguName,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+	sensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
 ) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
 	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = CombinedDoguConfigDiffs{
-			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, actualDoguConfig),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, actualSensitiveDoguConfig, slices.Contains(installedDogus, doguName)),
+			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu),
+			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, sensitiveConfigByDogu),
 		}
 	}
 	return diffsPerDogu

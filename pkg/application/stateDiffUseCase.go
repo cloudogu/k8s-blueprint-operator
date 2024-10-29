@@ -5,31 +5,27 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
 	componentInstallationRepo componentInstallationRepository
-	globalConfigRepo          globalConfigEntryRepository
-	doguConfigRepo            doguConfigEntryRepository
-	sensitiveDoguConfigRepo   sensitiveDoguConfigEntryRepository
-	encryptionAdapter         configEncryptionAdapter
+	globalConfigRepo          globalConfigRepository
+	doguConfigRepo            doguConfigRepository
+	sensitiveDoguConfigRepo   sensitiveDoguConfigRepository
 }
 
 func NewStateDiffUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguInstallationRepo domainservice.DoguInstallationRepository,
 	componentInstallationRepo domainservice.ComponentInstallationRepository,
-	globalConfigRepo domainservice.GlobalConfigEntryRepository,
-	doguConfigRepo domainservice.DoguConfigEntryRepository,
-	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigEntryRepository,
-	encryptionAdapter configEncryptionAdapter,
+	globalConfigRepo domainservice.GlobalConfigRepository,
+	doguConfigRepo domainservice.DoguConfigRepository,
+	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -38,7 +34,6 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
-		encryptionAdapter:         encryptionAdapter,
 	}
 }
 
@@ -95,42 +90,24 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
 	logger.Info("collect needed global config")
-	globalConfig, globalConfigErr := useCase.globalConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.Global.GetGlobalConfigKeys())
+	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
+
 	logger.Info("collect needed dogu config")
-	doguConfig, doguConfigErr := useCase.doguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetDoguConfigKeys())
+	configByDogu, doguConfigErr := useCase.doguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
+
 	logger.Info("collect needed sensitive dogu config")
-	sensitiveDoguConfig, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllByKey(ctx, effectiveBlueprint.Config.GetSensitiveDoguConfigKeys())
+	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
-
-	var internalErrorType *domainservice.InternalError
-	if errors.As(joinedError, &internalErrorType) {
-		// we ignore NotFoundErrors as there is a high chance to have a config key in the blueprint which is not yet present in the ecosystem.
-		// the config repos give us all present keys even if there is a NotFoundError for others.
+	if joinedError != nil {
 		return ecosystem.EcosystemState{}, fmt.Errorf("could not collect ecosystem state: %w", joinedError)
 	}
 
-	encryptedConfig := map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue{}
-	for key, entry := range sensitiveDoguConfig {
-		encryptedConfig[key] = entry.Value
-	}
-
-	logger.Info("decrypt sensitive dogu config")
-	decryptedConfig, err := useCase.encryptionAdapter.DecryptAll(ctx, encryptedConfig)
-	if err != nil {
-		// we cannot ignore any error type here:
-		// - InternalError -> there could be a network error -> retry by reconciliation
-		// - NotFoundError -> we only have encrypted values to decrypt, therefore the encryption key pair should be present
-		//                    if the key pair is not present, we could have a serious problem or there is config for a not installed dogu
-		return ecosystem.EcosystemState{}, fmt.Errorf("could not decrypt sensitive dogu config: %w", err)
-	}
-
 	return ecosystem.EcosystemState{
-		InstalledDogus:               installedDogus,
-		InstalledComponents:          installedComponents,
-		GlobalConfig:                 globalConfig,
-		DoguConfig:                   doguConfig,
-		EncryptedDoguConfig:          sensitiveDoguConfig,
-		DecryptedSensitiveDoguConfig: decryptedConfig,
+		InstalledDogus:        installedDogus,
+		InstalledComponents:   installedComponents,
+		GlobalConfig:          globalConfig,
+		ConfigByDogu:          configByDogu,
+		SensitiveConfigByDogu: sensitiveConfigByDogu,
 	}, nil
 }

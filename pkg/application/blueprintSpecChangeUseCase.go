@@ -110,6 +110,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return nil
 	case domain.StatusPhaseFailed:
 		return nil
+		//FIXME: add StatusPhaseApplyRegistryConfigFailed
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}

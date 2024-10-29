@@ -149,10 +149,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	CRAfterUpdate, err := repo.blueprintClient.Update(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
-			return &domainservice.ConflictError{
-				WrappedError: err,
-				Message:      fmt.Sprintf("cannot update blueprint CR %q as it was modified in the meantime", spec.Id),
-			}
+			return domainservice.NewConflictError(err, "cannot update blueprint CR %q as it was modified in the meantime", spec.Id)
 		}
 		return domainservice.NewInternalError(err, "cannot update blueprint CR %q", spec.Id)
 	}
@@ -167,10 +164,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
-			return &domainservice.ConflictError{
-				WrappedError: err,
-				Message:      fmt.Sprintf("cannot update blueprint CR status %q as it was modified in the meantime", spec.Id),
-			}
+			return domainservice.NewConflictError(err, "cannot update blueprint CR status %q as it was modified in the meantime", spec.Id)
 		}
 		return domainservice.NewInternalError(err, "cannot update blueprint CR status %q", spec.Id)
 	}

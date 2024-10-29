@@ -6,6 +6,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0] - 2024-10-29
+### Changed
+- [#85] Make imagePullSecrets configurable via helm values and use `ces-container-registries` as default.
+
+### Changed
+- [#81] migrate etcd access to ecosystem config to k8s-config
+- [#81] create configmaps and secrets for dogu config if the dogu is not yet installed
+- [#81] give operator permissions to see configmaps and secrets
+- [#81] use maintenance mode implementation from k8s-registry-lib
+- [#81] use dogu v2 implementation
+- [#81] small refactorings on configDiff implementation
+- [#81] update various dependencies
+- [#81] use go 1.23
+
+### Fixed
+- [#81] fix go-linter to support go 1.23
+- [#81] fix superfluous response headers in tests
+
+### Removed
+- [#81] remove encryption for sensitive dogu config
+- [#81] remove etcd from default list of required components
+
 ## [v1.1.0] - 2024-09-18
 ### Changed
 - [#79] Relicense to AGPL-3.0-only

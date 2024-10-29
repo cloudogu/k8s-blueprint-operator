@@ -712,7 +712,7 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 
 func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	// given
-	ldapLoggingKey := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}}
+	ldapLoggingKey := common.SensitiveDoguConfigKey{DoguName: "ldap", Key: "logging/root"}
 	spec := &BlueprintSpec{
 		Blueprint: Blueprint{
 			Config: Config{

@@ -54,10 +54,10 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 					},
 					SensitiveConfig: domain.SensitiveDoguConfig{
 						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-							{DoguConfigKey: common.DoguConfigKey{
+							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
-							}}: "42",
+							}: "42",
 						},
 					},
 				},
@@ -181,10 +181,10 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 					},
 					SensitiveConfig: domain.SensitiveDoguConfig{
 						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-							{DoguConfigKey: common.DoguConfigKey{
+							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
-							}}: "42",
+							}: "42",
 						},
 					},
 				},

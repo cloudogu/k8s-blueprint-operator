@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	v1 "github.com/cloudogu/k8s-dogu-operator/api/v1"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,7 +19,7 @@ var postgresDoguName = common.QualifiedDoguName{
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
-		cr *v1.Dogu
+		cr *v2.Dogu
 	}
 	tests := []struct {
 		name    string
@@ -35,23 +35,23 @@ func Test_parseDoguCR(t *testing.T) {
 		},
 		{
 			name: "ok",
-			args: args{cr: &v1.Dogu{
+			args: args{cr: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "postgresql",
 					ResourceVersion: crResourceVersion,
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:      "official/postgresql",
 					Version:   version3214.Raw,
-					Resources: v1.DoguResources{},
-					UpgradeConfig: v1.UpgradeConfig{
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: true,
 					},
 				},
-				Status: v1.DoguStatus{
-					Status: v1.DoguStatusInstalled,
-					Health: v1.AvailableHealthStatus,
+				Status: v2.DoguStatus{
+					Status: v2.DoguStatusInstalled,
+					Health: v2.AvailableHealthStatus,
 				},
 			}},
 			want: &ecosystem.DoguInstallation{
@@ -68,23 +68,23 @@ func Test_parseDoguCR(t *testing.T) {
 		},
 		{
 			name: "cannot parse version",
-			args: args{cr: &v1.Dogu{
+			args: args{cr: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
 					Name:            "postgresql",
 					ResourceVersion: "abc",
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:      "official/postgresql",
 					Version:   "vxyz",
-					Resources: v1.DoguResources{},
-					UpgradeConfig: v1.UpgradeConfig{
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: false,
 					},
 				},
-				Status: v1.DoguStatus{
-					Status: v1.DoguStatusInstalled,
-					Health: v1.AvailableHealthStatus,
+				Status: v2.DoguStatus{
+					Status: v2.DoguStatusInstalled,
+					Health: v2.AvailableHealthStatus,
 				},
 			}},
 			want:    nil,
@@ -109,7 +109,7 @@ func Test_toDoguCR(t *testing.T) {
 	tests := []struct {
 		name string
 		dogu *ecosystem.DoguInstallation
-		want *v1.Dogu
+		want *v2.Dogu
 	}{
 		{
 			name: "ok",
@@ -122,7 +122,7 @@ func Test_toDoguCR(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 			},
-			want: &v1.Dogu{
+			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
@@ -131,19 +131,19 @@ func Test_toDoguCR(t *testing.T) {
 						"dogu.name": "postgresql",
 					},
 				},
-				Spec: v1.DoguSpec{
+				Spec: v2.DoguSpec{
 					Name:    "official/postgresql",
 					Version: version3214.Raw,
-					Resources: v1.DoguResources{
+					Resources: v2.DoguResources{
 						DataVolumeSize: "",
 					},
-					UpgradeConfig: v1.UpgradeConfig{
+					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: true,
 						ForceUpgrade:         false,
 					},
 					AdditionalIngressAnnotations: nil,
 				},
-				Status: v1.DoguStatus{},
+				Status: v2.DoguStatus{},
 			},
 		},
 	}
@@ -260,7 +260,7 @@ func Test_getNginxIngressAnnotations(t *testing.T) {
 func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 	quantity1 := resource.MustParse("1G")
 	type args struct {
-		annotations v1.IngressAnnotations
+		annotations v2.IngressAnnotations
 	}
 	tests := []struct {
 		name    string
@@ -271,7 +271,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 		{
 			name: "should parse annotations",
 			args: args{
-				annotations: v1.IngressAnnotations{
+				annotations: v2.IngressAnnotations{
 					"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
 					"nginx.ingress.kubernetes.io/rewrite-target":        "/",
 					"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
@@ -289,7 +289,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 		{
 			name: "should return internal error on invalid quantity",
 			args: args{
-				annotations: v1.IngressAnnotations{
+				annotations: v2.IngressAnnotations{
 					"nginx.ingress.kubernetes.io/proxy-body-size": "1GG",
 				},
 			},
