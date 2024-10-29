@@ -18,8 +18,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
-	config2 "github.com/cloudogu/k8s-blueprint-operator/pkg/config"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	config2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 )
 
 var testCtx = context.Background()

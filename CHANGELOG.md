@@ -8,9 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [v2.0.0] - 2024-10-29
 ### Changed
+- Update module to v2
 - [#85] Make imagePullSecrets configurable via helm values and use `ces-container-registries` as default.
-
-### Changed
 - [#81] migrate etcd access to ecosystem config to k8s-config
 - [#81] create configmaps and secrets for dogu config if the dogu is not yet installed
 - [#81] give operator permissions to see configmaps and secrets

@@ -2,7 +2,7 @@ package serializer
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 // ToID provides common mappings from strings to domain.TargetState, e.g. for dogus.

@@ -1,6 +1,6 @@
 package ecosystem
 
-import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+import "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 type RegistryConfigEntry interface {
 	*GlobalConfigEntry | *DoguConfigEntry | *SensitiveDoguConfigEntry

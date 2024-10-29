@@ -1,6 +1,6 @@
 package serializer
 
-import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+import "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 
 // BlueprintSerializer can serialize a domain.Blueprint to a string. The format is implementation specific.
 // Add a new implementation if you want either another format, e.g. json, xml, or if you change your specific structure in that format.

@@ -2,16 +2,12 @@ package ecosystem
 
 import (
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var (
-	testNamespace             = "k8s"
-	testComponentName         = k8sK8sDoguOperator
-	testLonghornComponentName = "k8s-longhorn"
-)
+var testComponentName = k8sK8sDoguOperator
 
 var (
 	testVersion1, _ = semver.NewVersion("1.0.0")

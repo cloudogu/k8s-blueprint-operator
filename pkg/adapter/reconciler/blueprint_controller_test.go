@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
 	"testing"
 	"time"
@@ -21,7 +21,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 )
 
 var testCtx = context.Background()
@@ -208,16 +208,16 @@ func newTrivialTestLogSink() *testLogSink {
 	return &testLogSink{output: output, r: logr.RuntimeInfo{CallDepth: 1}}
 }
 
-func (t *testLogSink) doLog(level int, msg string, keysAndValues ...interface{}) {
+func (t *testLogSink) doLog(level int, msg string, _ ...interface{}) {
 	t.output = append(t.output, fmt.Sprintf("%d: %s", level, msg))
 }
 func (t *testLogSink) Init(info logr.RuntimeInfo) { t.r = info }
-func (t *testLogSink) Enabled(level int) bool     { return true }
+func (t *testLogSink) Enabled(int) bool           { return true }
 func (t *testLogSink) Info(level int, msg string, keysAndValues ...interface{}) {
 	t.doLog(level, msg, keysAndValues...)
 }
 func (t *testLogSink) Error(err error, msg string, keysAndValues ...interface{}) {
 	t.doLog(0, msg, append(keysAndValues, err)...)
 }
-func (t *testLogSink) WithValues(keysAndValues ...interface{}) logr.LogSink { return t }
-func (t *testLogSink) WithName(name string) logr.LogSink                    { return t }
+func (t *testLogSink) WithValues(...interface{}) logr.LogSink { return t }
+func (t *testLogSink) WithName(string) logr.LogSink           { return t }
