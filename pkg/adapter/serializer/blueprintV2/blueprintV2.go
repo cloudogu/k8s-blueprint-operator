@@ -3,9 +3,9 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES

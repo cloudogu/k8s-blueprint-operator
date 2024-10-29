@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

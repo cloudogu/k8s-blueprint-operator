@@ -3,7 +3,7 @@ package blueprintV2
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 type Serializer struct{}

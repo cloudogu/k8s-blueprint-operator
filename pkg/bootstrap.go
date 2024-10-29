@@ -2,11 +2,11 @@ package pkg
 
 import (
 	"fmt"
-	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
+	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restartcr"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -14,19 +14,19 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/remote"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
-	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
-	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/healthConfig"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/componentcr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
+	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/healthConfig"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/maintenance"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
 	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
 )

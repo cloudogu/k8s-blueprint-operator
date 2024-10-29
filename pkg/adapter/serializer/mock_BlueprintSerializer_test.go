@@ -3,7 +3,7 @@
 package serializer
 
 import (
-	domain "github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 

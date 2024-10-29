@@ -9,7 +9,7 @@ This file was generated with "make generate".
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

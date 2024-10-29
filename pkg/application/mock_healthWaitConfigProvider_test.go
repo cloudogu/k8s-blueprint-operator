@@ -5,7 +5,7 @@ package application
 import (
 	context "context"
 
-	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	ecosystem "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	mock "github.com/stretchr/testify/mock"
 )
 
