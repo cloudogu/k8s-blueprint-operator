@@ -479,7 +479,11 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 				}
 			}
 
-			assert.Equal(t, tt.want, config.GetDogusWithChangedConfig())
+			changedDogus := config.GetDogusWithChangedConfig()
+			assert.Len(t, changedDogus, len(tt.want))
+			for _, wantedVal := range tt.want {
+				assert.Contains(t, changedDogus, wantedVal)
+			}
 		})
 	}
 }
@@ -556,7 +560,11 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 				}
 			}
 
-			assert.Equal(t, tt.want, config.GetDogusWithChangedSensitiveConfig())
+			changedDogus := config.GetDogusWithChangedSensitiveConfig()
+			assert.Len(t, changedDogus, len(tt.want))
+			for _, wantedVal := range tt.want {
+				assert.Contains(t, changedDogus, wantedVal)
+			}
 		})
 	}
 }
