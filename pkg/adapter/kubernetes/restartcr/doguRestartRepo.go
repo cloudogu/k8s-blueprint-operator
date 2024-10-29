@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )

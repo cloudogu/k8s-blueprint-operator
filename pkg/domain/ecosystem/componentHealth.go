@@ -2,12 +2,12 @@ package ecosystem
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 type RequiredComponent struct {

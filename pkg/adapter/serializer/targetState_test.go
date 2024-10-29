@@ -2,7 +2,7 @@ package serializer
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

@@ -3,7 +3,7 @@ package domainservice
 import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 var testDataDoguRegistry = stubRemoteDoguRegistry{

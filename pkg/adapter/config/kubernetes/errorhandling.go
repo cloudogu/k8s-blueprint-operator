@@ -1,7 +1,7 @@
 package kubernetes
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
 )
 

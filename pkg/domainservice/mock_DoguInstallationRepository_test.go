@@ -7,7 +7,7 @@ import (
 
 	config "github.com/cloudogu/k8s-registry-lib/config"
 
-	ecosystem "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	ecosystem "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 
 	mock "github.com/stretchr/testify/mock"
 )

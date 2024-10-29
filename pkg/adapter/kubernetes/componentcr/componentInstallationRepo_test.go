@@ -2,7 +2,7 @@ package componentcr
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
@@ -16,8 +16,8 @@ import (
 
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 var testCtx = context.Background()

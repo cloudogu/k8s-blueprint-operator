@@ -2,7 +2,7 @@ package maintenance
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/errors"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	"github.com/stretchr/testify/assert"

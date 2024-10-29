@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"time"
 
 	"k8s.io/api/core/v1"
@@ -13,9 +13,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/yaml"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 const (
