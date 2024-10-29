@@ -7,9 +7,11 @@ patches:
   values.yaml:
     kubeRbacProxy:
       image:
-        repository: "{{ registryFrom .images.kubeRbacProxy }}/{{ repositoryFrom .images.kubeRbacProxy }}"
+        registry: "{{ registryFrom .images.kubeRbacProxy }}"
+        repository: "{{ repositoryFrom .images.kubeRbacProxy }}"
         tag: "{{ tagFrom .images.kubeRbacProxy }}"
     manager:
       image:
-        repository: "{{ registryFrom .images.blueprintOperator }}/{{ repositoryFrom .images.blueprintOperator }}"
+        registry: "{{ registryFrom .images.blueprintOperator }}"
+        repository: "{{ repositoryFrom .images.blueprintOperator }}"
         tag: "{{ tagFrom .images.blueprintOperator }}"
