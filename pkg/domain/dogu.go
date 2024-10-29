@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"slices"
@@ -14,7 +14,7 @@ import (
 // was applied.
 type Dogu struct {
 	// Name defines the name of the dogu, e.g. "official/postgresql"
-	Name common.QualifiedDoguName
+	Name cescommons.QualifiedDoguName
 	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
 	Version core.Version
@@ -30,7 +30,6 @@ type Dogu struct {
 // validate checks if the Dogu is semantically correct.
 func (dogu Dogu) validate() error {
 	var errorList []error
-	errorList = append(errorList, dogu.Name.Validate())
 	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
 		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.Name))
 	}
@@ -59,7 +58,7 @@ func (dogu Dogu) validate() error {
 	return err
 }
 
-func FindDoguByName(dogus []Dogu, name common.SimpleDoguName) (Dogu, bool) {
+func FindDoguByName(dogus []Dogu, name cescommons.SimpleDoguName) (Dogu, bool) {
 	for _, dogu := range dogus {
 		if dogu.Name.SimpleName == name {
 			return dogu, true

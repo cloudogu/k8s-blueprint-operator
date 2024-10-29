@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
 
@@ -16,10 +17,10 @@ type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
 	// a NotFoundError if the dogu is not installed or
 	// an InternalError if there is any other error.
-	GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error)
+	GetByName(ctx context.Context, doguName cescommons.SimpleDoguName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
 	// an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error)
+	GetAll(ctx context.Context) (map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
 	// a ConflictError if there is already a DoguInstallation with this name or
 	// an InternalError if there is any error while saving the DoguInstallation
@@ -33,7 +34,7 @@ type DoguInstallationRepository interface {
 	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
 	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
 	// returns an InternalError if there is any other error
-	Delete(ctx context.Context, doguName common.SimpleDoguName) error
+	Delete(ctx context.Context, doguName cescommons.SimpleDoguName) error
 }
 
 type ComponentInstallationRepository interface {
@@ -81,16 +82,16 @@ type RemoteDoguRegistry interface {
 	// GetDogu returns the dogu specification for the given dogu and version or
 	// an NotFoundError indicating that there was no dogu spec found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogu(doguName common.QualifiedDoguName, version string) (*core.Dogu, error)
+	GetDogu(qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error)
 
 	// GetDogus returns the all requested dogu specifications or
 	// an NotFoundError indicating that any dogu spec was not found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogus(dogusToLoad []DoguToLoad) (map[common.QualifiedDoguName]*core.Dogu, error)
+	GetDogus(dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error)
 }
 
 type DoguToLoad struct {
-	DoguName common.QualifiedDoguName
+	DoguName cescommons.QualifiedDoguName
 	Version  string
 }
 
@@ -113,7 +114,7 @@ type ConfigEncryptionAdapter interface {
 	// Encrypt encrypts the given value for a dogu.
 	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
 	// It can throw a NotFoundError if the encryption key is not found.
-	Encrypt(context.Context, common.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
+	Encrypt(context.Context, cescommons.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
 	// EncryptAll encrypts the given values for a dogu.
 	// If the encryption fails on a part of the values, the resulting error is returned along with a map that only holds
 	// the values that could have been encrypted.
@@ -124,7 +125,7 @@ type ConfigEncryptionAdapter interface {
 	// It can throw
 	//  - NotFoundError if decryption key is not found
 	//  - InternalError in any other error case
-	Decrypt(context.Context, common.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)
+	Decrypt(context.Context, cescommons.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)
 	// DecryptAll decrypts a map of sensitive dogu values.
 	// If the decryption fails on a part of the values, the resulting error is returned along with a map that only holds
 	// the values that could have been decrypted.
@@ -136,7 +137,7 @@ type ConfigEncryptionAdapter interface {
 
 type DoguRestartRepository interface {
 	// RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []common.SimpleDoguName) error
+	RestartAll(context.Context, []cescommons.SimpleDoguName) error
 }
 
 type GlobalConfigEntryRepository interface {
@@ -224,7 +225,7 @@ type SensitiveDoguConfigEntryRepository interface {
 	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
 	// It can throw the following errors:
 	//  - InternalError if any error happens.
-	SaveAllForNotInstalledDogu(context.Context, common.SimpleDoguName, []*ecosystem.SensitiveDoguConfigEntry) error
+	SaveAllForNotInstalledDogu(context.Context, cescommons.SimpleDoguName, []*ecosystem.SensitiveDoguConfigEntry) error
 	// SaveAllForNotInstalledDogus persists all given configs for the given sensitive dogu entries.
 	// It can throw the following errors:
 	//  - InternalError if any error happens.

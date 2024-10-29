@@ -6,6 +6,8 @@ import (
 	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
 	adapterconfigkubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
 
+	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
+
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
 
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
@@ -16,8 +18,6 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/cesapp-lib/remote"
-
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
 	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
@@ -144,12 +144,12 @@ func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 		return nil, fmt.Errorf("failed to get remote dogu registry credentials: %w", err)
 	}
 
-	doguRemoteRegistry, err := remote.New(remoteConfig, remoteCreds)
+	doguRemoteRepository, err := remotedogudescriptor.NewRemoteDoguDescriptorRepository(remoteConfig, remoteCreds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create new remote dogu registry: %w", err)
+		return nil, fmt.Errorf("failed to create new remote dogu repository: %w", err)
 	}
 
-	return doguregistry.NewRemote(doguRemoteRegistry), nil
+	return doguregistry.NewRemote(doguRemoteRepository), nil
 }
 
 func createEcosystemClientSet(restConfig *rest.Config) (*adapterk8s.ClientSet, error) {
