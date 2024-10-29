@@ -1,82 +1,56 @@
 package maintenance
 
 import (
-	"github.com/cloudogu/cesapp-lib/registry"
-
+	"context"
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 )
 
 // Mode contains methods to Activate and Deactivate the switcher.
 // When it is active, a page is displayed to the user, telling them that there is maintenance going on.
 type Mode struct {
-	lock
-	switcher
+	libAdapter libMaintenanceModeAdapter
 }
 
-func New(globalConfig registry.ConfigurationContext) *Mode {
+func NewMaintenanceModeAdapter(libAdapter libMaintenanceModeAdapter) *Mode {
 	return &Mode{
-		lock:     &defaultLock{globalConfig: globalConfig},
-		switcher: &defaultSwitcher{globalConfig: globalConfig},
+		libAdapter: libAdapter,
 	}
 }
 
 // Activate enables the maintenance mode, setting the given MaintenancePageModel
-func (m *Mode) Activate(content domainservice.MaintenancePageModel) error {
-	isActive, isOurs, err := m.lock.isActiveAndOurs()
+func (m *Mode) Activate(ctx context.Context, title, text string) error {
+	err := m.libAdapter.Activate(ctx, repository.MaintenanceModeDescription{
+		Title: title,
+		Text:  text,
+	})
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to check if maintenance mode is already active and ours",
-		}
+		return fmt.Errorf("could not activate maintenance mode: %w", mapToBlueprintError(err))
 	}
-
-	if isActive && !isOurs {
-		return &domainservice.ConflictError{
-			WrappedError: nil,
-			Message:      "cannot activate maintenance mode as it was already activated by another party",
-		}
-	}
-
-	err = m.switcher.activate(content)
-	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to activate maintenance mode",
-		}
-	}
-
 	return nil
 }
 
 // Deactivate disables the maintenance mode.
-func (m *Mode) Deactivate() error {
-	isActive, isOurs, err := m.lock.isActiveAndOurs()
+func (m *Mode) Deactivate(ctx context.Context) error {
+	err := m.libAdapter.Deactivate(ctx)
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to check if maintenance mode is already active and ours",
-		}
+		return fmt.Errorf("could not activate maintenance mode: %w", mapToBlueprintError(err))
 	}
+	return nil
+}
 
-	if !isActive {
-		// do nothing
-		return nil
-	}
-
-	if !isOurs {
-		return &domainservice.ConflictError{
-			WrappedError: nil,
-			Message:      "cannot deactivate maintenance mode as it was activated by another party",
-		}
-	}
-
-	err = m.switcher.deactivate()
+func mapToBlueprintError(err error) error {
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "failed to deactivate maintenance mode",
+		if liberrors.IsConflictError(err) {
+			return domainservice.NewConflictError(err, "there were conflicting changes to the maintenance mode")
+		} else if liberrors.IsConnectionError(err) {
+			return domainservice.NewInternalError(err, "could not update maintenance mode due to connection problems")
+		} else {
+			// GenericError and NotFoundError and fallback if even that would not match the error
+			return domainservice.NewInternalError(err, "could not update maintenance mode due to an unknown problem")
 		}
 	}
-
 	return nil
 }

@@ -12,7 +12,7 @@ github = new GitHub(this, git)
 changelog = new Changelog(this)
 Docker docker = new Docker(this)
 gpg = new Gpg(this, docker)
-goVersion = "1.22"
+goVersion = "1.23"
 Makefile makefile = new Makefile(this)
 
 // Configuration of repository
@@ -210,7 +210,8 @@ void stageAutomaticRelease(Makefile makefile) {
                                     sh ".bin/helm registry login ${registry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
 
                                     sh ".bin/helm push ${helmChartDir}/${repositoryName}-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
-                                    sh ".bin/helm push ${helmCRDChartDir}/${repositoryName}-crd-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
+// Don't release crd until it has it's own repository (to avoid unnecessary major version jump)
+//                                     sh ".bin/helm push ${helmCRDChartDir}/${repositoryName}-crd-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
                                 }
                             }
         }

@@ -2,18 +2,13 @@ package ecosystem
 
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"golang.org/x/exp/maps"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type EcosystemState struct {
-	InstalledDogus               map[common.SimpleDoguName]*DoguInstallation
-	InstalledComponents          map[common.SimpleComponentName]*ComponentInstallation
-	GlobalConfig                 map[common.GlobalConfigKey]*GlobalConfigEntry
-	DoguConfig                   map[common.DoguConfigKey]*DoguConfigEntry
-	EncryptedDoguConfig          map[common.SensitiveDoguConfigKey]*SensitiveDoguConfigEntry
-	DecryptedSensitiveDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
-}
-
-func (state EcosystemState) GetInstalledDoguNames() []common.SimpleDoguName {
-	return maps.Keys(state.InstalledDogus)
+	InstalledDogus        map[common.SimpleDoguName]*DoguInstallation
+	InstalledComponents   map[common.SimpleComponentName]*ComponentInstallation
+	GlobalConfig          config.GlobalConfig
+	ConfigByDogu          map[common.SimpleDoguName]config.DoguConfig
+	SensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig
 }

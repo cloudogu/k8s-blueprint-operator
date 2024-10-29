@@ -16,7 +16,7 @@ func TestRetryUntilSuccessOrCancellation(t *testing.T) {
 	expected := &testType{"test"}
 
 	t.Run("ok", func(t *testing.T) {
-		testCtx, cancel := context.WithTimeout(context.Background(), 1*time.Millisecond)
+		testCtx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 		defer cancel()
 
 		result, err := RetryUntilSuccessOrCancellation(
@@ -32,20 +32,20 @@ func TestRetryUntilSuccessOrCancellation(t *testing.T) {
 	})
 
 	t.Run("ok after retry", func(t *testing.T) {
-		testCtx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+		testCtx, cancel := context.WithTimeout(context.Background(), 10*time.Millisecond)
 		defer cancel()
 
 		callCounter := 0
 
 		result, err := RetryUntilSuccessOrCancellation(
 			testCtx,
-			1*time.Second,
+			5*time.Millisecond,
 			func(ctx context.Context) (*testType, error, bool) {
 				callCounter++
-				if callCounter >= 2 { // return at second try
+				if callCounter >= 2 { // success at second try
 					return expected, nil, false
 				} else {
-					return nil, nil, true
+					return nil, nil, true // retry at first try
 				}
 			},
 		)
