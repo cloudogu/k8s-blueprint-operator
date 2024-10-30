@@ -79,8 +79,8 @@ spec:
       },
       {
         "name":"official/jenkins",
-        "version":"2.426.3-1",
-        "targetState":"absent",
+        "version":"2.462.3-1",
+        "targetState":"present",
         "platformConfig": {
           "resource": {
             "minVolumeSize": "20Gi"
