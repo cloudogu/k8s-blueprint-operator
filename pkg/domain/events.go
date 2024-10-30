@@ -77,7 +77,14 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	CombinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs
+	DoguConfigDiffs          map[common.SimpleDoguName]DoguConfigDiffs
+	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+}
+
+func NewDoguConfigDiffDeterminedEvent(
+	doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs,
+	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs) *DoguConfigDiffDeterminedEvent {
+	return &DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs, SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
 }
 
 func (e DoguConfigDiffDeterminedEvent) Name() string {
@@ -85,14 +92,24 @@ func (e DoguConfigDiffDeterminedEvent) Name() string {
 }
 
 func (e DoguConfigDiffDeterminedEvent) Message() string {
+	// TODO for review: decide if we keep a multiline string as event or add a second event (type) for sensitive config
+	return fmt.Sprintf(
+		"dogu config diff determined: %s \n"+
+			"sensitive dogu config diff determined: %s",
+		generateDoguConfigDiffCounterString(e.DoguConfigDiffs),
+		generateDoguConfigDiffCounterString(e.SensitiveDoguConfigDiffs),
+	)
+}
+
+func generateDoguConfigDiffCounterString(doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
-	for action, amount := range countByAction(e.CombinedDogusConfigDiffs) {
+	for action, amount := range countByAction(doguConfigDiffs) {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
 		actionsCounter += amount
 	}
 	slices.Sort(stringPerAction)
-	return fmt.Sprintf("dogu config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+	return fmt.Sprintf("%d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.

@@ -273,7 +273,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
-	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
+	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
@@ -281,16 +281,17 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:         doguDiffs,
-		ComponentDiffs:    compDiffs,
-		DoguConfigDiffs:   doguConfigDiffs,
-		GlobalConfigDiffs: globalConfigDiffs,
+		DoguDiffs:                doguDiffs,
+		ComponentDiffs:           compDiffs,
+		DoguConfigDiffs:          doguConfigDiffs,
+		SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs,
+		GlobalConfigDiffs:        globalConfigDiffs,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
-	spec.Events = append(spec.Events, DoguConfigDiffDeterminedEvent{spec.StateDiff.DoguConfigDiffs})
+	spec.Events = append(spec.Events, NewDoguConfigDiffDeterminedEvent(spec.StateDiff.DoguConfigDiffs, spec.StateDiff.SensitiveDoguConfigDiffs))
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
@@ -384,9 +385,7 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 func (spec *BlueprintSpec) CensorSensitiveData() {
 	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
 	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
-	for k, v := range spec.StateDiff.DoguConfigDiffs {
-		spec.StateDiff.DoguConfigDiffs[k] = v.censorValues()
-	}
+	spec.StateDiff.DoguConfigDiffs = censorValues(spec.StateDiff.DoguConfigDiffs)
 
 	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
 }
@@ -466,7 +465,9 @@ func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
 	var dogusThatNeedRestart []common.SimpleDoguName
 	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
-		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
+		//TODO: test this
+		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
+			spec.StateDiff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
 			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
 		}
 	}

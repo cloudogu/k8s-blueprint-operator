@@ -64,11 +64,14 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, err)
 	}
 
-	// do not apply further configs if error happens, we don't want to corrupt the system more than needed
-	// apply normal and sensitive config with this
-	err = useCase.applyDoguConfigDiffs(ctx, blueprintSpec.StateDiff.DoguConfigDiffs)
+	// do not apply further configs if error happens, we don't want to corrupt the system more than needed.
+	err = applyDoguConfigDiffs(ctx, useCase.doguConfigRepository, blueprintSpec.StateDiff.DoguConfigDiffs)
 	if err != nil {
-		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply normal dogu config: %w", err))
+	}
+	err = applyDoguConfigDiffs(ctx, useCase.sensitiveDoguConfigRepository, blueprintSpec.StateDiff.SensitiveDoguConfigDiffs)
+	if err != nil {
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply normal dogu config: %w", err))
 	}
 	err = useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction())
 	if err != nil {
@@ -107,34 +110,21 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(
+func applyDoguConfigDiffs(
 	ctx context.Context,
-	diffsByDogu map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs,
+	repo doguConfigRepository,
+	diffsByDogu map[common.SimpleDoguName]domain.DoguConfigDiffs,
 ) error {
 	var doguConfigDiffs = map[common.SimpleDoguName]domain.DoguConfigDiffs{}
-	var sensitiveDoguConfigDiffs = map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
 
-	for dogu, combinedDiff := range diffsByDogu {
+	for dogu, entryDiffs := range diffsByDogu {
 		// only collect doguConfigs with changes, so we don't need to load all.
-		if combinedDiff.DoguConfigDiff.HasChangesForDogu(dogu) {
-			doguConfigDiffs[dogu] = combinedDiff.DoguConfigDiff
-		}
-		if combinedDiff.SensitiveDoguConfigDiff.HasChangesForDogu(dogu) {
-			sensitiveDoguConfigDiffs[dogu] = combinedDiff.SensitiveDoguConfigDiff
+		if entryDiffs.HasChanges() {
+			doguConfigDiffs[dogu] = entryDiffs
 		}
 	}
 
-	err := saveDoguConfigs(ctx, useCase.doguConfigRepository, doguConfigDiffs)
-	if err != nil {
-		return fmt.Errorf("could not apply normal dogu config: %w", err)
-	}
-
-	err = saveDoguConfigs(ctx, useCase.sensitiveDoguConfigRepository, sensitiveDoguConfigDiffs)
-	if err != nil {
-		return fmt.Errorf("could not apply sensitive dogu config: %w", err)
-	}
-
-	return nil
+	return saveDoguConfigs(ctx, repo, doguConfigDiffs)
 }
 
 func saveDoguConfigs(
