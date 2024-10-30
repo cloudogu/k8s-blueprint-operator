@@ -313,8 +313,6 @@ spec:
                                   required:
                                     - exists
                                   type: object
-                                doguNotInstalled:
-                                  type: boolean
                                 expected:
                                   properties:
                                     exists:

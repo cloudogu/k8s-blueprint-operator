@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"slices"
 )
 
@@ -34,7 +34,7 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 
 // validateOnlyConfigForDogusInBlueprint checks that there is only config for dogus to install in the blueprint
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
-	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) common.SimpleDoguName {
+	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) cescommons.SimpleDoguName {
 		return dogu.Name.SimpleName
 	})
 	var errorList []error

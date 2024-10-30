@@ -2,8 +2,8 @@ package application
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,7 +36,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		maintenanceMock.EXPECT().Activate(testCtx, maintenanceTitle, maintenanceText).Return(nil)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
@@ -62,7 +62,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		maintenanceMock.EXPECT().Activate(testCtx, maintenanceTitle, maintenanceText).Return(nil)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
@@ -77,7 +77,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		repoMock := newMockBlueprintSpecRepository(t)
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
+		maintenanceMock.EXPECT().Activate(testCtx, maintenanceTitle, maintenanceText).Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
@@ -130,7 +130,7 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(nil)
+		maintenanceMock.EXPECT().Activate(testCtx, maintenanceTitle, maintenanceText).Return(nil)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
@@ -145,7 +145,7 @@ func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 		repoMock := newMockBlueprintSpecRepository(t)
 		maintenanceMock := newMockMaintenanceMode(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
-		maintenanceMock.EXPECT().Activate(mock.Anything).Return(assert.AnError)
+		maintenanceMock.EXPECT().Activate(testCtx, maintenanceTitle, maintenanceText).Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PreProcessBlueprintApplication(testCtx, blueprintId)
@@ -569,7 +569,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
-		maintenanceMock.EXPECT().Deactivate().Return(nil)
+		maintenanceMock.EXPECT().Deactivate(testCtx).Return(nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
@@ -601,7 +601,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
-		maintenanceMock.EXPECT().Deactivate().Return(nil)
+		maintenanceMock.EXPECT().Deactivate(testCtx).Return(nil)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
@@ -618,7 +618,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(spec, nil)
 		maintenanceMock := newMockMaintenanceMode(t)
-		maintenanceMock.EXPECT().Deactivate().Return(assert.AnError)
+		maintenanceMock.EXPECT().Deactivate(testCtx).Return(assert.AnError)
 		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil, maintenanceMock)
 
 		err := useCase.PostProcessBlueprintApplication(testCtx, blueprintId)

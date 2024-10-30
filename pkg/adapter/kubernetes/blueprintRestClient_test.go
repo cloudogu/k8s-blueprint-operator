@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/rest"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
+	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 )
 
 var testCtx = context.Background()
@@ -34,7 +34,6 @@ func Test_blueprintClient_Get(t *testing.T) {
 			require.NoError(t, err)
 			_, err = writer.Write(blueprintBytes)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -68,7 +67,6 @@ func Test_blueprintClient_List(t *testing.T) {
 			require.NoError(t, err)
 			_, err = writer.Write(blueprintBytes)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -98,7 +96,6 @@ func Test_blueprintClient_Watch(t *testing.T) {
 			writer.Header().Add("content-type", "application/json")
 			_, err := writer.Write([]byte("egal"))
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -135,7 +132,6 @@ func Test_blueprintClient_Create(t *testing.T) {
 			writer.Header().Add("content-type", "application/json")
 			_, err = writer.Write(bytes)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -172,7 +168,6 @@ func Test_blueprintClient_Update(t *testing.T) {
 			writer.Header().Add("content-type", "application/json")
 			_, err = writer.Write(bytes)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -209,7 +204,6 @@ func Test_blueprintClient_UpdateStatus(t *testing.T) {
 			writer.Header().Add("content-type", "application/json")
 			_, err = writer.Write(bytes)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{
@@ -294,7 +288,6 @@ func Test_blueprintClient_Patch(t *testing.T) {
 			writer.Header().Add("content-type", "application/json")
 			_, err = writer.Write(result)
 			require.NoError(t, err)
-			writer.WriteHeader(200)
 		}))
 
 		config := rest.Config{

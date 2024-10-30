@@ -6,8 +6,8 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 

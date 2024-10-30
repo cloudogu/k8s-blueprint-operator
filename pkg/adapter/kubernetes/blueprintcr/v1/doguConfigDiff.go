@@ -1,8 +1,10 @@
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type CombinedDoguConfigDiff struct {
@@ -22,11 +24,10 @@ type DoguConfigEntryDiff struct {
 
 type SensitiveDoguConfigDiff []SensitiveDoguConfigEntryDiff
 type SensitiveDoguConfigEntryDiff struct {
-	Key              string               `json:"key"`
-	Actual           DoguConfigValueState `json:"actual"`
-	Expected         DoguConfigValueState `json:"expected"`
-	DoguNotInstalled bool                 `json:"doguNotInstalled,omitempty"`
-	NeededAction     ConfigAction         `json:"neededAction"`
+	Key          string               `json:"key"`
+	Actual       DoguConfigValueState `json:"actual"`
+	Expected     DoguConfigValueState `json:"expected"`
+	NeededAction ConfigAction         `json:"neededAction"`
 }
 
 func convertToCombinedDoguConfigDiffDomain(doguName string, dto CombinedDoguConfigDiff) domain.CombinedDoguConfigDiffs {
@@ -55,8 +56,8 @@ func convertToCombinedDoguConfigDiffDomain(doguName string, dto CombinedDoguConf
 func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
-			DoguName: common.SimpleDoguName(doguName),
-			Key:      dto.Key,
+			DoguName: cescommons.SimpleDoguName(doguName),
+			Key:      config.Key(dto.Key),
 		},
 		Actual: domain.DoguConfigValueState{
 			Value:  dto.Actual.Value,
@@ -73,10 +74,8 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff
 func convertToSensitiveDoguConfigEntryDiffDomain(doguName string, dto SensitiveDoguConfigEntryDiff) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
-			DoguConfigKey: common.DoguConfigKey{
-				DoguName: common.SimpleDoguName(doguName),
-				Key:      dto.Key,
-			},
+			DoguName: cescommons.SimpleDoguName(doguName),
+			Key:      config.Key(dto.Key),
 		},
 		Actual: domain.DoguConfigValueState{
 			Value:  dto.Actual.Value,
@@ -86,8 +85,7 @@ func convertToSensitiveDoguConfigEntryDiffDomain(doguName string, dto SensitiveD
 			Value:  dto.Expected.Value,
 			Exists: dto.Expected.Exists,
 		},
-		DoguAlreadyInstalled: !dto.DoguNotInstalled,
-		NeededAction:         domain.ConfigAction(dto.NeededAction),
+		NeededAction: domain.ConfigAction(dto.NeededAction),
 	}
 }
 
@@ -116,7 +114,7 @@ func convertToCombinedDoguConfigDiffDTO(domainModel domain.CombinedDoguConfigDif
 
 func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff) DoguConfigEntryDiff {
 	return DoguConfigEntryDiff{
-		Key: domainModel.Key.Key,
+		Key: string(domainModel.Key.Key),
 		Actual: DoguConfigValueState{
 			Value:  domainModel.Actual.Value,
 			Exists: domainModel.Actual.Exists,
@@ -131,7 +129,7 @@ func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff) Dog
 
 func convertToSensitiveDoguConfigEntryDiffDTO(domainModel domain.SensitiveDoguConfigEntryDiff) SensitiveDoguConfigEntryDiff {
 	return SensitiveDoguConfigEntryDiff{
-		Key: domainModel.Key.Key,
+		Key: string(domainModel.Key.Key),
 		Actual: DoguConfigValueState{
 			Value:  domainModel.Actual.Value,
 			Exists: domainModel.Actual.Exists,
@@ -140,7 +138,6 @@ func convertToSensitiveDoguConfigEntryDiffDTO(domainModel domain.SensitiveDoguCo
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},
-		DoguNotInstalled: !domainModel.DoguAlreadyInstalled,
-		NeededAction:     ConfigAction(domainModel.NeededAction),
+		NeededAction: ConfigAction(domainModel.NeededAction),
 	}
 }

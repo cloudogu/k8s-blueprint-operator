@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"testing"
 
 	"github.com/go-logr/logr"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 var (

@@ -6,12 +6,11 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
-	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
 	"strings"
 
 	"github.com/cloudogu/cesapp-lib/core"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 var maxTries = 20
@@ -64,5 +63,5 @@ func (r *Remote) GetDogus(dogusToLoad []cescommons.QualifiedDoguVersion) (map[ce
 }
 
 func isConnectionError(err error) bool {
-	return !strings.Contains(err.Error(), remotedogudescriptor.ConnectionError.Error())
+	return !strings.Contains(err.Error(), cescommons.ConnectionError.Error())
 }

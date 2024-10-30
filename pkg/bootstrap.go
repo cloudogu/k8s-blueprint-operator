@@ -2,37 +2,34 @@ package pkg
 
 import (
 	"fmt"
-	adapterconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config"
-	adapterconfigetcd "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/etcd"
-	adapterconfigkubernetes "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/config/kubernetes"
-
+	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restartcr"
+	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/restartcr"
-
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/cesapp-lib/registry"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/doguregistry"
-	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/componentcr"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/dogucr"
-	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/healthConfig"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/maintenance"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintMaskV1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer/blueprintV2"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/application"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/cesapp-lib/remote"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/componentcr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
+	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/healthConfig"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/maintenance"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/api/ecoSystem"
+	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
 )
 
 // ApplicationContext contains vital application parts for this operator.
@@ -44,6 +41,8 @@ var blueprintOperatorName = common.QualifiedComponentName{
 	Namespace:  "k8s",
 	SimpleName: "k8s-blueprint-operator",
 }
+
+var maintenanceModeOwner = "blueprint-operator"
 
 // Bootstrap creates the ApplicationContext.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
@@ -69,24 +68,20 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		eventRecorder,
 	)
 
-	configRegistry, err := createConfigRegistry(namespace)
-	if err != nil {
-		return nil, err
-	}
-
-	maintenanceMode := maintenance.New(configRegistry.GlobalConfig())
+	libMaintenanceAdapter := repository.NewMaintenanceModeAdapter(maintenanceModeOwner, ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	maintenanceMode := maintenance.NewMaintenanceModeAdapter(libMaintenanceAdapter)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {
 		return nil, err
 	}
 
-	configEncryptionAdapter := adapterconfig.NewPublicKeyConfigEncryptionAdapter(ecosystemClientSet.CoreV1().Secrets(namespace), configRegistry, namespace)
-	doguConfigAdapter := adapterconfigetcd.NewDoguConfigRepository(configRegistry)
-	sensitiveDoguConfigAdapter := adapterconfigetcd.NewSensitiveDoguConfigRepository(configRegistry)
-	globalConfigAdapter := adapterconfigetcd.NewGlobalConfigRepository(configRegistry.GlobalConfig())
-	secretSensitiveDoguConfigAdapter := adapterconfigkubernetes.NewSecretSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
-	combinedSensitiveDoguConfigAdapter := adapterconfig.NewCombinedSecretEtcdSensitiveDoguConfigRepository(sensitiveDoguConfigAdapter, secretSensitiveDoguConfigAdapter)
+	k8sDoguConfigRepo := repository.NewDoguConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	doguConfigRepo := adapterconfigk8s.NewDoguConfigRepository(*k8sDoguConfigRepo)
+	k8sSensitiveDoguConfigRepo := repository.NewSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	sensitiveDoguConfigRepo := adapterconfigk8s.NewSensitiveDoguConfigRepository(*k8sSensitiveDoguConfigRepo)
+	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace), ecosystemClientSet.CoreV1().PersistentVolumeClaims(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
@@ -97,12 +92,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigAdapter, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, configEncryptionAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
-	registryConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigAdapter, combinedSensitiveDoguConfigAdapter, globalConfigAdapter, configEncryptionAdapter)
+	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
 	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName, healthConfigRepo)
@@ -110,7 +105,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
-		applyBlueprintSpecUseCase, registryConfigUseCase,
+		applyBlueprintSpecUseCase, ConfigUseCase,
 		doguRestartUseCase,
 		selfUpgradeUseCase,
 	)
@@ -119,18 +114,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	return &ApplicationContext{
 		Reconciler: blueprintReconciler,
 	}, nil
-}
-
-func createConfigRegistry(namespace string) (registry.Registry, error) {
-	configRegistry, err := registry.New(core.Registry{
-		Type:      "etcd",
-		Endpoints: []string{fmt.Sprintf("http://etcd.%s.svc.cluster.local:4001", namespace)},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("failed to create CES configuration registry: %w", err)
-	}
-
-	return configRegistry, nil
 }
 
 func createRemoteDoguRegistry() (*doguregistry.Remote, error) {

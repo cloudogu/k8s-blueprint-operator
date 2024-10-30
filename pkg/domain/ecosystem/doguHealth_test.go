@@ -1,28 +1,28 @@
 package ecosystem
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 const (
-	testDoguNamespace    common.DoguNamespace  = "testing"
-	postgresqlSimpleName common.SimpleDoguName = "postgresql"
-	postfixSimpleName    common.SimpleDoguName = "postfix"
-	ldapSimpleName       common.SimpleDoguName = "ldap"
+	testDoguNamespace    cescommons.DoguNamespace  = "testing"
+	postgresqlSimpleName cescommons.SimpleDoguName = "postgresql"
+	postfixSimpleName    cescommons.SimpleDoguName = "postfix"
+	ldapSimpleName       cescommons.SimpleDoguName = "ldap"
 )
 
 var (
-	postgresqlQualifiedName = common.QualifiedDoguName{
+	postgresqlQualifiedName = cescommons.QualifiedDoguName{
 		Namespace:  testDoguNamespace,
 		SimpleName: postgresqlSimpleName,
 	}
-	postfixQualifiedName = common.QualifiedDoguName{
+	postfixQualifiedName = cescommons.QualifiedDoguName{
 		Namespace:  testDoguNamespace,
 		SimpleName: postfixSimpleName,
 	}
-	ldapQualifiedName = common.QualifiedDoguName{
+	ldapQualifiedName = cescommons.QualifiedDoguName{
 		Namespace:  testDoguNamespace,
 		SimpleName: ldapSimpleName,
 	}
@@ -51,7 +51,7 @@ func TestCalculateDoguHealthResult(t *testing.T) {
 				},
 			},
 			want: DoguHealthResult{
-				DogusByStatus: map[HealthStatus][]common.SimpleDoguName{
+				DogusByStatus: map[HealthStatus][]cescommons.SimpleDoguName{
 					AvailableHealthStatus:   {postgresqlSimpleName},
 					UnavailableHealthStatus: {postfixSimpleName},
 					PendingHealthStatus:     {ldapSimpleName},
@@ -69,18 +69,18 @@ func TestCalculateDoguHealthResult(t *testing.T) {
 func TestDoguHealthResult_String(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]common.SimpleDoguName
+		healthStates map[HealthStatus][]cescommons.SimpleDoguName
 		contains     []string
 		notContains  []string
 	}{
 		{
 			name:         "no dogus should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{},
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{},
 			contains:     []string{"0 dogu(s) are unhealthy: "},
 		},
 		{
 			name: "only available dogus should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
 				AvailableHealthStatus: {"nginx-ingress"},
 			},
 			contains:    []string{"0 dogu(s) are unhealthy: "},
@@ -88,7 +88,7 @@ func TestDoguHealthResult_String(t *testing.T) {
 		},
 		{
 			name: "any dogus not available should be unhealthy",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
 				AvailableHealthStatus:   {"nginx-static"},
 				UnavailableHealthStatus: {postgresqlSimpleName, "redmine"},
 				"other":                 {"scm"},
@@ -119,24 +119,24 @@ func TestDoguHealthResult_String(t *testing.T) {
 func TestDoguHealthResult_AllHealthy(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]common.SimpleDoguName
+		healthStates map[HealthStatus][]cescommons.SimpleDoguName
 		want         bool
 	}{
 		{
 			name:         "should be healthy if empty",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{},
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{},
 			want:         true,
 		},
 		{
 			name: "should be healthy if all are available",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
 				AvailableHealthStatus: {"nginx-ingress", "nginx-static", "postfix"},
 			},
 			want: true,
 		},
 		{
 			name: "should not be healthy if one is not available",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
 				AvailableHealthStatus:   {"nginx-ingress", "nginx-static", "postfix"},
 				UnavailableHealthStatus: {"postfix"},
 			},
@@ -144,7 +144,7 @@ func TestDoguHealthResult_AllHealthy(t *testing.T) {
 		},
 		{
 			name: "should not be healthy if multiple are not available",
-			healthStates: map[HealthStatus][]common.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
 				AvailableHealthStatus:   {"nginx-ingress", "nginx-static", "postfix"},
 				UnavailableHealthStatus: {"postfix", "redmine"},
 				PendingHealthStatus:     {postgresqlSimpleName},

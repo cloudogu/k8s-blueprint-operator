@@ -1,7 +1,7 @@
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -38,6 +38,9 @@ type BlueprintStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="Status",type="string",JSONPath=".status.phase",description="The current status of the resource"
+// +kubebuilder:printcolumn:name="DryRun",type="boolean",JSONPath=".spec.dryRun",description="Whether the resource is started as a dry run"
+// +kubebuilder:printcolumn:name="Age",type="date",JSONPath=".metadata.creationTimestamp",description="The age of the resource"
 
 // Blueprint is the Schema for the blueprints API
 type Blueprint struct {

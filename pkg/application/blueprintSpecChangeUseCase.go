@@ -6,8 +6,8 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 type BlueprintSpecChangeUseCase struct {
@@ -110,6 +110,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 		return nil
 	case domain.StatusPhaseFailed:
 		return nil
+		//FIXME: add StatusPhaseApplyRegistryConfigFailed
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}

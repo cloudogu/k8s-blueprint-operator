@@ -3,7 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"golang.org/x/exp/maps"
 	"testing"
 
@@ -11,8 +11,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 var version3211, _ = core.ParseVersion("3.2.1-1")
@@ -712,7 +712,7 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 
 func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	// given
-	ldapLoggingKey := common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}}
+	ldapLoggingKey := common.SensitiveDoguConfigKey{DoguName: "ldap", Key: "logging/root"}
 	spec := &BlueprintSpec{
 		Blueprint: Blueprint{
 			Config: Config{

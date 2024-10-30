@@ -1,8 +1,8 @@
 package v1
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -86,10 +86,10 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 			domainModel: domain.CombinedDoguConfigDiffs{
 				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/memory_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Value:  "512m",
 							Exists: true,
@@ -98,14 +98,13 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 							Value:  "1024m",
 							Exists: true,
 						},
-						DoguAlreadyInstalled: true,
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction: domain.ConfigActionSet,
 					},
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/swap_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Exists: false,
 						},
@@ -113,8 +112,7 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 							Value:  "512m",
 							Exists: true,
 						},
-						DoguAlreadyInstalled: false,
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction: domain.ConfigActionSet,
 					},
 				},
 			},
@@ -130,8 +128,7 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 							Value:  "1024m",
 							Exists: true,
 						},
-						DoguNotInstalled: false,
-						NeededAction:     "set",
+						NeededAction: "set",
 					},
 					{
 						Key: "container_config/swap_limit",
@@ -142,8 +139,7 @@ func Test_convertToCombinedDoguConfigDiffDTO(t *testing.T) {
 							Value:  "512m",
 							Exists: true,
 						},
-						DoguNotInstalled: true,
-						NeededAction:     "set",
+						NeededAction: "set",
 					},
 				},
 			},
@@ -244,8 +240,7 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 							Value:  "1024m",
 							Exists: true,
 						},
-						DoguNotInstalled: false,
-						NeededAction:     "set",
+						NeededAction: "set",
 					},
 					{
 						Key: "container_config/swap_limit",
@@ -256,18 +251,17 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 							Value:  "512m",
 							Exists: true,
 						},
-						DoguNotInstalled: true,
-						NeededAction:     "set",
+						NeededAction: "set",
 					},
 				},
 			},
 			want: domain.CombinedDoguConfigDiffs{
 				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/memory_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Value:  "512m",
 							Exists: true,
@@ -276,14 +270,13 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 							Value:  "1024m",
 							Exists: true,
 						},
-						DoguAlreadyInstalled: true,
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction: domain.ConfigActionSet,
 					},
 					{
-						Key: common.SensitiveDoguConfigKey{DoguConfigKey: common.DoguConfigKey{
+						Key: common.SensitiveDoguConfigKey{
 							DoguName: "ldap",
 							Key:      "container_config/swap_limit",
-						}},
+						},
 						Actual: domain.DoguConfigValueState{
 							Exists: false,
 						},
@@ -291,8 +284,7 @@ func Test_convertToCombinedDoguConfigDiffDomain(t *testing.T) {
 							Value:  "512m",
 							Exists: true,
 						},
-						DoguAlreadyInstalled: false,
-						NeededAction:         domain.ConfigActionSet,
+						NeededAction: domain.ConfigActionSet,
 					},
 				},
 			},

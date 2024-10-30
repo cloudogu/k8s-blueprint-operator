@@ -2,8 +2,8 @@ package domain
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"slices"
 	"strings"
 )
@@ -77,7 +77,7 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	CombinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs
+	CombinedDogusConfigDiffs map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs
 }
 
 func (e DoguConfigDiffDeterminedEvent) Name() string {

@@ -3,10 +3,10 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"slices"
 )
 
@@ -128,7 +128,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, found := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
+		dogu, found := FindDoguByName(spec.Blueprint.Dogus, cescommons.SimpleDoguName(doguMask.Name.SimpleName))
 		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
@@ -227,7 +227,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 		}
 		if maskDogu.Name.Namespace != dogu.Name.Namespace {
 			if spec.Config.AllowDoguNamespaceSwitch {
-				effectiveDogu.Name.Namespace = maskDogu.Name.Namespace
+				effectiveDogu.Name.Namespace = cescommons.DoguNamespace(maskDogu.Name.Namespace)
 			} else {
 				return Dogu{}, fmt.Errorf(
 					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.Name, maskDogu.Name)
@@ -275,7 +275,9 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	}
 	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
-		ecosystemState,
+		ecosystemState.GlobalConfig,
+		ecosystemState.ConfigByDogu,
+		ecosystemState.SensitiveConfigByDogu,
 	)
 
 	spec.StateDiff = StateDiff{
@@ -457,8 +459,8 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	}
 }
 
-func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
-	var dogusThatNeedRestart []common.SimpleDoguName
+func (spec *BlueprintSpec) GetDogusThatNeedARestart() []cescommons.SimpleDoguName {
+	var dogusThatNeedRestart []cescommons.SimpleDoguName
 	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
 		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {

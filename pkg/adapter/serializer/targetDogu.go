@@ -3,11 +3,11 @@ package serializer
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 // TargetDogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -43,7 +43,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		name, err := common.QualifiedDoguNameFromString(dogu.Name)
+		name, err := cescommons.QualifiedDoguNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

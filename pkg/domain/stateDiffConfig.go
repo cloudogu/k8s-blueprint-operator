@@ -1,9 +1,8 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"slices"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type CombinedDoguConfigDiffs struct {
@@ -18,11 +17,6 @@ const (
 	ConfigActionNone ConfigAction = "none"
 	// ConfigActionSet means that the config key needs to be set as given
 	ConfigActionSet ConfigAction = "set"
-	// ConfigActionSetEncrypted means that the config key needs to be encrypted
-	ConfigActionSetEncrypted ConfigAction = "setEncrypted"
-	// ConfigActionSetToEncrypt means that the config key needs to be encrypted but another service needs to do this.
-	// This can happen if a dogu is not yet installed and therefore no encryption key pair is available.
-	ConfigActionSetToEncrypt ConfigAction = "setToEncrypt"
 	// ConfigActionRemove means that the config key needs to be deleted
 	ConfigActionRemove ConfigAction = "remove"
 )
@@ -40,7 +34,7 @@ func (combinedDiff CombinedDoguConfigDiffs) censorValues() CombinedDoguConfigDif
 	return combinedDiff
 }
 
-func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs) map[ConfigAction]int {
+func countByAction(combinedDogusConfigDiffs map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs) map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, doguDiffs := range combinedDogusConfigDiffs {
 		for _, diff := range doguDiffs.DoguConfigDiff {
@@ -55,23 +49,28 @@ func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDo
 
 func determineConfigDiffs(
 	blueprintConfig Config,
-	clusterState ecosystem.EcosystemState,
-) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, clusterState.DoguConfig, clusterState.DecryptedSensitiveDoguConfig, clusterState.GetInstalledDoguNames()),
-		determineGlobalConfigDiffs(blueprintConfig.Global, clusterState.GlobalConfig)
+	globalConfig config.GlobalConfig,
+	configByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
+	SensitiveConfigByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
+) (map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
+	return determineDogusConfigDiffs(
+			blueprintConfig.Dogus,
+			configByDogu,
+			SensitiveConfigByDogu,
+		),
+		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
 }
 
 func determineDogusConfigDiffs(
-	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
-	actualDoguConfig map[common.DoguConfigKey]*ecosystem.DoguConfigEntry,
-	actualSensitiveDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
-	installedDogus []common.SimpleDoguName,
-) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
-	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}
+	combinedDoguConfigs map[cescommons.SimpleDoguName]CombinedDoguConfig,
+	configByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
+	sensitiveConfigByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
+) map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs {
+	diffsPerDogu := map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = CombinedDoguConfigDiffs{
-			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, actualDoguConfig),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, actualSensitiveDoguConfig, slices.Contains(installedDogus, doguName)),
+			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu),
+			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, sensitiveConfigByDogu),
 		}
 	}
 	return diffsPerDogu

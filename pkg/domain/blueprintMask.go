@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 // BlueprintMask describes an abstraction of CES components that should alter a blueprint definition before
@@ -36,7 +36,7 @@ func (blueprintMask *BlueprintMask) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) common.SimpleDoguName { return dogu.Name.SimpleName })
+	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) cescommons.SimpleDoguName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -44,7 +44,7 @@ func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprintMask *BlueprintMask) FindDoguByName(name common.SimpleDoguName) (MaskDogu, error) {
+func (blueprintMask *BlueprintMask) FindDoguByName(name cescommons.SimpleDoguName) (MaskDogu, error) {
 	for doguIndex, dogu := range blueprintMask.Dogus {
 		if dogu.Name.SimpleName == name {
 			return blueprintMask.Dogus[doguIndex], nil

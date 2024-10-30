@@ -2,9 +2,9 @@ package application
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 type blueprintSpecValidationUseCase interface {
@@ -98,20 +98,17 @@ type remoteDoguRegistry interface {
 type maintenanceMode interface {
 	domainservice.MaintenanceMode
 }
-type globalConfigEntryRepository interface {
-	domainservice.GlobalConfigEntryRepository
+
+type globalConfigRepository interface {
+	domainservice.GlobalConfigRepository
 }
 
-type doguConfigEntryRepository interface {
-	domainservice.DoguConfigEntryRepository
+type doguConfigRepository interface {
+	domainservice.DoguConfigRepository
 }
 
-type sensitiveDoguConfigEntryRepository interface {
-	domainservice.SensitiveDoguConfigEntryRepository
-}
-
-type configEncryptionAdapter interface {
-	domainservice.ConfigEncryptionAdapter
+type sensitiveDoguConfigRepository interface {
+	domainservice.SensitiveDoguConfigRepository
 }
 
 type doguRestartRepository interface {

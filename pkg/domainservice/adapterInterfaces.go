@@ -5,35 +5,36 @@ import (
 	"errors"
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 
 	"github.com/cloudogu/cesapp-lib/core"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
-	// a NotFoundError if the dogu is not installed or
-	// an InternalError if there is any other error.
+	//  - a NotFoundError if the dogu is not installed or
+	//  - an InternalError if there is any other error.
 	GetByName(ctx context.Context, doguName cescommons.SimpleDoguName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
-	// an InternalError if there is any other error.
+	//  - an InternalError if there is any other error.
 	GetAll(ctx context.Context) (map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
-	// a ConflictError if there is already a DoguInstallation with this name or
-	// an InternalError if there is any error while saving the DoguInstallation
+	//  - a ConflictError if there is already a DoguInstallation with this name or
+	//  - an InternalError if there is any error while saving the DoguInstallation
 	Create(ctx context.Context, dogu *ecosystem.DoguInstallation) error
 	// Update updates an ecosystem.DoguInstallation in the ecosystem.
-	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
-	// TODO: also return NotFoundErrors? Does k8s supply this error to us?
-	// returns an InternalError if there is any other error
+	//  - returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	//  - returns a NotFoundError if the DoguInstallation was not found or
+	//  - returns an InternalError if there is any other error
 	Update(ctx context.Context, dogu *ecosystem.DoguInstallation) error
 	// Delete removes the given ecosystem.DoguInstallation completely from the ecosystem.
 	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
-	// returns a ConflictError if there were changes on the DoguInstallation in the meantime or
-	// returns an InternalError if there is any other error
+	//  - returns a ConflictError if there were changes on the DoguInstallation in the meantime or
+	//  - returns an InternalError if there is any other error
 	Delete(ctx context.Context, doguName cescommons.SimpleDoguName) error
 }
 
@@ -96,43 +97,16 @@ type DoguToLoad struct {
 }
 
 type MaintenanceMode interface {
-	// Activate enables the maintenance mode with the given page model.
-	// May throw a generic InternalError or a ConflictError if another party activated the maintenance mode.
-	Activate(content MaintenancePageModel) error
+	// Activate enables the maintenance mode with the given title and text.
+	// May throw
+	//  - a ConflictError if another party activated the maintenance mode or
+	//  - a generic InternalError due to a connection error or an unknown error.
+	Activate(ctx context.Context, title, text string) error
 	// Deactivate disables the maintenance mode if it is active.
-	// May throw a generic InternalError or a ConflictError if another party holds the maintenance mode lock.
-	Deactivate() error
-}
-
-// MaintenancePageModel contains data that gets displayed when the maintenance mode is active.
-type MaintenancePageModel struct {
-	Title string
-	Text  string
-}
-
-type ConfigEncryptionAdapter interface {
-	// Encrypt encrypts the given value for a dogu.
-	// It can throw an InternalError if the encryption did not succeed, public key is missing or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	Encrypt(context.Context, cescommons.SimpleDoguName, common.SensitiveDoguConfigValue) (common.EncryptedDoguConfigValue, error)
-	// EncryptAll encrypts the given values for a dogu.
-	// If the encryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been encrypted.
-	// It can throw an InternalError if the encryption did not succeed or config store is not reachable.
-	// It can throw a NotFoundError if the encryption key is not found.
-	EncryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue, error)
-	// Decrypt decrypts sensitive dogu values.
-	// It can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	Decrypt(context.Context, cescommons.SimpleDoguName, common.EncryptedDoguConfigValue) (common.SensitiveDoguConfigValue, error)
-	// DecryptAll decrypts a map of sensitive dogu values.
-	// If the decryption fails on a part of the values, the resulting error is returned along with a map that only holds
-	// the values that could have been decrypted.
-	// This method can throw
-	//  - NotFoundError if decryption key is not found
-	//  - InternalError in any other error case
-	DecryptAll(context.Context, map[common.SensitiveDoguConfigKey]common.EncryptedDoguConfigValue) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error)
+	// May throw
+	//  - a ConflictError if another party initially activated the maintenance mode or
+	//  - a generic InternalError due to a connection error or an unknown error.
+	Deactivate(ctx context.Context) error
 }
 
 type DoguRestartRepository interface {
@@ -140,109 +114,59 @@ type DoguRestartRepository interface {
 	RestartAll(context.Context, []cescommons.SimpleDoguName) error
 }
 
-type GlobalConfigEntryRepository interface {
-	// Get retrieves a key from the global config.
+// GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
+type GlobalConfigRepository interface {
+	// Get retrieves the whole global config.
 	// It can throw the following errors:
-	// 	- NotFoundError if the key or the global config is not found.
+	// 	- NotFoundError if the global config was not found.
 	// 	- InternalError if any other error happens.
-	Get(context.Context, common.GlobalConfigKey) (*ecosystem.GlobalConfigEntry, error)
-	// GetAllByKey retrieves entries for the given keys from the global config.
+	Get(ctx context.Context) (config.GlobalConfig, error)
+	// Update persists the whole global config.
 	// It can throw the following errors:
-	// 	- NotFoundError if a key or the global config is not found.
-	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.GlobalConfigKey) (map[common.GlobalConfigKey]*ecosystem.GlobalConfigEntry, error)
-	// Save persists the global config.
-	// It can throw the following errors:
+	//  - NotFoundError if the global config was not found to update it.
 	//  - ConflictError if there were concurrent write accesses.
 	//  - InternalError if any other error happens.
-	Save(context.Context, *ecosystem.GlobalConfigEntry) error
-	// SaveAll persists all given config keys.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.GlobalConfigEntry) error
-	// Delete deletes a global config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent, no error will be returned.
-	Delete(context.Context, common.GlobalConfigKey) error
-	// DeleteAllByKeys deletes all given global config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.GlobalConfigKey) error
+	Update(ctx context.Context, config config.GlobalConfig) (config.GlobalConfig, error)
 }
 
-type DoguConfigEntryRepository interface {
-	// Get retrieves a key from the dogu's config.
+// DoguConfigRepository to get and update normal dogu config. The config is always handled as a whole.
+type DoguConfigRepository interface {
+	// Get retrieves the normal config for the given dogu.
 	// It can throw the following errors:
-	// 	- NotFoundError if the key is not found.
+	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
-	Get(context.Context, common.DoguConfigKey) (*ecosystem.DoguConfigEntry, error)
-	// GetAllByKey retrieves all ecosystem.DoguConfigEntry's for the given ecosystem.DoguConfigKey's config.
-	// It can trow the following errors:
-	// 	- NotFoundError if there is no config for the dogu.
+	Get(ctx context.Context, doguName cescommons.SimpleDoguName) (config.DoguConfig, error)
+	// GetAll retrieves the normal config for all given dogus as a map from doguName to config.
+	// It can throw the following errors:
+	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.DoguConfigKey) (map[common.DoguConfigKey]*ecosystem.DoguConfigEntry, error)
-	// Save persists the config for the given dogu. Config can be set even if the dogu is not yet installed.
+	GetAll(ctx context.Context, doguNames []cescommons.SimpleDoguName) (map[cescommons.SimpleDoguName]config.DoguConfig, error)
+	// GetAllExisting retrieves the normal config for all given dogus as a map from doguName to config and
+	// includes not found configs as empty configs.
 	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	Save(context.Context, *ecosystem.DoguConfigEntry) error
-	// SaveAll persists all given config keys. Configs can be set even if the dogus are not installed.
+	// 	- InternalError if any other error happens.
+	GetAllExisting(ctx context.Context, doguNames []cescommons.SimpleDoguName) (map[cescommons.SimpleDoguName]config.DoguConfig, error)
+	// Update persists the whole given config.
 	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.DoguConfigEntry) error
-	// Delete deletes a dogu config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(context.Context, common.DoguConfigKey) error
-	// DeleteAllByKeys deletes all given dogu config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.DoguConfigKey) error
+	//  - NotFoundError if the dogu config was not found to update it.
+	//  - ConflictError if there were concurrent write accesses.
+	//  - InternalError if any other error happens.
+	Update(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	// Create creates the data structure for the config and persists the given entries.
+	// It can throw the following errors:
+	//  - ConflictError if there already is a config.
+	//  - InternalError if any other error happens.
+	Create(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
+	// UpdateOrCreate updates the config if it already exists, otherwise creates it with the given content.
+	// It can throw the following errors:
+	//  - ConflictError if there already is a config.
+	//  - InternalError if any other error happens.
+	UpdateOrCreate(ctx context.Context, config config.DoguConfig) (config.DoguConfig, error)
 }
 
-type SensitiveDoguConfigEntryRepository interface {
-	// Get retrieves a key from the dogu's sensitive config.
-	// It can throw the following errors:
-	// 	- NotFoundError if the key is not found.
-	// 	- InternalError if any other error happens.
-	Get(context.Context, common.SensitiveDoguConfigKey) (*ecosystem.SensitiveDoguConfigEntry, error)
-	// GetAllByKey retrieves a dogu's sensitive config for the given keys.
-	// It can trow the following errors:
-	// 	- NotFoundError if there is no config for the dogu.
-	// 	- InternalError if any other error happens.
-	GetAllByKey(context.Context, []common.SensitiveDoguConfigKey) (map[common.SensitiveDoguConfigKey]*ecosystem.SensitiveDoguConfigEntry, error)
-	// Save persists the sensitive config for the given dogu. Config can be set even if the dogu is not yet installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	Save(context.Context, *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveForNotInstalledDogu persists the config for the given dogu. In contrast to Save or SaveAll the dogu is not
-	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
-	SaveForNotInstalledDogu(ctx context.Context, entry *ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAllForNotInstalledDogu persists all given configs for the given dogu. In contrast to Save or SaveAll the dogu is not
-	// already installed and no public key exists. However, the value should be encrypted and the repository must decide how.
-	// It can throw the following errors:
-	//  - InternalError if any error happens.
-	SaveAllForNotInstalledDogu(context.Context, cescommons.SimpleDoguName, []*ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAllForNotInstalledDogus persists all given configs for the given sensitive dogu entries.
-	// It can throw the following errors:
-	//  - InternalError if any error happens.
-	SaveAllForNotInstalledDogus(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
-	// SaveAll persists all given sensitive config keys. sensitive configs can be set even if the dogus are not installed.
-	// It can throw the following errors:
-	//	- ConflictError if there were concurrent write accesses.
-	//	- InternalError if any other error happens.
-	SaveAll(context.Context, []*ecosystem.SensitiveDoguConfigEntry) error
-	// Delete deletes a sensitive dogu config key.
-	// It can throw an InternalError if any error happens.
-	// If the key is not existent no error will be returned.
-	Delete(context.Context, common.SensitiveDoguConfigKey) error
-	// DeleteAllByKeys deletes all given sensitive dogu config keys.
-	// It can throw an InternalError if any error happens.
-	// If any key is not existent, no error will be returned for that case.
-	DeleteAllByKeys(context.Context, []common.SensitiveDoguConfigKey) error
+// SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.
+type SensitiveDoguConfigRepository interface {
+	DoguConfigRepository //interfaces are the same yet. Don't hesitate to split them if they diverge
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
@@ -300,10 +224,21 @@ func (e *InternalError) Unwrap() error {
 	return e.WrappedError
 }
 
+func IsInternalError(err error) bool {
+	var internalError *InternalError
+	return errors.As(err, &internalError)
+}
+
 // ConflictError is a common error indicating that the aggregate was modified in the meantime.
 type ConflictError struct {
 	WrappedError error
 	Message      string
+}
+
+// NewConflictError creates an ConflictError with a given message. The wrapped error may be nil. The error message must
+// omit the fmt.Errorf verb %w because this is done by ConflictError.Error().
+func NewConflictError(wrappedError error, message string, msgArgs ...any) *ConflictError {
+	return &ConflictError{WrappedError: wrappedError, Message: fmt.Sprintf(message, msgArgs...)}
 }
 
 // Error marks the struct as an error.
@@ -317,4 +252,9 @@ func (e *ConflictError) Error() string {
 // Unwrap is used to make it work with errors.Is, errors.As.
 func (e *ConflictError) Unwrap() error {
 	return e.WrappedError
+}
+
+func IsConflictError(err error) bool {
+	var conflictError *ConflictError
+	return errors.As(err, &conflictError)
 }

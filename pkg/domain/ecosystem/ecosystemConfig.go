@@ -1,6 +1,6 @@
 package ecosystem
 
-import "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+import "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 type RegistryConfigEntry interface {
 	*GlobalConfigEntry | *DoguConfigEntry | *SensitiveDoguConfigEntry
@@ -26,7 +26,7 @@ type DoguConfigEntry struct {
 
 type SensitiveDoguConfigEntry struct {
 	Key   common.SensitiveDoguConfigKey
-	Value common.EncryptedDoguConfigValue
+	Value common.SensitiveDoguConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.

@@ -3,9 +3,9 @@ package application
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domainservice"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -27,7 +27,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	}
 
 	logger.Info("searching for Dogus that need a restart...")
-	var dogusThatNeedARestart []common.SimpleDoguName
+	var dogusThatNeedARestart []cescommons.SimpleDoguName
 
 	if blueprintSpec.StateDiff.GlobalConfigDiffs.HasChanges() {
 		logger.Info("restarting all installed Dogus...")
@@ -61,7 +61,7 @@ func (useCase *DoguRestartUseCase) restartAllInstalledDogus(ctx context.Context)
 	if getInstalledDogusError != nil {
 		return domainservice.NewInternalError(getInstalledDogusError, "could not get all installed Dogus")
 	}
-	var installedDogusSimpleNames []common.SimpleDoguName
+	var installedDogusSimpleNames []cescommons.SimpleDoguName
 	for _, installation := range installedDogus {
 		installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
 	}

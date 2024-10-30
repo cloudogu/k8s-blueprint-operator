@@ -24,10 +24,10 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	"github.com/cloudogu/k8s-blueprint-operator/pkg"
-	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/kubernetes/blueprintcr/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/config"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
+	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	// +kubebuilder:scaffold:imports
 )
 

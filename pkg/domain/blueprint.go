@@ -3,8 +3,9 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 // Blueprint describes an abstraction of CES components that should be absent or present within one or more CES
@@ -48,7 +49,7 @@ func (blueprint *Blueprint) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprint *Blueprint) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) common.SimpleDoguName { return dogu.Name.SimpleName })
+	doguNames := util.Map(blueprint.Dogus, func(dogu Dogu) cescommons.SimpleDoguName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)

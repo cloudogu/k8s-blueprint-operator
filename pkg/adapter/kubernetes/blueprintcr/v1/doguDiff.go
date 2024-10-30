@@ -3,11 +3,11 @@ package v1
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 // DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
@@ -138,9 +138,9 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 	}
 
 	return domain.DoguDiff{
-		DoguName: common.SimpleDoguName(doguName),
+		DoguName: cescommons.SimpleDoguName(doguName),
 		Actual: domain.DoguDiffState{
-			Namespace:         common.DoguNamespace(dto.Actual.Namespace),
+			Namespace:         cescommons.DoguNamespace(dto.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
 			MinVolumeSize:     actualMinVolumeSize,
@@ -151,7 +151,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 			},
 		},
 		Expected: domain.DoguDiffState{
-			Namespace:         common.DoguNamespace(dto.Expected.Namespace),
+			Namespace:         cescommons.DoguNamespace(dto.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
 			MinVolumeSize:     expectedMinVolumeSize,

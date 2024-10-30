@@ -1,11 +1,13 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/util"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-type SensitiveDoguConfigDiffs []SensitiveDoguConfigEntryDiff
+type SensitiveDoguConfigDiffs = DoguConfigDiffs
 
 func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[ConfigAction][]SensitiveDoguConfigEntryDiff {
 	return util.GroupBy(diffs, func(diff SensitiveDoguConfigEntryDiff) ConfigAction {
@@ -13,23 +15,7 @@ func (diffs SensitiveDoguConfigDiffs) GetSensitiveDoguConfigDiffByAction() map[C
 	})
 }
 
-type SensitiveDoguConfigEntryDiff struct {
-	Key                  common.SensitiveDoguConfigKey
-	Actual               DoguConfigValueState
-	Expected             DoguConfigValueState
-	DoguAlreadyInstalled bool
-	NeededAction         ConfigAction
-}
-
-func NewDoguConfigValueStateFromSensitiveValue(actualValue common.SensitiveDoguConfigValue, actualExists bool) DoguConfigValueState {
-	if !actualExists {
-		actualValue = ""
-	}
-	return DoguConfigValueState{
-		Value:  string(actualValue),
-		Exists: actualExists,
-	}
-}
+type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newSensitiveDoguConfigEntryDiff(
 	key common.SensitiveDoguConfigKey,
@@ -37,49 +23,37 @@ func newSensitiveDoguConfigEntryDiff(
 	actualExists bool,
 	expectedValue common.SensitiveDoguConfigValue,
 	expectedExists bool,
-	doguAlreadyInstalled bool,
 ) SensitiveDoguConfigEntryDiff {
-	actual := NewDoguConfigValueStateFromSensitiveValue(actualValue, actualExists)
+	actual := DoguConfigValueState{
+		Value:  string(actualValue),
+		Exists: actualExists,
+	}
 	expected := DoguConfigValueState{
 		Value:  string(expectedValue),
 		Exists: expectedExists,
 	}
 	return SensitiveDoguConfigEntryDiff{
-		Key:                  key,
-		Actual:               actual,
-		Expected:             expected,
-		DoguAlreadyInstalled: doguAlreadyInstalled,
-		NeededAction:         getNeededSensitiveConfigAction(ConfigValueState(expected), ConfigValueState(actual), doguAlreadyInstalled),
+		Key:          key,
+		Actual:       actual,
+		Expected:     expected,
+		NeededAction: getNeededConfigAction(ConfigValueState(expected), ConfigValueState(actual)),
 	}
 }
 
 func determineSensitiveDoguConfigDiffs(
-	config SensitiveDoguConfig,
-	actualDoguConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
-	doguAlreadyInstalled bool,
+	wantedConfig SensitiveDoguConfig,
+	actualConfig map[cescommons.SimpleDoguName]config.DoguConfig,
 ) SensitiveDoguConfigDiffs {
 	var doguConfigDiff []SensitiveDoguConfigEntryDiff
 	// present entries
-	for key, expectedValue := range config.Present {
-		actualValue, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, expectedValue, true, doguAlreadyInstalled))
+	for key, expectedValue := range wantedConfig.Present {
+		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, exists, expectedValue, true))
 	}
 	// absent entries
-	for _, key := range config.Absent {
-		actualValue, actualExists := actualDoguConfig[key]
-		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualValue, actualExists, "", false, doguAlreadyInstalled))
+	for _, key := range wantedConfig.Absent {
+		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
+		doguConfigDiff = append(doguConfigDiff, newSensitiveDoguConfigEntryDiff(key, actualEntry, exists, "", false))
 	}
 	return doguConfigDiff
-}
-
-func getNeededSensitiveConfigAction(expected ConfigValueState, actual ConfigValueState, doguAlreadyInstalled bool) ConfigAction {
-	action := getNeededConfigAction(expected, actual)
-	if action == ConfigActionSet {
-		if !doguAlreadyInstalled {
-			return ConfigActionSetToEncrypt
-		} else {
-			return ConfigActionSetEncrypted
-		}
-	}
-	return action
 }
