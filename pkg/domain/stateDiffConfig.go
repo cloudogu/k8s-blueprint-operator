@@ -48,7 +48,7 @@ func determineConfigDiffs(
 	GlobalConfigDiffs,
 ) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu),
-		determineDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu),
+		determineSensitiveDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu),
 		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
 }
 
@@ -59,6 +59,17 @@ func determineDogusConfigDiffs(
 	diffsPerDogu := map[common.SimpleDoguName]DoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu)
+	}
+	return diffsPerDogu
+}
+
+func determineSensitiveDogusConfigDiffs(
+	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+) map[common.SimpleDoguName]DoguConfigDiffs {
+	diffsPerDogu := map[common.SimpleDoguName]DoguConfigDiffs{}
+	for doguName, combinedDoguConfig := range combinedDoguConfigs {
+		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, configByDogu)
 	}
 	return diffsPerDogu
 }

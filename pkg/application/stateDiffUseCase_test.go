@@ -555,23 +555,20 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		expectedConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			"nginx-static": {
-				DoguConfigDiff: []domain.DoguConfigEntryDiff{
-					{
-						Key:          nginxStaticConfigKeyNginxKey1,
-						Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
-						Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
-						NeededAction: domain.ConfigActionSet,
-					},
-					{
-						Key:          nginxStaticConfigKeyNginxKey2,
-						Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
-						Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
-						NeededAction: domain.ConfigActionRemove,
-					},
+		expectedConfigDiff := map[common.SimpleDoguName]domain.DoguConfigDiffs{
+			nginxStatic: {
+				domain.DoguConfigEntryDiff{
+					Key:          nginxStaticConfigKeyNginxKey1,
+					Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
+					NeededAction: domain.ConfigActionSet,
 				},
-				SensitiveDoguConfigDiff: nil,
+				domain.DoguConfigEntryDiff{
+					Key:          nginxStaticConfigKeyNginxKey2,
+					Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
+					NeededAction: domain.ConfigActionRemove,
+				},
 			},
 		}
 		assert.Equal(t, expectedConfigDiff, blueprint.StateDiff.DoguConfigDiffs)
@@ -583,8 +580,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
-						nginxStaticQualifiedDoguName.SimpleName: {
-							DoguName: nginxStaticQualifiedDoguName.SimpleName,
+						nginxStatic: {
+							DoguName: nginxStatic,
 							SensitiveConfig: domain.SensitiveDoguConfig{
 								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 									nginxStaticSensitiveConfigKeyNginxKey1: "nginxVal1",
@@ -642,25 +639,23 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		expectedConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			"nginx-static": {
-				SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-					{
-						Key:          nginxStaticSensitiveConfigKeyNginxKey1,
-						Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
-						Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
-						NeededAction: domain.ConfigActionSet,
-					},
-					{
-						Key:          nginxStaticSensitiveConfigKeyNginxKey2,
-						Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
-						Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
-						NeededAction: domain.ConfigActionRemove,
-					},
+		expectedConfigDiff := map[common.SimpleDoguName]domain.DoguConfigDiffs{
+			nginxStatic: {
+				{
+					Key:          nginxStaticSensitiveConfigKeyNginxKey1,
+					Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
+					NeededAction: domain.ConfigActionSet,
+				},
+				{
+					Key:          nginxStaticSensitiveConfigKeyNginxKey2,
+					Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
+					NeededAction: domain.ConfigActionRemove,
 				},
 			},
 		}
-		assert.Equal(t, expectedConfigDiff, blueprint.StateDiff.DoguConfigDiffs)
+		assert.Equal(t, expectedConfigDiff, blueprint.StateDiff.SensitiveDoguConfigDiffs)
 	})
 }
 

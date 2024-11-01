@@ -49,13 +49,19 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 		logger.Info("dogu config diffs are empty...")
 	}
 
+	sensitiveDoguConfigDiffs := blueprintSpec.StateDiff.SensitiveDoguConfigDiffs
+	isEmptySensitiveDiff := len(sensitiveDoguConfigDiffs) == 0
+	if isEmptySensitiveDiff {
+		logger.Info("sensitive dogu config diffs are empty...")
+	}
+
 	globalConfigDiffs := blueprintSpec.StateDiff.GlobalConfigDiffs
 	isEmptyGlobalDiff := len(globalConfigDiffs) == 0
 	if isEmptyGlobalDiff {
 		logger.Info("global config diffs are empty...")
 	}
 
-	if isEmptyDoguDiff && isEmptyGlobalDiff {
+	if isEmptyDoguDiff && isEmptyGlobalDiff && isEmptySensitiveDiff {
 		return useCase.markConfigApplied(ctx, blueprintSpec)
 	}
 
@@ -71,7 +77,7 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 	}
 	err = applyDoguConfigDiffs(ctx, useCase.sensitiveDoguConfigRepository, blueprintSpec.StateDiff.SensitiveDoguConfigDiffs)
 	if err != nil {
-		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply normal dogu config: %w", err))
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply sensitive dogu config: %w", err))
 	}
 	err = useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction())
 	if err != nil {
