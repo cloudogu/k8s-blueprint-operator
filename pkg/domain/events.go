@@ -91,7 +91,6 @@ func (e DoguConfigDiffDeterminedEvent) Name() string {
 }
 
 func (e DoguConfigDiffDeterminedEvent) Message() string {
-	// TODO for review: decide if we keep a multiline string as event or add a second event (type) for sensitive config
 	return fmt.Sprintf(
 		"dogu config diff determined: %s",
 		generateDoguConfigDiffCounterString(e.DoguConfigDiffs),
