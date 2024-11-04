@@ -24,14 +24,15 @@ func Test_determineConfigDiff(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
 		emptyConfig := Config{}
 
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
+		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			emptyConfig,
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[common.SimpleDoguName]config.DoguConfig{},
 			map[common.SimpleDoguName]config.DoguConfig{},
 		)
 
-		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]DoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
@@ -58,7 +59,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
+		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
 			map[common.SimpleDoguName]config.DoguConfig{},
@@ -66,7 +67,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 
 		//then
-		assert.Equal(t, map[common.SimpleDoguName]CombinedDoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]DoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[common.SimpleDoguName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
 		assert.Equal(t, 4, len(globalConfigDiff))
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key1",
@@ -149,7 +151,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
+		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
 			map[common.SimpleDoguName]config.DoguConfig{
@@ -160,9 +162,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
-		assert.Equal(t, SensitiveDoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff)
-		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"].DoguConfigDiff))
-		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
+		assert.Equal(t, SensitiveDoguConfigDiffs(nil), sensitiveConfigDiffs["dogu1"])
+		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"]))
+		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key1,
 			Actual: DoguConfigValueState{
 				Value:  "value",
@@ -174,7 +176,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			},
 			NeededAction: ConfigActionNone,
 		})
-		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
+		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key2,
 			Actual: DoguConfigValueState{
 				Value:  "value",
@@ -186,7 +188,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			},
 			NeededAction: ConfigActionSet,
 		})
-		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
+		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key3,
 			Actual: DoguConfigValueState{
 				Value:  "value",
@@ -202,7 +204,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		//Actual:domain.DoguConfigValueState{Value:"value", Exists:true},
 		//Expected:domain.DoguConfigValueState{Value:"", Exists:false},
 		//NeededAction:"set"}
-		assert.Contains(t, dogusConfigDiffs["dogu1"].DoguConfigDiff, DoguConfigEntryDiff{
+		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key4,
 			Actual: DoguConfigValueState{
 				Value:  "",
@@ -246,7 +248,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, globalConfigDiff := determineConfigDiffs(
+		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
 			map[common.SimpleDoguName]config.DoguConfig{},
@@ -257,8 +259,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
-		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"].DoguConfigDiff)
-		assert.Equal(t, 3, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
+		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"])
+		assert.Equal(t, 3, len(sensitiveConfigDiffs["dogu1"]))
 
 		entriesDogu1 := []SensitiveDoguConfigEntryDiff{
 			{
@@ -298,7 +300,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				NeededAction: ConfigActionNone,
 			},
 		}
-		assert.ElementsMatch(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff, entriesDogu1)
+		assert.ElementsMatch(t, sensitiveConfigDiffs["dogu1"], entriesDogu1)
 	})
 	t.Run("all actions for sensitive dogu config for absent dogu", func(t *testing.T) {
 		//given ecosystem config
@@ -327,7 +329,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		}
 
 		//when
-		dogusConfigDiffs, _ := determineConfigDiffs(
+		dogusConfigDiffs, sensitiveConfigDiffs, _ := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
 			map[common.SimpleDoguName]config.DoguConfig{
@@ -339,8 +341,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 		//then
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
-		require.Equal(t, 1, len(dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff))
-		assert.Equal(t, dogusConfigDiffs["dogu1"].SensitiveDoguConfigDiff[0], SensitiveDoguConfigEntryDiff{
+		require.Equal(t, 1, len(sensitiveConfigDiffs["dogu1"]))
+		assert.Equal(t, sensitiveConfigDiffs["dogu1"][0], SensitiveDoguConfigEntryDiff{
 			Key: sensitiveDogu1Key1,
 			Actual: DoguConfigValueState{
 				Value:  "",
@@ -414,153 +416,118 @@ func Test_getNeededConfigAction(t *testing.T) {
 }
 
 func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
-	t.Run("Not censoring normal dogu config", func(t *testing.T) {
-		//given
-		configDiff := CombinedDoguConfigDiffs{
-			DoguConfigDiff: []DoguConfigEntryDiff{
-				{
-					Key: common.DoguConfigKey{
-						DoguName: "ldap",
-						Key:      "logging/root",
-					},
-					Actual: DoguConfigValueState{
-						Value:  "ERROR",
-						Exists: false,
-					},
-					Expected: DoguConfigValueState{
-						Value:  "DEBUG",
-						Exists: false,
-					},
-					NeededAction: "Update",
-				},
-			},
-		}
 
-		//when
-		result := configDiff.censorValues()
-
-		require.Len(t, result.DoguConfigDiff, 1)
-
-		assert.Equal(t, "ldap", string(result.DoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", string(result.DoguConfigDiff[0].Key.Key))
-		assert.Equal(t, "ERROR", result.DoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, false, result.DoguConfigDiff[0].Actual.Exists)
-		assert.Equal(t, "DEBUG", result.DoguConfigDiff[0].Expected.Value)
-		assert.Equal(t, false, result.DoguConfigDiff[0].Expected.Exists)
-		assert.Equal(t, "Update", string(result.DoguConfigDiff[0].NeededAction))
-	})
-
-	t.Run("Censoring sensitive dogu config", func(t *testing.T) {
-		//given
-		configDiff := CombinedDoguConfigDiffs{
-			SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
-				{
-					Key: common.SensitiveDoguConfigKey{
-						DoguName: "ldap",
-						Key:      "logging/root",
-					},
-					Actual: DoguConfigValueState{
-						Value:  "ERROR",
-						Exists: false,
-					},
-					Expected: DoguConfigValueState{
-						Value:  "DEBUG",
-						Exists: false,
-					},
-					NeededAction: "Update",
-				},
-			},
-		}
-
-		//when
-		result := configDiff.censorValues()
-
-		require.Len(t, result.SensitiveDoguConfigDiff, 1)
-
-		assert.Equal(t, "ldap", string(result.SensitiveDoguConfigDiff[0].Key.DoguName))
-		assert.Equal(t, "logging/root", string(result.SensitiveDoguConfigDiff[0].Key.Key))
-		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Actual.Exists)
-		assert.Equal(t, censorValue, result.SensitiveDoguConfigDiff[0].Expected.Value)
-		assert.Equal(t, false, result.SensitiveDoguConfigDiff[0].Expected.Exists)
-		assert.Equal(t, "Update", string(result.SensitiveDoguConfigDiff[0].NeededAction))
-	})
-
-	t.Run("Not censoring sensitive, but empty dogu config", func(t *testing.T) {
-		//given
-		configDiff := CombinedDoguConfigDiffs{
-			SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
-				{
-					Actual: DoguConfigValueState{
-						Value: "",
-					},
-					Expected: DoguConfigValueState{
-						Value: "",
-					},
-				},
-			},
-		}
-
-		//when
-		result := configDiff.censorValues()
-
-		require.Len(t, result.SensitiveDoguConfigDiff, 1)
-
-		assert.Equal(t, "", result.SensitiveDoguConfigDiff[0].Actual.Value)
-		assert.Equal(t, "", result.SensitiveDoguConfigDiff[0].Expected.Value)
-	})
 }
 
-func TestCombinedDoguConfigDiffs_HasChanges(t *testing.T) {
-	type fields struct {
-		DoguConfigDiff          DoguConfigDiffs
-		SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
-	}
+//func TestCombinedDoguConfigDiffs_HasChanges(t *testing.T) {
+//	type fields struct {
+//		DoguConfigDiff          DoguConfigDiffs
+//		SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
+//	}
+//	tests := []struct {
+//		name   string
+//		fields fields
+//		want   bool
+//	}{
+//		{
+//			name: "false on empty input",
+//			fields: fields{
+//				DoguConfigDiff:          []DoguConfigEntryDiff{},
+//				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{},
+//			},
+//			want: false,
+//		},
+//		{
+//			name: "true on non-empty Dogu config diff",
+//			fields: fields{
+//				DoguConfigDiff: []DoguConfigEntryDiff{{
+//					Key:          common.DoguConfigKey{DoguName: "testdogu", Key: "testkey"},
+//					Actual:       DoguConfigValueState{Value: "changed", Exists: true},
+//					Expected:     DoguConfigValueState{"initial", true},
+//					NeededAction: ConfigActionSet}},
+//				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{},
+//			},
+//			want: true,
+//		},
+//		{
+//			name: "true on non-empty sensitive config diff",
+//			fields: fields{
+//				DoguConfigDiff: []DoguConfigEntryDiff{},
+//				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{{
+//					Key:          common.SensitiveDoguConfigKey{DoguName: "testdogu", Key: "testkey"},
+//					Actual:       DoguConfigValueState{Value: "changed", Exists: true},
+//					Expected:     DoguConfigValueState{"initial", true},
+//					NeededAction: ConfigActionSet}},
+//			},
+//			want: true,
+//		},
+//	}
+//	for _, tt := range tests {
+//		t.Run(tt.name, func(t *testing.T) {
+//			combinedDiff := CombinedDoguConfigDiffs{
+//				DoguConfigDiff:          tt.fields.DoguConfigDiff,
+//				SensitiveDoguConfigDiff: tt.fields.SensitiveDoguConfigDiff,
+//			}
+//			assert.Equalf(t, tt.want, combinedDiff.HasChanges(), "HasChanges()")
+//		})
+//	}
+//}
+
+func Test_censorValues(t *testing.T) {
 	tests := []struct {
-		name   string
-		fields fields
-		want   bool
+		name         string
+		configByDogu map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+		want         map[common.SimpleDoguName]SensitiveDoguConfigDiffs
 	}{
 		{
-			name: "false on empty input",
-			fields: fields{
-				DoguConfigDiff:          []DoguConfigEntryDiff{},
-				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{},
-			},
-			want: false,
+			name:         "no diff at all",
+			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
+			want:         map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
 		},
 		{
-			name: "true on non-empty Dogu config diff",
-			fields: fields{
-				DoguConfigDiff: []DoguConfigEntryDiff{{
-					Key:          common.DoguConfigKey{DoguName: "testdogu", Key: "testkey"},
-					Actual:       DoguConfigValueState{Value: "changed", Exists: true},
-					Expected:     DoguConfigValueState{"initial", true},
-					NeededAction: ConfigActionSet}},
-				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{},
+			name: "no diff for dogu",
+			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+				dogu1: {},
 			},
-			want: true,
+			want: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+				dogu1: {},
+			},
 		},
 		{
-			name: "true on non-empty sensitive config diff",
-			fields: fields{
-				DoguConfigDiff: []DoguConfigEntryDiff{},
-				SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{{
-					Key:          common.SensitiveDoguConfigKey{DoguName: "testdogu", Key: "testkey"},
-					Actual:       DoguConfigValueState{Value: "changed", Exists: true},
-					Expected:     DoguConfigValueState{"initial", true},
-					NeededAction: ConfigActionSet}},
+			name: "censored actual and expected values",
+			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+				dogu1: {DoguConfigEntryDiff{
+					Key: dogu1Key1,
+					Actual: DoguConfigValueState{
+						Value:  "123",
+						Exists: true,
+					},
+					Expected: DoguConfigValueState{
+						Value:  "1234",
+						Exists: true,
+					},
+					NeededAction: ConfigActionSet,
+				}},
 			},
-			want: true,
+			want: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+				dogu1: {DoguConfigEntryDiff{
+					Key: dogu1Key1,
+					Actual: DoguConfigValueState{
+						Value:  censorValue,
+						Exists: true,
+					},
+					Expected: DoguConfigValueState{
+						Value:  censorValue,
+						Exists: true,
+					},
+					NeededAction: ConfigActionSet,
+				}},
+			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			combinedDiff := CombinedDoguConfigDiffs{
-				DoguConfigDiff:          tt.fields.DoguConfigDiff,
-				SensitiveDoguConfigDiff: tt.fields.SensitiveDoguConfigDiff,
-			}
-			assert.Equalf(t, tt.want, combinedDiff.HasChanges(), "HasChanges()")
+			assert.Equalf(t, tt.want, censorValues(tt.configByDogu), "censorValues(%v)", tt.configByDogu)
 		})
 	}
 }

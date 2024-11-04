@@ -122,22 +122,24 @@ func TestEvents(t *testing.T) {
 		},
 		{
 			name: "dogu config diff determined",
-			event: DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{
-				"dogu1": {
-					DoguConfigDiff: []DoguConfigEntryDiff{
-						{NeededAction: ConfigActionNone},
-						{NeededAction: ConfigActionSet},
-						{NeededAction: ConfigActionRemove},
-					},
-					SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
+			event: DoguConfigDiffDeterminedEvent{
+				DoguConfigDiffs: map[common.SimpleDoguName]DoguConfigDiffs{
+					"dogu1": []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
 						{NeededAction: ConfigActionSet},
 						{NeededAction: ConfigActionRemove},
 					},
 				},
-			}},
+				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+					"dogu1": []SensitiveDoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSet},
+						{NeededAction: ConfigActionRemove},
+					},
+				},
+			},
 			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 6 actions (\"none\": 2, \"remove\": 2, \"set\": 2)",
+			expectedMessage: "dogu config diff determined: 3 actions (\"none\": 1, \"remove\": 1, \"set\": 1) \nsensitive dogu config diff determined: 3 actions (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name:            "blueprint application pre-processed",

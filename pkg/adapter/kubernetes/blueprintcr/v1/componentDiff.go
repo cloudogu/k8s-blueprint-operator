@@ -7,7 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 // ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
