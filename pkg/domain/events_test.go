@@ -118,7 +118,7 @@ func TestEvents(t *testing.T) {
 				{NeededAction: ConfigActionRemove},
 			}},
 			expectedName:    "GlobalConfigDiffDetermined",
-			expectedMessage: "global config diff determined: 4 actions (\"none\": 2, \"remove\": 1, \"set\": 1)",
+			expectedMessage: "global config diff determined: 2 changes (\"none\": 2, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name: "dogu config diff determined",
@@ -132,7 +132,7 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 3 actions (\"none\": 1, \"remove\": 1, \"set\": 1)",
+			expectedMessage: "dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name: "sensitive dogu config diff determined",
@@ -146,7 +146,7 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "SensitiveDoguConfigDiffDetermined",
-			expectedMessage: "sensitive dogu config diff determined: 3 actions (\"none\": 1, \"remove\": 1, \"set\": 1)",
+			expectedMessage: "sensitive dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name:            "blueprint application pre-processed",

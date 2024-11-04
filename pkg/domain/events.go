@@ -70,10 +70,12 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 	var actionsCounter int
 	for action, amount := range e.GlobalConfigDiffs.countByAction() {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		actionsCounter += amount
+		if action != ConfigActionNone {
+			actionsCounter += amount
+		}
 	}
 	slices.Sort(stringPerAction)
-	return fmt.Sprintf("global config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+	return fmt.Sprintf("global config diff determined: %d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 type DoguConfigDiffDeterminedEvent struct {
@@ -93,7 +95,7 @@ func (e DoguConfigDiffDeterminedEvent) Name() string {
 func (e DoguConfigDiffDeterminedEvent) Message() string {
 	return fmt.Sprintf(
 		"dogu config diff determined: %s",
-		generateDoguConfigDiffCounterString(e.DoguConfigDiffs),
+		generateDoguConfigChangeCounter(e.DoguConfigDiffs),
 	)
 }
 
@@ -114,19 +116,21 @@ func (e SensitiveDoguConfigDiffDeterminedEvent) Name() string {
 func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
 	return fmt.Sprintf(
 		"sensitive dogu config diff determined: %s",
-		generateDoguConfigDiffCounterString(e.SensitiveDoguConfigDiffs),
+		generateDoguConfigChangeCounter(e.SensitiveDoguConfigDiffs),
 	)
 }
 
-func generateDoguConfigDiffCounterString(doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs) string {
+func generateDoguConfigChangeCounter(doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
 	for action, amount := range countByAction(doguConfigDiffs) {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		actionsCounter += amount
+		if action != ConfigActionNone {
+			actionsCounter += amount
+		}
 	}
 	slices.Sort(stringPerAction)
-	return fmt.Sprintf("%d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+	return fmt.Sprintf("%d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
@@ -156,7 +160,7 @@ func (s StateDiffComponentDeterminedEvent) Message() string {
 
 	message, amount := getActionAmountMessage(amountActions)
 
-	return fmt.Sprintf("component state diff determined: %d actions (%s)", amount, message)
+	return fmt.Sprintf("component state diff determined: %d changes (%s)", amount, message)
 }
 
 func getActionAmountMessage(amountActions map[Action]int) (message string, totalAmount int) {
