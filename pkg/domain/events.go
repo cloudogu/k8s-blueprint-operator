@@ -77,15 +77,13 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	DoguConfigDiffs          map[common.SimpleDoguName]DoguConfigDiffs
-	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+	DoguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs
 }
 
 func NewDoguConfigDiffDeterminedEvent(
 	doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs,
-	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
 ) DoguConfigDiffDeterminedEvent {
-	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs, SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
+	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
 }
 
 func (e DoguConfigDiffDeterminedEvent) Name() string {
@@ -95,9 +93,28 @@ func (e DoguConfigDiffDeterminedEvent) Name() string {
 func (e DoguConfigDiffDeterminedEvent) Message() string {
 	// TODO for review: decide if we keep a multiline string as event or add a second event (type) for sensitive config
 	return fmt.Sprintf(
-		"dogu config diff determined: %s \n"+
-			"sensitive dogu config diff determined: %s",
+		"dogu config diff determined: %s",
 		generateDoguConfigDiffCounterString(e.DoguConfigDiffs),
+	)
+}
+
+type SensitiveDoguConfigDiffDeterminedEvent struct {
+	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+}
+
+func NewSensitiveDoguConfigDiffDeterminedEvent(
+	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
+) SensitiveDoguConfigDiffDeterminedEvent {
+	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
+}
+
+func (e SensitiveDoguConfigDiffDeterminedEvent) Name() string {
+	return "SensitiveDoguConfigDiffDetermined"
+}
+
+func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
+	return fmt.Sprintf(
+		"sensitive dogu config diff determined: %s",
 		generateDoguConfigDiffCounterString(e.SensitiveDoguConfigDiffs),
 	)
 }
