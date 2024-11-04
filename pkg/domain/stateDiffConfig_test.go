@@ -258,8 +258,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
-		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"])
+		require.NotNil(t, sensitiveConfigDiffs["dogu1"])
 		assert.Equal(t, 3, len(sensitiveConfigDiffs["dogu1"]))
 
 		entriesDogu1 := []SensitiveDoguConfigEntryDiff{
@@ -340,7 +340,9 @@ func Test_determineConfigDiff(t *testing.T) {
 			},
 		)
 		//then
-		require.NotNil(t, dogusConfigDiffs["dogu1"])
+		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"])
+
+		require.NotNil(t, sensitiveConfigDiffs["dogu1"])
 		require.Equal(t, 1, len(sensitiveConfigDiffs["dogu1"]))
 		assert.Equal(t, sensitiveConfigDiffs["dogu1"][0], SensitiveDoguConfigEntryDiff{
 			Key: sensitiveDogu1Key1,
