@@ -150,7 +150,11 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.DoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -504,7 +508,11 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{
 				DoguDiffs:      []domain.DoguDiff{},
 				ComponentDiffs: []domain.ComponentDiff{},
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[common.SimpleDoguName]domain.DoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
