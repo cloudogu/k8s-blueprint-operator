@@ -29,11 +29,8 @@ type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func convertToDoguConfigDiffsDomain(doguName string, dto DoguConfigDiff) domain.DoguConfigDiffs {
 	var doguConfigDiff domain.DoguConfigDiffs
-	if len(dto) != 0 {
-		doguConfigDiff = make(domain.DoguConfigDiffs, len(dto))
-		for i, entryDiff := range dto {
-			doguConfigDiff[i] = convertToDoguConfigEntryDiffDomain(doguName, entryDiff)
-		}
+	for _, entryDiff := range dto {
+		doguConfigDiff = append(doguConfigDiff, convertToDoguConfigEntryDiffDomain(doguName, entryDiff))
 	}
 	return doguConfigDiff
 }
