@@ -19,7 +19,6 @@ const (
 
 // censorValues censors all sensitive configuration data to make them unrecognisable.
 func censorValues(sensitiveConfigByDogu map[common.SimpleDoguName]SensitiveDoguConfigDiffs) map[common.SimpleDoguName]SensitiveDoguConfigDiffs {
-	//TODO: add/fix tests for this
 	censoredByDogu := maps.Clone(sensitiveConfigByDogu)
 	for dogu, entryDiffs := range sensitiveConfigByDogu {
 		censoredByDogu[dogu] = entryDiffs.CensorValues()

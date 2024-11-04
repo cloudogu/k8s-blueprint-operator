@@ -417,10 +417,6 @@ func Test_getNeededConfigAction(t *testing.T) {
 	}
 }
 
-func TestCombinedDoguConfigDiff_CensorValues(t *testing.T) {
-
-}
-
 func Test_censorValues(t *testing.T) {
 	tests := []struct {
 		name         string
