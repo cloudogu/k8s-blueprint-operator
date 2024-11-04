@@ -21,7 +21,10 @@ type DoguConfigEntryDiff struct {
 	NeededAction ConfigAction         `json:"neededAction"`
 }
 
+// +kubebuilder:object:generate:=false
 type SensitiveDoguConfigDiff = DoguConfigDiff
+
+// +kubebuilder:object:generate:=false
 type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func convertToDoguConfigDiffsDomain(doguName string, dto DoguConfigDiff) domain.DoguConfigDiffs {
