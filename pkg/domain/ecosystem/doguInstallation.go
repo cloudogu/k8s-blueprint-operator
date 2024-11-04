@@ -3,7 +3,7 @@ package ecosystem
 import (
 	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 // DoguInstallation represents an installed or to be installed dogu in the ecosystem.
@@ -29,6 +29,7 @@ type DoguInstallation struct {
 	ReverseProxyConfig ReverseProxyConfig
 }
 
+// TODO: Unused constants needed?
 const (
 	DoguStatusNotInstalled = ""
 	DoguStatusInstalling   = "installing"

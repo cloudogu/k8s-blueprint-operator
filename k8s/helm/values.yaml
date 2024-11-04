@@ -1,8 +1,12 @@
+global:
+  imagePullSecrets:
+    - name: "ces-container-registries"
 manager:
   replicas: 1
   image:
+    registry: docker.io
     repository: cloudogu/k8s-blueprint-operator
-    tag: 1.1.0
+    tag: 2.0.0
   imagePullPolicy: IfNotPresent
   env:
     logLevel: info
@@ -15,7 +19,8 @@ manager:
     memory: 64Mi
 kubeRbacProxy:
   image:
-    repository: gcr.io/kubebuilder/kube-rbac-proxy
+    registry: gcr.io
+    repository: kubebuilder/kube-rbac-proxy
     tag: v0.15.0
   resourceLimits:
     cpu: 500m

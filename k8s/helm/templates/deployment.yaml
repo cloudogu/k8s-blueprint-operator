@@ -19,12 +19,16 @@ spec:
         control-plane: controller-manager
       {{- include "k8s-blueprint-operator.labels" . | nindent 8 }}
     spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       containers:
         - args:
             - --secure-listen-address=0.0.0.0:8443
             - --upstream=http://127.0.0.1:8080/
             - --v=0
-          image: {{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}
+          image: "{{ .Values.kubeRbacProxy.image.registry }}/{{ .Values.kubeRbacProxy.image.repository }}:{{ .Values.kubeRbacProxy.image.tag }}"
           name: kube-rbac-proxy
           ports:
             - containerPort: 8443
@@ -74,7 +78,7 @@ spec:
                 key: urlschema
                 name: k8s-dogu-operator-dogu-registry
                 optional: true
-          image: {{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}
+          image: "{{ .Values.manager.image.registry }}/{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}"
           livenessProbe:
             httpGet:
               path: /healthz

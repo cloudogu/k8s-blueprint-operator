@@ -4,7 +4,7 @@ package domainservice
 
 import (
 	core "github.com/cloudogu/cesapp-lib/core"
-	common "github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	common "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 	mock "github.com/stretchr/testify/mock"
 )

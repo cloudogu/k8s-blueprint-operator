@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -479,11 +479,10 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 				}
 			}
 
-			result := config.GetDogusWithChangedConfig()
-
-			assert.Equal(t, len(tt.want), len(result))
+			changedDogus := config.GetDogusWithChangedConfig()
+			assert.Len(t, changedDogus, len(tt.want))
 			for _, doguName := range tt.want {
-				assert.Contains(t, result, doguName)
+				assert.Contains(t, changedDogus, doguName)
 			}
 		})
 	}
@@ -561,11 +560,10 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 				}
 			}
 
-			result := config.GetDogusWithChangedSensitiveConfig()
-
-			assert.Equal(t, len(tt.want), len(result))
+			changedDogus := config.GetDogusWithChangedSensitiveConfig()
+			assert.Len(t, changedDogus, len(tt.want))
 			for _, doguName := range tt.want {
-				assert.Contains(t, result, doguName)
+				assert.Contains(t, changedDogus, doguName)
 			}
 		})
 	}

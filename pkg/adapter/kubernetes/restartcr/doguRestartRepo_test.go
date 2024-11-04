@@ -2,7 +2,7 @@ package restartcr
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
