@@ -83,8 +83,9 @@ type DoguConfigDiffDeterminedEvent struct {
 
 func NewDoguConfigDiffDeterminedEvent(
 	doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs,
-	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs) *DoguConfigDiffDeterminedEvent {
-	return &DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs, SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
+	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
+) DoguConfigDiffDeterminedEvent {
+	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs, SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
 }
 
 func (e DoguConfigDiffDeterminedEvent) Name() string {

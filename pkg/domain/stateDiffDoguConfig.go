@@ -15,7 +15,6 @@ func (diffs DoguConfigDiffs) GetDoguConfigDiffByAction() map[ConfigAction][]Dogu
 }
 
 func (diffs DoguConfigDiffs) HasChanges() bool {
-	//TODO: add tests
 	for _, diff := range diffs {
 		if diff.NeededAction != ConfigActionNone {
 			return true

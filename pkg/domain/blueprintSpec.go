@@ -385,7 +385,7 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 func (spec *BlueprintSpec) CensorSensitiveData() {
 	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
 	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
-	spec.StateDiff.DoguConfigDiffs = censorValues(spec.StateDiff.DoguConfigDiffs)
+	spec.StateDiff.SensitiveDoguConfigDiffs = censorValues(spec.StateDiff.SensitiveDoguConfigDiffs)
 
 	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
 }

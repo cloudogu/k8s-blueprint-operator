@@ -58,7 +58,6 @@ func determineSensitiveDoguConfigDiffs(
 }
 
 func (diffs SensitiveDoguConfigDiffs) CensorValues() SensitiveDoguConfigDiffs {
-	//TODO: add tests for this
 	var censoredEntries []DoguConfigEntryDiff
 	for _, entry := range diffs {
 		actual := entry.Actual

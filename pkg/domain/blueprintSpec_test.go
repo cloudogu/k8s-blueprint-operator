@@ -771,8 +771,8 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), common.SimpleDoguName("ldap"))
 	assert.Equal(t, censorValue, string(spec.EffectiveBlueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
 
-	require.Len(t, spec.StateDiff.DoguConfigDiffs, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.DoguConfigDiffs), common.SimpleDoguName("ldapDiff"))
+	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
+	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), common.SimpleDoguName("ldapDiff"))
 	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)
 	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Actual.Value)
 	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Expected.Value)
