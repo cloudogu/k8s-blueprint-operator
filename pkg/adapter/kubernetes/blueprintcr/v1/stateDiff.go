@@ -37,7 +37,7 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 	var doguConfigDiffByDogu map[common.SimpleDoguName]DoguConfigDiff
 	var sensitiveDoguConfigDiff map[common.SimpleDoguName]SensitiveDoguConfigDiff
 
-	if len(domainModel.DoguConfigDiffs) != 0 {
+	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
 		combinedConfigDiffs = make(map[string]CombinedDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
 			doguConfigDiffByDogu = make(map[common.SimpleDoguName]DoguConfigDiff)
