@@ -160,7 +160,7 @@ func (s StateDiffComponentDeterminedEvent) Message() string {
 
 	message, amount := getActionAmountMessage(amountActions)
 
-	return fmt.Sprintf("component state diff determined: %d changes (%s)", amount, message)
+	return fmt.Sprintf("component state diff determined: %d actions (%s)", amount, message)
 }
 
 func getActionAmountMessage(amountActions map[Action]int) (message string, totalAmount int) {
