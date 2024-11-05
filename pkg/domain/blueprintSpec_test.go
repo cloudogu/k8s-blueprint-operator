@@ -522,6 +522,40 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
 	})
+	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Components: []Component{
+					{
+						Name: common.QualifiedComponentName{
+							Namespace:  testComponentName.Namespace,
+							SimpleName: testComponentName.SimpleName,
+						},
+						Version: compVersion3210,
+					},
+				},
+			},
+			Status: StatusPhaseValidated,
+		}
+		clusterState := ecosystem.EcosystemState{
+			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+				testComponentName.SimpleName: {
+					Name:            testComponentName,
+					ExpectedVersion: compVersion3211,
+				},
+			},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(clusterState)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, StatusPhaseInvalid, spec.Status)
+		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
+	})
 }
 
 func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
