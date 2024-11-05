@@ -65,12 +65,12 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseApplyRegistryConfig indicates that the apply registry config phase is active.
-	StatusPhaseApplyRegistryConfig StatusPhase = "applyRegistryConfig"
-	// StatusPhaseApplyRegistryConfigFailed indicates that the phase to apply registry config phase failed.
-	StatusPhaseApplyRegistryConfigFailed StatusPhase = "applyRegistryConfigFailed"
-	// StatusPhaseRegistryConfigApplied indicates that the phase to apply registry config phase succeeded.
-	StatusPhaseRegistryConfigApplied StatusPhase = "registryConfigApplied"
+	// StatusPhaseApplyEcosystemConfig indicates that the apply ecosystem config phase is active.
+	StatusPhaseApplyEcosystemConfig StatusPhase = "applyEcosystemConfig"
+	// StatusPhaseApplyEcosystemConfigFailed indicates that the phase to apply ecosystem config failed.
+	StatusPhaseApplyEcosystemConfigFailed StatusPhase = "applyEcosystemConfigFailed"
+	// StatusPhaseEcosystemConfigApplied indicates that the phase to apply ecosystem config succeeded.
+	StatusPhaseEcosystemConfigApplied StatusPhase = "ecosystemConfigApplied"
 	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
 	// Restarts are needed when the Dogu config changes.
 	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
@@ -273,7 +273,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		// we need to analyze first, what kind of error this is. Why do we need one?
 		return err
 	}
-	doguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
+	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
@@ -281,16 +281,18 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	)
 
 	spec.StateDiff = StateDiff{
-		DoguDiffs:         doguDiffs,
-		ComponentDiffs:    compDiffs,
-		DoguConfigDiffs:   doguConfigDiffs,
-		GlobalConfigDiffs: globalConfigDiffs,
+		DoguDiffs:                doguDiffs,
+		ComponentDiffs:           compDiffs,
+		DoguConfigDiffs:          doguConfigDiffs,
+		SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs,
+		GlobalConfigDiffs:        globalConfigDiffs,
 	}
 
 	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
-	spec.Events = append(spec.Events, DoguConfigDiffDeterminedEvent{spec.StateDiff.DoguConfigDiffs})
+	spec.Events = append(spec.Events, NewDoguConfigDiffDeterminedEvent(spec.StateDiff.DoguConfigDiffs))
+	spec.Events = append(spec.Events, NewSensitiveDoguConfigDiffDeterminedEvent(spec.StateDiff.SensitiveDoguConfigDiffs))
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
@@ -384,9 +386,7 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 func (spec *BlueprintSpec) CensorSensitiveData() {
 	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
 	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
-	for k, v := range spec.StateDiff.DoguConfigDiffs {
-		spec.StateDiff.DoguConfigDiffs[k] = v.censorValues()
-	}
+	spec.StateDiff.SensitiveDoguConfigDiffs = censorValues(spec.StateDiff.SensitiveDoguConfigDiffs)
 
 	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
 }
@@ -397,13 +397,16 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	case StatusPhaseEcosystemHealthyAfterwards:
 		spec.Status = StatusPhaseCompleted
 		spec.Events = append(spec.Events, CompletedEvent{})
+	case StatusPhaseApplyEcosystemConfigFailed:
+		fallthrough
+	case StatusPhaseEcosystemUnhealthyAfterwards:
+		spec.Status = StatusPhaseFailed
+		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
 	case StatusPhaseInProgress:
 		spec.Status = StatusPhaseFailed
 		err := errors.New(handleInProgressMsg)
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-	case StatusPhaseEcosystemUnhealthyAfterwards:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
+
 	case StatusPhaseBlueprintApplicationFailed:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
@@ -463,26 +466,28 @@ func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
 	var dogusThatNeedRestart []common.SimpleDoguName
 	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
-		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
+		//TODO: test this
+		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
+			spec.StateDiff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
 			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
 		}
 	}
 	return dogusThatNeedRestart
 }
 
-func (spec *BlueprintSpec) StartApplyRegistryConfig() {
-	spec.Status = StatusPhaseApplyRegistryConfig
-	spec.Events = append(spec.Events, ApplyRegistryConfigEvent{})
+func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
+	spec.Status = StatusPhaseApplyEcosystemConfig
+	spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
 }
 
-func (spec *BlueprintSpec) MarkApplyRegistryConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyRegistryConfigFailed
-	spec.Events = append(spec.Events, ApplyRegistryConfigFailedEvent{err: err})
+func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
+	spec.Status = StatusPhaseApplyEcosystemConfigFailed
+	spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
 }
 
-func (spec *BlueprintSpec) MarkRegistryConfigApplied() {
-	spec.Status = StatusPhaseRegistryConfigApplied
-	spec.Events = append(spec.Events, RegistryConfigAppliedEvent{})
+func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
+	spec.Status = StatusPhaseEcosystemConfigApplied
+	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

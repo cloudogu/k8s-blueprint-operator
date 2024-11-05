@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 // ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
@@ -37,7 +38,7 @@ type ComponentDiffState struct {
 	// DeployConfig contains generic properties for the component.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	DeployConfig map[string]interface{} `json:"deployConfig,omitempty"`
+	DeployConfig serializer.DeployConfig `json:"deployConfig,omitempty"`
 }
 
 // ComponentAction is the action that needs to be done for a component
@@ -66,13 +67,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			DeployConfig:      domainModel.Actual.DeployConfig,
+			DeployConfig:      serializer.DeployConfig(domainModel.Actual.DeployConfig),
 		},
 		Expected: ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			DeployConfig:      domainModel.Expected.DeployConfig,
+			DeployConfig:      serializer.DeployConfig(domainModel.Expected.DeployConfig),
 		},
 		NeededActions: componentActions,
 	}
@@ -127,13 +128,13 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
-			DeployConfig:      dto.Actual.DeployConfig,
+			DeployConfig:      ecosystem.DeployConfig(dto.Actual.DeployConfig),
 		},
 		Expected: domain.ComponentDiffState{
 			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
-			DeployConfig:      dto.Expected.DeployConfig,
+			DeployConfig:      ecosystem.DeployConfig(dto.Expected.DeployConfig),
 		},
 		NeededActions: componentActions,
 	}, nil

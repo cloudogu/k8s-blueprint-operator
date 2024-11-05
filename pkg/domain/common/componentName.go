@@ -6,8 +6,6 @@ import (
 	"strings"
 )
 
-var K8sK8sLonghornName = QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-longhorn"}
-
 type QualifiedComponentName struct {
 	Namespace  ComponentNamespace
 	SimpleName SimpleComponentName

@@ -54,7 +54,7 @@ type selfUpgradeUseCase interface {
 	HandleSelfUpgrade(ctx context.Context, blueprintId string) error
 }
 
-type registryConfigUseCase interface {
+type ecosystemConfigUseCase interface {
 	ApplyConfig(ctx context.Context, blueprintId string) error
 }
 
