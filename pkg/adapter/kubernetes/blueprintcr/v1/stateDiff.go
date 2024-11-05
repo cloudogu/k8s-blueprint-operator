@@ -95,9 +95,9 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 	if len(dto.DoguConfigDiffs) != 0 {
 		doguConfigDiffs = map[common.SimpleDoguName]domain.DoguConfigDiffs{}
 		sensitiveDoguConfigDiffs = map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
-		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
-			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff.DoguConfigDiff)
-			sensitiveDoguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff.SensitiveDoguConfigDiff)
+		for doguName, combinedConfigDiff := range dto.DoguConfigDiffs {
+			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.DoguConfigDiff)
+			sensitiveDoguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.SensitiveDoguConfigDiff)
 		}
 	}
 
