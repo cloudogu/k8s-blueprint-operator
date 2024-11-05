@@ -27,9 +27,9 @@ type SensitiveDoguConfigDiff = DoguConfigDiff
 // +kubebuilder:object:generate:=false
 type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
-func convertToDoguConfigDiffsDomain(doguName string, dto DoguConfigDiff) domain.DoguConfigDiffs {
+func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs DoguConfigDiff) domain.DoguConfigDiffs {
 	var doguConfigDiff domain.DoguConfigDiffs
-	for _, entryDiff := range dto {
+	for _, entryDiff := range dtoDiffs {
 		doguConfigDiff = append(doguConfigDiff, convertToDoguConfigEntryDiffDomain(doguName, entryDiff))
 	}
 	return doguConfigDiff
