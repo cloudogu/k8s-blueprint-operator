@@ -7,6 +7,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
+	"maps"
 	"slices"
 )
 
@@ -183,10 +184,12 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		return err
 	}
 
+	effectiveConfig := spec.removeConfigForMaskedDogus()
+
 	spec.EffectiveBlueprint = EffectiveBlueprint{
 		Dogus:      effectiveDogus,
 		Components: spec.Blueprint.Components,
-		Config:     spec.Blueprint.Config,
+		Config:     effectiveConfig,
 	}
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
@@ -237,6 +240,22 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	}
 
 	return effectiveDogu, nil
+}
+
+// It is not allowed to have config without the corresponding dogu, so this will clean up the unnecessary config.
+func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
+	effectiveDoguConfig := maps.Clone(spec.Blueprint.Config.Dogus)
+
+	for _, dogu := range spec.BlueprintMask.Dogus {
+		if dogu.TargetState == TargetStateAbsent {
+			delete(effectiveDoguConfig, dogu.Name.SimpleName)
+		}
+	}
+
+	return Config{
+		Dogus:  effectiveDoguConfig,
+		Global: spec.Blueprint.Config.Global,
+	}
 }
 
 // MarkInvalid is used to mark the blueprint as invalid after dynamically validating it.
