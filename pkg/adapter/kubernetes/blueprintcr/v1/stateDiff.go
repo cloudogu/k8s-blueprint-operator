@@ -37,7 +37,7 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 	var doguConfigDiffByDogu map[common.SimpleDoguName]DoguConfigDiff
 	var sensitiveDoguConfigDiff map[common.SimpleDoguName]SensitiveDoguConfigDiff
 
-	if len(domainModel.DoguConfigDiffs) != 0 {
+	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
 		combinedConfigDiffs = make(map[string]CombinedDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
 			doguConfigDiffByDogu = make(map[common.SimpleDoguName]DoguConfigDiff)
@@ -95,9 +95,9 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 	if len(dto.DoguConfigDiffs) != 0 {
 		doguConfigDiffs = map[common.SimpleDoguName]domain.DoguConfigDiffs{}
 		sensitiveDoguConfigDiffs = map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
-		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
-			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff.DoguConfigDiff)
-			sensitiveDoguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff.SensitiveDoguConfigDiff)
+		for doguName, combinedConfigDiff := range dto.DoguConfigDiffs {
+			doguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.DoguConfigDiff)
+			sensitiveDoguConfigDiffs[common.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.SensitiveDoguConfigDiff)
 		}
 	}
 
