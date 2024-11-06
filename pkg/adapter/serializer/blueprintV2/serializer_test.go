@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -44,8 +45,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
-					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: cescommons.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
+					{Name: cescommons.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present","platformConfig":{"resource":{"minVolumeSize":"2Gi"},"reverseProxy":{"maxBodySize":"2Gi","rewriteTarget":"/","additionalConfig":"additional"}}},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent","platformConfig":{"resource":{},"reverseProxy":{}}}],"config":{"global":{}}}`,
@@ -66,7 +67,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"regular dogu config in blueprint",
 			args{spec: domain.Blueprint{
 				Config: domain.Config{
-					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleDoguName]domain.CombinedDoguConfig{
 						"ldap": {
 							Config: domain.DoguConfig{
 								Present: map[common.DoguConfigKey]common.DoguConfigValue{
@@ -109,7 +110,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"sensitive dogu config in blueprint",
 			args{spec: domain.Blueprint{
 				Config: domain.Config{
-					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleDoguName]domain.CombinedDoguConfig{
 						"redmine": {
 							SensitiveConfig: domain.SensitiveDoguConfig{
 								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
@@ -182,7 +183,7 @@ func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
 	blueprint := domain.Blueprint{
 		Dogus: []domain.Dogu{
-			{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: -1},
+			{Name: cescommons.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: -1},
 		},
 	}
 
@@ -215,8 +216,8 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
 			domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
-					{Name: common.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
+					{Name: cescommons.QualifiedDoguName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: cescommons.QualifiedDoguName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
@@ -236,7 +237,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"ldap":{"config":{"present":{"container_config/memory_limit":"500m","container_config/swap_limit":"500m","password_change/notification_enabled":"true"},"absent":["password_change/mail_subject","password_change/mail_text","user_search_size_limit"]}}}}}`},
 			domain.Blueprint{
 				Config: domain.Config{
-					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleDoguName]domain.CombinedDoguConfig{
 						"ldap": {
 							DoguName: "ldap",
 							Config: domain.DoguConfig{
@@ -280,7 +281,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"redmine":{"sensitiveConfig":{"present":{"my-secret-password":"password-value","my-secret-password-2":"password-value-2"},"absent":["my-secret-password-3"]}}}}}`},
 			domain.Blueprint{
 				Config: domain.Config{
-					Dogus: map[common.SimpleDoguName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleDoguName]domain.CombinedDoguConfig{
 						"redmine": {
 							DoguName: "redmine",
 							SensitiveConfig: domain.SensitiveDoguConfig{

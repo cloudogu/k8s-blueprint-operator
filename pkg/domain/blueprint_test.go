@@ -2,6 +2,7 @@ package domain
 
 import (
 	"github.com/Masterminds/semver/v3"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/require"
@@ -70,8 +71,8 @@ func Test_validate_multipleErrors(t *testing.T) {
 	require.Error(t, err)
 	assert.ErrorContains(t, err, "blueprint is invalid")
 	assert.ErrorContains(t, err, "dogu is invalid")
-	assert.ErrorContains(t, err, "namespace of dogu \"\" must not be empty")
-	assert.ErrorContains(t, err, "dogu name must not be empty: '/'")
+	assert.ErrorContains(t, err, "namespace of dogu / must not be empty")
+	assert.ErrorContains(t, err, "dogu name must not be empty: /")
 	assert.ErrorContains(t, err, "dogu target state is invalid")
 	assert.ErrorContains(t, err, "component name must not be empty")
 	assert.ErrorContains(t, err, `namespace of component "" must not be empty`)
@@ -209,7 +210,7 @@ func Test_censorConfigValues(t *testing.T) {
 	ldapLoggingKey := common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}
 	ldapPasswordChangeKey := common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}
 	config := Config{
-		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+		Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 			"ldap": {
 				DoguName: "ldap",
 				Config: DoguConfig{

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -237,7 +238,7 @@ func TestConfig_validate(t *testing.T) {
 	t.Run("fail if dogu name in dogu config does not match dogu key", func(t *testing.T) {
 		// given
 		sut := Config{
-			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 				"some-name": {DoguName: "another-name"},
 			},
 		}
@@ -251,7 +252,7 @@ func TestConfig_validate(t *testing.T) {
 	t.Run("fail with multiple errors", func(t *testing.T) {
 		// given
 		sut := Config{
-			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 				"some-name": {
 					DoguName: "another-name",
 					Config: DoguConfig{
@@ -296,15 +297,15 @@ func TestGlobalConfig_GetGlobalConfigKeys(t *testing.T) {
 
 func TestConfig_GetDoguConfigKeys(t *testing.T) {
 	var (
-		nginx       = common.SimpleDoguName("nginx")
-		postfix     = common.SimpleDoguName("postfix")
+		nginx       = cescommons.SimpleDoguName("nginx")
+		postfix     = cescommons.SimpleDoguName("postfix")
 		nginxKey1   = common.DoguConfigKey{DoguName: nginx, Key: "key1"}
 		nginxKey2   = common.DoguConfigKey{DoguName: nginx, Key: "key2"}
 		postfixKey1 = common.DoguConfigKey{DoguName: postfix, Key: "key1"}
 		postfixKey2 = common.DoguConfigKey{DoguName: postfix, Key: "key2"}
 	)
 	config := Config{
-		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+		Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 			nginx: {
 				DoguName: nginx,
 				Config: DoguConfig{
@@ -339,15 +340,15 @@ func TestConfig_GetDoguConfigKeys(t *testing.T) {
 
 func TestConfig_GetSensitiveDoguConfigKeys(t *testing.T) {
 	var (
-		nginx       = common.SimpleDoguName("nginx")
-		postfix     = common.SimpleDoguName("postfix")
+		nginx       = cescommons.SimpleDoguName("nginx")
+		postfix     = cescommons.SimpleDoguName("postfix")
 		nginxKey1   = common.SensitiveDoguConfigKey{DoguName: nginx, Key: "key1"}
 		nginxKey2   = common.SensitiveDoguConfigKey{DoguName: nginx, Key: "key2"}
 		postfixKey1 = common.SensitiveDoguConfigKey{DoguName: postfix, Key: "key1"}
 		postfixKey2 = common.SensitiveDoguConfigKey{DoguName: postfix, Key: "key2"}
 	)
 	config := Config{
-		Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+		Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 			nginx: {
 				DoguName: nginx,
 				SensitiveConfig: SensitiveDoguConfig{
@@ -422,31 +423,31 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 		withDogu2Change bool
 	}
 
-	var emptyResult []common.SimpleDoguName
+	var emptyResult []cescommons.SimpleDoguName
 	var tests = []struct {
 		name string
 		args args
-		want []common.SimpleDoguName
+		want []cescommons.SimpleDoguName
 	}{
 		{
 			name: "should get multiple Dogus",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}, withDogu2Change: true},
-			want: []common.SimpleDoguName{dogu1, dogu2},
+			want: []cescommons.SimpleDoguName{dogu1, dogu2},
 		},
 		{
 			name: "should get Dogus with changed present and absent config",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed present config",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: emptyAbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed absent config",
 			args: args{doguConfig: DoguConfig{Present: emptyPresentConfig, Absent: AbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should not get Dogus with no config changes",
@@ -461,7 +462,7 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 				Absent  []common.DoguConfigKey
 			}{}
 			config := Config{
-				Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 					dogu1: {
 						DoguName:        dogu1,
 						Config:          tt.args.doguConfig,
@@ -503,31 +504,31 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 		withDogu2Change bool
 	}
 
-	var emptyResult []common.SimpleDoguName
+	var emptyResult []cescommons.SimpleDoguName
 	var tests = []struct {
 		name string
 		args args
-		want []common.SimpleDoguName
+		want []cescommons.SimpleDoguName
 	}{
 		{
 			name: "should get multiple Dogus",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}, withDogu2Change: true},
-			want: []common.SimpleDoguName{dogu1, dogu2},
+			want: []cescommons.SimpleDoguName{dogu1, dogu2},
 		},
 		{
 			name: "should get Dogus with changed present and absent config",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed present config",
 			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: emptyAbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed absent config",
 			args: args{doguConfig: DoguConfig{Present: emptyPresentConfig, Absent: AbsentConfig}},
-			want: []common.SimpleDoguName{dogu1},
+			want: []cescommons.SimpleDoguName{dogu1},
 		},
 		{
 			name: "should not get Dogus with no config changes",
@@ -542,7 +543,7 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 				Absent  []common.DoguConfigKey
 			}{}
 			config := Config{
-				Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
 					dogu1: {
 						DoguName:        dogu1,
 						Config:          emptyDoguConfig,

@@ -3,7 +3,7 @@ package application
 import (
 	"context"
 	"errors"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -131,7 +131,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseNew,
 			Blueprint: domain.Blueprint{Dogus: []domain.Dogu{
-				{Name: common.QualifiedDoguName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: domain.TargetStatePresent},
+				{Name: cescommons.QualifiedDoguName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: domain.TargetStatePresent},
 			}},
 		}, nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(assert.AnError)

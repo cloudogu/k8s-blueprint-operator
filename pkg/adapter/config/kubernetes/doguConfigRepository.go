@@ -47,7 +47,7 @@ func (repo *DoguConfigRepository) GetAllExisting(ctx context.Context, doguNames 
 		loaded, err := repo.Get(ctx, doguName)
 		if liberrors.IsNotFoundError(err) {
 			// if notFoundError happens, the dogu is not yet installed. Therefore, the config is empty
-			loaded = config.CreateDoguConfig(config.SimpleDoguName(doguName), map[config.Key]config.Value{})
+			loaded = config.CreateDoguConfig(doguName, map[config.Key]config.Value{})
 		} else if err != nil {
 			return nil, fmt.Errorf("could not load %s for all given dogus: %w", repo.repoType, err)
 		}

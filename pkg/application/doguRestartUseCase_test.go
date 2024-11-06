@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -18,7 +19,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		testStateDiff := domain.StateDiff{
 			DoguDiffs:         domain.DoguDiffs{},
 			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguConfigDiffs:   map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 		}
 		testBlueprint := domain.BlueprintSpec{
@@ -53,7 +54,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		testStateDiff := domain.StateDiff{
 			DoguDiffs:       domain.DoguDiffs{},
 			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -72,19 +73,19 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		installedDogu := ecosystem.DoguInstallation{
-			Name:               common.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
+			Name:               cescommons.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
 			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			Status:             "installed",
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: false},
 			PersistenceContext: nil,
 		}
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+		installedDogus := map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 			testDoguSimpleName: &installedDogu,
 		}
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
@@ -108,7 +109,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		testStateDiff := domain.StateDiff{
 			DoguDiffs:       domain.DoguDiffs{},
 			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -131,7 +132,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
 		blueprintSpecRepo.EXPECT().GetById(testContext, testBlueprintId).Return(&testBlueprint, nil)
-		installationRepository.EXPECT().GetAll(testContext).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, assert.AnError)
+		installationRepository.EXPECT().GetAll(testContext).Return(map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{}, assert.AnError)
 
 		restartUseCase := NewDoguRestartUseCase(installationRepository, blueprintSpecRepo, restartRepository)
 
@@ -149,7 +150,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		testStateDiff := domain.StateDiff{
 			DoguDiffs:       domain.DoguDiffs{},
 			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -168,19 +169,19 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		installedDogu := ecosystem.DoguInstallation{
-			Name:               common.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
+			Name:               cescommons.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
 			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			Status:             "installed",
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: false},
 			PersistenceContext: nil,
 		}
-		installedDogus := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+		installedDogus := map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 			testDoguSimpleName: &installedDogu,
 		}
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
@@ -199,8 +200,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("restart some dogus", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
@@ -215,7 +216,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
-			Name:        common.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
+			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
@@ -230,7 +231,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
@@ -248,8 +249,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on dogu restart for some dogus", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
@@ -264,7 +265,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
-			Name:        common.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
+			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
@@ -279,7 +280,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
@@ -297,8 +298,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on error in blueprint spec update", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
@@ -313,7 +314,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
-			Name:        common.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
+			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
@@ -328,7 +329,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		installationRepository := newMockDoguInstallationRepository(t)
 		blueprintSpecRepo := newMockBlueprintSpecRepository(t)
 		restartRepository := newMockDoguRestartRepository(t)
@@ -347,8 +348,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on error when getting blueprint", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := common.SimpleDoguName("testdogu1")
+		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
 			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
 			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
@@ -363,7 +364,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
-			Name:        common.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
+			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}

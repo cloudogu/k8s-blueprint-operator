@@ -1,8 +1,8 @@
 package domain
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -35,7 +35,7 @@ func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
-	dogu := MaskDogu{Name: common.QualifiedDoguName{Namespace: "official"}}
+	dogu := MaskDogu{Name: cescommons.QualifiedDoguName{Namespace: "official"}}
 
 	err := dogu.validate()
 

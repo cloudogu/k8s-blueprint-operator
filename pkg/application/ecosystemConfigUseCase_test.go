@@ -1,6 +1,7 @@
 package application
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -13,12 +14,12 @@ import (
 )
 
 const (
-	redmine         = common.SimpleDoguName("redmine")
-	cas             = common.SimpleDoguName("cas")
+	redmine         = cescommons.SimpleDoguName("redmine")
+	cas             = cescommons.SimpleDoguName("cas")
 	testBlueprintID = "blueprint1"
 )
 
-var emptyDoguList []common.SimpleDoguName
+var emptyDoguList []cescommons.SimpleDoguName
 
 func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
@@ -42,7 +43,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 						NeededActions: []domain.Action{},
 					},
 				},
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					redmine: {
 						DoguConfigDiff: []domain.DoguConfigEntryDiff{
 							getSetDoguConfigEntryDiff("key", "value", redmine),
@@ -73,16 +74,16 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// Just check if the routine hits the repos. Check values in concrete test of methods.
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{cas, redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{cas, redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{
 				redmine: config.CreateDoguConfig(redmine, map[config.Key]config.Value{}),
 				cas:     config.CreateDoguConfig(cas, map[config.Key]config.Value{}),
 			}, nil)
 		doguConfigMock.EXPECT().UpdateOrCreate(testCtx, mock.Anything).Return(config.DoguConfig{}, nil).Times(2)
 
 		sensitiveDoguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{cas, redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{cas, redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{
 				redmine: config.CreateDoguConfig(redmine, map[config.Key]config.Value{}),
 				cas:     config.CreateDoguConfig(cas, map[config.Key]config.Value{}),
 			}, nil)
@@ -128,7 +129,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs:   map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				DoguConfigDiffs:   map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{},
 			},
 		}
@@ -152,7 +153,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
@@ -182,7 +183,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					redmine: {
 						DoguConfigDiff: []domain.DoguConfigEntryDiff{
 							getSetDoguConfigEntryDiff("key", "value", redmine),
@@ -199,8 +200,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// Just check if the routine hits the repos. Check values in concrete test of methods.
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{cas, redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{cas, redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{
 				redmine: config.CreateDoguConfig(redmine, map[config.Key]config.Value{}),
 				cas:     config.CreateDoguConfig(cas, map[config.Key]config.Value{}),
 			}, nil)
@@ -234,7 +235,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		casDiff := getSensitiveDoguConfigEntryDiffForAction("key", "value", cas, domain.ConfigActionSet)
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					redmine: {
 						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
 							getSensitiveDoguConfigEntryDiffForAction("key", "value", redmine, domain.ConfigActionSet),
@@ -252,10 +253,10 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		// Just check if the routine hits the repos. Check values in concrete test of methods.
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{cas, redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{cas, redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{
 				redmine: config.CreateDoguConfig(redmine, map[config.Key]config.Value{}),
 				cas:     config.CreateDoguConfig(cas, map[config.Key]config.Value{}),
 			}, nil)
@@ -288,7 +289,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
@@ -299,10 +300,10 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
@@ -338,7 +339,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		diff2 := getSetDoguConfigEntryDiff("key2", "update2", redmine)
 		diff3 := getSetDoguConfigEntryDiff("key3", "update3", redmine)
 		diff4 := getSetDoguConfigEntryDiff("key4", "update4", redmine)
-		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 			redmine: {
 				DoguConfigDiff:          []domain.DoguConfigEntryDiff{diff1, diff2},
 				SensitiveDoguConfigDiff: []domain.DoguConfigEntryDiff{diff3, diff4},
@@ -377,14 +378,14 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		require.NoError(t, err)
 
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
 		doguConfigMock.EXPECT().
 			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedConfig}).
 			Return(config.DoguConfig{}, nil)
 		sensitiveConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{redmine: sensitiveRedmineConfig}, nil)
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: sensitiveRedmineConfig}, nil)
 		sensitiveConfigMock.EXPECT().
 			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedSensitiveConfig}).
 			Return(config.DoguConfig{}, nil)
@@ -403,7 +404,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getRemoveDoguConfigEntryDiff("key1", redmine)
 		diff2 := getRemoveDoguConfigEntryDiff("key2", redmine)
-		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1, diff2}},
 		}
 
@@ -420,14 +421,14 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			Delete("key2")
 
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
 		doguConfigMock.EXPECT().
 			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedConfig}).
 			Return(config.DoguConfig{}, nil)
 		sensitiveConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
@@ -444,16 +445,16 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		diff1 := domain.DoguConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}
-		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
 		}
 
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 		sensitiveConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, nil)
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
@@ -468,14 +469,14 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		sensitiveConfigMock := newMockDoguConfigRepository(t)
 		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getSetDoguConfigEntryDiff("key1", "value", redmine)
-		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
 		}
 
 		expectedError := liberrors.NewConnectionError(assert.AnError)
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{}, expectedError)
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, expectedError)
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
@@ -491,7 +492,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		sensitiveConfigMock := newMockDoguConfigRepository(t)
 		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getSetDoguConfigEntryDiff("key1/key1_1", "value", redmine)
-		diffsByDogu := map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
 		}
 
@@ -501,8 +502,8 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		})
 
 		doguConfigMock.EXPECT().
-			GetAllExisting(testCtx, []common.SimpleDoguName{redmine}).
-			Return(map[config.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
+			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
+			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
 
 		// when
 		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
@@ -750,7 +751,7 @@ func TestNewEcosystemConfigUseCase(t *testing.T) {
 	})
 }
 
-func getSetDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName) domain.DoguConfigEntryDiff {
+func getSetDoguConfigEntryDiff(key, value string, doguName cescommons.SimpleDoguName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
@@ -763,7 +764,7 @@ func getSetDoguConfigEntryDiff(key, value string, doguName common.SimpleDoguName
 	}
 }
 
-func getRemoveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) domain.DoguConfigEntryDiff {
+func getRemoveDoguConfigEntryDiff(key string, doguName cescommons.SimpleDoguName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
@@ -773,7 +774,7 @@ func getRemoveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) do
 	}
 }
 
-func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName common.SimpleDoguName, action domain.ConfigAction) domain.SensitiveDoguConfigEntryDiff {
+func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescommons.SimpleDoguName, action domain.ConfigAction) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
 			Key:      config.Key(key),
@@ -786,7 +787,7 @@ func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName common
 	}
 }
 
-func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName common.SimpleDoguName) domain.SensitiveDoguConfigEntryDiff {
+func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName cescommons.SimpleDoguName) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
 		Key: common.SensitiveDoguConfigKey{
 			Key:      config.Key(key),

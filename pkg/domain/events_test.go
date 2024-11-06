@@ -2,7 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -62,7 +62,7 @@ func TestEvents(t *testing.T) {
 			event: EcosystemUnhealthyUpfrontEvent{
 				HealthResult: ecosystem.HealthResult{
 					DoguHealth: ecosystem.DoguHealthResult{
-						DogusByStatus: map[ecosystem.HealthStatus][]common.SimpleDoguName{
+						DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
 							ecosystem.AvailableHealthStatus:   {"postgresql"},
 							ecosystem.UnavailableHealthStatus: {"ldap"},
 							ecosystem.PendingHealthStatus:     {"admin"},
@@ -122,7 +122,7 @@ func TestEvents(t *testing.T) {
 		},
 		{
 			name: "dogu config diff determined",
-			event: DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{
+			event: DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs{
 				"dogu1": {
 					DoguConfigDiff: []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},

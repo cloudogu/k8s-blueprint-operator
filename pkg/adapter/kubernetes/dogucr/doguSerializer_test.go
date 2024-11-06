@@ -2,9 +2,9 @@ package dogucr
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,9 +12,9 @@ import (
 	"testing"
 )
 
-var postgresDoguName = common.QualifiedDoguName{
-	Namespace:  common.DoguNamespace("official"),
-	SimpleName: common.SimpleDoguName("postgresql"),
+var postgresDoguName = cescommons.QualifiedDoguName{
+	Namespace:  cescommons.DoguNamespace("official"),
+	SimpleName: cescommons.SimpleDoguName("postgresql"),
 }
 
 func Test_parseDoguCR(t *testing.T) {

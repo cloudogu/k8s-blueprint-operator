@@ -1,8 +1,8 @@
 package ecosystem
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -77,7 +77,7 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, &DoguInstallation{
-			Name: common.QualifiedDoguName{
+			Name: cescommons.QualifiedDoguName{
 				Namespace:  "premium",
 				SimpleName: "postgresql",
 			},

@@ -3,9 +3,9 @@ package v1
 import (
 	"cmp"
 	"github.com/Masterminds/semver/v3"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -150,7 +150,7 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -504,7 +504,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{
 				DoguDiffs:      []domain.DoguDiff{},
 				ComponentDiffs: []domain.ComponentDiff{},
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},

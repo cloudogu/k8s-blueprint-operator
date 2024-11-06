@@ -5,8 +5,7 @@ package application
 import (
 	context "context"
 
-	config "github.com/cloudogu/k8s-registry-lib/config"
-
+	dogu "github.com/cloudogu/ces-commons-lib/dogu"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -24,7 +23,7 @@ func (_m *mockDoguRestartRepository) EXPECT() *mockDoguRestartRepository_Expecte
 }
 
 // RestartAll provides a mock function with given fields: _a0, _a1
-func (_m *mockDoguRestartRepository) RestartAll(_a0 context.Context, _a1 []config.SimpleDoguName) error {
+func (_m *mockDoguRestartRepository) RestartAll(_a0 context.Context, _a1 []dogu.SimpleDoguName) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -32,7 +31,7 @@ func (_m *mockDoguRestartRepository) RestartAll(_a0 context.Context, _a1 []confi
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleDoguName) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
@@ -48,14 +47,14 @@ type mockDoguRestartRepository_RestartAll_Call struct {
 
 // RestartAll is a helper method to define mock.On call
 //   - _a0 context.Context
-//   - _a1 []config.SimpleDoguName
+//   - _a1 []dogu.SimpleDoguName
 func (_e *mockDoguRestartRepository_Expecter) RestartAll(_a0 interface{}, _a1 interface{}) *mockDoguRestartRepository_RestartAll_Call {
 	return &mockDoguRestartRepository_RestartAll_Call{Call: _e.mock.On("RestartAll", _a0, _a1)}
 }
 
-func (_c *mockDoguRestartRepository_RestartAll_Call) Run(run func(_a0 context.Context, _a1 []config.SimpleDoguName)) *mockDoguRestartRepository_RestartAll_Call {
+func (_c *mockDoguRestartRepository_RestartAll_Call) Run(run func(_a0 context.Context, _a1 []dogu.SimpleDoguName)) *mockDoguRestartRepository_RestartAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]config.SimpleDoguName))
+		run(args[0].(context.Context), args[1].([]dogu.SimpleDoguName))
 	})
 	return _c
 }
@@ -65,7 +64,7 @@ func (_c *mockDoguRestartRepository_RestartAll_Call) Return(_a0 error) *mockDogu
 	return _c
 }
 
-func (_c *mockDoguRestartRepository_RestartAll_Call) RunAndReturn(run func(context.Context, []config.SimpleDoguName) error) *mockDoguRestartRepository_RestartAll_Call {
+func (_c *mockDoguRestartRepository_RestartAll_Call) RunAndReturn(run func(context.Context, []dogu.SimpleDoguName) error) *mockDoguRestartRepository_RestartAll_Call {
 	_c.Call.Return(run)
 	return _c
 }

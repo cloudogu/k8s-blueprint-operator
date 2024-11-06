@@ -159,7 +159,7 @@ func saveDoguConfigs(
 			return err
 		}
 		_, err = repo.UpdateOrCreate(ctx, config.DoguConfig{
-			DoguName: config.SimpleDoguName(dogu),
+			DoguName: dogu,
 			Config:   updatedConfig,
 		})
 		if err != nil {

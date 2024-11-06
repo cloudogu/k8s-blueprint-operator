@@ -38,6 +38,13 @@ func (dogu Dogu) validate() error {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
 
+	if dogu.Name.SimpleName == "" {
+		errorList = append(errorList, fmt.Errorf("dogu name must not be empty: %s", dogu.Name))
+	}
+
+	if dogu.Name.Namespace == "" {
+		errorList = append(errorList, fmt.Errorf("namespace of dogu %s must not be empty", dogu.Name))
+	}
 	// Storage is usually expressed in Binary SI. Using Decimal SI can cause problems because sizes will be
 	// rounded up (longhorn does this in volume resize).
 	minVolumeSize := dogu.MinVolumeSize

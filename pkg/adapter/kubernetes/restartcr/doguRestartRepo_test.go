@@ -2,8 +2,8 @@ package restartcr
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -14,8 +14,8 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("no error on restart all", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		testDoguSimpleName := common.SimpleDoguName("testdogu")
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu")
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 
@@ -33,7 +33,7 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("no error on empty restart all", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		dogusThatNeedARestart := []common.SimpleDoguName{}
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 
 		restartRepository := NewDoguRestartRepository(mockDoguRestartInterface)
@@ -48,8 +48,8 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("fail on error at create", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		testDoguSimpleName := common.SimpleDoguName("testdogu")
-		dogusThatNeedARestart := []common.SimpleDoguName{testDoguSimpleName}
+		testDoguSimpleName := cescommons.SimpleDoguName("testdogu")
+		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 

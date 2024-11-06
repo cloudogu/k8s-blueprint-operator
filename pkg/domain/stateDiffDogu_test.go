@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -401,7 +401,7 @@ func Test_determineDoguDiff(t *testing.T) {
 func Test_determineDoguDiffs(t *testing.T) {
 	type args struct {
 		blueprintDogus []Dogu
-		installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation
+		installedDogus map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation
 	}
 	tests := []struct {
 		name string
@@ -447,7 +447,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 			name: "an installed dogu which is not in the blueprint",
 			args: args{
 				blueprintDogus: nil,
-				installedDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+				installedDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 					"postgresql": {
 						Name:    officialNexus,
 						Version: version3211,
@@ -481,7 +481,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 						TargetState: TargetStatePresent,
 					},
 				},
-				installedDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+				installedDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 					"nexus": {
 						Name:    officialNexus,
 						Version: version3211,

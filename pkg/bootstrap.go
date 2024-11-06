@@ -13,8 +13,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	"github.com/cloudogu/cesapp-lib/remote"
-
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
 	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr"
@@ -29,7 +27,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	componentEcoClient "github.com/cloudogu/k8s-component-operator/pkg/api/ecosystem"
-	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
+	doguEcoClient "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
 )
 
 // ApplicationContext contains vital application parts for this operator.

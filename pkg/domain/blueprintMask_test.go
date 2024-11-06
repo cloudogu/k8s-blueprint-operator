@@ -1,8 +1,8 @@
 package domain
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
@@ -10,10 +10,10 @@ import (
 var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
 
 var (
-	officialNamespace = common.DoguNamespace("official")
-	officialDogu1     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu1")}
-	officialDogu2     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu2")}
-	officialDogu3     = common.QualifiedDoguName{Namespace: officialNamespace, SimpleName: common.SimpleDoguName("dogu3")}
+	officialNamespace = cescommons.DoguNamespace("official")
+	officialDogu1     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu1")}
+	officialDogu2     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu2")}
+	officialDogu3     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu3")}
 )
 
 func Test_Validate(t *testing.T) {

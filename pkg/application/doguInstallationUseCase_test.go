@@ -2,9 +2,9 @@ package application
 
 import (
 	"context"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -18,7 +18,7 @@ const blueprintId = "blueprint1"
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 
-var postgresqlQualifiedName = common.QualifiedDoguName{
+var postgresqlQualifiedName = cescommons.QualifiedDoguName{
 	Namespace:  "official",
 	SimpleName: "postgresql",
 }
@@ -97,7 +97,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action uninstall", func(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
-			Delete(testCtx, common.SimpleDoguName("postgresql")).
+			Delete(testCtx, cescommons.SimpleDoguName("postgresql")).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
@@ -463,7 +463,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, common.DoguNamespace("premium"), dogu.Name.Namespace)
+		assert.Equal(t, cescommons.DoguNamespace("premium"), dogu.Name.Namespace)
 	})
 
 	t.Run("unknown action", func(t *testing.T) {
@@ -562,7 +562,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		}, nil)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
+		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
 
 		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
@@ -589,7 +589,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		}, nil)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 			"postgresql": {
 				Name:          postgresqlQualifiedName,
 				Version:       version3211,
@@ -615,7 +615,7 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		timedCtx, cancel := context.WithTimeout(testCtx, 10*time.Millisecond)
 		defer cancel()
-		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
+		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{}, nil)
 
 		waitConfigMock := newMockHealthWaitConfigProvider(t)
 		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: time.Millisecond}, nil)
@@ -662,7 +662,7 @@ func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
 		timedCtx, cancel := context.WithTimeout(testCtx, 0*time.Millisecond)
 		defer cancel()
 		// return unhealthy result
-		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
 			"postgresql": {Health: ecosystem.DoguStatusInstalling},
 		}, nil).Maybe()
 
