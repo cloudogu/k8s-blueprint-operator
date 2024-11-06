@@ -241,8 +241,14 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			{Name: officialDogu2, TargetState: TargetStateAbsent},
 		}
 
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				officialDogu1.SimpleName: {},
+			},
+		}
+
 		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: dogus},
+			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Status:        StatusPhaseValidated,
 		}
@@ -252,6 +258,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 		assert.Equal(t, Dogu{Name: officialDogu1, Version: version3211, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
 		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3212, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+		assert.NotContains(t, spec.EffectiveBlueprint.Config.Dogus, officialDogu1.SimpleName)
 	})
 	t.Run("change dogu namespace", func(t *testing.T) {
 		dogus := []Dogu{
