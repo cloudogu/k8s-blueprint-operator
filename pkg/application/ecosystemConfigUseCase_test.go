@@ -43,26 +43,24 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 						NeededActions: []domain.Action{},
 					},
 				},
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
 					redmine: {
-						DoguConfigDiff: []domain.DoguConfigEntryDiff{
-							getSetDoguConfigEntryDiff("key", "value", redmine),
-							getRemoveDoguConfigEntryDiff("key", redmine),
-						},
-						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							sensitiveRedmineDiff,
-							getRemoveSensitiveDoguConfigEntryDiff("key", redmine),
-						},
+						getSetDoguConfigEntryDiff("key", "value", redmine),
+						getRemoveDoguConfigEntryDiff("key", redmine),
 					},
 					cas: {
-						DoguConfigDiff: []domain.DoguConfigEntryDiff{
-							getSetDoguConfigEntryDiff("key", "value", cas),
-							getRemoveDoguConfigEntryDiff("key", cas),
-						},
-						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							sensitiveCasDiff,
-							getRemoveSensitiveDoguConfigEntryDiff("key", cas),
-						},
+						getSetDoguConfigEntryDiff("key", "value", cas),
+						getRemoveDoguConfigEntryDiff("key", cas),
+					},
+				},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
+					redmine: {
+						sensitiveRedmineDiff,
+						getRemoveSensitiveDoguConfigEntryDiff("key", redmine),
+					},
+					cas: {
+						sensitiveCasDiff,
+						getRemoveSensitiveDoguConfigEntryDiff("key", cas),
 					},
 				},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{
@@ -129,8 +127,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs:   map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
-				GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+				DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+				GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 			},
 		}
 
@@ -144,7 +143,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseRegistryConfigApplied, spec.Status)
+		assert.Equal(t, domain.StatusPhaseEcosystemConfigApplied, spec.Status)
 	})
 
 	t.Run("should return on mark apply config start error", func(t *testing.T) {
@@ -153,7 +152,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
@@ -171,7 +171,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, spec.Status, domain.StatusPhaseApplyRegistryConfigFailed)
+		assert.Equal(t, spec.Status, domain.StatusPhaseApplyEcosystemConfigFailed)
 	})
 
 	t.Run("error applying dogu config", func(t *testing.T) {
@@ -183,16 +183,12 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
 					redmine: {
-						DoguConfigDiff: []domain.DoguConfigEntryDiff{
-							getSetDoguConfigEntryDiff("key", "value", redmine),
-						},
+						getSetDoguConfigEntryDiff("key", "value", redmine),
 					},
 					cas: {
-						DoguConfigDiff: []domain.DoguConfigEntryDiff{
-							getSetDoguConfigEntryDiff("key", "value", cas),
-						},
+						getSetDoguConfigEntryDiff("key", "value", cas),
 					},
 				},
 			},
@@ -217,9 +213,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
 		require.Len(t, spec.Events, 2)
-		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
+		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply normal dogu config")
 		// cannot check for dogu name here as the order of the events is not fixed. It could be either redmine or cas
 		assert.Contains(t, spec.Events[1].Message(), "could not persist config for dogu")
@@ -232,19 +228,14 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		sensitiveDoguConfigMock := newMockSensitiveDoguConfigRepository(t)
 		globalConfigMock := newMockGlobalConfigRepository(t)
 
-		casDiff := getSensitiveDoguConfigEntryDiffForAction("key", "value", cas, domain.ConfigActionSet)
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
 					redmine: {
-						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							getSensitiveDoguConfigEntryDiffForAction("key", "value", redmine, domain.ConfigActionSet),
-						},
+						getSensitiveDoguConfigEntryDiffForAction("key", "value", redmine, domain.ConfigActionSet),
 					},
 					cas: {
-						SensitiveDoguConfigDiff: []domain.SensitiveDoguConfigEntryDiff{
-							casDiff,
-						},
+						getSensitiveDoguConfigEntryDiffForAction("key", "value", cas, domain.ConfigActionSet),
 					},
 				},
 			},
@@ -272,9 +263,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
 		require.Len(t, spec.Events, 2)
-		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
+		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply sensitive dogu config")
 		// cannot check for dogu name here as the order of the events is not fixed. It could be either redmine or cas
 		assert.Contains(t, spec.Events[1].Message(), "could not persist config for dogu")
@@ -289,7 +280,8 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		spec := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+				DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
 				GlobalConfigDiffs: domain.GlobalConfigDiffs{
 					getSetGlobalConfigEntryDiff("key", "value"),
 				},
@@ -320,9 +312,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
+		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
 		require.Len(t, spec.Events, 2)
-		assert.Equal(t, domain.ApplyRegistryConfigEvent{}, spec.Events[0])
+		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, spec.Events[0])
 		assert.Contains(t, spec.Events[1].Message(), "could not apply global config")
 		assert.Contains(t, spec.Events[1].Message(), "assert.AnError general error for testing")
 	})
@@ -332,27 +324,19 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveConfigMock := newMockDoguConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 
 		diff1 := getSetDoguConfigEntryDiff("key1", "update1", redmine)
 		diff2 := getSetDoguConfigEntryDiff("key2", "update2", redmine)
-		diff3 := getSetDoguConfigEntryDiff("key3", "update3", redmine)
-		diff4 := getSetDoguConfigEntryDiff("key4", "update4", redmine)
-		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
 			redmine: {
-				DoguConfigDiff:          []domain.DoguConfigEntryDiff{diff1, diff2},
-				SensitiveDoguConfigDiff: []domain.DoguConfigEntryDiff{diff3, diff4},
+				diff1,
+				diff2,
 			},
 		}
 
 		redmineConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
 			"key1": "val1",
 			"key2": "val2",
-		})
-		sensitiveRedmineConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
-			"key3": "val3",
-			"key4": "val4",
 		})
 
 		// do not use redmineConfig here, because there is a bug in the k8s-registry lib
@@ -366,32 +350,15 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		updatedConfig, err = updatedConfig.Set(diff2.Key.Key, config.Value(diff2.Expected.Value))
 		require.NoError(t, err)
 
-		// do not use redmineConfig here, because there is a bug in the k8s-registry lib
-		// TODO: remove workaround when bug #50007 is fixed
-		updatedSensitiveConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
-			"key3": "val3",
-			"key4": "val4",
-		}).Config
-		updatedSensitiveConfig, err = updatedSensitiveConfig.Set(diff3.Key.Key, config.Value(diff3.Expected.Value))
-		require.NoError(t, err)
-		updatedSensitiveConfig, err = updatedSensitiveConfig.Set(diff4.Key.Key, config.Value(diff4.Expected.Value))
-		require.NoError(t, err)
-
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
 			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
 		doguConfigMock.EXPECT().
 			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedConfig}).
 			Return(config.DoguConfig{}, nil)
-		sensitiveConfigMock.EXPECT().
-			GetAllExisting(testCtx, []cescommons.SimpleDoguName{redmine}).
-			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: sensitiveRedmineConfig}, nil)
-		sensitiveConfigMock.EXPECT().
-			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedSensitiveConfig}).
-			Return(config.DoguConfig{}, nil)
 
 		// when
-		err = sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err = applyDoguConfigDiffs(testCtx, doguConfigMock, diffsByDogu)
 
 		// then
 		require.NoError(t, err)
@@ -400,12 +367,10 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveConfigMock := newMockDoguConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getRemoveDoguConfigEntryDiff("key1", redmine)
 		diff2 := getRemoveDoguConfigEntryDiff("key2", redmine)
-		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1, diff2}},
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+			redmine: {diff1, diff2},
 		}
 
 		redmineConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
@@ -426,12 +391,9 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 		doguConfigMock.EXPECT().
 			UpdateOrCreate(testCtx, config.DoguConfig{DoguName: redmine, Config: updatedConfig}).
 			Return(config.DoguConfig{}, nil)
-		sensitiveConfigMock.EXPECT().
-			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := applyDoguConfigDiffs(testCtx, doguConfigMock, diffsByDogu)
 
 		// then
 		require.NoError(t, err)
@@ -440,24 +402,19 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("should apply nothing on action none", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveConfigMock := newMockDoguConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := domain.DoguConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}
-		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+			redmine: {diff1},
 		}
 
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, emptyDoguList).
 			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
-		sensitiveConfigMock.EXPECT().
-			GetAllExisting(testCtx, emptyDoguList).
-			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, nil)
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := applyDoguConfigDiffs(testCtx, doguConfigMock, diffsByDogu)
 
 		// then
 		require.NoError(t, err)
@@ -466,11 +423,9 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("err when GetAllExisting fails", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveConfigMock := newMockDoguConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getSetDoguConfigEntryDiff("key1", "value", redmine)
-		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+			redmine: {diff1},
 		}
 
 		expectedError := liberrors.NewConnectionError(assert.AnError)
@@ -479,7 +434,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			Return(map[cescommons.SimpleDoguName]config.DoguConfig{}, expectedError)
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := applyDoguConfigDiffs(testCtx, doguConfigMock, diffsByDogu)
 
 		// then
 		require.Error(t, err)
@@ -489,11 +444,9 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 	t.Run("error while applying key", func(t *testing.T) {
 		// given
 		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveConfigMock := newMockDoguConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, doguConfigMock, sensitiveConfigMock, nil)
 		diff1 := getSetDoguConfigEntryDiff("key1/key1_1", "value", redmine)
-		diffsByDogu := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
-			redmine: {DoguConfigDiff: []domain.DoguConfigEntryDiff{diff1}},
+		diffsByDogu := map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+			redmine: {diff1},
 		}
 
 		redmineConfig := config.CreateDoguConfig(redmine, map[config.Key]config.Value{
@@ -506,7 +459,7 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			Return(map[cescommons.SimpleDoguName]config.DoguConfig{redmine: redmineConfig}, nil)
 
 		// when
-		err := sut.applyDoguConfigDiffs(testCtx, diffsByDogu)
+		err := applyDoguConfigDiffs(testCtx, doguConfigMock, diffsByDogu)
 
 		// then
 		assert.Error(t, err, "should throw an error when trying to create a sub key for an existing key")
@@ -615,8 +568,8 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseRegistryConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.RegistryConfigAppliedEvent{})
+		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
+		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
@@ -634,8 +587,8 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseRegistryConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.RegistryConfigAppliedEvent{})
+		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
+		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
@@ -647,7 +600,7 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to mark registry config applied")
+		assert.ErrorContains(t, err, "failed to mark ecosystem config applied")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }
@@ -657,8 +610,8 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyRegistryConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyRegistryConfigEvent{})
+		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
+		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
@@ -676,8 +629,8 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
 		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyRegistryConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyRegistryConfigEvent{})
+		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
+		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
@@ -694,7 +647,7 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 	})
 }
 
-func TestEcosystemConfigUseCase_handleFailedApplyRegistryConfig(t *testing.T) {
+func TestEcosystemConfigUseCase_handleFailedApplyEcosystemConfig(t *testing.T) {
 	t.Run("should set applied status and event", func(t *testing.T) {
 		// given
 		spec := &domain.BlueprintSpec{}
@@ -705,12 +658,12 @@ func TestEcosystemConfigUseCase_handleFailedApplyRegistryConfig(t *testing.T) {
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.handleFailedApplyRegistryConfig(testCtx, spec, assert.AnError)
+		err := sut.handleFailedApplyEcosystemConfig(testCtx, spec, assert.AnError)
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyRegistryConfigFailed, spec.Status)
-		assert.IsType(t, domain.ApplyRegistryConfigFailedEvent{}, spec.Events[0])
+		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
+		assert.IsType(t, domain.ApplyEcosystemConfigFailedEvent{}, spec.Events[0])
 	})
 
 	t.Run("should return error on update error", func(t *testing.T) {
@@ -723,11 +676,11 @@ func TestEcosystemConfigUseCase_handleFailedApplyRegistryConfig(t *testing.T) {
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.handleFailedApplyRegistryConfig(testCtx, spec, assert.AnError)
+		err := sut.handleFailedApplyEcosystemConfig(testCtx, spec, assert.AnError)
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed while handling \"applyRegistryConfigFailed\" status")
+		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed while handling \"applyEcosystemConfigFailed\" status")
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }

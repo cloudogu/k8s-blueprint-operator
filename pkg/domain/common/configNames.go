@@ -7,10 +7,6 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-type RegistryConfigKey interface {
-	GlobalConfigKey | DoguConfigKey
-}
-
 type GlobalConfigKey = config.Key
 
 type DoguConfigKey struct {

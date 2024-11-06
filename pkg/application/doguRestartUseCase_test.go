@@ -12,15 +12,20 @@ import (
 	"testing"
 )
 
+var (
+	testDoguSimpleName = cescommons.SimpleDoguName("testDogu1")
+)
+
 func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 	t.Run("no dogu restarts triggered on blueprint with empty state diff", func(t *testing.T) {
 		// given
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:         domain.DoguDiffs{},
-			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
-			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+			DoguDiffs:                domain.DoguDiffs{},
+			ComponentDiffs:           domain.ComponentDiffs{},
+			DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
@@ -52,9 +57,10 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		// given
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:       domain.DoguDiffs{},
-			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguDiffs:                domain.DoguDiffs{},
+			ComponentDiffs:           domain.ComponentDiffs{},
+			DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -73,7 +79,6 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		installedDogu := ecosystem.DoguInstallation{
 			Name:               cescommons.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
 			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
@@ -107,9 +112,10 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		// given
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:       domain.DoguDiffs{},
-			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguDiffs:                domain.DoguDiffs{},
+			ComponentDiffs:           domain.ComponentDiffs{},
+			DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -148,9 +154,10 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		// given
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:       domain.DoguDiffs{},
-			ComponentDiffs:  domain.ComponentDiffs{},
-			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{},
+			DoguDiffs:                domain.DoguDiffs{},
+			ComponentDiffs:           domain.ComponentDiffs{},
+			DoguConfigDiffs:          map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs: domain.GlobalConfigDiffs{{
 				Key:          "testkey",
 				Actual:       domain.GlobalConfigValueState{Value: "changed", Exists: true},
@@ -169,7 +176,6 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			PersistenceContext: nil,
 			Events:             nil,
 		}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
 		installedDogu := ecosystem.DoguInstallation{
 			Name:               cescommons.QualifiedDoguName{Namespace: "testing", SimpleName: testDoguSimpleName},
 			Version:            core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
@@ -200,20 +206,20 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("restart some dogus", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
-		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
-			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
-			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
-			NeededAction: domain.ConfigActionSet}},
-		}
+
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:         domain.DoguDiffs{},
-			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   doguConfigDiff,
-			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+			DoguDiffs:      domain.DoguDiffs{},
+			ComponentDiffs: domain.ComponentDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+				testDoguSimpleName: {{
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
+					NeededAction: domain.ConfigActionSet}},
+			},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
@@ -249,20 +255,19 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on dogu restart for some dogus", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
-		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
-			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
-			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
-			NeededAction: domain.ConfigActionSet}},
-		}
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:         domain.DoguDiffs{},
-			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   doguConfigDiff,
-			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+			DoguDiffs:      domain.DoguDiffs{},
+			ComponentDiffs: domain.ComponentDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+				testDoguSimpleName: {{
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
+					NeededAction: domain.ConfigActionSet}},
+			},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
@@ -298,20 +303,19 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on error in blueprint spec update", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
-		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
-			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
-			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
-			NeededAction: domain.ConfigActionSet}},
-		}
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:         domain.DoguDiffs{},
-			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   doguConfigDiff,
-			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+			DoguDiffs:      domain.DoguDiffs{},
+			ComponentDiffs: domain.ComponentDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+				testDoguSimpleName: {{
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
+					NeededAction: domain.ConfigActionSet}},
+			},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},
@@ -348,20 +352,19 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 
 	t.Run("fail on error when getting blueprint", func(t *testing.T) {
 		// given
-		doguConfigDiff := map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{}
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu1")
-		doguConfigDiff[testDoguSimpleName] = domain.CombinedDoguConfigDiffs{DoguConfigDiff: domain.DoguConfigDiffs{{
-			Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testkey"},
-			Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
-			Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
-			NeededAction: domain.ConfigActionSet}},
-		}
 		testContext := context.Background()
 		testStateDiff := domain.StateDiff{
-			DoguDiffs:         domain.DoguDiffs{},
-			ComponentDiffs:    domain.ComponentDiffs{},
-			DoguConfigDiffs:   doguConfigDiff,
-			GlobalConfigDiffs: domain.GlobalConfigDiffs{},
+			DoguDiffs:      domain.DoguDiffs{},
+			ComponentDiffs: domain.ComponentDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+				testDoguSimpleName: {{
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
+					NeededAction: domain.ConfigActionSet}},
+			},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{},
+			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
 		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedDoguName{SimpleName: testDoguSimpleName, Namespace: "testing"},

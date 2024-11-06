@@ -118,26 +118,35 @@ func TestEvents(t *testing.T) {
 				{NeededAction: ConfigActionRemove},
 			}},
 			expectedName:    "GlobalConfigDiffDetermined",
-			expectedMessage: "global config diff determined: 4 actions (\"none\": 2, \"remove\": 1, \"set\": 1)",
+			expectedMessage: "global config diff determined: 2 changes (\"none\": 2, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name: "dogu config diff determined",
-			event: DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[cescommons.SimpleDoguName]CombinedDoguConfigDiffs{
-				"dogu1": {
-					DoguConfigDiff: []DoguConfigEntryDiff{
-						{NeededAction: ConfigActionNone},
-						{NeededAction: ConfigActionSet},
-						{NeededAction: ConfigActionRemove},
-					},
-					SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{
+			event: DoguConfigDiffDeterminedEvent{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]DoguConfigDiffs{
+					"dogu1": []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
 						{NeededAction: ConfigActionSet},
 						{NeededAction: ConfigActionRemove},
 					},
 				},
-			}},
+			},
 			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 6 actions (\"none\": 2, \"remove\": 2, \"set\": 2)",
+			expectedMessage: "dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
+		},
+		{
+			name: "sensitive dogu config diff determined",
+			event: SensitiveDoguConfigDiffDeterminedEvent{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs{
+					"dogu1": []SensitiveDoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSet},
+						{NeededAction: ConfigActionRemove},
+					},
+				},
+			},
+			expectedName:    "SensitiveDoguConfigDiffDetermined",
+			expectedMessage: "sensitive dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name:            "blueprint application pre-processed",
@@ -170,21 +179,21 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "test-error",
 		},
 		{
-			name:            "apply registry config",
-			event:           ApplyRegistryConfigEvent{},
-			expectedName:    "ApplyRegistryConfig",
-			expectedMessage: "apply registry config",
+			name:            "apply ecosystem config",
+			event:           ApplyEcosystemConfigEvent{},
+			expectedName:    "ApplyEcosystemConfig",
+			expectedMessage: "apply ecosystem config",
 		},
 		{
-			name:            "registry config applied",
-			event:           RegistryConfigAppliedEvent{},
-			expectedName:    "RegistryConfigApplied",
-			expectedMessage: "registry config applied",
+			name:            "ecosystem config applied",
+			event:           EcosystemConfigAppliedEvent{},
+			expectedName:    "EcosystemConfigApplied",
+			expectedMessage: "ecosystem config applied",
 		},
 		{
-			name:            "registry config apply failed",
-			event:           ApplyRegistryConfigFailedEvent{fmt.Errorf("test-error")},
-			expectedName:    "ApplyDoguConfigFailed",
+			name:            "applying ecosystem config failed",
+			event:           ApplyEcosystemConfigFailedEvent{fmt.Errorf("test-error")},
+			expectedName:    "ApplyEcosystemConfigFailed",
 			expectedMessage: "test-error",
 		},
 		{

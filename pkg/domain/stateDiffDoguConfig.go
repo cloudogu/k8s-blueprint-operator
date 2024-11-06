@@ -3,25 +3,40 @@ package domain
 import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type DoguConfigDiffs []DoguConfigEntryDiff
+type SensitiveDoguConfigDiffs = DoguConfigDiffs
 
-func (diffs DoguConfigDiffs) GetDoguConfigDiffByAction() map[ConfigAction][]DoguConfigEntryDiff {
-	return util.GroupBy(diffs, func(diff DoguConfigEntryDiff) ConfigAction {
-		return diff.NeededAction
-	})
-}
-
-func (diffs DoguConfigDiffs) HasChangesForDogu(dogu cescommons.SimpleDoguName) bool {
+func (diffs DoguConfigDiffs) HasChanges() bool {
 	for _, diff := range diffs {
-		if diff.Key.DoguName == dogu && diff.NeededAction != ConfigActionNone {
+		if diff.NeededAction != ConfigActionNone {
 			return true
 		}
 	}
 	return false
+}
+
+func (diffs SensitiveDoguConfigDiffs) CensorValues() SensitiveDoguConfigDiffs {
+	var censoredEntries []DoguConfigEntryDiff
+	for _, entry := range diffs {
+		actual := entry.Actual
+		expected := entry.Expected
+		if len(entry.Actual.Value) > 0 {
+			actual.Value = censorValue
+		}
+		if len(entry.Expected.Value) > 0 {
+			expected.Value = censorValue
+		}
+		censoredEntries = append(censoredEntries, DoguConfigEntryDiff{
+			Key:          entry.Key,
+			Actual:       actual,
+			Expected:     expected,
+			NeededAction: entry.NeededAction,
+		})
+	}
+	return censoredEntries
 }
 
 type DoguConfigValueState ConfigValueState
@@ -36,6 +51,7 @@ type DoguConfigEntryDiff struct {
 	Expected     DoguConfigValueState
 	NeededAction ConfigAction
 }
+type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newDoguConfigEntryDiff(
 	key common.DoguConfigKey,

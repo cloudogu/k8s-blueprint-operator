@@ -50,30 +50,39 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 		logger.Info("dogu config diffs are empty...")
 	}
 
+	sensitiveDoguConfigDiffs := blueprintSpec.StateDiff.SensitiveDoguConfigDiffs
+	isEmptySensitiveDiff := len(sensitiveDoguConfigDiffs) == 0
+	if isEmptySensitiveDiff {
+		logger.Info("sensitive dogu config diffs are empty...")
+	}
+
 	globalConfigDiffs := blueprintSpec.StateDiff.GlobalConfigDiffs
 	isEmptyGlobalDiff := len(globalConfigDiffs) == 0
 	if isEmptyGlobalDiff {
 		logger.Info("global config diffs are empty...")
 	}
 
-	if isEmptyDoguDiff && isEmptyGlobalDiff {
+	if isEmptyDoguDiff && isEmptyGlobalDiff && isEmptySensitiveDiff {
 		return useCase.markConfigApplied(ctx, blueprintSpec)
 	}
 
 	err = useCase.markApplyConfigStart(ctx, blueprintSpec)
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, err)
 	}
 
-	// do not apply further configs if error happens, we don't want to corrupt the system more than needed
-	// apply normal and sensitive config with this
-	err = useCase.applyDoguConfigDiffs(ctx, blueprintSpec.StateDiff.DoguConfigDiffs)
+	// do not apply further configs if error happens, we don't want to corrupt the system more than needed.
+	err = applyDoguConfigDiffs(ctx, useCase.doguConfigRepository, blueprintSpec.StateDiff.DoguConfigDiffs)
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply normal dogu config: %w", err))
+	}
+	err = applyDoguConfigDiffs(ctx, useCase.sensitiveDoguConfigRepository, blueprintSpec.StateDiff.SensitiveDoguConfigDiffs)
+	if err != nil {
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply sensitive dogu config: %w", err))
 	}
 	err = useCase.applyGlobalConfigDiffs(ctx, globalConfigDiffs.GetGlobalConfigDiffsByAction())
 	if err != nil {
-		return useCase.handleFailedApplyRegistryConfig(ctx, blueprintSpec, fmt.Errorf("could not apply global config: %w", err))
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprintSpec, fmt.Errorf("could not apply global config: %w", err))
 	}
 
 	return useCase.markConfigApplied(ctx, blueprintSpec)
@@ -108,34 +117,21 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 	return errors.Join(errs...)
 }
 
-func (useCase *EcosystemConfigUseCase) applyDoguConfigDiffs(
+func applyDoguConfigDiffs(
 	ctx context.Context,
-	diffsByDogu map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs,
+	repo doguConfigRepository,
+	diffsByDogu map[cescommons.SimpleDoguName]domain.DoguConfigDiffs,
 ) error {
 	var doguConfigDiffs = map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{}
-	var sensitiveDoguConfigDiffs = map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
 
-	for dogu, combinedDiff := range diffsByDogu {
+	for dogu, entryDiffs := range diffsByDogu {
 		// only collect doguConfigs with changes, so we don't need to load all.
-		if combinedDiff.DoguConfigDiff.HasChangesForDogu(dogu) {
-			doguConfigDiffs[dogu] = combinedDiff.DoguConfigDiff
-		}
-		if combinedDiff.SensitiveDoguConfigDiff.HasChangesForDogu(dogu) {
-			sensitiveDoguConfigDiffs[dogu] = combinedDiff.SensitiveDoguConfigDiff
+		if entryDiffs.HasChanges() {
+			doguConfigDiffs[dogu] = entryDiffs
 		}
 	}
 
-	err := saveDoguConfigs(ctx, useCase.doguConfigRepository, doguConfigDiffs)
-	if err != nil {
-		return fmt.Errorf("could not apply normal dogu config: %w", err)
-	}
-
-	err = saveDoguConfigs(ctx, useCase.sensitiveDoguConfigRepository, sensitiveDoguConfigDiffs)
-	if err != nil {
-		return fmt.Errorf("could not apply sensitive dogu config: %w", err)
-	}
-
-	return nil
+	return saveDoguConfigs(ctx, repo, doguConfigDiffs)
 }
 
 func saveDoguConfigs(
@@ -170,7 +166,7 @@ func saveDoguConfigs(
 }
 
 func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.StartApplyRegistryConfig()
+	blueprintSpec.StartApplyEcosystemConfig()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
 		return fmt.Errorf("cannot mark blueprint as applying config: %w", err)
@@ -178,12 +174,12 @@ func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context,
 	return nil
 }
 
-func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
+func (useCase *EcosystemConfigUseCase) handleFailedApplyEcosystemConfig(ctx context.Context, blueprintSpec *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
-		WithName("EcosystemConfigUseCase.handleFailedApplyRegistryConfig").
+		WithName("EcosystemConfigUseCase.handleFailedApplyEcosystemConfig").
 		WithValues("blueprintId", blueprintSpec.Id)
 
-	blueprintSpec.MarkApplyRegistryConfigFailed(err)
+	blueprintSpec.MarkApplyEcosystemConfigFailed(err)
 	repoErr := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 
 	if repoErr != nil {
@@ -195,10 +191,10 @@ func (useCase *EcosystemConfigUseCase) handleFailedApplyRegistryConfig(ctx conte
 }
 
 func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.MarkRegistryConfigApplied()
+	blueprintSpec.MarkEcosystemConfigApplied()
 	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("failed to mark registry config applied: %w", err)
+		return fmt.Errorf("failed to mark ecosystem config applied: %w", err)
 	}
 	return nil
 }

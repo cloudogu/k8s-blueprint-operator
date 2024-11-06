@@ -6,6 +6,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -19,6 +20,8 @@ var (
 	testVersionLow     = semver.MustParse(testVersionLowRaw)
 	testVersionHighRaw = "2.3.4"
 	testVersionHigh    = semver.MustParse(testVersionHighRaw)
+	testDogu           = cescommons.SimpleDoguName("testDogu")
+	testDoguKey1       = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
 )
 
 func TestConvertToDTO(t *testing.T) {
@@ -150,7 +153,11 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -504,7 +511,11 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{
 				DoguDiffs:      []domain.DoguDiff{},
 				ComponentDiffs: []domain.ComponentDiff{},
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{
+					"ldap":    {},
+					"postfix": {},
+				},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -546,7 +557,8 @@ func TestConvertToDomainModel(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
-		}, {
+		},
+		{
 			name: "succeed for multiple component diffs",
 			dto: StateDiff{
 				ComponentDiffs: map[string]ComponentDiff{
@@ -580,7 +592,8 @@ func TestConvertToDomainModel(t *testing.T) {
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
-		}, {
+		},
+		{
 			name: "fail for multiple component diffs",
 			dto: StateDiff{
 				ComponentDiffs: map[string]ComponentDiff{
@@ -625,6 +638,70 @@ func TestConvertToDomainModel(t *testing.T) {
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
 				return cmp.Compare(a.DoguName, b.DoguName)
 			})
+		})
+	}
+}
+
+func TestConvertToStateDiffDTO(t *testing.T) {
+
+	tests := []struct {
+		name  string
+		model domain.StateDiff
+		want  StateDiff
+	}{
+		{
+			name: "ok",
+			model: domain.StateDiff{
+				DoguDiffs:       nil,
+				ComponentDiffs:  nil,
+				DoguConfigDiffs: map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
+					testDogu: {
+						{
+							Key: testDoguKey1,
+							Actual: domain.DoguConfigValueState{
+								Value:  "123",
+								Exists: true,
+							},
+							Expected: domain.DoguConfigValueState{
+								Value:  "123",
+								Exists: true,
+							},
+							NeededAction: domain.ConfigActionSet,
+						},
+					},
+				},
+				GlobalConfigDiffs: nil,
+			},
+			want: StateDiff{
+				DoguDiffs:      map[string]DoguDiff{},
+				ComponentDiffs: map[string]ComponentDiff{},
+				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+					testDogu.String(): {
+						DoguConfigDiff: DoguConfigDiff(nil),
+						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{
+							DoguConfigEntryDiff{
+								Key: testDoguKey1.Key.String(),
+								Actual: DoguConfigValueState{
+									Value:  "123",
+									Exists: true,
+								},
+								Expected: DoguConfigValueState{
+									Value:  "123",
+									Exists: true,
+								},
+								NeededAction: ConfigAction("set"),
+							},
+						},
+					},
+				},
+				GlobalConfigDiff: nil,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equalf(t, tt.want, ConvertToStateDiffDTO(tt.model), "ConvertToStateDiffDTO(%v)", tt.model)
 		})
 	}
 }

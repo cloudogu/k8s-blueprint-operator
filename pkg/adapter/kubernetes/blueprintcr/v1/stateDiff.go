@@ -5,6 +5,7 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"slices"
 )
 
 // StateDiff is the result of comparing the EffectiveBlueprint to the current cluster state.
@@ -31,18 +32,38 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 		componentDiffsV1[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
 	}
 
-	var doguConfigDiffs map[string]CombinedDoguConfigDiff
-	if len(domainModel.DoguConfigDiffs) != 0 {
-		doguConfigDiffs = make(map[string]CombinedDoguConfigDiff)
+	var dogus []cescommons.SimpleDoguName
+	var combinedConfigDiffs map[string]CombinedDoguConfigDiff
+	var doguConfigDiffByDogu map[cescommons.SimpleDoguName]DoguConfigDiff
+	var sensitiveDoguConfigDiff map[cescommons.SimpleDoguName]SensitiveDoguConfigDiff
+
+	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
+		combinedConfigDiffs = make(map[string]CombinedDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
-			doguConfigDiffs[string(doguName)] = convertToCombinedDoguConfigDiffDTO(doguConfigDiff)
+			doguConfigDiffByDogu = make(map[cescommons.SimpleDoguName]DoguConfigDiff)
+			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
+			dogus = append(dogus, doguName)
+		}
+		for doguName, doguConfigDiff := range domainModel.SensitiveDoguConfigDiffs {
+			sensitiveDoguConfigDiff = make(map[cescommons.SimpleDoguName]SensitiveDoguConfigDiff)
+			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
+			dogus = append(dogus, doguName)
+		}
+
+		//remove duplicates, so we have a complete list of all dogus with config
+		dogus = slices.Compact(dogus)
+		for _, doguName := range dogus {
+			combinedConfigDiffs[string(doguName)] = CombinedDoguConfigDiff{
+				DoguConfigDiff:          doguConfigDiffByDogu[doguName],
+				SensitiveDoguConfigDiff: sensitiveDoguConfigDiff[doguName],
+			}
 		}
 	}
 
 	return StateDiff{
 		DoguDiffs:        doguDiffs,
 		ComponentDiffs:   componentDiffsV1,
-		DoguConfigDiffs:  doguConfigDiffs,
+		DoguConfigDiffs:  combinedConfigDiffs,
 		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiffs),
 	}
 }
@@ -69,18 +90,22 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff DTO to domain model: %w", err)
 	}
 
-	var doguConfigDiffs map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs
+	var doguConfigDiffs map[cescommons.SimpleDoguName]domain.DoguConfigDiffs
+	var sensitiveDoguConfigDiffs map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs
 	if len(dto.DoguConfigDiffs) != 0 {
-		doguConfigDiffs = make(map[cescommons.SimpleDoguName]domain.CombinedDoguConfigDiffs)
-		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
-			doguConfigDiffs[cescommons.SimpleDoguName(doguName)] = convertToCombinedDoguConfigDiffDomain(doguName, doguConfigDiff)
+		doguConfigDiffs = map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{}
+		sensitiveDoguConfigDiffs = map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
+		for doguName, combinedConfigDiff := range dto.DoguConfigDiffs {
+			doguConfigDiffs[cescommons.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.DoguConfigDiff)
+			sensitiveDoguConfigDiffs[cescommons.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.SensitiveDoguConfigDiff)
 		}
 	}
 
 	return domain.StateDiff{
-		DoguDiffs:         doguDiffs,
-		ComponentDiffs:    componentDiffs,
-		DoguConfigDiffs:   doguConfigDiffs,
-		GlobalConfigDiffs: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
+		DoguDiffs:                doguDiffs,
+		ComponentDiffs:           componentDiffs,
+		DoguConfigDiffs:          doguConfigDiffs,
+		SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs,
+		GlobalConfigDiffs:        convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
 	}, nil
 }
