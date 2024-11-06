@@ -70,14 +70,22 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 	var actionsCounter int
 	for action, amount := range e.GlobalConfigDiffs.countByAction() {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		actionsCounter += amount
+		if action != ConfigActionNone {
+			actionsCounter += amount
+		}
 	}
 	slices.Sort(stringPerAction)
-	return fmt.Sprintf("global config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+	return fmt.Sprintf("global config diff determined: %d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	CombinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs
+	DoguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs
+}
+
+func NewDoguConfigDiffDeterminedEvent(
+	doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs,
+) DoguConfigDiffDeterminedEvent {
+	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
 }
 
 func (e DoguConfigDiffDeterminedEvent) Name() string {
@@ -85,14 +93,44 @@ func (e DoguConfigDiffDeterminedEvent) Name() string {
 }
 
 func (e DoguConfigDiffDeterminedEvent) Message() string {
+	return fmt.Sprintf(
+		"dogu config diff determined: %s",
+		generateDoguConfigChangeCounter(e.DoguConfigDiffs),
+	)
+}
+
+type SensitiveDoguConfigDiffDeterminedEvent struct {
+	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+}
+
+func NewSensitiveDoguConfigDiffDeterminedEvent(
+	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
+) SensitiveDoguConfigDiffDeterminedEvent {
+	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
+}
+
+func (e SensitiveDoguConfigDiffDeterminedEvent) Name() string {
+	return "SensitiveDoguConfigDiffDetermined"
+}
+
+func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
+	return fmt.Sprintf(
+		"sensitive dogu config diff determined: %s",
+		generateDoguConfigChangeCounter(e.SensitiveDoguConfigDiffs),
+	)
+}
+
+func generateDoguConfigChangeCounter(doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
-	for action, amount := range countByAction(e.CombinedDogusConfigDiffs) {
+	for action, amount := range countByAction(doguConfigDiffs) {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		actionsCounter += amount
+		if action != ConfigActionNone {
+			actionsCounter += amount
+		}
 	}
 	slices.Sort(stringPerAction)
-	return fmt.Sprintf("dogu config diff determined: %d actions (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
+	return fmt.Sprintf("%d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
@@ -292,36 +330,36 @@ func (e CompletedEvent) Message() string {
 	return "maintenance mode deactivated"
 }
 
-type ApplyRegistryConfigEvent struct{}
+type ApplyEcosystemConfigEvent struct{}
 
-func (e ApplyRegistryConfigEvent) Name() string {
-	return "ApplyRegistryConfig"
+func (e ApplyEcosystemConfigEvent) Name() string {
+	return "ApplyEcosystemConfig"
 }
 
-func (e ApplyRegistryConfigEvent) Message() string {
-	return "apply registry config"
+func (e ApplyEcosystemConfigEvent) Message() string {
+	return "apply ecosystem config"
 }
 
-type ApplyRegistryConfigFailedEvent struct {
+type ApplyEcosystemConfigFailedEvent struct {
 	err error
 }
 
-func (e ApplyRegistryConfigFailedEvent) Name() string {
-	return "ApplyDoguConfigFailed"
+func (e ApplyEcosystemConfigFailedEvent) Name() string {
+	return "ApplyEcosystemConfigFailed"
 }
 
-func (e ApplyRegistryConfigFailedEvent) Message() string {
+func (e ApplyEcosystemConfigFailedEvent) Message() string {
 	return e.err.Error()
 }
 
-type RegistryConfigAppliedEvent struct{}
+type EcosystemConfigAppliedEvent struct{}
 
-func (e RegistryConfigAppliedEvent) Name() string {
-	return "RegistryConfigApplied"
+func (e EcosystemConfigAppliedEvent) Name() string {
+	return "EcosystemConfigApplied"
 }
 
-func (e RegistryConfigAppliedEvent) Message() string {
-	return "registry config applied"
+func (e EcosystemConfigAppliedEvent) Message() string {
+	return "ecosystem config applied"
 }
 
 type AwaitSelfUpgradeEvent struct{}

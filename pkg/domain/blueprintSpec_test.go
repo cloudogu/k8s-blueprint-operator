@@ -241,8 +241,14 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			{Name: officialDogu2, TargetState: TargetStateAbsent},
 		}
 
+		config := Config{
+			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+				officialDogu1.SimpleName: {},
+			},
+		}
+
 		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: dogus},
+			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Status:        StatusPhaseValidated,
 		}
@@ -252,6 +258,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 		assert.Equal(t, Dogu{Name: officialDogu1, Version: version3211, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
 		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3212, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+		assert.NotContains(t, spec.EffectiveBlueprint.Config.Dogus, officialDogu1.SimpleName)
 	})
 	t.Run("change dogu namespace", func(t *testing.T) {
 		dogus := []Dogu{
@@ -352,14 +359,24 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState)
 
 		// then
-		stateDiff := StateDiff{DoguDiffs: DoguDiffs{}, ComponentDiffs: ComponentDiffs{}, DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{}}
+		stateDiff := StateDiff{
+			DoguDiffs:                DoguDiffs{},
+			ComponentDiffs:           ComponentDiffs{},
+			DoguConfigDiffs:          map[common.SimpleDoguName]DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
+		}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
-		require.Equal(t, 4, len(spec.Events))
+		require.Equal(t, 5, len(spec.Events))
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
 		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
 		assert.Equal(t, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs(nil)}, spec.Events[2])
-		assert.Equal(t, DoguConfigDiffDeterminedEvent{CombinedDogusConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{}}, spec.Events[3])
+		assert.Equal(t, DoguConfigDiffDeterminedEvent{
+			DoguConfigDiffs: map[common.SimpleDoguName]DoguConfigDiffs{},
+		}, spec.Events[3])
+		assert.Equal(t, SensitiveDoguConfigDiffDeterminedEvent{
+			SensitiveDoguConfigDiffs: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
+		}, spec.Events[4])
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
 
@@ -511,6 +528,40 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
+	})
+	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Components: []Component{
+					{
+						Name: common.QualifiedComponentName{
+							Namespace:  testComponentName.Namespace,
+							SimpleName: testComponentName.SimpleName,
+						},
+						Version: compVersion3210,
+					},
+				},
+			},
+			Status: StatusPhaseValidated,
+		}
+		clusterState := ecosystem.EcosystemState{
+			InstalledDogus: map[common.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+				testComponentName.SimpleName: {
+					Name:            testComponentName,
+					ExpectedVersion: compVersion3211,
+				},
+			},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(clusterState)
+
+		// then
+		require.Error(t, err)
+		assert.Equal(t, StatusPhaseInvalid, spec.Status)
+		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
 	})
 }
 
@@ -743,11 +794,11 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 			},
 		},
 		StateDiff: StateDiff{
-			DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{
-				"ldapDiff": {SensitiveDoguConfigDiff: []SensitiveDoguConfigEntryDiff{{
+			SensitiveDoguConfigDiffs: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+				"ldapDiff": []SensitiveDoguConfigEntryDiff{{
 					Actual:   DoguConfigValueState{Value: "Test1"},
 					Expected: DoguConfigValueState{Value: "Test2"},
-				}}},
+				}},
 			},
 		},
 	}
@@ -763,11 +814,11 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), common.SimpleDoguName("ldap"))
 	assert.Equal(t, censorValue, string(spec.EffectiveBlueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
 
-	require.Len(t, spec.StateDiff.DoguConfigDiffs, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.DoguConfigDiffs), common.SimpleDoguName("ldapDiff"))
-	require.Len(t, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff, 1)
-	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff[0].Actual.Value)
-	assert.Equal(t, censorValue, spec.StateDiff.DoguConfigDiffs["ldapDiff"].SensitiveDoguConfigDiff[0].Expected.Value)
+	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
+	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), common.SimpleDoguName("ldapDiff"))
+	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)
+	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Actual.Value)
+	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Expected.Value)
 }
 
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
@@ -955,26 +1006,22 @@ func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 }
 
 func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
-	testdogu1 := Dogu{Name: common.QualifiedDoguName{Namespace: "testnamespace", SimpleName: "testdogu1"}}
-	testBlueprint1 := Blueprint{Dogus: []Dogu{testdogu1}}
-	testDoguConfigDiffsChanged := CombinedDoguConfigDiffs{
-		DoguConfigDiff: []DoguConfigEntryDiff{{
-			Actual:       DoguConfigValueState{},
-			Expected:     DoguConfigValueState{Value: "testvalue", Exists: true},
-			NeededAction: ConfigActionSet,
-		}},
-	}
-	testDoguConfigDiffsActionNone := CombinedDoguConfigDiffs{
-		DoguConfigDiff: []DoguConfigEntryDiff{{
-			NeededAction: ConfigActionNone,
-		}},
-	}
+	testDogu1 := Dogu{Name: common.QualifiedDoguName{Namespace: "testNamespace", SimpleName: "testDogu1"}}
+	testBlueprint1 := Blueprint{Dogus: []Dogu{testDogu1}}
+	testDoguConfigDiffsChanged := []DoguConfigEntryDiff{{
+		Actual:       DoguConfigValueState{},
+		Expected:     DoguConfigValueState{Value: "testValue", Exists: true},
+		NeededAction: ConfigActionSet,
+	}}
+	testDoguConfigDiffsActionNone := []DoguConfigEntryDiff{{
+		NeededAction: ConfigActionNone,
+	}}
 
 	testDoguConfigChangeDiffChanged := StateDiff{
-		DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsChanged},
+		DoguConfigDiffs: map[common.SimpleDoguName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsChanged},
 	}
 	testDoguConfigChangeDiffActionNone := StateDiff{
-		DoguConfigDiffs: map[common.SimpleDoguName]CombinedDoguConfigDiffs{testdogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
+		DoguConfigDiffs: map[common.SimpleDoguName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
 	}
 
 	type fields struct {
@@ -1004,7 +1051,7 @@ func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
 				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
 				StateDiff:          testDoguConfigChangeDiffChanged,
 			},
-			want: []common.SimpleDoguName{testdogu1.Name.SimpleName},
+			want: []common.SimpleDoguName{testDogu1.Name.SimpleName},
 		},
 		{
 			name: "return nothing on dogu config unchanged",

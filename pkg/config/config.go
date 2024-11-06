@@ -27,8 +27,6 @@ const (
 
 const registryCacheDir = "/tmp/dogu-registry-cache"
 
-const ApplicationContextKey = "applicationContext"
-
 var log = ctrl.Log.WithName("config")
 var Stage = StageProduction
 

@@ -3,12 +3,8 @@ package domain
 import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
+	"maps"
 )
-
-type CombinedDoguConfigDiffs struct {
-	DoguConfigDiff          DoguConfigDiffs
-	SensitiveDoguConfigDiff SensitiveDoguConfigDiffs
-}
 
 type ConfigAction string
 
@@ -22,25 +18,18 @@ const (
 )
 
 // censorValues censors all sensitive configuration data to make them unrecognisable.
-func (combinedDiff CombinedDoguConfigDiffs) censorValues() CombinedDoguConfigDiffs {
-	for i, entry := range combinedDiff.SensitiveDoguConfigDiff {
-		if len(entry.Actual.Value) > 0 {
-			combinedDiff.SensitiveDoguConfigDiff[i].Actual.Value = censorValue
-		}
-		if len(entry.Expected.Value) > 0 {
-			combinedDiff.SensitiveDoguConfigDiff[i].Expected.Value = censorValue
-		}
+func censorValues(sensitiveConfigByDogu map[common.SimpleDoguName]SensitiveDoguConfigDiffs) map[common.SimpleDoguName]SensitiveDoguConfigDiffs {
+	censoredByDogu := maps.Clone(sensitiveConfigByDogu)
+	for dogu, entryDiffs := range sensitiveConfigByDogu {
+		censoredByDogu[dogu] = entryDiffs.CensorValues()
 	}
-	return combinedDiff
+	return censoredByDogu
 }
 
-func countByAction(combinedDogusConfigDiffs map[common.SimpleDoguName]CombinedDoguConfigDiffs) map[ConfigAction]int {
+func countByAction(diffsByDogu map[common.SimpleDoguName]DoguConfigDiffs) map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
-	for _, doguDiffs := range combinedDogusConfigDiffs {
-		for _, diff := range doguDiffs.DoguConfigDiff {
-			countByAction[diff.NeededAction]++
-		}
-		for _, diff := range doguDiffs.SensitiveDoguConfigDiff {
+	for _, doguDiffs := range diffsByDogu {
+		for _, diff := range doguDiffs {
 			countByAction[diff.NeededAction]++
 		}
 	}
@@ -52,26 +41,34 @@ func determineConfigDiffs(
 	globalConfig config.GlobalConfig,
 	configByDogu map[common.SimpleDoguName]config.DoguConfig,
 	SensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
-) (map[common.SimpleDoguName]CombinedDoguConfigDiffs, GlobalConfigDiffs) {
-	return determineDogusConfigDiffs(
-			blueprintConfig.Dogus,
-			configByDogu,
-			SensitiveConfigByDogu,
-		),
+) (
+	map[common.SimpleDoguName]DoguConfigDiffs,
+	map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
+	GlobalConfigDiffs,
+) {
+	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu),
+		determineSensitiveDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu),
 		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
 }
 
 func determineDogusConfigDiffs(
 	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
 	configByDogu map[common.SimpleDoguName]config.DoguConfig,
-	sensitiveConfigByDogu map[common.SimpleDoguName]config.DoguConfig,
-) map[common.SimpleDoguName]CombinedDoguConfigDiffs {
-	diffsPerDogu := map[common.SimpleDoguName]CombinedDoguConfigDiffs{}
+) map[common.SimpleDoguName]DoguConfigDiffs {
+	diffsPerDogu := map[common.SimpleDoguName]DoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
-		diffsPerDogu[doguName] = CombinedDoguConfigDiffs{
-			DoguConfigDiff:          determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu),
-			SensitiveDoguConfigDiff: determineSensitiveDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, sensitiveConfigByDogu),
-		}
+		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu)
+	}
+	return diffsPerDogu
+}
+
+func determineSensitiveDogusConfigDiffs(
+	combinedDoguConfigs map[common.SimpleDoguName]CombinedDoguConfig,
+	configByDogu map[common.SimpleDoguName]config.DoguConfig,
+) map[common.SimpleDoguName]DoguConfigDiffs {
+	diffsPerDogu := map[common.SimpleDoguName]DoguConfigDiffs{}
+	for doguName, combinedDoguConfig := range combinedDoguConfigs {
+		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, configByDogu)
 	}
 	return diffsPerDogu
 }
@@ -88,18 +85,4 @@ func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) C
 		}
 	}
 	return ConfigActionSet
-}
-
-func (combinedDiff CombinedDoguConfigDiffs) HasChanges() bool {
-	for _, diff := range combinedDiff.DoguConfigDiff {
-		if diff.NeededAction != ConfigActionNone {
-			return true
-		}
-	}
-	for _, diff := range combinedDiff.SensitiveDoguConfigDiff {
-		if diff.NeededAction != ConfigActionNone {
-			return true
-		}
-	}
-	return false
 }

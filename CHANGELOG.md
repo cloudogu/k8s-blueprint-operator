@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.1] - 2024-11-06
+### Fixed
+- [#81] Forbid component downgrades because the component operator can't handle this operation.
+- [#81] Remove dogu configuration from removed dogus via the blueprint mask.
+- [#81] Refactor DoguConfigDiff and remove code duplication for sensitive dogu config
+
 ## [v2.0.0] - 2024-10-29
 ### Changed
 - Update module to v2

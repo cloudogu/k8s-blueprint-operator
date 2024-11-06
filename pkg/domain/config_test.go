@@ -481,8 +481,8 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 
 			changedDogus := config.GetDogusWithChangedConfig()
 			assert.Len(t, changedDogus, len(tt.want))
-			for _, wantedVal := range tt.want {
-				assert.Contains(t, changedDogus, wantedVal)
+			for _, doguName := range tt.want {
+				assert.Contains(t, changedDogus, doguName)
 			}
 		})
 	}
@@ -562,8 +562,8 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 
 			changedDogus := config.GetDogusWithChangedSensitiveConfig()
 			assert.Len(t, changedDogus, len(tt.want))
-			for _, wantedVal := range tt.want {
-				assert.Contains(t, changedDogus, wantedVal)
+			for _, doguName := range tt.want {
+				assert.Contains(t, changedDogus, doguName)
 			}
 		})
 	}

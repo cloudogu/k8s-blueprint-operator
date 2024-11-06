@@ -1,11 +1,13 @@
 package serializer
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
@@ -20,7 +22,37 @@ type TargetComponent struct {
 	// DeployConfig defines a generic property map for the component configuration. This field is optional.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	DeployConfig map[string]interface{} `json:"deployConfig,omitempty"`
+	DeployConfig DeployConfig `json:"deployConfig,omitempty"`
+}
+
+func (in TargetComponent) DeepCopyInto(out *TargetComponent) {
+	if out != nil {
+		out.Name = in.Name
+		out.Version = in.Version
+		out.TargetState = in.TargetState
+		out.DeployConfig = *in.DeployConfig.DeepCopy()
+	}
+}
+
+type DeployConfig map[string]interface{}
+
+func (in *DeployConfig) DeepCopy() *DeployConfig {
+	out := new(DeployConfig)
+	in.DeepCopyInto(out)
+	return out
+}
+
+func (in *DeployConfig) DeepCopyInto(out *DeployConfig) {
+	if out != nil {
+		jsonStr, err := json.Marshal(in)
+		if err != nil {
+			return
+		}
+		err = json.Unmarshal(jsonStr, in)
+		if err != nil {
+			return
+		}
+	}
 }
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
@@ -54,7 +86,7 @@ func ConvertComponents(components []TargetComponent) ([]domain.Component, error)
 			Name:         name,
 			Version:      version,
 			TargetState:  newState,
-			DeployConfig: component.DeployConfig,
+			DeployConfig: ecosystem.DeployConfig(component.DeployConfig),
 		})
 	}
 
@@ -85,7 +117,7 @@ func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, e
 			Name:         joinedComponentName,
 			Version:      version,
 			TargetState:  newState,
-			DeployConfig: component.DeployConfig,
+			DeployConfig: DeployConfig(component.DeployConfig),
 		}
 	})
 	return converted, errors.Join(errorList...)
