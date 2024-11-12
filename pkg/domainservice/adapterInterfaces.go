@@ -83,12 +83,12 @@ type RemoteDoguRegistry interface {
 	// GetDogu returns the dogu specification for the given dogu and version or
 	// an NotFoundError indicating that there was no dogu spec found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogu(qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error)
+	GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error)
 
 	// GetDogus returns the all requested dogu specifications or
 	// an NotFoundError indicating that any dogu spec was not found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogus(dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error)
+	GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error)
 }
 
 type DoguToLoad struct {

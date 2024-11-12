@@ -42,7 +42,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(qDoguVersion)
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.Error(t, err)
@@ -66,7 +66,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(qDoguVersion)
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.Error(t, err)
@@ -92,7 +92,7 @@ func TestRemote_GetDogu(t *testing.T) {
 		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(qDoguVersion)
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.NoError(t, err)
@@ -142,7 +142,7 @@ func TestRemote_GetDogus(t *testing.T) {
 		}
 
 		// when
-		actual, err := sut.GetDogus(dogusToLoad)
+		actual, err := sut.GetDogus(context.TODO(), dogusToLoad)
 
 		// then
 		require.Error(t, err)

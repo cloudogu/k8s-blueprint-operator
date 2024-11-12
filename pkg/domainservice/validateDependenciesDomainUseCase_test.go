@@ -184,7 +184,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFo
 	RegistryMock := NewMockRemoteDoguRegistry(t)
 	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
 
-	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &NotFoundError{Message: "my error"})
+	RegistryMock.EXPECT().GetDogus(ctx, mock.Anything).Return(nil, &NotFoundError{Message: "my error"})
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
@@ -202,7 +202,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_inter
 	RegistryMock := NewMockRemoteDoguRegistry(t)
 	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
 
-	RegistryMock.EXPECT().GetDogus(mock.Anything).Return(nil, &InternalError{Message: "my error"})
+	RegistryMock.EXPECT().GetDogus(ctx, mock.Anything).Return(nil, &InternalError{Message: "my error"})
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{})
 	// then

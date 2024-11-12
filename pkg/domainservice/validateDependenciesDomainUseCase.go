@@ -43,7 +43,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 		}
 	})
 	logger.Info("load dogu specifications...", "wantedDogus", wantedDogus)
-	doguSpecsOfWantedDogus, err := useCase.remoteDoguRegistry.GetDogus(dogusToLoad)
+	doguSpecsOfWantedDogus, err := useCase.remoteDoguRegistry.GetDogus(ctx, dogusToLoad)
 	if err != nil {
 		var notFoundError *NotFoundError
 		if errors.As(err, &notFoundError) {

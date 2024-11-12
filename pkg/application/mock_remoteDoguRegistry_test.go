@@ -3,6 +3,8 @@
 package application
 
 import (
+	context "context"
+
 	dogu "github.com/cloudogu/ces-commons-lib/dogu"
 	core "github.com/cloudogu/cesapp-lib/core"
 
@@ -22,9 +24,9 @@ func (_m *mockRemoteDoguRegistry) EXPECT() *mockRemoteDoguRegistry_Expecter {
 	return &mockRemoteDoguRegistry_Expecter{mock: &_m.Mock}
 }
 
-// GetDogu provides a mock function with given fields: qualifiedDoguVersion
-func (_m *mockRemoteDoguRegistry) GetDogu(qualifiedDoguVersion dogu.QualifiedDoguVersion) (*core.Dogu, error) {
-	ret := _m.Called(qualifiedDoguVersion)
+// GetDogu provides a mock function with given fields: ctx, qualifiedDoguVersion
+func (_m *mockRemoteDoguRegistry) GetDogu(ctx context.Context, qualifiedDoguVersion dogu.QualifiedDoguVersion) (*core.Dogu, error) {
+	ret := _m.Called(ctx, qualifiedDoguVersion)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDogu")
@@ -32,19 +34,19 @@ func (_m *mockRemoteDoguRegistry) GetDogu(qualifiedDoguVersion dogu.QualifiedDog
 
 	var r0 *core.Dogu
 	var r1 error
-	if rf, ok := ret.Get(0).(func(dogu.QualifiedDoguVersion) (*core.Dogu, error)); ok {
-		return rf(qualifiedDoguVersion)
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.QualifiedDoguVersion) (*core.Dogu, error)); ok {
+		return rf(ctx, qualifiedDoguVersion)
 	}
-	if rf, ok := ret.Get(0).(func(dogu.QualifiedDoguVersion) *core.Dogu); ok {
-		r0 = rf(qualifiedDoguVersion)
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.QualifiedDoguVersion) *core.Dogu); ok {
+		r0 = rf(ctx, qualifiedDoguVersion)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*core.Dogu)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(dogu.QualifiedDoguVersion) error); ok {
-		r1 = rf(qualifiedDoguVersion)
+	if rf, ok := ret.Get(1).(func(context.Context, dogu.QualifiedDoguVersion) error); ok {
+		r1 = rf(ctx, qualifiedDoguVersion)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,14 +60,15 @@ type mockRemoteDoguRegistry_GetDogu_Call struct {
 }
 
 // GetDogu is a helper method to define mock.On call
+//   - ctx context.Context
 //   - qualifiedDoguVersion dogu.QualifiedDoguVersion
-func (_e *mockRemoteDoguRegistry_Expecter) GetDogu(qualifiedDoguVersion interface{}) *mockRemoteDoguRegistry_GetDogu_Call {
-	return &mockRemoteDoguRegistry_GetDogu_Call{Call: _e.mock.On("GetDogu", qualifiedDoguVersion)}
+func (_e *mockRemoteDoguRegistry_Expecter) GetDogu(ctx interface{}, qualifiedDoguVersion interface{}) *mockRemoteDoguRegistry_GetDogu_Call {
+	return &mockRemoteDoguRegistry_GetDogu_Call{Call: _e.mock.On("GetDogu", ctx, qualifiedDoguVersion)}
 }
 
-func (_c *mockRemoteDoguRegistry_GetDogu_Call) Run(run func(qualifiedDoguVersion dogu.QualifiedDoguVersion)) *mockRemoteDoguRegistry_GetDogu_Call {
+func (_c *mockRemoteDoguRegistry_GetDogu_Call) Run(run func(ctx context.Context, qualifiedDoguVersion dogu.QualifiedDoguVersion)) *mockRemoteDoguRegistry_GetDogu_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(dogu.QualifiedDoguVersion))
+		run(args[0].(context.Context), args[1].(dogu.QualifiedDoguVersion))
 	})
 	return _c
 }
@@ -75,14 +78,14 @@ func (_c *mockRemoteDoguRegistry_GetDogu_Call) Return(_a0 *core.Dogu, _a1 error)
 	return _c
 }
 
-func (_c *mockRemoteDoguRegistry_GetDogu_Call) RunAndReturn(run func(dogu.QualifiedDoguVersion) (*core.Dogu, error)) *mockRemoteDoguRegistry_GetDogu_Call {
+func (_c *mockRemoteDoguRegistry_GetDogu_Call) RunAndReturn(run func(context.Context, dogu.QualifiedDoguVersion) (*core.Dogu, error)) *mockRemoteDoguRegistry_GetDogu_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetDogus provides a mock function with given fields: dogusToLoad
-func (_m *mockRemoteDoguRegistry) GetDogus(dogusToLoad []dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error) {
-	ret := _m.Called(dogusToLoad)
+// GetDogus provides a mock function with given fields: ctx, dogusToLoad
+func (_m *mockRemoteDoguRegistry) GetDogus(ctx context.Context, dogusToLoad []dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error) {
+	ret := _m.Called(ctx, dogusToLoad)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDogus")
@@ -90,19 +93,19 @@ func (_m *mockRemoteDoguRegistry) GetDogus(dogusToLoad []dogu.QualifiedDoguVersi
 
 	var r0 map[dogu.QualifiedDoguName]*core.Dogu
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error)); ok {
-		return rf(dogusToLoad)
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error)); ok {
+		return rf(ctx, dogusToLoad)
 	}
-	if rf, ok := ret.Get(0).(func([]dogu.QualifiedDoguVersion) map[dogu.QualifiedDoguName]*core.Dogu); ok {
-		r0 = rf(dogusToLoad)
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.QualifiedDoguVersion) map[dogu.QualifiedDoguName]*core.Dogu); ok {
+		r0 = rf(ctx, dogusToLoad)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[dogu.QualifiedDoguName]*core.Dogu)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]dogu.QualifiedDoguVersion) error); ok {
-		r1 = rf(dogusToLoad)
+	if rf, ok := ret.Get(1).(func(context.Context, []dogu.QualifiedDoguVersion) error); ok {
+		r1 = rf(ctx, dogusToLoad)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -116,14 +119,15 @@ type mockRemoteDoguRegistry_GetDogus_Call struct {
 }
 
 // GetDogus is a helper method to define mock.On call
+//   - ctx context.Context
 //   - dogusToLoad []dogu.QualifiedDoguVersion
-func (_e *mockRemoteDoguRegistry_Expecter) GetDogus(dogusToLoad interface{}) *mockRemoteDoguRegistry_GetDogus_Call {
-	return &mockRemoteDoguRegistry_GetDogus_Call{Call: _e.mock.On("GetDogus", dogusToLoad)}
+func (_e *mockRemoteDoguRegistry_Expecter) GetDogus(ctx interface{}, dogusToLoad interface{}) *mockRemoteDoguRegistry_GetDogus_Call {
+	return &mockRemoteDoguRegistry_GetDogus_Call{Call: _e.mock.On("GetDogus", ctx, dogusToLoad)}
 }
 
-func (_c *mockRemoteDoguRegistry_GetDogus_Call) Run(run func(dogusToLoad []dogu.QualifiedDoguVersion)) *mockRemoteDoguRegistry_GetDogus_Call {
+func (_c *mockRemoteDoguRegistry_GetDogus_Call) Run(run func(ctx context.Context, dogusToLoad []dogu.QualifiedDoguVersion)) *mockRemoteDoguRegistry_GetDogus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]dogu.QualifiedDoguVersion))
+		run(args[0].(context.Context), args[1].([]dogu.QualifiedDoguVersion))
 	})
 	return _c
 }
@@ -133,7 +137,7 @@ func (_c *mockRemoteDoguRegistry_GetDogus_Call) Return(_a0 map[dogu.QualifiedDog
 	return _c
 }
 
-func (_c *mockRemoteDoguRegistry_GetDogus_Call) RunAndReturn(run func([]dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error)) *mockRemoteDoguRegistry_GetDogus_Call {
+func (_c *mockRemoteDoguRegistry_GetDogus_Call) RunAndReturn(run func(context.Context, []dogu.QualifiedDoguVersion) (map[dogu.QualifiedDoguName]*core.Dogu, error)) *mockRemoteDoguRegistry_GetDogus_Call {
 	_c.Call.Return(run)
 	return _c
 }

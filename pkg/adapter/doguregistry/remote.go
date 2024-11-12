@@ -23,11 +23,11 @@ func NewRemote(repository remoteDoguDescriptorRepository) *Remote {
 	return &Remote{repository: repository}
 }
 
-func (r *Remote) GetDogu(qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error) {
+func (r *Remote) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error) {
 	dogu := &core.Dogu{}
 	err := retry.OnError(maxTries, isConnectionError, func() error {
 		var err error
-		dogu, err = r.repository.Get(context.TODO(), qualifiedDoguVersion)
+		dogu, err = r.repository.Get(ctx, qualifiedDoguVersion)
 		return err
 	})
 	if err != nil {
@@ -48,12 +48,12 @@ func (r *Remote) GetDogu(qualifiedDoguVersion cescommons.QualifiedDoguVersion) (
 	return dogu, nil
 }
 
-func (r *Remote) GetDogus(dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error) {
+func (r *Remote) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error) {
 	dogus := make(map[cescommons.QualifiedDoguName]*core.Dogu)
 
 	var errs []error
 	for _, doguRef := range dogusToLoad {
-		dogu, err := r.GetDogu(doguRef)
+		dogu, err := r.GetDogu(ctx, doguRef)
 		errs = append(errs, err)
 
 		dogus[doguRef.Name] = dogu
