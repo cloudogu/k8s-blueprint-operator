@@ -18,7 +18,7 @@ const (
 )
 
 // censorValues censors all sensitive configuration data to make them unrecognisable.
-func censorValues(sensitiveConfigByDogu map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs) map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs {
+func censorValues(sensitiveConfigByDogu map[cescommons.SimpleName]SensitiveDoguConfigDiffs) map[cescommons.SimpleName]SensitiveDoguConfigDiffs {
 	censoredByDogu := maps.Clone(sensitiveConfigByDogu)
 	for dogu, entryDiffs := range sensitiveConfigByDogu {
 		censoredByDogu[dogu] = entryDiffs.CensorValues()
@@ -26,7 +26,7 @@ func censorValues(sensitiveConfigByDogu map[cescommons.SimpleDoguName]SensitiveD
 	return censoredByDogu
 }
 
-func countByAction(diffsByDogu map[cescommons.SimpleDoguName]DoguConfigDiffs) map[ConfigAction]int {
+func countByAction(diffsByDogu map[cescommons.SimpleName]DoguConfigDiffs) map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}
 	for _, doguDiffs := range diffsByDogu {
 		for _, diff := range doguDiffs {
@@ -39,11 +39,11 @@ func countByAction(diffsByDogu map[cescommons.SimpleDoguName]DoguConfigDiffs) ma
 func determineConfigDiffs(
 	blueprintConfig Config,
 	globalConfig config.GlobalConfig,
-	configByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
-	SensitiveConfigByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
+	configByDogu map[cescommons.SimpleName]config.DoguConfig,
+	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig,
 ) (
-	map[cescommons.SimpleDoguName]DoguConfigDiffs,
-	map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs,
+	map[cescommons.SimpleName]DoguConfigDiffs,
+	map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 	GlobalConfigDiffs,
 ) {
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu),
@@ -52,10 +52,10 @@ func determineConfigDiffs(
 }
 
 func determineDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleDoguName]CombinedDoguConfig,
-	configByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
-) map[cescommons.SimpleDoguName]DoguConfigDiffs {
-	diffsPerDogu := map[cescommons.SimpleDoguName]DoguConfigDiffs{}
+	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	configByDogu map[cescommons.SimpleName]config.DoguConfig,
+) map[cescommons.SimpleName]DoguConfigDiffs {
+	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu)
 	}
@@ -63,10 +63,10 @@ func determineDogusConfigDiffs(
 }
 
 func determineSensitiveDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleDoguName]CombinedDoguConfig,
-	configByDogu map[cescommons.SimpleDoguName]config.DoguConfig,
-) map[cescommons.SimpleDoguName]DoguConfigDiffs {
-	diffsPerDogu := map[cescommons.SimpleDoguName]DoguConfigDiffs{}
+	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	configByDogu map[cescommons.SimpleName]config.DoguConfig,
+) map[cescommons.SimpleName]DoguConfigDiffs {
+	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
 	for doguName, combinedDoguConfig := range combinedDoguConfigs {
 		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.SensitiveConfig, configByDogu)
 	}

@@ -3,8 +3,8 @@ package maintenance
 import (
 	"context"
 	"fmt"
+	liberrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 )
 

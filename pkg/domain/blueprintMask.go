@@ -36,7 +36,7 @@ func (blueprintMask *BlueprintMask) validateDogus() error {
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
 func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) cescommons.SimpleDoguName { return dogu.Name.SimpleName })
+	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) cescommons.SimpleName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -44,7 +44,7 @@ func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprintMask *BlueprintMask) FindDoguByName(name cescommons.SimpleDoguName) (MaskDogu, error) {
+func (blueprintMask *BlueprintMask) FindDoguByName(name cescommons.SimpleName) (MaskDogu, error) {
 	for doguIndex, dogu := range blueprintMask.Dogus {
 		if dogu.Name.SimpleName == name {
 			return blueprintMask.Dogus[doguIndex], nil

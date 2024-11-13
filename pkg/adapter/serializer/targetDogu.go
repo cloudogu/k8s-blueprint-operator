@@ -43,7 +43,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		name, err := cescommons.QualifiedDoguNameFromString(dogu.Name)
+		name, err := cescommons.QualifiedNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

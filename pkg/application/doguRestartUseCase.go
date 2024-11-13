@@ -27,7 +27,7 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 	}
 
 	logger.Info("searching for Dogus that need a restart...")
-	var dogusThatNeedARestart []cescommons.SimpleDoguName
+	var dogusThatNeedARestart []cescommons.SimpleName
 
 	if blueprintSpec.StateDiff.GlobalConfigDiffs.HasChanges() {
 		logger.Info("restarting all installed Dogus...")
@@ -61,7 +61,7 @@ func (useCase *DoguRestartUseCase) restartAllInstalledDogus(ctx context.Context)
 	if getInstalledDogusError != nil {
 		return domainservice.NewInternalError(getInstalledDogusError, "could not get all installed Dogus")
 	}
-	var installedDogusSimpleNames []cescommons.SimpleDoguName
+	var installedDogusSimpleNames []cescommons.SimpleName
 	for _, installation := range installedDogus {
 		installedDogusSimpleNames = append(installedDogusSimpleNames, installation.Name.SimpleName)
 	}

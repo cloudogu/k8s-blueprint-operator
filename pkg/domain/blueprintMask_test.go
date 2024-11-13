@@ -10,10 +10,10 @@ import (
 var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
 
 var (
-	officialNamespace = cescommons.DoguNamespace("official")
-	officialDogu1     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu1")}
-	officialDogu2     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu2")}
-	officialDogu3     = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("dogu3")}
+	officialNamespace = cescommons.Namespace("official")
+	officialDogu1     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu1")}
+	officialDogu2     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu2")}
+	officialDogu3     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu3")}
 )
 
 func Test_Validate(t *testing.T) {

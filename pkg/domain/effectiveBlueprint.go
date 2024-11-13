@@ -34,7 +34,7 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 
 // validateOnlyConfigForDogusInBlueprint checks that there is only config for dogus to install in the blueprint
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
-	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) cescommons.SimpleDoguName {
+	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) cescommons.SimpleName {
 		return dogu.Name.SimpleName
 	})
 	var errorList []error

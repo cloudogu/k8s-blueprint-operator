@@ -7,9 +7,9 @@ import (
 )
 
 type EcosystemState struct {
-	InstalledDogus        map[cescommons.SimpleDoguName]*DoguInstallation
+	InstalledDogus        map[cescommons.SimpleName]*DoguInstallation
 	InstalledComponents   map[common.SimpleComponentName]*ComponentInstallation
 	GlobalConfig          config.GlobalConfig
-	ConfigByDogu          map[cescommons.SimpleDoguName]config.DoguConfig
-	SensitiveConfigByDogu map[cescommons.SimpleDoguName]config.DoguConfig
+	ConfigByDogu          map[cescommons.SimpleName]config.DoguConfig
+	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig
 }

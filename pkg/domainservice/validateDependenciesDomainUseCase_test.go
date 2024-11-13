@@ -16,24 +16,24 @@ var (
 	version2001, _ = core.ParseVersion("2.0.0-1")
 	version2003, _ = core.ParseVersion("2.0.0-3")
 
-	officialNamespace   = cescommons.DoguNamespace("official")
-	premiumNamespace    = cescommons.DoguNamespace("premium")
-	k8sNamespace        = cescommons.DoguNamespace("k8s")
-	helloworldNamespace = cescommons.DoguNamespace("helloworld")
+	officialNamespace   = cescommons.Namespace("official")
+	premiumNamespace    = cescommons.Namespace("premium")
+	k8sNamespace        = cescommons.Namespace("k8s")
+	helloworldNamespace = cescommons.Namespace("helloworld")
 
-	officialNginx         = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("nginx")}
-	officialRedmine       = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("redmine")}
-	officialRedmine2      = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("redmine2")}
-	officialPostgres      = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("postgres")}
-	premiumPostgres       = cescommons.QualifiedDoguName{Namespace: premiumNamespace, SimpleName: cescommons.SimpleDoguName("postgres")}
-	officialK8sCesControl = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("k8s-ces-control")}
-	officialScm           = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("scm")}
-	k8sNginxStatic        = cescommons.QualifiedDoguName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleDoguName("nginx-static")}
-	k8sNginxIngress       = cescommons.QualifiedDoguName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleDoguName("nginx-ingress")}
-	officialPlantuml      = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("plantuml")}
-	officialUnknownDogu   = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("unknownDogu")}
-	helloworldBluespice   = cescommons.QualifiedDoguName{Namespace: helloworldNamespace, SimpleName: cescommons.SimpleDoguName("bluespice")}
-	ldapMapper            = cescommons.QualifiedDoguName{Namespace: officialNamespace, SimpleName: cescommons.SimpleDoguName("ldap-mapper")}
+	officialNginx         = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("nginx")}
+	officialRedmine       = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("redmine")}
+	officialRedmine2      = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("redmine2")}
+	officialPostgres      = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("postgres")}
+	premiumPostgres       = cescommons.QualifiedName{Namespace: premiumNamespace, SimpleName: cescommons.SimpleName("postgres")}
+	officialK8sCesControl = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("k8s-ces-control")}
+	officialScm           = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("scm")}
+	k8sNginxStatic        = cescommons.QualifiedName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleName("nginx-static")}
+	k8sNginxIngress       = cescommons.QualifiedName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleName("nginx-ingress")}
+	officialPlantuml      = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("plantuml")}
+	officialUnknownDogu   = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("unknownDogu")}
+	helloworldBluespice   = cescommons.QualifiedName{Namespace: helloworldNamespace, SimpleName: cescommons.SimpleName("bluespice")}
+	ldapMapper            = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("ldap-mapper")}
 
 	ctx = context.Background()
 )

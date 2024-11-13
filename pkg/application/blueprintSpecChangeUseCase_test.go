@@ -131,7 +131,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseNew,
 			Blueprint: domain.Blueprint{Dogus: []domain.Dogu{
-				{Name: cescommons.QualifiedDoguName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: domain.TargetStatePresent},
+				{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: domain.TargetStatePresent},
 			}},
 		}, nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(assert.AnError)

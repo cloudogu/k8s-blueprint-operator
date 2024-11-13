@@ -39,7 +39,7 @@ func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs DoguConfigDiff) do
 func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
-			DoguName: cescommons.SimpleDoguName(doguName),
+			DoguName: cescommons.SimpleName(doguName),
 			Key:      config.Key(dto.Key),
 		},
 		Actual: domain.DoguConfigValueState{

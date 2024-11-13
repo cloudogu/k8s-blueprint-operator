@@ -79,7 +79,7 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguName, err := cescommons.QualifiedDoguNameFromString(dogu.Name)
+		doguName, err := cescommons.QualifiedNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

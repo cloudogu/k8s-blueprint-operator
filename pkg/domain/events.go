@@ -79,11 +79,11 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	DoguConfigDiffs map[cescommons.SimpleDoguName]DoguConfigDiffs
+	DoguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs
 }
 
 func NewDoguConfigDiffDeterminedEvent(
-	doguConfigDiffs map[cescommons.SimpleDoguName]DoguConfigDiffs,
+	doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs,
 ) DoguConfigDiffDeterminedEvent {
 	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
 }
@@ -100,11 +100,11 @@ func (e DoguConfigDiffDeterminedEvent) Message() string {
 }
 
 type SensitiveDoguConfigDiffDeterminedEvent struct {
-	SensitiveDoguConfigDiffs map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs
+	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 }
 
 func NewSensitiveDoguConfigDiffDeterminedEvent(
-	sensitiveDoguConfigDiffs map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs,
+	sensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 ) SensitiveDoguConfigDiffDeterminedEvent {
 	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
 }
@@ -120,7 +120,7 @@ func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
 	)
 }
 
-func generateDoguConfigChangeCounter(doguConfigDiffs map[cescommons.SimpleDoguName]DoguConfigDiffs) string {
+func generateDoguConfigChangeCounter(doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
 	for action, amount := range countByAction(doguConfigDiffs) {

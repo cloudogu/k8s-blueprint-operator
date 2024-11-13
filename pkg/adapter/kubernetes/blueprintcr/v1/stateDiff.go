@@ -32,20 +32,20 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 		componentDiffsV1[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
 	}
 
-	var dogus []cescommons.SimpleDoguName
+	var dogus []cescommons.SimpleName
 	var combinedConfigDiffs map[string]CombinedDoguConfigDiff
-	var doguConfigDiffByDogu map[cescommons.SimpleDoguName]DoguConfigDiff
-	var sensitiveDoguConfigDiff map[cescommons.SimpleDoguName]SensitiveDoguConfigDiff
+	var doguConfigDiffByDogu map[cescommons.SimpleName]DoguConfigDiff
+	var sensitiveDoguConfigDiff map[cescommons.SimpleName]SensitiveDoguConfigDiff
 
 	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
 		combinedConfigDiffs = make(map[string]CombinedDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
-			doguConfigDiffByDogu = make(map[cescommons.SimpleDoguName]DoguConfigDiff)
+			doguConfigDiffByDogu = make(map[cescommons.SimpleName]DoguConfigDiff)
 			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
 			dogus = append(dogus, doguName)
 		}
 		for doguName, doguConfigDiff := range domainModel.SensitiveDoguConfigDiffs {
-			sensitiveDoguConfigDiff = make(map[cescommons.SimpleDoguName]SensitiveDoguConfigDiff)
+			sensitiveDoguConfigDiff = make(map[cescommons.SimpleName]SensitiveDoguConfigDiff)
 			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
 			dogus = append(dogus, doguName)
 		}
@@ -90,14 +90,14 @@ func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 		return domain.StateDiff{}, fmt.Errorf("failed to convert state diff DTO to domain model: %w", err)
 	}
 
-	var doguConfigDiffs map[cescommons.SimpleDoguName]domain.DoguConfigDiffs
-	var sensitiveDoguConfigDiffs map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs
+	var doguConfigDiffs map[cescommons.SimpleName]domain.DoguConfigDiffs
+	var sensitiveDoguConfigDiffs map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs
 	if len(dto.DoguConfigDiffs) != 0 {
-		doguConfigDiffs = map[cescommons.SimpleDoguName]domain.DoguConfigDiffs{}
-		sensitiveDoguConfigDiffs = map[cescommons.SimpleDoguName]domain.SensitiveDoguConfigDiffs{}
+		doguConfigDiffs = map[cescommons.SimpleName]domain.DoguConfigDiffs{}
+		sensitiveDoguConfigDiffs = map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{}
 		for doguName, combinedConfigDiff := range dto.DoguConfigDiffs {
-			doguConfigDiffs[cescommons.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.DoguConfigDiff)
-			sensitiveDoguConfigDiffs[cescommons.SimpleDoguName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.SensitiveDoguConfigDiff)
+			doguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.DoguConfigDiff)
+			sensitiveDoguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, combinedConfigDiff.SensitiveDoguConfigDiff)
 		}
 	}
 

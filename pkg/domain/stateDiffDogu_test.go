@@ -401,7 +401,7 @@ func Test_determineDoguDiff(t *testing.T) {
 func Test_determineDoguDiffs(t *testing.T) {
 	type args struct {
 		blueprintDogus []Dogu
-		installedDogus map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation
+		installedDogus map[cescommons.SimpleName]*ecosystem.DoguInstallation
 	}
 	tests := []struct {
 		name string
@@ -447,7 +447,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 			name: "an installed dogu which is not in the blueprint",
 			args: args{
 				blueprintDogus: nil,
-				installedDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
+				installedDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
 					"postgresql": {
 						Name:    officialNexus,
 						Version: version3211,
@@ -481,7 +481,7 @@ func Test_determineDoguDiffs(t *testing.T) {
 						TargetState: TargetStatePresent,
 					},
 				},
-				installedDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
+				installedDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
 					"nexus": {
 						Name:    officialNexus,
 						Version: version3211,

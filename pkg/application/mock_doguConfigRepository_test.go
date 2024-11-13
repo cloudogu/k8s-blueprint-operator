@@ -83,7 +83,7 @@ func (_c *mockDoguConfigRepository_Create_Call) RunAndReturn(run func(context.Co
 }
 
 // Get provides a mock function with given fields: ctx, doguName
-func (_m *mockDoguConfigRepository) Get(ctx context.Context, doguName dogu.SimpleDoguName) (config.DoguConfig, error) {
+func (_m *mockDoguConfigRepository) Get(ctx context.Context, doguName dogu.SimpleName) (config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguName)
 
 	if len(ret) == 0 {
@@ -92,16 +92,16 @@ func (_m *mockDoguConfigRepository) Get(ctx context.Context, doguName dogu.Simpl
 
 	var r0 config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleDoguName) (config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) (config.DoguConfig, error)); ok {
 		return rf(ctx, doguName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleDoguName) config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) config.DoguConfig); ok {
 		r0 = rf(ctx, doguName)
 	} else {
 		r0 = ret.Get(0).(config.DoguConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, dogu.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguName)
 	} else {
 		r1 = ret.Error(1)
@@ -117,14 +117,14 @@ type mockDoguConfigRepository_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguName dogu.SimpleDoguName
+//   - doguName dogu.SimpleName
 func (_e *mockDoguConfigRepository_Expecter) Get(ctx interface{}, doguName interface{}) *mockDoguConfigRepository_Get_Call {
 	return &mockDoguConfigRepository_Get_Call{Call: _e.mock.On("Get", ctx, doguName)}
 }
 
-func (_c *mockDoguConfigRepository_Get_Call) Run(run func(ctx context.Context, doguName dogu.SimpleDoguName)) *mockDoguConfigRepository_Get_Call {
+func (_c *mockDoguConfigRepository_Get_Call) Run(run func(ctx context.Context, doguName dogu.SimpleName)) *mockDoguConfigRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dogu.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(dogu.SimpleName))
 	})
 	return _c
 }
@@ -134,33 +134,33 @@ func (_c *mockDoguConfigRepository_Get_Call) Return(_a0 config.DoguConfig, _a1 e
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_Get_Call) RunAndReturn(run func(context.Context, dogu.SimpleDoguName) (config.DoguConfig, error)) *mockDoguConfigRepository_Get_Call {
+func (_c *mockDoguConfigRepository_Get_Call) RunAndReturn(run func(context.Context, dogu.SimpleName) (config.DoguConfig, error)) *mockDoguConfigRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx, doguNames
-func (_m *mockDoguConfigRepository) GetAll(ctx context.Context, doguNames []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error) {
+func (_m *mockDoguConfigRepository) GetAll(ctx context.Context, doguNames []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguNames)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
 	}
 
-	var r0 map[dogu.SimpleDoguName]config.DoguConfig
+	var r0 map[dogu.SimpleName]config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)); ok {
 		return rf(ctx, doguNames)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleDoguName) map[dogu.SimpleDoguName]config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) map[dogu.SimpleName]config.DoguConfig); ok {
 		r0 = rf(ctx, doguNames)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[dogu.SimpleDoguName]config.DoguConfig)
+			r0 = ret.Get(0).(map[dogu.SimpleName]config.DoguConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguNames)
 	} else {
 		r1 = ret.Error(1)
@@ -176,50 +176,50 @@ type mockDoguConfigRepository_GetAll_Call struct {
 
 // GetAll is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguNames []dogu.SimpleDoguName
+//   - doguNames []dogu.SimpleName
 func (_e *mockDoguConfigRepository_Expecter) GetAll(ctx interface{}, doguNames interface{}) *mockDoguConfigRepository_GetAll_Call {
 	return &mockDoguConfigRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx, doguNames)}
 }
 
-func (_c *mockDoguConfigRepository_GetAll_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleDoguName)) *mockDoguConfigRepository_GetAll_Call {
+func (_c *mockDoguConfigRepository_GetAll_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleName)) *mockDoguConfigRepository_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]dogu.SimpleDoguName))
+		run(args[0].(context.Context), args[1].([]dogu.SimpleName))
 	})
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_GetAll_Call) Return(_a0 map[dogu.SimpleDoguName]config.DoguConfig, _a1 error) *mockDoguConfigRepository_GetAll_Call {
+func (_c *mockDoguConfigRepository_GetAll_Call) Return(_a0 map[dogu.SimpleName]config.DoguConfig, _a1 error) *mockDoguConfigRepository_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_GetAll_Call) RunAndReturn(run func(context.Context, []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error)) *mockDoguConfigRepository_GetAll_Call {
+func (_c *mockDoguConfigRepository_GetAll_Call) RunAndReturn(run func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)) *mockDoguConfigRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllExisting provides a mock function with given fields: ctx, doguNames
-func (_m *mockDoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error) {
+func (_m *mockDoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguNames)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllExisting")
 	}
 
-	var r0 map[dogu.SimpleDoguName]config.DoguConfig
+	var r0 map[dogu.SimpleName]config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)); ok {
 		return rf(ctx, doguNames)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleDoguName) map[dogu.SimpleDoguName]config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) map[dogu.SimpleName]config.DoguConfig); ok {
 		r0 = rf(ctx, doguNames)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[dogu.SimpleDoguName]config.DoguConfig)
+			r0 = ret.Get(0).(map[dogu.SimpleName]config.DoguConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguNames)
 	} else {
 		r1 = ret.Error(1)
@@ -235,24 +235,24 @@ type mockDoguConfigRepository_GetAllExisting_Call struct {
 
 // GetAllExisting is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguNames []dogu.SimpleDoguName
+//   - doguNames []dogu.SimpleName
 func (_e *mockDoguConfigRepository_Expecter) GetAllExisting(ctx interface{}, doguNames interface{}) *mockDoguConfigRepository_GetAllExisting_Call {
 	return &mockDoguConfigRepository_GetAllExisting_Call{Call: _e.mock.On("GetAllExisting", ctx, doguNames)}
 }
 
-func (_c *mockDoguConfigRepository_GetAllExisting_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleDoguName)) *mockDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockDoguConfigRepository_GetAllExisting_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleName)) *mockDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]dogu.SimpleDoguName))
+		run(args[0].(context.Context), args[1].([]dogu.SimpleName))
 	})
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_GetAllExisting_Call) Return(_a0 map[dogu.SimpleDoguName]config.DoguConfig, _a1 error) *mockDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockDoguConfigRepository_GetAllExisting_Call) Return(_a0 map[dogu.SimpleName]config.DoguConfig, _a1 error) *mockDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockDoguConfigRepository_GetAllExisting_Call) RunAndReturn(run func(context.Context, []dogu.SimpleDoguName) (map[dogu.SimpleDoguName]config.DoguConfig, error)) *mockDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockDoguConfigRepository_GetAllExisting_Call) RunAndReturn(run func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)) *mockDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Return(run)
 	return _c
 }

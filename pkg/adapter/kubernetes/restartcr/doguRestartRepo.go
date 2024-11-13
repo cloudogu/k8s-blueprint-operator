@@ -17,7 +17,7 @@ func NewDoguRestartRepository(restartInterface DoguRestartInterface) *doguRestar
 	return &doguRestartRepository{restartInterface: restartInterface}
 }
 
-func (d doguRestartRepository) RestartAll(ctx context.Context, names []cescommons.SimpleDoguName) error {
+func (d doguRestartRepository) RestartAll(ctx context.Context, names []cescommons.SimpleName) error {
 	var createErrors []error
 	for _, doguName := range names {
 		_, err := d.restartInterface.Create(ctx, &v2.DoguRestart{

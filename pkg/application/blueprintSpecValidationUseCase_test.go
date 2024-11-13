@@ -13,7 +13,7 @@ import (
 	"testing"
 )
 
-var redmineQualifiedDoguName = cescommons.QualifiedDoguName{
+var redmineQualifiedDoguName = cescommons.QualifiedName{
 	Namespace:  "official",
 	SimpleName: "redmine",
 }
@@ -166,7 +166,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
 	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
 
-	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedDoguVersion{}).Return(map[cescommons.QualifiedDoguName]*core.Dogu{}, nil)
+	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedVersion{}).Return(map[cescommons.QualifiedName]*core.Dogu{}, nil)
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 		Id:     "testBlueprint1",
@@ -210,7 +210,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(blueprintSpec, nil)
 	repoMock.EXPECT().Update(ctx, mock.Anything).Return(nil)
 
-	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedDoguVersion{
+	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedVersion{
 		{
 			redmineQualifiedDoguName,
 			version,

@@ -22,7 +22,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	}
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
-	doguName, nameErr := cescommons.QualifiedDoguNameFromString(cr.Spec.Name)
+	doguName, nameErr := cescommons.QualifiedNameFromString(cr.Spec.Name)
 
 	volumeSize, volumeSizeErr := ecosystem.GetQuantityReference(cr.Spec.Resources.DataVolumeSize)
 

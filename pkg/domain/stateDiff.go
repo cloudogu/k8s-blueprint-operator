@@ -9,8 +9,8 @@ import (
 type StateDiff struct {
 	DoguDiffs                DoguDiffs
 	ComponentDiffs           ComponentDiffs
-	DoguConfigDiffs          map[cescommons.SimpleDoguName]DoguConfigDiffs
-	SensitiveDoguConfigDiffs map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs
+	DoguConfigDiffs          map[cescommons.SimpleName]DoguConfigDiffs
+	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 	GlobalConfigDiffs        GlobalConfigDiffs
 }
 

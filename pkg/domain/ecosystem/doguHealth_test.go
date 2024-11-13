@@ -7,22 +7,22 @@ import (
 )
 
 const (
-	testDoguNamespace    cescommons.DoguNamespace  = "testing"
-	postgresqlSimpleName cescommons.SimpleDoguName = "postgresql"
-	postfixSimpleName    cescommons.SimpleDoguName = "postfix"
-	ldapSimpleName       cescommons.SimpleDoguName = "ldap"
+	testDoguNamespace    cescommons.Namespace  = "testing"
+	postgresqlSimpleName cescommons.SimpleName = "postgresql"
+	postfixSimpleName    cescommons.SimpleName = "postfix"
+	ldapSimpleName       cescommons.SimpleName = "ldap"
 )
 
 var (
-	postgresqlQualifiedName = cescommons.QualifiedDoguName{
+	postgresqlQualifiedName = cescommons.QualifiedName{
 		Namespace:  testDoguNamespace,
 		SimpleName: postgresqlSimpleName,
 	}
-	postfixQualifiedName = cescommons.QualifiedDoguName{
+	postfixQualifiedName = cescommons.QualifiedName{
 		Namespace:  testDoguNamespace,
 		SimpleName: postfixSimpleName,
 	}
-	ldapQualifiedName = cescommons.QualifiedDoguName{
+	ldapQualifiedName = cescommons.QualifiedName{
 		Namespace:  testDoguNamespace,
 		SimpleName: ldapSimpleName,
 	}
@@ -51,7 +51,7 @@ func TestCalculateDoguHealthResult(t *testing.T) {
 				},
 			},
 			want: DoguHealthResult{
-				DogusByStatus: map[HealthStatus][]cescommons.SimpleDoguName{
+				DogusByStatus: map[HealthStatus][]cescommons.SimpleName{
 					AvailableHealthStatus:   {postgresqlSimpleName},
 					UnavailableHealthStatus: {postfixSimpleName},
 					PendingHealthStatus:     {ldapSimpleName},
@@ -69,18 +69,18 @@ func TestCalculateDoguHealthResult(t *testing.T) {
 func TestDoguHealthResult_String(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]cescommons.SimpleDoguName
+		healthStates map[HealthStatus][]cescommons.SimpleName
 		contains     []string
 		notContains  []string
 	}{
 		{
 			name:         "no dogus should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{},
+			healthStates: map[HealthStatus][]cescommons.SimpleName{},
 			contains:     []string{"0 dogu(s) are unhealthy: "},
 		},
 		{
 			name: "only available dogus should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus: {"nginx-ingress"},
 			},
 			contains:    []string{"0 dogu(s) are unhealthy: "},
@@ -88,7 +88,7 @@ func TestDoguHealthResult_String(t *testing.T) {
 		},
 		{
 			name: "any dogus not available should be unhealthy",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus:   {"nginx-static"},
 				UnavailableHealthStatus: {postgresqlSimpleName, "redmine"},
 				"other":                 {"scm"},
@@ -119,24 +119,24 @@ func TestDoguHealthResult_String(t *testing.T) {
 func TestDoguHealthResult_AllHealthy(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]cescommons.SimpleDoguName
+		healthStates map[HealthStatus][]cescommons.SimpleName
 		want         bool
 	}{
 		{
 			name:         "should be healthy if empty",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{},
+			healthStates: map[HealthStatus][]cescommons.SimpleName{},
 			want:         true,
 		},
 		{
 			name: "should be healthy if all are available",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus: {"nginx-ingress", "nginx-static", "postfix"},
 			},
 			want: true,
 		},
 		{
 			name: "should not be healthy if one is not available",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus:   {"nginx-ingress", "nginx-static", "postfix"},
 				UnavailableHealthStatus: {"postfix"},
 			},
@@ -144,7 +144,7 @@ func TestDoguHealthResult_AllHealthy(t *testing.T) {
 		},
 		{
 			name: "should not be healthy if multiple are not available",
-			healthStates: map[HealthStatus][]cescommons.SimpleDoguName{
+			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus:   {"nginx-ingress", "nginx-static", "postfix"},
 				UnavailableHealthStatus: {"postfix", "redmine"},
 				PendingHealthStatus:     {postgresqlSimpleName},

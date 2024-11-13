@@ -62,7 +62,7 @@ func TestEvents(t *testing.T) {
 			event: EcosystemUnhealthyUpfrontEvent{
 				HealthResult: ecosystem.HealthResult{
 					DoguHealth: ecosystem.DoguHealthResult{
-						DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
+						DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
 							ecosystem.AvailableHealthStatus:   {"postgresql"},
 							ecosystem.UnavailableHealthStatus: {"ldap"},
 							ecosystem.PendingHealthStatus:     {"admin"},
@@ -123,7 +123,7 @@ func TestEvents(t *testing.T) {
 		{
 			name: "dogu config diff determined",
 			event: DoguConfigDiffDeterminedEvent{
-				DoguConfigDiffs: map[cescommons.SimpleDoguName]DoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
 					"dogu1": []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
 						{NeededAction: ConfigActionSet},
@@ -137,7 +137,7 @@ func TestEvents(t *testing.T) {
 		{
 			name: "sensitive dogu config diff determined",
 			event: SensitiveDoguConfigDiffDeterminedEvent{
-				SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 					"dogu1": []SensitiveDoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
 						{NeededAction: ConfigActionSet},

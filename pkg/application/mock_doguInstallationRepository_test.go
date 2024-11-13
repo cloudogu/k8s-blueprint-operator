@@ -72,7 +72,7 @@ func (_c *mockDoguInstallationRepository_Create_Call) RunAndReturn(run func(cont
 }
 
 // Delete provides a mock function with given fields: ctx, doguName
-func (_m *mockDoguInstallationRepository) Delete(ctx context.Context, doguName dogu.SimpleDoguName) error {
+func (_m *mockDoguInstallationRepository) Delete(ctx context.Context, doguName dogu.SimpleName) error {
 	ret := _m.Called(ctx, doguName)
 
 	if len(ret) == 0 {
@@ -80,7 +80,7 @@ func (_m *mockDoguInstallationRepository) Delete(ctx context.Context, doguName d
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) error); ok {
 		r0 = rf(ctx, doguName)
 	} else {
 		r0 = ret.Error(0)
@@ -96,14 +96,14 @@ type mockDoguInstallationRepository_Delete_Call struct {
 
 // Delete is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguName dogu.SimpleDoguName
+//   - doguName dogu.SimpleName
 func (_e *mockDoguInstallationRepository_Expecter) Delete(ctx interface{}, doguName interface{}) *mockDoguInstallationRepository_Delete_Call {
 	return &mockDoguInstallationRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, doguName)}
 }
 
-func (_c *mockDoguInstallationRepository_Delete_Call) Run(run func(ctx context.Context, doguName dogu.SimpleDoguName)) *mockDoguInstallationRepository_Delete_Call {
+func (_c *mockDoguInstallationRepository_Delete_Call) Run(run func(ctx context.Context, doguName dogu.SimpleName)) *mockDoguInstallationRepository_Delete_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dogu.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(dogu.SimpleName))
 	})
 	return _c
 }
@@ -113,29 +113,29 @@ func (_c *mockDoguInstallationRepository_Delete_Call) Return(_a0 error) *mockDog
 	return _c
 }
 
-func (_c *mockDoguInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, dogu.SimpleDoguName) error) *mockDoguInstallationRepository_Delete_Call {
+func (_c *mockDoguInstallationRepository_Delete_Call) RunAndReturn(run func(context.Context, dogu.SimpleName) error) *mockDoguInstallationRepository_Delete_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx
-func (_m *mockDoguInstallationRepository) GetAll(ctx context.Context) (map[dogu.SimpleDoguName]*ecosystem.DoguInstallation, error) {
+func (_m *mockDoguInstallationRepository) GetAll(ctx context.Context) (map[dogu.SimpleName]*ecosystem.DoguInstallation, error) {
 	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
 	}
 
-	var r0 map[dogu.SimpleDoguName]*ecosystem.DoguInstallation
+	var r0 map[dogu.SimpleName]*ecosystem.DoguInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (map[dogu.SimpleDoguName]*ecosystem.DoguInstallation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) (map[dogu.SimpleName]*ecosystem.DoguInstallation, error)); ok {
 		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context) map[dogu.SimpleDoguName]*ecosystem.DoguInstallation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context) map[dogu.SimpleName]*ecosystem.DoguInstallation); ok {
 		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[dogu.SimpleDoguName]*ecosystem.DoguInstallation)
+			r0 = ret.Get(0).(map[dogu.SimpleName]*ecosystem.DoguInstallation)
 		}
 	}
 
@@ -166,18 +166,18 @@ func (_c *mockDoguInstallationRepository_GetAll_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *mockDoguInstallationRepository_GetAll_Call) Return(_a0 map[dogu.SimpleDoguName]*ecosystem.DoguInstallation, _a1 error) *mockDoguInstallationRepository_GetAll_Call {
+func (_c *mockDoguInstallationRepository_GetAll_Call) Return(_a0 map[dogu.SimpleName]*ecosystem.DoguInstallation, _a1 error) *mockDoguInstallationRepository_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockDoguInstallationRepository_GetAll_Call) RunAndReturn(run func(context.Context) (map[dogu.SimpleDoguName]*ecosystem.DoguInstallation, error)) *mockDoguInstallationRepository_GetAll_Call {
+func (_c *mockDoguInstallationRepository_GetAll_Call) RunAndReturn(run func(context.Context) (map[dogu.SimpleName]*ecosystem.DoguInstallation, error)) *mockDoguInstallationRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetByName provides a mock function with given fields: ctx, doguName
-func (_m *mockDoguInstallationRepository) GetByName(ctx context.Context, doguName dogu.SimpleDoguName) (*ecosystem.DoguInstallation, error) {
+func (_m *mockDoguInstallationRepository) GetByName(ctx context.Context, doguName dogu.SimpleName) (*ecosystem.DoguInstallation, error) {
 	ret := _m.Called(ctx, doguName)
 
 	if len(ret) == 0 {
@@ -186,10 +186,10 @@ func (_m *mockDoguInstallationRepository) GetByName(ctx context.Context, doguNam
 
 	var r0 *ecosystem.DoguInstallation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleDoguName) (*ecosystem.DoguInstallation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) (*ecosystem.DoguInstallation, error)); ok {
 		return rf(ctx, doguName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleDoguName) *ecosystem.DoguInstallation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) *ecosystem.DoguInstallation); ok {
 		r0 = rf(ctx, doguName)
 	} else {
 		if ret.Get(0) != nil {
@@ -197,7 +197,7 @@ func (_m *mockDoguInstallationRepository) GetByName(ctx context.Context, doguNam
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, dogu.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguName)
 	} else {
 		r1 = ret.Error(1)
@@ -213,14 +213,14 @@ type mockDoguInstallationRepository_GetByName_Call struct {
 
 // GetByName is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguName dogu.SimpleDoguName
+//   - doguName dogu.SimpleName
 func (_e *mockDoguInstallationRepository_Expecter) GetByName(ctx interface{}, doguName interface{}) *mockDoguInstallationRepository_GetByName_Call {
 	return &mockDoguInstallationRepository_GetByName_Call{Call: _e.mock.On("GetByName", ctx, doguName)}
 }
 
-func (_c *mockDoguInstallationRepository_GetByName_Call) Run(run func(ctx context.Context, doguName dogu.SimpleDoguName)) *mockDoguInstallationRepository_GetByName_Call {
+func (_c *mockDoguInstallationRepository_GetByName_Call) Run(run func(ctx context.Context, doguName dogu.SimpleName)) *mockDoguInstallationRepository_GetByName_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(dogu.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(dogu.SimpleName))
 	})
 	return _c
 }
@@ -230,7 +230,7 @@ func (_c *mockDoguInstallationRepository_GetByName_Call) Return(_a0 *ecosystem.D
 	return _c
 }
 
-func (_c *mockDoguInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, dogu.SimpleDoguName) (*ecosystem.DoguInstallation, error)) *mockDoguInstallationRepository_GetByName_Call {
+func (_c *mockDoguInstallationRepository_GetByName_Call) RunAndReturn(run func(context.Context, dogu.SimpleName) (*ecosystem.DoguInstallation, error)) *mockDoguInstallationRepository_GetByName_Call {
 	_c.Call.Return(run)
 	return _c
 }

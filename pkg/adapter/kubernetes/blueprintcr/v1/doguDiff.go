@@ -138,9 +138,9 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 	}
 
 	return domain.DoguDiff{
-		DoguName: cescommons.SimpleDoguName(doguName),
+		DoguName: cescommons.SimpleName(doguName),
 		Actual: domain.DoguDiffState{
-			Namespace:         cescommons.DoguNamespace(dto.Actual.Namespace),
+			Namespace:         cescommons.Namespace(dto.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
 			MinVolumeSize:     actualMinVolumeSize,
@@ -151,7 +151,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 			},
 		},
 		Expected: domain.DoguDiffState{
-			Namespace:         cescommons.DoguNamespace(dto.Expected.Namespace),
+			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
 			MinVolumeSize:     expectedMinVolumeSize,

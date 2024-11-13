@@ -35,12 +35,12 @@ func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
-	dogu := MaskDogu{Name: cescommons.QualifiedDoguName{Namespace: "official"}}
+	dogu := MaskDogu{Name: cescommons.QualifiedName{Namespace: "official"}}
 
 	err := dogu.validate()
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, "dogu name must not be empty: '/official'")
+	require.ErrorContains(t, err, "dogu name must not be empty")
 }
 
 func Test_MaskTargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {

@@ -122,7 +122,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		switch action {
 		case domain.ActionInstall:
 			logger.Info("install dogu")
-			newDogu := ecosystem.InstallDogu(cescommons.QualifiedDoguName{
+			newDogu := ecosystem.InstallDogu(cescommons.QualifiedName{
 				Namespace:  doguDiff.Expected.Namespace,
 				SimpleName: doguDiff.DoguName,
 			}, doguDiff.Expected.Version, doguDiff.Expected.MinVolumeSize, doguDiff.Expected.ReverseProxyConfig)

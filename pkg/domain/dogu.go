@@ -14,7 +14,7 @@ import (
 // was applied.
 type Dogu struct {
 	// Name defines the name of the dogu, e.g. "official/postgresql"
-	Name cescommons.QualifiedDoguName
+	Name cescommons.QualifiedName
 	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
 	Version core.Version
@@ -38,13 +38,6 @@ func (dogu Dogu) validate() error {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
 
-	if dogu.Name.SimpleName == "" {
-		errorList = append(errorList, fmt.Errorf("dogu name must not be empty: %s", dogu.Name))
-	}
-
-	if dogu.Name.Namespace == "" {
-		errorList = append(errorList, fmt.Errorf("namespace of dogu %s must not be empty", dogu.Name))
-	}
 	// Storage is usually expressed in Binary SI. Using Decimal SI can cause problems because sizes will be
 	// rounded up (longhorn does this in volume resize).
 	minVolumeSize := dogu.MinVolumeSize
@@ -65,7 +58,7 @@ func (dogu Dogu) validate() error {
 	return err
 }
 
-func FindDoguByName(dogus []Dogu, name cescommons.SimpleDoguName) (Dogu, bool) {
+func FindDoguByName(dogus []Dogu, name cescommons.SimpleName) (Dogu, bool) {
 	for _, dogu := range dogus {
 		if dogu.Name.SimpleName == name {
 			return dogu, true

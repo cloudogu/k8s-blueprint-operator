@@ -77,7 +77,7 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, &DoguInstallation{
-			Name: cescommons.QualifiedDoguName{
+			Name: cescommons.QualifiedName{
 				Namespace:  "premium",
 				SimpleName: "postgresql",
 			},

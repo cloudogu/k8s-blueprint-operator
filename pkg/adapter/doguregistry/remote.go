@@ -5,10 +5,9 @@ import (
 	"errors"
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
-	"strings"
-
+	cloudoguerrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
@@ -23,16 +22,16 @@ func NewRemote(repository remoteDoguDescriptorRepository) *Remote {
 	return &Remote{repository: repository}
 }
 
-func (r *Remote) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error) {
+func (r *Remote) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error) {
 	dogu := &core.Dogu{}
-	err := retry.OnError(maxTries, isConnectionError, func() error {
+	err := retry.OnError(maxTries, cloudoguerrors.IsConnectionError, func() error {
 		var err error
 		dogu, err = r.repository.Get(ctx, qualifiedDoguVersion)
 		return err
 	})
 	if err != nil {
 		// this is ugly, maybe do it better in cesapp-lib?
-		if strings.Contains(err.Error(), cescommons.DoguDescriptorNotFoundError.Error()) {
+		if cloudoguerrors.IsNotFoundError(err) {
 			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("dogu %q with version %q could not be found", qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw),
@@ -48,8 +47,8 @@ func (r *Remote) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.Qu
 	return dogu, nil
 }
 
-func (r *Remote) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error) {
-	dogus := make(map[cescommons.QualifiedDoguName]*core.Dogu)
+func (r *Remote) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedVersion) (map[cescommons.QualifiedName]*core.Dogu, error) {
+	dogus := make(map[cescommons.QualifiedName]*core.Dogu)
 
 	var errs []error
 	for _, doguRef := range dogusToLoad {
@@ -60,8 +59,4 @@ func (r *Remote) GetDogus(ctx context.Context, dogusToLoad []cescommons.Qualifie
 	}
 
 	return dogus, errors.Join(errs...)
-}
-
-func isConnectionError(err error) bool {
-	return strings.Contains(err.Error(), cescommons.ConnectionError.Error())
 }

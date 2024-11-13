@@ -10,7 +10,7 @@ import (
 type GlobalConfigKey = config.Key
 
 type DoguConfigKey struct {
-	DoguName cescommons.SimpleDoguName
+	DoguName cescommons.SimpleName
 	Key      config.Key
 }
 

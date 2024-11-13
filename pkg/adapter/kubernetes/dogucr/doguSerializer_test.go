@@ -12,9 +12,9 @@ import (
 	"testing"
 )
 
-var postgresDoguName = cescommons.QualifiedDoguName{
-	Namespace:  cescommons.DoguNamespace("official"),
-	SimpleName: cescommons.SimpleDoguName("postgresql"),
+var postgresDoguName = cescommons.QualifiedName{
+	Namespace:  cescommons.Namespace("official"),
+	SimpleName: cescommons.SimpleName("postgresql"),
 }
 
 func Test_parseDoguCR(t *testing.T) {

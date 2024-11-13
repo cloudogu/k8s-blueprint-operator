@@ -14,8 +14,8 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("no error on restart all", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu")
-		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
+		testDoguSimpleName := cescommons.SimpleName("testdogu")
+		dogusThatNeedARestart := []cescommons.SimpleName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 
@@ -33,7 +33,7 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("no error on empty restart all", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		dogusThatNeedARestart := []cescommons.SimpleDoguName{}
+		dogusThatNeedARestart := []cescommons.SimpleName{}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 
 		restartRepository := NewDoguRestartRepository(mockDoguRestartInterface)
@@ -48,8 +48,8 @@ func Test_doguRestartRepository_RestartAll(t *testing.T) {
 	t.Run("fail on error at create", func(t *testing.T) {
 		// given
 		testContext := context.Background()
-		testDoguSimpleName := cescommons.SimpleDoguName("testdogu")
-		dogusThatNeedARestart := []cescommons.SimpleDoguName{testDoguSimpleName}
+		testDoguSimpleName := cescommons.SimpleName("testdogu")
+		dogusThatNeedARestart := []cescommons.SimpleName{testDoguSimpleName}
 		mockDoguRestartInterface := NewMockDoguRestartInterface(t)
 		expectedDoguRestartToCreate := &v2.DoguRestart{ObjectMeta: metav1.ObjectMeta{GenerateName: "testdogu-"}, Spec: v2.DoguRestartSpec{DoguName: "testdogu"}}
 

@@ -12,7 +12,7 @@ import (
 // was applied for a blueprintMask.
 type MaskDogu struct {
 	// Name is the qualified name of the dogu.
-	Name cescommons.QualifiedDoguName
+	Name cescommons.QualifiedName
 	// Version defines the version of the dogu that is to be installed. This version is optional and overrides
 	// the version of the dogu from the blueprint.
 	Version core.Version

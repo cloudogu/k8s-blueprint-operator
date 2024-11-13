@@ -11,12 +11,12 @@ import (
 )
 
 type Config struct {
-	Dogus  map[cescommons.SimpleDoguName]CombinedDoguConfig
+	Dogus  map[cescommons.SimpleName]CombinedDoguConfig
 	Global GlobalConfig
 }
 
 type CombinedDoguConfig struct {
-	DoguName        cescommons.SimpleDoguName
+	DoguName        cescommons.SimpleName
 	Config          DoguConfig
 	SensitiveConfig SensitiveDoguConfig
 }
@@ -59,8 +59,8 @@ func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKe
 }
 
 // GetDogusWithChangedConfig returns a list of dogus for which possible config changes are needed.
-func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleDoguName {
-	var dogus []cescommons.SimpleDoguName
+func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
 	for dogu, doguConfig := range config.Dogus {
 		if len(doguConfig.Config.Present) != 0 || len(doguConfig.Config.Absent) != 0 {
 			dogus = append(dogus, dogu)
@@ -70,8 +70,8 @@ func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleDoguName {
 }
 
 // GetDogusWithChangedSensitiveConfig returns a list of dogus for which possible sensitive config changes are needed.
-func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleDoguName {
-	var dogus []cescommons.SimpleDoguName
+func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
 	for dogu, doguConfig := range config.Dogus {
 		if len(doguConfig.SensitiveConfig.Present) != 0 || len(doguConfig.SensitiveConfig.Absent) != 0 {
 			dogus = append(dogus, dogu)
@@ -140,7 +140,7 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 	return errors.Join(errorList...)
 }
 
-func (config DoguConfig) validate(referencedDoguName cescommons.SimpleDoguName) error {
+func (config DoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
 	var errs []error
 
 	for configKey := range config.Present {

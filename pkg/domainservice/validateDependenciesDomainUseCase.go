@@ -36,8 +36,8 @@ func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry)
 func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogus(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error {
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.ValidateDependenciesForAllDogus")
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
-	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) cescommons.QualifiedDoguVersion {
-		return cescommons.QualifiedDoguVersion{
+	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) cescommons.QualifiedVersion {
+		return cescommons.QualifiedVersion{
 			Name:    dogu.Name,
 			Version: dogu.Version,
 		}
@@ -76,7 +76,7 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 	ctx context.Context,
 	wantedDogus []domain.Dogu,
-	knownDoguSpecs map[cescommons.QualifiedDoguName]*core.Dogu,
+	knownDoguSpecs map[cescommons.QualifiedName]*core.Dogu,
 	dependenciesOfWantedDogu []core.Dependency,
 ) error {
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.checkDoguDependencies")
@@ -119,7 +119,7 @@ func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
 	return foundNginxIngress && foundNginxStatic
 }
 
-func isDoguInSlice(dogus []domain.Dogu, name cescommons.SimpleDoguName) bool {
+func isDoguInSlice(dogus []domain.Dogu, name cescommons.SimpleName) bool {
 	for _, dogu := range dogus {
 		if dogu.Name.SimpleName == name {
 			return true
@@ -132,10 +132,10 @@ func isDoguInSlice(dogus []domain.Dogu, name cescommons.SimpleDoguName) bool {
 func checkDoguDependency(
 	dependencyOfWantedDogu core.Dependency,
 	wantedDogus []domain.Dogu,
-	knownDoguSpecs map[cescommons.QualifiedDoguName]*core.Dogu,
+	knownDoguSpecs map[cescommons.QualifiedName]*core.Dogu,
 ) error {
 	// this also works with namespace changes as only the simple dogu name get searched
-	dependencyInBlueprint, found := domain.FindDoguByName(wantedDogus, cescommons.SimpleDoguName(dependencyOfWantedDogu.Name))
+	dependencyInBlueprint, found := domain.FindDoguByName(wantedDogus, cescommons.SimpleName(dependencyOfWantedDogu.Name))
 	if !found {
 		return fmt.Errorf("dependency '%s' in version '%s' is not a present dogu in the effective blueprint", dependencyOfWantedDogu.Name, dependencyOfWantedDogu.Version)
 	}

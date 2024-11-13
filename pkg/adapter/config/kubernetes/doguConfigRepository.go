@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	liberrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	liberrors "github.com/cloudogu/k8s-registry-lib/errors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -29,8 +29,8 @@ func NewSensitiveDoguConfigRepository(repo k8sDoguConfigRepo) *DoguConfigReposit
 	return &DoguConfigRepository{repo: repo, repoType: sensitiveConfig}
 }
 
-func (repo *DoguConfigRepository) GetAll(ctx context.Context, doguNames []cescommons.SimpleDoguName) (map[cescommons.SimpleDoguName]config.DoguConfig, error) {
-	var configByDogus = map[cescommons.SimpleDoguName]config.DoguConfig{}
+func (repo *DoguConfigRepository) GetAll(ctx context.Context, doguNames []cescommons.SimpleName) (map[cescommons.SimpleName]config.DoguConfig, error) {
+	var configByDogus = map[cescommons.SimpleName]config.DoguConfig{}
 	for _, doguName := range doguNames {
 		loaded, err := repo.Get(ctx, doguName)
 		if err != nil {
@@ -41,8 +41,8 @@ func (repo *DoguConfigRepository) GetAll(ctx context.Context, doguNames []cescom
 	return configByDogus, nil
 }
 
-func (repo *DoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []cescommons.SimpleDoguName) (map[cescommons.SimpleDoguName]config.DoguConfig, error) {
-	var configByDogus = map[cescommons.SimpleDoguName]config.DoguConfig{}
+func (repo *DoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []cescommons.SimpleName) (map[cescommons.SimpleName]config.DoguConfig, error) {
+	var configByDogus = map[cescommons.SimpleName]config.DoguConfig{}
 	for _, doguName := range doguNames {
 		loaded, err := repo.Get(ctx, doguName)
 		if liberrors.IsNotFoundError(err) {
@@ -56,7 +56,7 @@ func (repo *DoguConfigRepository) GetAllExisting(ctx context.Context, doguNames 
 	return configByDogus, nil
 }
 
-func (repo *DoguConfigRepository) Get(ctx context.Context, doguName cescommons.SimpleDoguName) (config.DoguConfig, error) {
+func (repo *DoguConfigRepository) Get(ctx context.Context, doguName cescommons.SimpleName) (config.DoguConfig, error) {
 	loadedConfig, err := repo.repo.Get(ctx, doguName)
 	if err != nil {
 		return loadedConfig, fmt.Errorf("could not load %s for %s: %w", repo.repoType, doguName, mapToBlueprintError(err))

@@ -46,13 +46,13 @@ func ConvertToConfigDTO(config domain.Config) Config {
 }
 
 func ConvertToConfigDomain(config Config) domain.Config {
-	var dogus map[cescommons.SimpleDoguName]domain.CombinedDoguConfig
+	var dogus map[cescommons.SimpleName]domain.CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
-		dogus = make(map[cescommons.SimpleDoguName]domain.CombinedDoguConfig, len(config.Dogus))
+		dogus = make(map[cescommons.SimpleName]domain.CombinedDoguConfig, len(config.Dogus))
 		for doguName, doguConfig := range config.Dogus {
-			dogus[cescommons.SimpleDoguName(doguName)] = convertToCombinedDoguConfigDomain(doguName, doguConfig)
+			dogus[cescommons.SimpleName(doguName)] = convertToCombinedDoguConfigDomain(doguName, doguConfig)
 		}
 	}
 
@@ -71,7 +71,7 @@ func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) CombinedDo
 
 func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfig) domain.CombinedDoguConfig {
 	return domain.CombinedDoguConfig{
-		DoguName:        cescommons.SimpleDoguName(doguName),
+		DoguName:        cescommons.SimpleName(doguName),
 		Config:          convertToDoguConfigDomain(doguName, config.Config),
 		SensitiveConfig: convertToSensitiveDoguConfigDomain(doguName, config.SensitiveConfig),
 	}
@@ -133,7 +133,7 @@ func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguCo
 
 func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
 	return common.DoguConfigKey{
-		DoguName: cescommons.SimpleDoguName(doguName),
+		DoguName: cescommons.SimpleName(doguName),
 		Key:      config.Key(key),
 	}
 }
@@ -183,7 +183,7 @@ func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDog
 		absent = make([]common.SensitiveDoguConfigKey, len(doguConfig.Absent))
 		for i, key := range doguConfig.Absent {
 			absent[i] = common.SensitiveDoguConfigKey{
-				DoguName: cescommons.SimpleDoguName(doguName),
+				DoguName: cescommons.SimpleName(doguName),
 				Key:      config.Key(key),
 			}
 		}
@@ -197,7 +197,7 @@ func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDog
 
 func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.SensitiveDoguConfigKey {
 	return common.SensitiveDoguConfigKey{
-		DoguName: cescommons.SimpleDoguName(doguName),
+		DoguName: cescommons.SimpleName(doguName),
 		Key:      config.Key(key),
 	}
 }

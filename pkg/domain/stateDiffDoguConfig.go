@@ -78,7 +78,7 @@ func newDoguConfigEntryDiff(
 
 func determineDoguConfigDiffs(
 	wantedConfig DoguConfig,
-	actualConfig map[cescommons.SimpleDoguName]config.DoguConfig,
+	actualConfig map[cescommons.SimpleName]config.DoguConfig,
 ) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff
 	// present entries

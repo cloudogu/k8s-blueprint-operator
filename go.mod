@@ -2,17 +2,16 @@ module github.com/cloudogu/k8s-blueprint-operator/v2
 
 go 1.23.2
 
-replace github.com/cloudogu/k8s-registry-lib => github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241030150150-5f2f055c0134
+replace github.com/cloudogu/k8s-registry-lib => github.com/cloudogu/k8s-registry-lib v0.2.2-0.20241113124947-565e48441650
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
-	github.com/cloudogu/ces-commons-lib v0.0.0-20241030144542-5ac13c31b3f4
+	github.com/cloudogu/ces-commons-lib v0.0.0-20241113093231-55d3fef793db
 	github.com/cloudogu/cesapp-lib v0.14.2
 	github.com/cloudogu/k8s-blueprint-operator v1.1.0
 	github.com/cloudogu/k8s-component-operator v1.2.0
-	github.com/cloudogu/k8s-dogu-operator/v3 v3.0.1
 	github.com/cloudogu/k8s-registry-lib v0.4.1
-	github.com/cloudogu/remote-dogu-descriptor-lib v0.0.0-20241029141608-9f338268fe6c
+	github.com/cloudogu/remote-dogu-descriptor-lib v0.0.0-20241113151358-e8464649dcc7
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
@@ -42,6 +41,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
+	github.com/cloudogu/k8s-dogu-operator/v3 v3.0.1 // indirect
 	github.com/containerd/containerd v1.7.21 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect

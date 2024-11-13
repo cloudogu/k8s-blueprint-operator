@@ -275,7 +275,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		expectedDoguInstallations := map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
+		expectedDoguInstallations := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
@@ -283,7 +283,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
-				Name: cescommons.QualifiedDoguName{
+				Name: cescommons.QualifiedName{
 					Namespace:  "official",
 					SimpleName: "ldap",
 				},

@@ -8,7 +8,7 @@ import (
 )
 
 var testDataDoguRegistry = stubRemoteDoguRegistry{
-	dogus: map[cescommons.QualifiedDoguName]map[string]*core.Dogu{
+	dogus: map[cescommons.QualifiedName]map[string]*core.Dogu{
 		officialPostgres: {
 			"1.0.0-1": &core.Dogu{
 				Name:         "official/postgres",
@@ -84,10 +84,10 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 }
 
 type stubRemoteDoguRegistry struct {
-	dogus map[cescommons.QualifiedDoguName]map[string]*core.Dogu
+	dogus map[cescommons.QualifiedName]map[string]*core.Dogu
 }
 
-func (registry stubRemoteDoguRegistry) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedDoguVersion) (*core.Dogu, error) {
+func (registry stubRemoteDoguRegistry) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error) {
 	dogu := registry.dogus[qualifiedDoguVersion.Name][qualifiedDoguVersion.Version.Raw]
 	if dogu == nil {
 		return nil, &NotFoundError{Message: fmt.Sprintf("dogu %s in version %s not found", qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw)}
@@ -95,8 +95,8 @@ func (registry stubRemoteDoguRegistry) GetDogu(ctx context.Context, qualifiedDog
 	return dogu, nil
 }
 
-func (registry stubRemoteDoguRegistry) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedDoguVersion) (map[cescommons.QualifiedDoguName]*core.Dogu, error) {
-	dogus := map[cescommons.QualifiedDoguName]*core.Dogu{}
+func (registry stubRemoteDoguRegistry) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedVersion) (map[cescommons.QualifiedName]*core.Dogu, error) {
+	dogus := map[cescommons.QualifiedName]*core.Dogu{}
 	for _, doguToLoad := range dogusToLoad {
 		doguSpec, err := registry.GetDogu(ctx, doguToLoad)
 		if err != nil {

@@ -25,11 +25,11 @@ const (
 	testChangeDistributionNamespace = "k8s-testing"
 )
 
-var officialNexus = cescommons.QualifiedDoguName{
+var officialNexus = cescommons.QualifiedName{
 	Namespace:  "official",
 	SimpleName: "nexus",
 }
-var premiumNexus = cescommons.QualifiedDoguName{
+var premiumNexus = cescommons.QualifiedName{
 	Namespace:  "premium",
 	SimpleName: "nexus",
 }
@@ -243,7 +243,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		}
 
 		config := Config{
-			Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 				officialDogu1.SimpleName: {},
 			},
 		}
@@ -304,7 +304,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 	})
 	t.Run("validate only config for dogus in blueprint", func(t *testing.T) {
 		config := Config{
-			Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 				"my-dogu": {},
 			},
 		}
@@ -352,7 +352,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 
@@ -363,8 +363,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		stateDiff := StateDiff{
 			DoguDiffs:                DoguDiffs{},
 			ComponentDiffs:           ComponentDiffs{},
-			DoguConfigDiffs:          map[cescommons.SimpleDoguName]DoguConfigDiffs{},
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs{},
+			DoguConfigDiffs:          map[cescommons.SimpleName]DoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
@@ -373,10 +373,10 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
 		assert.Equal(t, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs(nil)}, spec.Events[2])
 		assert.Equal(t, DoguConfigDiffDeterminedEvent{
-			DoguConfigDiffs: map[cescommons.SimpleDoguName]DoguConfigDiffs{},
+			DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{},
 		}, spec.Events[3])
 		assert.Equal(t, SensitiveDoguConfigDiffDeterminedEvent{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs{},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}, spec.Events[4])
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
@@ -387,7 +387,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus: []Dogu{
 					{
-						Name: cescommons.QualifiedDoguName{
+						Name: cescommons.QualifiedName{
 							Namespace:  "namespace-change",
 							SimpleName: "name",
 						},
@@ -401,8 +401,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
-				"name": {Name: cescommons.QualifiedDoguName{
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+				"name": {Name: cescommons.QualifiedName{
 					Namespace:  "namespace",
 					SimpleName: "name",
 				}},
@@ -424,7 +424,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus: []Dogu{
 					{
-						Name: cescommons.QualifiedDoguName{
+						Name: cescommons.QualifiedName{
 							Namespace:  "namespace-change",
 							SimpleName: "name",
 						},
@@ -438,8 +438,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{
-				"name": {Name: cescommons.QualifiedDoguName{
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+				"name": {Name: cescommons.QualifiedName{
 					Namespace:  "namespace",
 					SimpleName: "name",
 				}},
@@ -464,7 +464,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Status: initialStatus,
 			}
 			clusterState := ecosystem.EcosystemState{
-				InstalledDogus:      map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{},
+				InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 			}
 			// when
@@ -484,7 +484,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: initialStatus,
 		}
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 		// when
@@ -513,7 +513,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 				testComponentName.SimpleName: {
 					Name:            testComponentName,
@@ -547,7 +547,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleDoguName]*ecosystem.DoguInstallation{},
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
 				testComponentName.SimpleName: {
 					Name:            testComponentName,
@@ -604,7 +604,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 			inputSpec: &BlueprintSpec{},
 			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
+					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
 						ecosystem.AvailableHealthStatus:   {"postfix"},
 						ecosystem.UnavailableHealthStatus: {"ldap"},
 						ecosystem.PendingHealthStatus:     {"postgresql"},
@@ -620,7 +620,7 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 			inputSpec: &BlueprintSpec{},
 			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
+					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
 						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
 					},
 				},
@@ -655,7 +655,7 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 			inputSpec: &BlueprintSpec{},
 			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
+					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
 						ecosystem.AvailableHealthStatus:   {"postfix"},
 						ecosystem.UnavailableHealthStatus: {"ldap"},
 						ecosystem.PendingHealthStatus:     {"postgresql"},
@@ -671,7 +671,7 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 			inputSpec: &BlueprintSpec{},
 			healthResult: ecosystem.HealthResult{
 				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleDoguName{
+					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
 						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
 					},
 				},
@@ -768,7 +768,7 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	spec := &BlueprintSpec{
 		Blueprint: Blueprint{
 			Config: Config{
-				Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 					"ldap": {
 						DoguName: "ldap",
 						SensitiveConfig: SensitiveDoguConfig{
@@ -782,7 +782,7 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 		},
 		EffectiveBlueprint: EffectiveBlueprint{
 			Config: Config{
-				Dogus: map[cescommons.SimpleDoguName]CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 					"ldap": {
 						DoguName: "ldap",
 						SensitiveConfig: SensitiveDoguConfig{
@@ -795,7 +795,7 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 			},
 		},
 		StateDiff: StateDiff{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleDoguName]SensitiveDoguConfigDiffs{
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				"ldapDiff": []SensitiveDoguConfigEntryDiff{{
 					Actual:   DoguConfigValueState{Value: "Test1"},
 					Expected: DoguConfigValueState{Value: "Test2"},
@@ -808,15 +808,15 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 
 	// then
 	require.Len(t, spec.Blueprint.Config.Dogus, 1)
-	assert.Contains(t, maps.Keys(spec.Blueprint.Config.Dogus), cescommons.SimpleDoguName("ldap"))
+	assert.Contains(t, maps.Keys(spec.Blueprint.Config.Dogus), cescommons.SimpleName("ldap"))
 	assert.Equal(t, censorValue, string(spec.Blueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
 
 	require.Len(t, spec.EffectiveBlueprint.Config.Dogus, 1)
-	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), cescommons.SimpleDoguName("ldap"))
+	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), cescommons.SimpleName("ldap"))
 	assert.Equal(t, censorValue, string(spec.EffectiveBlueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
 
 	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), cescommons.SimpleDoguName("ldapDiff"))
+	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), cescommons.SimpleName("ldapDiff"))
 	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)
 	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Actual.Value)
 	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Expected.Value)
@@ -1007,7 +1007,7 @@ func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 }
 
 func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
-	testDogu1 := Dogu{Name: cescommons.QualifiedDoguName{Namespace: "testNamespace", SimpleName: "testDogu1"}}
+	testDogu1 := Dogu{Name: cescommons.QualifiedName{Namespace: "testNamespace", SimpleName: "testDogu1"}}
 	testBlueprint1 := Blueprint{Dogus: []Dogu{testDogu1}}
 	testDoguConfigDiffsChanged := []DoguConfigEntryDiff{{
 		Actual:       DoguConfigValueState{},
@@ -1019,10 +1019,10 @@ func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
 	}}
 
 	testDoguConfigChangeDiffChanged := StateDiff{
-		DoguConfigDiffs: map[cescommons.SimpleDoguName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsChanged},
+		DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsChanged},
 	}
 	testDoguConfigChangeDiffActionNone := StateDiff{
-		DoguConfigDiffs: map[cescommons.SimpleDoguName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
+		DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
 	}
 
 	type fields struct {
@@ -1033,7 +1033,7 @@ func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   []cescommons.SimpleDoguName
+		want   []cescommons.SimpleName
 	}{
 		{
 			name:   "return nothing on empty blueprint",
@@ -1052,7 +1052,7 @@ func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
 				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
 				StateDiff:          testDoguConfigChangeDiffChanged,
 			},
-			want: []cescommons.SimpleDoguName{testDogu1.Name.SimpleName},
+			want: []cescommons.SimpleName{testDogu1.Name.SimpleName},
 		},
 		{
 			name: "return nothing on dogu config unchanged",

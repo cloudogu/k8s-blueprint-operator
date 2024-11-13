@@ -15,7 +15,7 @@ type k8sGlobalConfigRepo interface {
 }
 
 type k8sDoguConfigRepo interface {
-	Get(context.Context, cescommons.SimpleDoguName) (config.DoguConfig, error)
+	Get(context.Context, cescommons.SimpleName) (config.DoguConfig, error)
 	Update(context.Context, config.DoguConfig) (config.DoguConfig, error)
 	Create(context.Context, config.DoguConfig) (config.DoguConfig, error)
 }
