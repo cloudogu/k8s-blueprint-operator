@@ -7,7 +7,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	cloudoguerrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/pkg/retry"
+	"github.com/cloudogu/retry-lib/retry"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
