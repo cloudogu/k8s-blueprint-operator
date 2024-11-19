@@ -4,9 +4,10 @@ metadata:
   labels:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-manager-rolebinding
+  namespace: '{{ .Release.Namespace }}'
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
+  kind: Role
   name: {{ include "k8s-blueprint-operator.name" . }}-manager-role
 subjects:
   - kind: ServiceAccount
