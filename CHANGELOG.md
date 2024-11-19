@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+- [#93] Remove RBAC permissions that seem unnecessary for the execution of the operator
+  - this is an operational security measure
+- [#93] deactivate operator leader election
 
 ## [v2.0.1] - 2024-11-06
 ### Fixed
