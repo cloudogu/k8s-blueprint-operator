@@ -54,3 +54,11 @@ rules:
     verbs:
       - get
       - list
+# issue event write permissions so the operator can inform about events during the blueprint processing.
+  - apiGroups:
+      - ""
+    resources:
+      - events
+    verbs:
+      - create
+      - patch
