@@ -3,9 +3,9 @@ package serializer
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
@@ -43,7 +43,7 @@ func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		name, err := common.QualifiedDoguNameFromString(dogu.Name)
+		name, err := cescommons.QualifiedNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

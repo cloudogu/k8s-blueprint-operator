@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v2/api/ecoSystem"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +33,7 @@ type doguInstallationRepo struct {
 func NewDoguInstallationRepo(doguClient ecosystemclient.DoguInterface, pvcClient PvcInterface) domainservice.DoguInstallationRepository {
 	return &doguInstallationRepo{doguClient: doguClient, pvcClient: pvcClient}
 }
-func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName cescommons.SimpleName) (*ecosystem.DoguInstallation, error) {
 	cr, err := repo.doguClient.Get(ctx, string(doguName), metav1.GetOptions{})
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
@@ -58,7 +58,7 @@ func (repo *doguInstallationRepo) GetByName(ctx context.Context, doguName common
 	return parseDoguCR(cr)
 }
 
-func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error) {
+func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[cescommons.SimpleName]*ecosystem.DoguInstallation, error) {
 	crList, err := repo.doguClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, &domainservice.InternalError{
@@ -73,7 +73,7 @@ func (repo *doguInstallationRepo) GetAll(ctx context.Context) (map[common.Simple
 	}
 
 	var errs []error
-	doguInstallations := make(map[common.SimpleDoguName]*ecosystem.DoguInstallation, len(crList.Items))
+	doguInstallations := make(map[cescommons.SimpleName]*ecosystem.DoguInstallation, len(crList.Items))
 	for _, cr := range crList.Items {
 		repo.appendVolumeSizeIfNotSet(&cr, pvcList)
 		doguInstallation, err := parseDoguCR(&cr)
@@ -158,7 +158,7 @@ func (repo *doguInstallationRepo) Update(ctx context.Context, dogu *ecosystem.Do
 	return nil
 }
 
-func (repo *doguInstallationRepo) Delete(ctx context.Context, doguName common.SimpleDoguName) error {
+func (repo *doguInstallationRepo) Delete(ctx context.Context, doguName cescommons.SimpleName) error {
 	err := repo.doguClient.Delete(ctx, string(doguName), metav1.DeleteOptions{})
 	if err != nil {
 		return &domainservice.InternalError{

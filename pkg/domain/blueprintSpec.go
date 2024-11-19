@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"maps"
@@ -129,7 +129,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	var errorList []error
 	for _, doguMask := range spec.BlueprintMask.Dogus {
-		dogu, found := FindDoguByName(spec.Blueprint.Dogus, doguMask.Name.SimpleName)
+		dogu, found := FindDoguByName(spec.Blueprint.Dogus, cescommons.SimpleName(doguMask.Name.SimpleName))
 		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
@@ -230,7 +230,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 		}
 		if maskDogu.Name.Namespace != dogu.Name.Namespace {
 			if spec.Config.AllowDoguNamespaceSwitch {
-				effectiveDogu.Name.Namespace = maskDogu.Name.Namespace
+				effectiveDogu.Name.Namespace = cescommons.Namespace(maskDogu.Name.Namespace)
 			} else {
 				return Dogu{}, fmt.Errorf(
 					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.Name, maskDogu.Name)
@@ -481,8 +481,8 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	}
 }
 
-func (spec *BlueprintSpec) GetDogusThatNeedARestart() []common.SimpleDoguName {
-	var dogusThatNeedRestart []common.SimpleDoguName
+func (spec *BlueprintSpec) GetDogusThatNeedARestart() []cescommons.SimpleName {
+	var dogusThatNeedRestart []cescommons.SimpleName
 	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
 	for _, dogu := range dogusInEffectiveBlueprint {
 		//TODO: test this

@@ -3,10 +3,10 @@ package blueprintMaskV1
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
@@ -79,7 +79,7 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 	var errorList []error
 
 	for _, dogu := range dogus {
-		doguName, err := common.QualifiedDoguNameFromString(dogu.Name)
+		doguName, err := cescommons.QualifiedNameFromString(dogu.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue

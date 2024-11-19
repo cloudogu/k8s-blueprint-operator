@@ -3,6 +3,7 @@ package v1
 import (
 	"cmp"
 	"github.com/Masterminds/semver/v3"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -19,7 +20,7 @@ var (
 	testVersionLow     = semver.MustParse(testVersionLowRaw)
 	testVersionHighRaw = "2.3.4"
 	testVersionHigh    = semver.MustParse(testVersionHighRaw)
-	testDogu           = common.SimpleDoguName("testDogu")
+	testDogu           = cescommons.SimpleName("testDogu")
 	testDoguKey1       = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
 )
 
@@ -152,11 +153,11 @@ func TestConvertToDTO(t *testing.T) {
 		}, {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.DoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
-				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -510,11 +511,11 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{
 				DoguDiffs:      []domain.DoguDiff{},
 				ComponentDiffs: []domain.ComponentDiff{},
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.DoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
-				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -653,8 +654,8 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 			model: domain.StateDiff{
 				DoguDiffs:       nil,
 				ComponentDiffs:  nil,
-				DoguConfigDiffs: map[common.SimpleDoguName]domain.DoguConfigDiffs{},
-				SensitiveDoguConfigDiffs: map[common.SimpleDoguName]domain.SensitiveDoguConfigDiffs{
+				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
 					testDogu: {
 						{
 							Key: testDoguKey1,

@@ -2,8 +2,8 @@ package domain
 
 import (
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
 )
@@ -13,7 +13,7 @@ type DoguDiffs []DoguDiff
 
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
-	DoguName      common.SimpleDoguName
+	DoguName      cescommons.SimpleName
 	Actual        DoguDiffState
 	Expected      DoguDiffState
 	NeededActions []Action
@@ -21,7 +21,7 @@ type DoguDiff struct {
 
 // DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
-	Namespace          common.DoguNamespace
+	Namespace          cescommons.Namespace
 	Version            core.Version
 	InstallationState  TargetState
 	MinVolumeSize      *ecosystem.VolumeSize
@@ -51,8 +51,8 @@ func (diff *DoguDiffState) String() string {
 
 // determineDoguDiffs creates DoguDiffs for all dogus in the blueprint and all installed dogus as well.
 // see determineDoguDiff for more information.
-func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[common.SimpleDoguName]*ecosystem.DoguInstallation) []DoguDiff {
-	var doguDiffs = map[common.SimpleDoguName]DoguDiff{}
+func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[cescommons.SimpleName]*ecosystem.DoguInstallation) []DoguDiff {
+	var doguDiffs = map[cescommons.SimpleName]DoguDiff{}
 	for _, blueprintDogu := range blueprintDogus {
 		installedDogu := installedDogus[blueprintDogu.Name.SimpleName]
 		doguDiffs[blueprintDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
@@ -74,7 +74,7 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[common.SimpleD
 // returns a DoguDiff
 func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstallation) DoguDiff {
 	var expectedState, actualState DoguDiffState
-	var doguName common.SimpleDoguName = "" // either blueprintDogu or installedDogu could be nil
+	var doguName cescommons.SimpleName = "" // either blueprintDogu or installedDogu could be nil
 
 	if installedDogu == nil {
 		actualState = DoguDiffState{

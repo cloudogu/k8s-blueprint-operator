@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"slices"
 )
 
@@ -12,7 +12,7 @@ import (
 // was applied for a blueprintMask.
 type MaskDogu struct {
 	// Name is the qualified name of the dogu.
-	Name common.QualifiedDoguName
+	Name cescommons.QualifiedName
 	// Version defines the version of the dogu that is to be installed. This version is optional and overrides
 	// the version of the dogu from the blueprint.
 	Version core.Version

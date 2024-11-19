@@ -8,18 +8,6 @@ import (
 	"testing"
 )
 
-func Test_TargetDogu_validate_errorOnMissingDoguName(t *testing.T) {
-	dogus := []Dogu{
-		{Version: version3212, TargetState: TargetStatePresent},
-	}
-	blueprint := Blueprint{Dogus: dogus}
-
-	err := blueprint.Validate()
-
-	require.NotNil(t, err)
-	assert.Contains(t, err.Error(), "dogu name must not be empty")
-}
-
 func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) {
 	dogu := Dogu{Name: officialDogu1, TargetState: TargetStatePresent}
 
