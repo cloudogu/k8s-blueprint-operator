@@ -1,28 +1,34 @@
+# Issue RBAC permissions to the operator to fulfill CR handling which includes reading and updating customer-created
+# Blueprint CRs. The operator does not create or delete Blueprints by itself, though.
+
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
+# the blueprint operator should only handle Blueprint CRs within its own namespace, not Blueprints in other namespaces
+kind: Role
 metadata:
   labels:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-manager-role
 rules:
+
+# issue permissions to read/update fields beyond the status or finalizer fields
   - apiGroups:
       - k8s.cloudogu.com
     resources:
       - blueprints
     verbs:
-      - create
-      - delete
       - get
       - list
       - patch
       - update
       - watch
+# issue permissions to update the finalizer field that may control CR deletion
   - apiGroups:
       - k8s.cloudogu.com
     resources:
       - blueprints/finalizers
     verbs:
       - update
+# issue permissions to update the status which contains blueprint processing data
   - apiGroups:
       - k8s.cloudogu.com
     resources:
@@ -31,6 +37,7 @@ rules:
       - get
       - patch
       - update
+# issue secret handling for Dogus
   - apiGroups:
       - ""
     resources:
@@ -39,6 +46,7 @@ rules:
       - create
       - update
       - get
+# issue PVC read-only permissions to amend the Blueprint CR with a currently configured Dogu volume size
   - apiGroups:
       - ""
     resources:
