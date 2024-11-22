@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -122,7 +122,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		switch action {
 		case domain.ActionInstall:
 			logger.Info("install dogu")
-			newDogu := ecosystem.InstallDogu(common.QualifiedDoguName{
+			newDogu := ecosystem.InstallDogu(cescommons.QualifiedName{
 				Namespace:  doguDiff.Expected.Namespace,
 				SimpleName: doguDiff.DoguName,
 			}, doguDiff.Expected.Version, doguDiff.Expected.MinVolumeSize, doguDiff.Expected.ReverseProxyConfig)

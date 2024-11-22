@@ -3,13 +3,14 @@ package common
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type GlobalConfigKey = config.Key
 
 type DoguConfigKey struct {
-	DoguName SimpleDoguName
+	DoguName cescommons.SimpleName
 	Key      config.Key
 }
 

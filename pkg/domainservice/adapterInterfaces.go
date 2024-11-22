@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -17,10 +18,10 @@ type DoguInstallationRepository interface {
 	// GetByName returns the ecosystem.DoguInstallation or
 	//  - a NotFoundError if the dogu is not installed or
 	//  - an InternalError if there is any other error.
-	GetByName(ctx context.Context, doguName common.SimpleDoguName) (*ecosystem.DoguInstallation, error)
+	GetByName(ctx context.Context, doguName cescommons.SimpleName) (*ecosystem.DoguInstallation, error)
 	// GetAll returns the installation info of all installed dogus or
 	//  - an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[common.SimpleDoguName]*ecosystem.DoguInstallation, error)
+	GetAll(ctx context.Context) (map[cescommons.SimpleName]*ecosystem.DoguInstallation, error)
 	// Create saves a new ecosystem.DoguInstallation. This initiates a dogu installation. It returns
 	//  - a ConflictError if there is already a DoguInstallation with this name or
 	//  - an InternalError if there is any error while saving the DoguInstallation
@@ -34,7 +35,7 @@ type DoguInstallationRepository interface {
 	// We delete DoguInstallations with the object not just the name as this way we can detect concurrent updates.
 	//  - returns a ConflictError if there were changes on the DoguInstallation in the meantime or
 	//  - returns an InternalError if there is any other error
-	Delete(ctx context.Context, doguName common.SimpleDoguName) error
+	Delete(ctx context.Context, doguName cescommons.SimpleName) error
 }
 
 type ComponentInstallationRepository interface {
@@ -82,16 +83,16 @@ type RemoteDoguRegistry interface {
 	// GetDogu returns the dogu specification for the given dogu and version or
 	// an NotFoundError indicating that there was no dogu spec found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogu(doguName common.QualifiedDoguName, version string) (*core.Dogu, error)
+	GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error)
 
 	// GetDogus returns the all requested dogu specifications or
 	// an NotFoundError indicating that any dogu spec was not found or
 	// an InternalError indicating that the caller has no fault.
-	GetDogus(dogusToLoad []DoguToLoad) (map[common.QualifiedDoguName]*core.Dogu, error)
+	GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedVersion) (map[cescommons.QualifiedName]*core.Dogu, error)
 }
 
 type DoguToLoad struct {
-	DoguName common.QualifiedDoguName
+	DoguName cescommons.QualifiedName
 	Version  string
 }
 
@@ -110,7 +111,7 @@ type MaintenanceMode interface {
 
 type DoguRestartRepository interface {
 	// RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []common.SimpleDoguName) error
+	RestartAll(context.Context, []cescommons.SimpleName) error
 }
 
 // GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
@@ -134,17 +135,17 @@ type DoguConfigRepository interface {
 	// It can throw the following errors:
 	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
-	Get(ctx context.Context, doguName common.SimpleDoguName) (config.DoguConfig, error)
+	Get(ctx context.Context, doguName cescommons.SimpleName) (config.DoguConfig, error)
 	// GetAll retrieves the normal config for all given dogus as a map from doguName to config.
 	// It can throw the following errors:
 	// 	- NotFoundError if the dogu config was not found.
 	// 	- InternalError if any other error happens.
-	GetAll(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	GetAll(ctx context.Context, doguNames []cescommons.SimpleName) (map[cescommons.SimpleName]config.DoguConfig, error)
 	// GetAllExisting retrieves the normal config for all given dogus as a map from doguName to config and
 	// includes not found configs as empty configs.
 	// It can throw the following errors:
 	// 	- InternalError if any other error happens.
-	GetAllExisting(ctx context.Context, doguNames []common.SimpleDoguName) (map[common.SimpleDoguName]config.DoguConfig, error)
+	GetAllExisting(ctx context.Context, doguNames []cescommons.SimpleName) (map[cescommons.SimpleName]config.DoguConfig, error)
 	// Update persists the whole given config.
 	// It can throw the following errors:
 	//  - NotFoundError if the dogu config was not found to update it.

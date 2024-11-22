@@ -1,13 +1,14 @@
 package domainservice
 
 import (
+	"context"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 var testDataDoguRegistry = stubRemoteDoguRegistry{
-	dogus: map[common.QualifiedDoguName]map[string]*core.Dogu{
+	dogus: map[cescommons.QualifiedName]map[string]*core.Dogu{
 		officialPostgres: {
 			"1.0.0-1": &core.Dogu{
 				Name:         "official/postgres",
@@ -83,25 +84,25 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 }
 
 type stubRemoteDoguRegistry struct {
-	dogus map[common.QualifiedDoguName]map[string]*core.Dogu
+	dogus map[cescommons.QualifiedName]map[string]*core.Dogu
 }
 
-func (registry stubRemoteDoguRegistry) GetDogu(doguName common.QualifiedDoguName, version string) (*core.Dogu, error) {
-	dogu := registry.dogus[doguName][version]
+func (registry stubRemoteDoguRegistry) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error) {
+	dogu := registry.dogus[qualifiedDoguVersion.Name][qualifiedDoguVersion.Version.Raw]
 	if dogu == nil {
-		return nil, &NotFoundError{Message: fmt.Sprintf("dogu %s in version %s not found", doguName, version)}
+		return nil, &NotFoundError{Message: fmt.Sprintf("dogu %s in version %s not found", qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw)}
 	}
 	return dogu, nil
 }
 
-func (registry stubRemoteDoguRegistry) GetDogus(dogusToLoad []DoguToLoad) (map[common.QualifiedDoguName]*core.Dogu, error) {
-	dogus := map[common.QualifiedDoguName]*core.Dogu{}
+func (registry stubRemoteDoguRegistry) GetDogus(ctx context.Context, dogusToLoad []cescommons.QualifiedVersion) (map[cescommons.QualifiedName]*core.Dogu, error) {
+	dogus := map[cescommons.QualifiedName]*core.Dogu{}
 	for _, doguToLoad := range dogusToLoad {
-		doguSpec, err := registry.GetDogu(doguToLoad.DoguName, doguToLoad.Version)
+		doguSpec, err := registry.GetDogu(ctx, doguToLoad)
 		if err != nil {
 			return nil, err
 		}
-		dogus[doguToLoad.DoguName] = doguSpec
+		dogus[doguToLoad.Name] = doguSpec
 	}
 	return dogus, nil
 }

@@ -1,26 +1,28 @@
 package doguregistry
 
 import (
+	"context"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	cloudoguerrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
 )
 
-var myQualifiedTestDoguName = common.QualifiedDoguName{
+var myQualifiedTestDoguName = cescommons.QualifiedName{
 	Namespace:  "testing",
 	SimpleName: "my-dogu",
 }
 
 func TestNewRemote(t *testing.T) {
 	// given
-	regMock := newMockCesappLibRemoteRegistry(t)
+	repoMock := newMockRemoteDoguDescriptorRepository(t)
 
 	// when
-	actual := NewRemote(regMock)
+	actual := NewRemote(repoMock)
 
 	// then
 	assert.NotEmpty(t, actual)
@@ -29,32 +31,43 @@ func TestNewRemote(t *testing.T) {
 func TestRemote_GetDogu(t *testing.T) {
 	t.Run("should return not found error", func(t *testing.T) {
 		// given
-		notFoundError := fmt.Errorf("404 not found: %w", assert.AnError)
-		regMock := newMockCesappLibRemoteRegistry(t)
-		regMock.EXPECT().GetVersion("testing/my-dogu", "1.2.3").Return(nil, notFoundError)
+		repoMock := newMockRemoteDoguDescriptorRepository(t)
+		version, err := core.ParseVersion("1.2.3")
+		require.NoError(t, err)
+		qDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			version,
+		}
+		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(nil, cloudoguerrors.NewNotFoundError(cloudoguerrors.Error{}))
 
-		sut := &Remote{regMock}
+		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.Error(t, err)
 		assert.Nil(t, actual)
 		assert.ErrorContains(t, err, "dogu \"testing/my-dogu\" with version \"1.2.3\" could not be found")
-		assert.ErrorIs(t, err, assert.AnError)
 		expectedErr := &domainservice.NotFoundError{}
 		assert.ErrorAs(t, err, &expectedErr)
 	})
 	t.Run("should return internal error", func(t *testing.T) {
 		// given
-		regMock := newMockCesappLibRemoteRegistry(t)
-		regMock.EXPECT().GetVersion("testing/my-dogu", "1.2.3").Return(nil, assert.AnError)
+		repoMock := newMockRemoteDoguDescriptorRepository(t)
 
-		sut := &Remote{regMock}
+		version, err := core.ParseVersion("1.2.3")
+		require.NoError(t, err)
+		qDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			version,
+		}
+		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(nil, assert.AnError)
+
+		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.Error(t, err)
@@ -68,13 +81,19 @@ func TestRemote_GetDogu(t *testing.T) {
 		// given
 		expectedDogu := core.Dogu{Name: "testing/my-dogu", Version: "1.2.3"}
 
-		regMock := newMockCesappLibRemoteRegistry(t)
-		regMock.EXPECT().GetVersion("testing/my-dogu", "1.2.3").Return(&expectedDogu, nil)
+		repoMock := newMockRemoteDoguDescriptorRepository(t)
+		version, err := core.ParseVersion("1.2.3")
+		require.NoError(t, err)
+		qDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			version,
+		}
+		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(&expectedDogu, nil)
 
-		sut := &Remote{regMock}
+		sut := &Remote{repoMock}
 
 		// when
-		actual, err := sut.GetDogu(myQualifiedTestDoguName, "1.2.3")
+		actual, err := sut.GetDogu(context.TODO(), qDoguVersion)
 
 		// then
 		require.NoError(t, err)
@@ -85,45 +104,52 @@ func TestRemote_GetDogu(t *testing.T) {
 func TestRemote_GetDogus(t *testing.T) {
 	t.Run("should return collected errors", func(t *testing.T) {
 		// given
-		regMock := newMockCesappLibRemoteRegistry(t)
+		repoMock := newMockRemoteDoguDescriptorRepository(t)
 		expectedDogu := core.Dogu{Name: "testing/good-dogu", Version: "0.1.2"}
-		regMock.EXPECT().GetVersion("testing/good-dogu", "0.1.2").Return(&expectedDogu, nil)
+		goodVersion, err := core.ParseVersion("0.1.2")
+		require.NoError(t, err)
+		NotFoundVersion, err := core.ParseVersion("1.2.3")
+		require.NoError(t, err)
+		OtherVersion, err := core.ParseVersion("2.3.4")
+		require.NoError(t, err)
+		qGoodDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "good-dogu"},
+			goodVersion,
+		}
+		qNotFoundDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "not-found"},
+			NotFoundVersion,
+		}
+		qOtherErrorDoguVersion := cescommons.QualifiedVersion{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "other-error"},
+			OtherVersion,
+		}
+		repoMock.EXPECT().Get(context.TODO(), qGoodDoguVersion).Return(&expectedDogu, nil)
 		notFoundError := fmt.Errorf("404 not found")
-		regMock.EXPECT().GetVersion("testing/not-found", "1.2.3").Return(nil, notFoundError)
-		regMock.EXPECT().GetVersion("testing/other-error", "2.3.4").Return(nil, assert.AnError)
+		repoMock.EXPECT().Get(context.TODO(), qNotFoundDoguVersion).Return(nil, notFoundError)
+		repoMock.EXPECT().Get(context.TODO(), qOtherErrorDoguVersion).Return(nil, assert.AnError)
 
-		sut := &Remote{regMock}
-		dogusToLoad := []domainservice.DoguToLoad{
-			{DoguName: common.QualifiedDoguName{
-				Namespace:  "testing",
-				SimpleName: "good-dogu",
-			}, Version: "0.1.2"},
-			{DoguName: common.QualifiedDoguName{
-				Namespace:  "testing",
-				SimpleName: "not-found",
-			}, Version: "1.2.3"},
-			{DoguName: common.QualifiedDoguName{
-				Namespace:  "testing",
-				SimpleName: "other-error",
-			}, Version: "2.3.4"},
+		sut := &Remote{repoMock}
+		dogusToLoad := []cescommons.QualifiedVersion{
+			qGoodDoguVersion,
+			qOtherErrorDoguVersion,
+			qNotFoundDoguVersion,
 		}
 
-		expectedDogus := map[common.QualifiedDoguName]*core.Dogu{
-			common.QualifiedDoguName{Namespace: "testing", SimpleName: "good-dogu"}:   &expectedDogu,
-			common.QualifiedDoguName{Namespace: "testing", SimpleName: "not-found"}:   nil,
-			common.QualifiedDoguName{Namespace: "testing", SimpleName: "other-error"}: nil,
+		expectedDogus := map[cescommons.QualifiedName]*core.Dogu{
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "good-dogu"}:   &expectedDogu,
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "not-found"}:   nil,
+			cescommons.QualifiedName{Namespace: "testing", SimpleName: "other-error"}: nil,
 		}
 
 		// when
-		actual, err := sut.GetDogus(dogusToLoad)
+		actual, err := sut.GetDogus(context.TODO(), dogusToLoad)
 
 		// then
 		require.Error(t, err)
 
-		assert.ErrorContains(t, err, "dogu \"testing/not-found\" with version \"1.2.3\" could not be found")
+		assert.ErrorContains(t, err, "dogu \"testing/not-found\" with version \"1.2.3\": 404 not found")
 		assert.ErrorIs(t, err, notFoundError)
-		expectedNotFound := &domainservice.NotFoundError{}
-		assert.ErrorAs(t, err, &expectedNotFound)
 
 		assert.ErrorContains(t, err, "failed to get dogu \"testing/other-error\" with version \"2.3.4\"")
 		assert.ErrorIs(t, err, assert.AnError)

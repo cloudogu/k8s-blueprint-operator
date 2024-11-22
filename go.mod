@@ -4,10 +4,12 @@ go 1.23.2
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
-	github.com/cloudogu/cesapp-lib v0.14.2
+	github.com/cloudogu/ces-commons-lib v0.2.0
+	github.com/cloudogu/cesapp-lib v0.15.0
 	github.com/cloudogu/k8s-component-operator v1.2.0
-	github.com/cloudogu/k8s-dogu-operator/v2 v2.3.0
-	github.com/cloudogu/k8s-registry-lib v0.5.0
+	github.com/cloudogu/k8s-registry-lib v0.5.1
+	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
+	github.com/cloudogu/retry-lib v0.1.0
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.20.2
 	github.com/onsi/gomega v1.34.2
@@ -37,6 +39,7 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
+	github.com/cloudogu/k8s-dogu-operator/v3 v3.0.1 // indirect
 	github.com/containerd/containerd v1.7.21 // indirect
 	github.com/containerd/errdefs v0.1.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect

@@ -1,7 +1,7 @@
 package doguregistry
 
-import "github.com/cloudogu/cesapp-lib/remote"
+import cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 
-type cesappLibRemoteRegistry interface {
-	remote.Registry
+type remoteDoguDescriptorRepository interface {
+	cescommons.RemoteDoguDescriptorRepository
 }

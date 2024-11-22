@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -119,9 +120,9 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 func applyDoguConfigDiffs(
 	ctx context.Context,
 	repo doguConfigRepository,
-	diffsByDogu map[common.SimpleDoguName]domain.DoguConfigDiffs,
+	diffsByDogu map[cescommons.SimpleName]domain.DoguConfigDiffs,
 ) error {
-	var doguConfigDiffs = map[common.SimpleDoguName]domain.DoguConfigDiffs{}
+	var doguConfigDiffs = map[cescommons.SimpleName]domain.DoguConfigDiffs{}
 
 	for dogu, entryDiffs := range diffsByDogu {
 		// only collect doguConfigs with changes, so we don't need to load all.
@@ -136,7 +137,7 @@ func applyDoguConfigDiffs(
 func saveDoguConfigs(
 	ctx context.Context,
 	repo doguConfigRepository,
-	diffsByDogu map[common.SimpleDoguName]domain.DoguConfigDiffs,
+	diffsByDogu map[cescommons.SimpleName]domain.DoguConfigDiffs,
 ) error {
 	// sort to simplify tests
 	// this has no real performance impact as we only have a very limited amount of dogus

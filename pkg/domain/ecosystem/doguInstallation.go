@@ -2,14 +2,14 @@ package ecosystem
 
 import (
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 // DoguInstallation represents an installed or to be installed dogu in the ecosystem.
 type DoguInstallation struct {
 	// Name identifies the dogu by simple dogu name and namespace.
-	Name common.QualifiedDoguName
+	Name cescommons.QualifiedName
 	// Version is the version of the dogu
 	Version core.Version
 	// Status is the installation status of the dogu in the ecosystem
@@ -62,7 +62,7 @@ type UpgradeConfig struct {
 }
 
 // InstallDogu is a factory for new DoguInstallation's.
-func InstallDogu(name common.QualifiedDoguName, version core.Version, minVolumeSize *VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
+func InstallDogu(name cescommons.QualifiedName, version core.Version, minVolumeSize *VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
 	return &DoguInstallation{
 		Name:               name,
 		Version:            version,
@@ -81,7 +81,7 @@ func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {
 	dogu.UpgradeConfig.AllowNamespaceSwitch = false
 }
 
-func (dogu *DoguInstallation) SwitchNamespace(newNamespace common.DoguNamespace, isNamespaceSwitchAllowed bool) error {
+func (dogu *DoguInstallation) SwitchNamespace(newNamespace cescommons.Namespace, isNamespaceSwitchAllowed bool) error {
 	if !isNamespaceSwitchAllowed {
 		return fmt.Errorf("not allowed to switch dogu namespace from %q to %q", dogu.Name.Namespace, newNamespace)
 	}

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
@@ -9,8 +10,8 @@ import (
 )
 
 var (
-	dogu1              = common.SimpleDoguName("dogu1")
-	dogu2              = common.SimpleDoguName("dogu2")
+	dogu1              = cescommons.SimpleName("dogu1")
+	dogu2              = cescommons.SimpleName("dogu2")
 	dogu1Key1          = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
 	dogu1Key2          = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
 	dogu1Key3          = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
@@ -27,12 +28,12 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			emptyConfig,
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
-			map[common.SimpleDoguName]config.DoguConfig{},
-			map[common.SimpleDoguName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
 		)
 
-		assert.Equal(t, map[common.SimpleDoguName]DoguConfigDiffs{}, dogusConfigDiffs)
-		assert.Equal(t, map[common.SimpleDoguName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
+		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[cescommons.SimpleName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
@@ -62,13 +63,13 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
-			map[common.SimpleDoguName]config.DoguConfig{},
-			map[common.SimpleDoguName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
 		)
 
 		//then
-		assert.Equal(t, map[common.SimpleDoguName]DoguConfigDiffs{}, dogusConfigDiffs)
-		assert.Equal(t, map[common.SimpleDoguName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
+		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
+		assert.Equal(t, map[cescommons.SimpleName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
 		assert.Equal(t, 4, len(globalConfigDiff))
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key1",
@@ -134,7 +135,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
 					Config: DoguConfig{
@@ -154,10 +155,10 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
-			map[common.SimpleDoguName]config.DoguConfig{
+			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,
 			},
-			map[common.SimpleDoguName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
@@ -231,7 +232,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
 					SensitiveConfig: SensitiveDoguConfig{
@@ -251,8 +252,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
-			map[common.SimpleDoguName]config.DoguConfig{},
-			map[common.SimpleDoguName]config.DoguConfig{
+			map[cescommons.SimpleName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: sensitiveDoguConfig,
 			},
 		)
@@ -315,7 +316,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[common.SimpleDoguName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
 					SensitiveConfig: SensitiveDoguConfig{
@@ -332,10 +333,10 @@ func Test_determineConfigDiff(t *testing.T) {
 		dogusConfigDiffs, sensitiveConfigDiffs, _ := determineConfigDiffs(
 			givenConfig,
 			globalConfig,
-			map[common.SimpleDoguName]config.DoguConfig{
+			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,
 			},
-			map[common.SimpleDoguName]config.DoguConfig{
+			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: sensitiveDoguConfig,
 			},
 		)
@@ -420,26 +421,26 @@ func Test_getNeededConfigAction(t *testing.T) {
 func Test_censorValues(t *testing.T) {
 	tests := []struct {
 		name         string
-		configByDogu map[common.SimpleDoguName]SensitiveDoguConfigDiffs
-		want         map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+		configByDogu map[cescommons.SimpleName]SensitiveDoguConfigDiffs
+		want         map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 	}{
 		{
 			name:         "no diff at all",
-			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
-			want:         map[common.SimpleDoguName]SensitiveDoguConfigDiffs{},
+			configByDogu: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
+			want:         map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		},
 		{
 			name: "no diff for dogu",
-			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+			configByDogu: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				dogu1: nil,
 			},
-			want: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+			want: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				dogu1: nil,
 			},
 		},
 		{
 			name: "censored actual and expected values",
-			configByDogu: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+			configByDogu: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				dogu1: {DoguConfigEntryDiff{
 					Key: dogu1Key1,
 					Actual: DoguConfigValueState{
@@ -453,7 +454,7 @@ func Test_censorValues(t *testing.T) {
 					NeededAction: ConfigActionSet,
 				}},
 			},
-			want: map[common.SimpleDoguName]SensitiveDoguConfigDiffs{
+			want: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				dogu1: {DoguConfigEntryDiff{
 					Key: dogu1Key1,
 					Actual: DoguConfigValueState{
