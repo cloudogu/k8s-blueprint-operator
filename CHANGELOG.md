@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#87] Use ces-commons-lib for common errors and common types
 - [#87] Use remote-dogu-descriptor-lib
 - [#87] Use retry-lib
+- [#93] deactivate operator leader election
+
+### Security
+- [#93] Remove RBAC permissions that seem unnecessary for the execution of the operator
+  - this is an operational security measure
 
 ## [v2.0.1] - 2024-11-06
 ### Fixed

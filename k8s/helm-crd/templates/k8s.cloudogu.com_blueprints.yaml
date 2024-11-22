@@ -17,7 +17,20 @@ spec:
     singular: blueprint
   scope: Namespaced
   versions:
-    - name: v1
+    - additionalPrinterColumns:
+        - description: The current status of the resource
+          jsonPath: .status.phase
+          name: Status
+          type: string
+        - description: Whether the resource is started as a dry run
+          jsonPath: .spec.dryRun
+          name: DryRun
+          type: boolean
+        - description: The age of the resource
+          jsonPath: .metadata.creationTimestamp
+          name: Age
+          type: date
+      name: v1
       schema:
         openAPIV3Schema:
           description: Blueprint is the Schema for the blueprints API
