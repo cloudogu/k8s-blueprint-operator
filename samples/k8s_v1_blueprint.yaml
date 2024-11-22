@@ -14,14 +14,14 @@ spec:
     "dogus":[
       {
         "name":"official/postgresql",
-        "version":"12.15-2",
+        "version":"14.13-1",
         "targetState":"present"
       }
     ],
     "components": [
       {
         "name":"k8s/k8s-dogu-operator",
-        "version":"0.41.0",
+        "version":"3.0.1",
         "targetState":"present"
       }
     ]}

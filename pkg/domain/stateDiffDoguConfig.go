@@ -1,6 +1,7 @@
 package domain
 
 import (
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
@@ -77,7 +78,7 @@ func newDoguConfigEntryDiff(
 
 func determineDoguConfigDiffs(
 	wantedConfig DoguConfig,
-	actualConfig map[common.SimpleDoguName]config.DoguConfig,
+	actualConfig map[cescommons.SimpleName]config.DoguConfig,
 ) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff
 	// present entries

@@ -7,6 +7,8 @@ import (
 
 	config "github.com/cloudogu/k8s-registry-lib/config"
 
+	dogu "github.com/cloudogu/ces-commons-lib/dogu"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -81,7 +83,7 @@ func (_c *mockSensitiveDoguConfigRepository_Create_Call) RunAndReturn(run func(c
 }
 
 // Get provides a mock function with given fields: ctx, doguName
-func (_m *mockSensitiveDoguConfigRepository) Get(ctx context.Context, doguName config.SimpleDoguName) (config.DoguConfig, error) {
+func (_m *mockSensitiveDoguConfigRepository) Get(ctx context.Context, doguName dogu.SimpleName) (config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguName)
 
 	if len(ret) == 0 {
@@ -90,16 +92,16 @@ func (_m *mockSensitiveDoguConfigRepository) Get(ctx context.Context, doguName c
 
 	var r0 config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, config.SimpleDoguName) (config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) (config.DoguConfig, error)); ok {
 		return rf(ctx, doguName)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, config.SimpleDoguName) config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, dogu.SimpleName) config.DoguConfig); ok {
 		r0 = rf(ctx, doguName)
 	} else {
 		r0 = ret.Get(0).(config.DoguConfig)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, config.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguName)
 	} else {
 		r1 = ret.Error(1)
@@ -115,14 +117,14 @@ type mockSensitiveDoguConfigRepository_Get_Call struct {
 
 // Get is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguName config.SimpleDoguName
+//   - doguName dogu.SimpleName
 func (_e *mockSensitiveDoguConfigRepository_Expecter) Get(ctx interface{}, doguName interface{}) *mockSensitiveDoguConfigRepository_Get_Call {
 	return &mockSensitiveDoguConfigRepository_Get_Call{Call: _e.mock.On("Get", ctx, doguName)}
 }
 
-func (_c *mockSensitiveDoguConfigRepository_Get_Call) Run(run func(ctx context.Context, doguName config.SimpleDoguName)) *mockSensitiveDoguConfigRepository_Get_Call {
+func (_c *mockSensitiveDoguConfigRepository_Get_Call) Run(run func(ctx context.Context, doguName dogu.SimpleName)) *mockSensitiveDoguConfigRepository_Get_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(config.SimpleDoguName))
+		run(args[0].(context.Context), args[1].(dogu.SimpleName))
 	})
 	return _c
 }
@@ -132,33 +134,33 @@ func (_c *mockSensitiveDoguConfigRepository_Get_Call) Return(_a0 config.DoguConf
 	return _c
 }
 
-func (_c *mockSensitiveDoguConfigRepository_Get_Call) RunAndReturn(run func(context.Context, config.SimpleDoguName) (config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_Get_Call {
+func (_c *mockSensitiveDoguConfigRepository_Get_Call) RunAndReturn(run func(context.Context, dogu.SimpleName) (config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAll provides a mock function with given fields: ctx, doguNames
-func (_m *mockSensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error) {
+func (_m *mockSensitiveDoguConfigRepository) GetAll(ctx context.Context, doguNames []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguNames)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
 	}
 
-	var r0 map[config.SimpleDoguName]config.DoguConfig
+	var r0 map[dogu.SimpleName]config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)); ok {
 		return rf(ctx, doguNames)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) map[config.SimpleDoguName]config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) map[dogu.SimpleName]config.DoguConfig); ok {
 		r0 = rf(ctx, doguNames)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[config.SimpleDoguName]config.DoguConfig)
+			r0 = ret.Get(0).(map[dogu.SimpleName]config.DoguConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []config.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguNames)
 	} else {
 		r1 = ret.Error(1)
@@ -174,50 +176,50 @@ type mockSensitiveDoguConfigRepository_GetAll_Call struct {
 
 // GetAll is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguNames []config.SimpleDoguName
+//   - doguNames []dogu.SimpleName
 func (_e *mockSensitiveDoguConfigRepository_Expecter) GetAll(ctx interface{}, doguNames interface{}) *mockSensitiveDoguConfigRepository_GetAll_Call {
 	return &mockSensitiveDoguConfigRepository_GetAll_Call{Call: _e.mock.On("GetAll", ctx, doguNames)}
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) Run(run func(ctx context.Context, doguNames []config.SimpleDoguName)) *mockSensitiveDoguConfigRepository_GetAll_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleName)) *mockSensitiveDoguConfigRepository_GetAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]config.SimpleDoguName))
+		run(args[0].(context.Context), args[1].([]dogu.SimpleName))
 	})
 	return _c
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) Return(_a0 map[config.SimpleDoguName]config.DoguConfig, _a1 error) *mockSensitiveDoguConfigRepository_GetAll_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) Return(_a0 map[dogu.SimpleName]config.DoguConfig, _a1 error) *mockSensitiveDoguConfigRepository_GetAll_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) RunAndReturn(run func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_GetAll_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAll_Call) RunAndReturn(run func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_GetAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetAllExisting provides a mock function with given fields: ctx, doguNames
-func (_m *mockSensitiveDoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error) {
+func (_m *mockSensitiveDoguConfigRepository) GetAllExisting(ctx context.Context, doguNames []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error) {
 	ret := _m.Called(ctx, doguNames)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllExisting")
 	}
 
-	var r0 map[config.SimpleDoguName]config.DoguConfig
+	var r0 map[dogu.SimpleName]config.DoguConfig
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)); ok {
 		return rf(ctx, doguNames)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, []config.SimpleDoguName) map[config.SimpleDoguName]config.DoguConfig); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, []dogu.SimpleName) map[dogu.SimpleName]config.DoguConfig); ok {
 		r0 = rf(ctx, doguNames)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[config.SimpleDoguName]config.DoguConfig)
+			r0 = ret.Get(0).(map[dogu.SimpleName]config.DoguConfig)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, []config.SimpleDoguName) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, []dogu.SimpleName) error); ok {
 		r1 = rf(ctx, doguNames)
 	} else {
 		r1 = ret.Error(1)
@@ -233,24 +235,24 @@ type mockSensitiveDoguConfigRepository_GetAllExisting_Call struct {
 
 // GetAllExisting is a helper method to define mock.On call
 //   - ctx context.Context
-//   - doguNames []config.SimpleDoguName
+//   - doguNames []dogu.SimpleName
 func (_e *mockSensitiveDoguConfigRepository_Expecter) GetAllExisting(ctx interface{}, doguNames interface{}) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
 	return &mockSensitiveDoguConfigRepository_GetAllExisting_Call{Call: _e.mock.On("GetAllExisting", ctx, doguNames)}
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Run(run func(ctx context.Context, doguNames []config.SimpleDoguName)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Run(run func(ctx context.Context, doguNames []dogu.SimpleName)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]config.SimpleDoguName))
+		run(args[0].(context.Context), args[1].([]dogu.SimpleName))
 	})
 	return _c
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Return(_a0 map[config.SimpleDoguName]config.DoguConfig, _a1 error) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) Return(_a0 map[dogu.SimpleName]config.DoguConfig, _a1 error) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) RunAndReturn(run func(context.Context, []config.SimpleDoguName) (map[config.SimpleDoguName]config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
+func (_c *mockSensitiveDoguConfigRepository_GetAllExisting_Call) RunAndReturn(run func(context.Context, []dogu.SimpleName) (map[dogu.SimpleName]config.DoguConfig, error)) *mockSensitiveDoguConfigRepository_GetAllExisting_Call {
 	_c.Call.Return(run)
 	return _c
 }

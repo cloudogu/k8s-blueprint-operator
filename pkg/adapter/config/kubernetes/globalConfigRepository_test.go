@@ -2,9 +2,9 @@ package kubernetes
 
 import (
 	"fmt"
+	"github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	"github.com/cloudogu/k8s-registry-lib/errors"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/net/context"
 	"testing"

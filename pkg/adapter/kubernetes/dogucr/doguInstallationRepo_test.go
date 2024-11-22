@@ -3,11 +3,11 @@ package dogucr
 import (
 	"context"
 	"errors"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v2/api/v2"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -275,7 +275,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		expectedDoguInstallations := map[common.SimpleDoguName]*ecosystem.DoguInstallation{
+		expectedDoguInstallations := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
@@ -283,7 +283,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
-				Name: common.QualifiedDoguName{
+				Name: cescommons.QualifiedName{
 					Namespace:  "official",
 					SimpleName: "ldap",
 				},

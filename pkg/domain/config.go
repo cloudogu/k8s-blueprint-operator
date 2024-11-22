@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"golang.org/x/exp/maps"
@@ -10,12 +11,12 @@ import (
 )
 
 type Config struct {
-	Dogus  map[common.SimpleDoguName]CombinedDoguConfig
+	Dogus  map[cescommons.SimpleName]CombinedDoguConfig
 	Global GlobalConfig
 }
 
 type CombinedDoguConfig struct {
-	DoguName        common.SimpleDoguName
+	DoguName        cescommons.SimpleName
 	Config          DoguConfig
 	SensitiveConfig SensitiveDoguConfig
 }
@@ -58,8 +59,8 @@ func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKe
 }
 
 // GetDogusWithChangedConfig returns a list of dogus for which possible config changes are needed.
-func (config Config) GetDogusWithChangedConfig() []common.SimpleDoguName {
-	var dogus []common.SimpleDoguName
+func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
 	for dogu, doguConfig := range config.Dogus {
 		if len(doguConfig.Config.Present) != 0 || len(doguConfig.Config.Absent) != 0 {
 			dogus = append(dogus, dogu)
@@ -69,8 +70,8 @@ func (config Config) GetDogusWithChangedConfig() []common.SimpleDoguName {
 }
 
 // GetDogusWithChangedSensitiveConfig returns a list of dogus for which possible sensitive config changes are needed.
-func (config Config) GetDogusWithChangedSensitiveConfig() []common.SimpleDoguName {
-	var dogus []common.SimpleDoguName
+func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
 	for dogu, doguConfig := range config.Dogus {
 		if len(doguConfig.SensitiveConfig.Present) != 0 || len(doguConfig.SensitiveConfig.Absent) != 0 {
 			dogus = append(dogus, dogu)
@@ -139,7 +140,7 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 	return errors.Join(errorList...)
 }
 
-func (config DoguConfig) validate(referencedDoguName common.SimpleDoguName) error {
+func (config DoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
 	var errs []error
 
 	for configKey := range config.Present {

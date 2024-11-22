@@ -46,8 +46,12 @@ spec:
                 - ALL
         - args:
             - --health-probe-bind-address=:8081
+            # currently, there don't exist any k8s metrics resources.
+            # These have to be re-created if they are going to be used
             - --metrics-bind-address=127.0.0.1:8080
-            - --leader-elect
+            # currently, there don't exist any k8s leader-election resources.
+            # These have to be re-created if they are going to be used as well as uncommenting the leader-elect flag
+            # - --leader-elect
           env:
           - name: STAGE
             value: {{ quote .Values.manager.env.stage | default "production"}}

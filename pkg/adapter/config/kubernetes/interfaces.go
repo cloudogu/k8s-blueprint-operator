@@ -2,7 +2,7 @@ package kubernetes
 
 import (
 	"context"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
@@ -15,7 +15,7 @@ type k8sGlobalConfigRepo interface {
 }
 
 type k8sDoguConfigRepo interface {
-	Get(context.Context, common.SimpleDoguName) (config.DoguConfig, error)
+	Get(context.Context, cescommons.SimpleName) (config.DoguConfig, error)
 	Update(context.Context, config.DoguConfig) (config.DoguConfig, error)
 	Create(context.Context, config.DoguConfig) (config.DoguConfig, error)
 }

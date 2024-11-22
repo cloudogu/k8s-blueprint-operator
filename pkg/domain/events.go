@@ -2,7 +2,7 @@ package domain
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"slices"
 	"strings"
@@ -79,11 +79,11 @@ func (e GlobalConfigDiffDeterminedEvent) Message() string {
 }
 
 type DoguConfigDiffDeterminedEvent struct {
-	DoguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs
+	DoguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs
 }
 
 func NewDoguConfigDiffDeterminedEvent(
-	doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs,
+	doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs,
 ) DoguConfigDiffDeterminedEvent {
 	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
 }
@@ -100,11 +100,11 @@ func (e DoguConfigDiffDeterminedEvent) Message() string {
 }
 
 type SensitiveDoguConfigDiffDeterminedEvent struct {
-	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 }
 
 func NewSensitiveDoguConfigDiffDeterminedEvent(
-	sensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs,
+	sensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 ) SensitiveDoguConfigDiffDeterminedEvent {
 	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
 }
@@ -120,7 +120,7 @@ func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
 	)
 }
 
-func generateDoguConfigChangeCounter(doguConfigDiffs map[common.SimpleDoguName]DoguConfigDiffs) string {
+func generateDoguConfigChangeCounter(doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
 	for action, amount := range countByAction(doguConfigDiffs) {

@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 )
 
 // StateDiff represents the diff between the defined state in the effective blueprint and the actual state in the ecosystem.
@@ -9,8 +9,8 @@ import (
 type StateDiff struct {
 	DoguDiffs                DoguDiffs
 	ComponentDiffs           ComponentDiffs
-	DoguConfigDiffs          map[common.SimpleDoguName]DoguConfigDiffs
-	SensitiveDoguConfigDiffs map[common.SimpleDoguName]SensitiveDoguConfigDiffs
+	DoguConfigDiffs          map[cescommons.SimpleName]DoguConfigDiffs
+	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 	GlobalConfigDiffs        GlobalConfigDiffs
 }
 
