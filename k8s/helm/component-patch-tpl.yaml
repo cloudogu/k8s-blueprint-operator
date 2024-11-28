@@ -1,7 +1,7 @@
 apiVersion: v1
 values:
   images:
-    blueprintOperator: cloudogu/k8s-blueprint-operator:2.1.0
+    blueprintOperator: cloudogu/k8s-blueprint-operator:2.1.1
     kubeRbacProxy: gcr.io/kubebuilder/kube-rbac-proxy:v0.15.0
 patches:
   values.yaml:

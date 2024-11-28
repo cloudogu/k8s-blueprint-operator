@@ -21,7 +21,9 @@ var (
 	testVersionHighRaw = "2.3.4"
 	testVersionHigh    = semver.MustParse(testVersionHighRaw)
 	testDogu           = cescommons.SimpleName("testDogu")
+	testDogu2          = cescommons.SimpleName("testDogu2")
 	testDoguKey1       = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
+	testDoguKey2       = common.DoguConfigKey{DoguName: testDogu2, Key: "key2"}
 )
 
 func TestConvertToDTO(t *testing.T) {
@@ -660,8 +662,22 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 						{
 							Key: testDoguKey1,
 							Actual: domain.DoguConfigValueState{
+								Value:  "1",
+								Exists: true,
+							},
+							Expected: domain.DoguConfigValueState{
 								Value:  "123",
 								Exists: true,
+							},
+							NeededAction: domain.ConfigActionSet,
+						},
+					},
+					testDogu2: {
+						{
+							Key: testDoguKey2,
+							Actual: domain.DoguConfigValueState{
+								Value:  "",
+								Exists: false,
 							},
 							Expected: domain.DoguConfigValueState{
 								Value:  "123",
@@ -683,8 +699,24 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 							DoguConfigEntryDiff{
 								Key: testDoguKey1.Key.String(),
 								Actual: DoguConfigValueState{
+									Value:  "1",
+									Exists: true,
+								},
+								Expected: DoguConfigValueState{
 									Value:  "123",
 									Exists: true,
+								},
+								NeededAction: ConfigAction("set"),
+							},
+						},
+					},
+					testDogu2.String(): {
+						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{
+							DoguConfigEntryDiff{
+								Key: testDoguKey2.Key.String(),
+								Actual: DoguConfigValueState{
+									Value:  "",
+									Exists: false,
 								},
 								Expected: DoguConfigValueState{
 									Value:  "123",

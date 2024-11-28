@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.1.1] - 2024-11-28
+### Fixed
+- [#95] Fix a bug of the dogu config state diff where multiple dogus replaced the whole diff.
+
 ## [v2.1.0] - 2024-11-22
 ### Changed
 - [#87] Use ces-commons-lib for common errors and common types
