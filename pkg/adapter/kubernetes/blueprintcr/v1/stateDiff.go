@@ -39,18 +39,18 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 
 	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
 		combinedConfigDiffs = make(map[string]CombinedDoguConfigDiff)
+		doguConfigDiffByDogu = make(map[cescommons.SimpleName]DoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
-			doguConfigDiffByDogu = make(map[cescommons.SimpleName]DoguConfigDiff)
 			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
 			dogus = append(dogus, doguName)
 		}
+		sensitiveDoguConfigDiff = make(map[cescommons.SimpleName]SensitiveDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.SensitiveDoguConfigDiffs {
-			sensitiveDoguConfigDiff = make(map[cescommons.SimpleName]SensitiveDoguConfigDiff)
 			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
 			dogus = append(dogus, doguName)
 		}
 
-		//remove duplicates, so we have a complete list of all dogus with config
+		// remove duplicates, so we have a complete list of all dogus with config
 		dogus = slices.Compact(dogus)
 		for _, doguName := range dogus {
 			combinedConfigDiffs[string(doguName)] = CombinedDoguConfigDiff{
