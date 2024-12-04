@@ -17,6 +17,8 @@ manager:
   resourceRequests:
     cpu: 10m
     memory: 64Mi
+  networkPolicies:
+    enabled: true
 healthConfig:
   components:
     required:
