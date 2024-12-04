@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Removed
+- [#97] Remove RBAC-Proxy along with k8s-metrics-service, because metrics are currently no used and all incoming traffic is blocked by the network-policy
+- [#97] Remove unused WebHookServer
 
 ## [v2.1.1] - 2024-11-28
 ### Fixed
