@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.2.0] - 2024-12-05
+### Added
+- [#97] Add a `deny-all` network-policy, to block all incoming traffic
+
+### Removed
+- [#97] Remove RBAC-Proxy along with k8s-metrics-service, because metrics are currently no used and all incoming traffic is blocked by the network-policy
+- [#97] Remove unused WebHookServer
+
 ## [v2.1.1] - 2024-11-28
 ### Fixed
 - [#95] Fix a bug of the dogu config state diff where multiple dogus replaced the whole diff.
