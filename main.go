@@ -7,6 +7,10 @@ import (
 	"os"
 	"time"
 
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
+	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -22,12 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
-
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
-	k8sv1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -126,7 +124,6 @@ func getK8sManagerOptions(flags *flag.FlagSet, args []string, operatorConfig *co
 		Cache: cache.Options{DefaultNamespaces: map[string]cache.Config{
 			operatorConfig.Namespace: {},
 		}},
-		WebhookServer:    webhook.NewServer(webhook.Options{Port: 9443}),
 		LeaderElectionID: "ae48821c.cloudogu.com",
 		LeaseDuration:    &leaseDuration,
 		RenewDeadline:    &renewDeadline,

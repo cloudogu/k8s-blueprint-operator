@@ -1,0 +1,18 @@
+{{- if .Values.manager.networkPolicies.enabled }}
+---
+# A deny-all network-policy to block all incoming traffic.
+# If incoming traffic should be allowed (e.g. to scrape the metrics-endpoint), a specific network-policy must be added to allow this exact traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "k8s-blueprint-operator.name" . }}-deny-all
+  labels:
+    {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "k8s-blueprint-operator.selectorLabels" . | nindent 6 }}
+  policyTypes:
+    - Ingress
+  ingress: []
+{{- end }}
