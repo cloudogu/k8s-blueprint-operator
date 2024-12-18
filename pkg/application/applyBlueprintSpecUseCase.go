@@ -192,6 +192,13 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
 	}
 
+	// we have to wait for all dogus to be healthy
+	// otherwise service account creation might fail because dogus are restarted right after this step
+	_, err = useCase.doguInstallUseCase.WaitForHealthyDogus(ctx)
+	if err != nil {
+		return useCase.handleApplyFailedError(ctx, blueprintSpec, err)
+	}
+
 	logger.Info("blueprint successfully applied to the cluster")
 	return useCase.markBlueprintApplied(ctx, blueprintSpec)
 }

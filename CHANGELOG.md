@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.2.1] - 2024-12-18
+### Fixed
+- [#99] Service account creation fails because of dogu restarts
+  - before restarting, we now wait for all dogus to get healthy
+
 ## [v2.2.0] - 2024-12-05
 ### Added
 - [#97] Add a `deny-all` network-policy, to block all incoming traffic
