@@ -254,12 +254,13 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		var counter = 0
 		repoMock.EXPECT().Update(testCtx, spec).RunAndReturn(func(ctx context.Context, spec *domain.BlueprintSpec) error {
 			counter++
-			assert.Equal(t, spec.Status, statusTransitions[counter])
+			assert.Equal(t, statusTransitions[counter], spec.Status)
 			return nil
 		}).Times(2)
 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
+		installUseCaseMock.EXPECT().WaitForHealthyDogus(testCtx).Return(ecosystem.DoguHealthResult{}, nil)
 		componentInstallUseCase := newMockComponentInstallationUseCase(t)
 		componentInstallUseCase.EXPECT().ApplyComponentStates(testCtx, "blueprintId").Return(nil)
 		componentInstallUseCase.EXPECT().WaitForHealthyComponents(testCtx).Return(ecosystem.ComponentHealthResult{}, nil)
@@ -270,6 +271,28 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, spec.Status)
+	})
+	t.Run("error waiting for dogu health", func(t *testing.T) {
+		spec := &domain.BlueprintSpec{
+			Status: domain.StatusPhaseEcosystemHealthyUpfront,
+		}
+		repoMock := newMockBlueprintSpecRepository(t)
+		repoMock.EXPECT().GetById(testCtx, "blueprintId").Return(spec, nil)
+		repoMock.EXPECT().Update(testCtx, spec).Return(nil).Times(2)
+
+		installUseCaseMock := newMockDoguInstallationUseCase(t)
+		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, "blueprintId").Return(nil)
+		installUseCaseMock.EXPECT().WaitForHealthyDogus(testCtx).Return(ecosystem.DoguHealthResult{}, assert.AnError)
+		componentInstallUseCase := newMockComponentInstallationUseCase(t)
+		componentInstallUseCase.EXPECT().ApplyComponentStates(testCtx, "blueprintId").Return(nil)
+		componentInstallUseCase.EXPECT().WaitForHealthyComponents(testCtx).Return(ecosystem.ComponentHealthResult{}, nil)
+
+		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock, componentInstallUseCase: componentInstallUseCase}
+
+		err := useCase.ApplyBlueprintSpec(testCtx, "blueprintId")
+
+		require.ErrorIs(t, err, assert.AnError)
+		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, spec.Status)
 	})
 
 	t.Run("cannot load spec", func(t *testing.T) {
