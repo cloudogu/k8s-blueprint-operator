@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.2.2] - 2024-12-19
+### Fixed
+- [#101] Fix CVE-2024-45337
+
 ## [v2.2.1] - 2024-12-18
 ### Fixed
 - [#99] Service account creation fails because of dogu restarts
