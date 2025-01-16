@@ -1,10 +1,11 @@
 package v1
 
 import (
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 type CombinedDoguConfigDiff struct {
@@ -38,7 +39,7 @@ func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs DoguConfigDiff) do
 
 func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
-		Key: common.DoguConfigKey{
+		Key: bpv2.DoguConfigKey{
 			DoguName: cescommons.SimpleName(doguName),
 			Key:      config.Key(dto.Key),
 		},

@@ -3,7 +3,7 @@
 package serializer
 
 import (
-	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	domain "github.com/cloudogu/blueprint-lib/v2"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,22 +21,22 @@ func (_m *MockBlueprintSerializer) EXPECT() *MockBlueprintSerializer_Expecter {
 }
 
 // Deserialize provides a mock function with given fields: rawBlueprint
-func (_m *MockBlueprintSerializer) Deserialize(rawBlueprint string) (domain.Blueprint, error) {
+func (_m *MockBlueprintSerializer) Deserialize(rawBlueprint string) (v2.Blueprint, error) {
 	ret := _m.Called(rawBlueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Deserialize")
 	}
 
-	var r0 domain.Blueprint
+	var r0 v2.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (domain.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (v2.Blueprint, error)); ok {
 		return rf(rawBlueprint)
 	}
-	if rf, ok := ret.Get(0).(func(string) domain.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(string) v2.Blueprint); ok {
 		r0 = rf(rawBlueprint)
 	} else {
-		r0 = ret.Get(0).(domain.Blueprint)
+		r0 = ret.Get(0).(v2.Blueprint)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
@@ -66,18 +66,18 @@ func (_c *MockBlueprintSerializer_Deserialize_Call) Run(run func(rawBlueprint st
 	return _c
 }
 
-func (_c *MockBlueprintSerializer_Deserialize_Call) Return(_a0 domain.Blueprint, _a1 error) *MockBlueprintSerializer_Deserialize_Call {
+func (_c *MockBlueprintSerializer_Deserialize_Call) Return(_a0 v2.Blueprint, _a1 error) *MockBlueprintSerializer_Deserialize_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockBlueprintSerializer_Deserialize_Call) RunAndReturn(run func(string) (domain.Blueprint, error)) *MockBlueprintSerializer_Deserialize_Call {
+func (_c *MockBlueprintSerializer_Deserialize_Call) RunAndReturn(run func(string) (v2.Blueprint, error)) *MockBlueprintSerializer_Deserialize_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Serialize provides a mock function with given fields: blueprint
-func (_m *MockBlueprintSerializer) Serialize(blueprint domain.Blueprint) (string, error) {
+func (_m *MockBlueprintSerializer) Serialize(blueprint v2.Blueprint) (string, error) {
 	ret := _m.Called(blueprint)
 
 	if len(ret) == 0 {
@@ -86,16 +86,16 @@ func (_m *MockBlueprintSerializer) Serialize(blueprint domain.Blueprint) (string
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(domain.Blueprint) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(v2.Blueprint) (string, error)); ok {
 		return rf(blueprint)
 	}
-	if rf, ok := ret.Get(0).(func(domain.Blueprint) string); ok {
+	if rf, ok := ret.Get(0).(func(v2.Blueprint) string); ok {
 		r0 = rf(blueprint)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain.Blueprint) error); ok {
+	if rf, ok := ret.Get(1).(func(v2.Blueprint) error); ok {
 		r1 = rf(blueprint)
 	} else {
 		r1 = ret.Error(1)
@@ -115,9 +115,9 @@ func (_e *MockBlueprintSerializer_Expecter) Serialize(blueprint interface{}) *Mo
 	return &MockBlueprintSerializer_Serialize_Call{Call: _e.mock.On("Serialize", blueprint)}
 }
 
-func (_c *MockBlueprintSerializer_Serialize_Call) Run(run func(blueprint domain.Blueprint)) *MockBlueprintSerializer_Serialize_Call {
+func (_c *MockBlueprintSerializer_Serialize_Call) Run(run func(blueprint v2.Blueprint)) *MockBlueprintSerializer_Serialize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(domain.Blueprint))
+		run(args[0].(v2.Blueprint))
 	})
 	return _c
 }
@@ -127,7 +127,7 @@ func (_c *MockBlueprintSerializer_Serialize_Call) Return(_a0 string, _a1 error) 
 	return _c
 }
 
-func (_c *MockBlueprintSerializer_Serialize_Call) RunAndReturn(run func(domain.Blueprint) (string, error)) *MockBlueprintSerializer_Serialize_Call {
+func (_c *MockBlueprintSerializer_Serialize_Call) RunAndReturn(run func(v2.Blueprint) (string, error)) *MockBlueprintSerializer_Serialize_Call {
 	_c.Call.Return(run)
 	return _c
 }

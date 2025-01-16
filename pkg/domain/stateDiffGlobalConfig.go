@@ -1,7 +1,7 @@
 package domain
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
@@ -25,7 +25,7 @@ func (diffs GlobalConfigDiffs) GetGlobalConfigDiffsByAction() map[ConfigAction][
 
 type GlobalConfigValueState ConfigValueState
 type GlobalConfigEntryDiff struct {
-	Key          common.GlobalConfigKey
+	Key          v2.GlobalConfigKey
 	Actual       GlobalConfigValueState
 	Expected     GlobalConfigValueState
 	NeededAction ConfigAction
@@ -40,10 +40,10 @@ func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 }
 
 func newGlobalConfigEntryDiff(
-	key common.GlobalConfigKey,
-	actualValue common.GlobalConfigValue,
+	key v2.GlobalConfigKey,
+	actualValue v2.GlobalConfigValue,
 	actualExists bool,
-	expectedValue common.GlobalConfigValue,
+	expectedValue v2.GlobalConfigValue,
 	expectedExists bool,
 ) GlobalConfigEntryDiff {
 	actual := GlobalConfigValueState{
@@ -63,7 +63,7 @@ func newGlobalConfigEntryDiff(
 }
 
 func determineGlobalConfigDiffs(
-	config GlobalConfig,
+	config v2.GlobalConfig,
 	actualConfig config.GlobalConfig,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff

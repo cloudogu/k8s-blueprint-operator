@@ -2,12 +2,11 @@ package blueprintV2
 
 import (
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -27,35 +26,35 @@ var (
 )
 
 func Test_ConvertToBlueprintV2(t *testing.T) {
-	dogus := []domain.Dogu{
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+	dogus := []v2.Dogu{
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: v2.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: v2.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: v2.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233},
 	}
 
-	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component4"}, Version: compVersion3213},
+	components := []v2.Component{
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: v2.TargetStateAbsent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: v2.TargetStateAbsent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component3"}, Version: compVersion3212, TargetState: v2.TargetStatePresent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component4"}, Version: compVersion3213},
 	}
-	blueprint := domain.Blueprint{
+	blueprint := v2.Blueprint{
 		Dogus:      dogus,
 		Components: components,
-		Config: domain.Config{
-			Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+		Config: v2.Config{
+			Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
 				"my-dogu": {
-					Config: domain.DoguConfig{
-						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+					Config: v2.DoguConfig{
+						Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config",
 							}: "42",
 						},
 					},
-					SensitiveConfig: domain.SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+					SensitiveConfig: v2.SensitiveDoguConfig{
+						Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
@@ -64,7 +63,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 					},
 				},
 			},
-			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
+			Global: v2.GlobalConfig{Absent: []v2.GlobalConfigKey{"test/key"}},
 		},
 	}
 
@@ -152,37 +151,37 @@ func Test_ConvertToBlueprint(t *testing.T) {
 
 	require.NoError(t, err)
 
-	convertedDogus := []domain.Dogu{
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
+	convertedDogus := []v2.Dogu{
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: v2.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: v2.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: v2.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233},
 	}
 
-	convertedComponents := []domain.Component{
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: domain.TargetStateAbsent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component4"}, Version: compVersion1233},
+	convertedComponents := []v2.Component{
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: v2.TargetStateAbsent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: v2.TargetStateAbsent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component3"}, Version: compVersion3212, TargetState: v2.TargetStatePresent},
+		{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component4"}, Version: compVersion1233},
 	}
 
-	assert.Equal(t, domain.Blueprint{
+	assert.Equal(t, v2.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		Config: domain.Config{
-			Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+		Config: v2.Config{
+			Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
 				"my-dogu": {
 					DoguName: "my-dogu",
-					Config: domain.DoguConfig{
-						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+					Config: v2.DoguConfig{
+						Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config",
 							}: "42",
 						},
 					},
-					SensitiveConfig: domain.SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+					SensitiveConfig: v2.SensitiveDoguConfig{
+						Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
@@ -191,7 +190,7 @@ func Test_ConvertToBlueprint(t *testing.T) {
 					},
 				},
 			},
-			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
+			Global: v2.GlobalConfig{Absent: []v2.GlobalConfigKey{"test/key"}},
 		},
 	}, blueprint)
 }

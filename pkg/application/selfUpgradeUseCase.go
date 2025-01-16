@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -17,7 +17,7 @@ type SelfUpgradeUseCase struct {
 	blueprintRepo         domainservice.BlueprintSpecRepository
 	componentRepo         componentInstallationRepository
 	componentUseCase      componentInstallationUseCase
-	blueprintOperatorName common.SimpleComponentName
+	blueprintOperatorName v2.SimpleComponentName
 	healthConfigProvider  healthConfigProvider
 }
 
@@ -25,7 +25,7 @@ func NewSelfUpgradeUseCase(
 	blueprintRepo domainservice.BlueprintSpecRepository,
 	componentRepo componentInstallationRepository,
 	componentUseCase componentInstallationUseCase,
-	blueprintOperatorName common.SimpleComponentName,
+	blueprintOperatorName v2.SimpleComponentName,
 	healthConfigProvider healthConfigProvider,
 ) *SelfUpgradeUseCase {
 	return &SelfUpgradeUseCase{

@@ -1,29 +1,31 @@
 package domain
 
 import (
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-registry-lib/config"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 var (
 	dogu1              = cescommons.SimpleName("dogu1")
 	dogu2              = cescommons.SimpleName("dogu2")
-	dogu1Key1          = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
-	dogu1Key2          = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
-	dogu1Key3          = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
-	dogu1Key4          = common.DoguConfigKey{DoguName: dogu1, Key: "key4"}
-	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key1"}
-	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key2"}
-	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key3"}
+	dogu1Key1          = bpv2.DoguConfigKey{DoguName: dogu1, Key: "key1"}
+	dogu1Key2          = bpv2.DoguConfigKey{DoguName: dogu1, Key: "key2"}
+	dogu1Key3          = bpv2.DoguConfigKey{DoguName: dogu1, Key: "key3"}
+	dogu1Key4          = bpv2.DoguConfigKey{DoguName: dogu1, Key: "key4"}
+	sensitiveDogu1Key1 = bpv2.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key1"}
+	sensitiveDogu1Key2 = bpv2.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key2"}
+	sensitiveDogu1Key3 = bpv2.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key3"}
 )
 
 func Test_determineConfigDiff(t *testing.T) {
 	t.Run("empty", func(t *testing.T) {
-		emptyConfig := Config{}
+		emptyConfig := bpv2.Config{}
 
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
 			emptyConfig,
@@ -47,13 +49,13 @@ func Test_determineConfigDiff(t *testing.T) {
 		})
 		globalConfig := config.CreateGlobalConfig(entries)
 		//given blueprint config
-		givenConfig := Config{
-			Global: GlobalConfig{
-				Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
+		givenConfig := bpv2.Config{
+			Global: bpv2.GlobalConfig{
+				Present: map[bpv2.GlobalConfigKey]bpv2.GlobalConfigValue{
 					"key1": "value1",
 					"key2": "value2.2",
 				},
-				Absent: []common.GlobalConfigKey{
+				Absent: []bpv2.GlobalConfigKey{
 					"key3", "key4",
 				},
 			},
@@ -134,16 +136,16 @@ func Test_determineConfigDiff(t *testing.T) {
 		doguConfig := config.CreateDoguConfig(dogu1, doguConfigEntries)
 
 		//given blueprint config
-		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+		givenConfig := bpv2.Config{
+			Dogus: map[cescommons.SimpleName]bpv2.CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
-					Config: DoguConfig{
-						Present: map[common.DoguConfigKey]common.DoguConfigValue{
+					Config: bpv2.DoguConfig{
+						Present: map[bpv2.DoguConfigKey]bpv2.DoguConfigValue{
 							dogu1Key1: "value",
 							dogu1Key2: "updatedValue",
 						},
-						Absent: []common.DoguConfigKey{
+						Absent: []bpv2.DoguConfigKey{
 							dogu1Key3, dogu1Key4,
 						},
 					},
@@ -231,16 +233,16 @@ func Test_determineConfigDiff(t *testing.T) {
 		sensitiveDoguConfig := config.CreateDoguConfig(dogu1, sensitiveDoguConfigEntries)
 
 		//given blueprint config
-		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+		givenConfig := bpv2.Config{
+			Dogus: map[cescommons.SimpleName]bpv2.CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
-					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+					SensitiveConfig: bpv2.SensitiveDoguConfig{
+						Present: map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue{
 							sensitiveDogu1Key1: "value",
 							sensitiveDogu1Key2: "updated value",
 						},
-						Absent: []common.SensitiveDoguConfigKey{
+						Absent: []bpv2.SensitiveDoguConfigKey{
 							sensitiveDogu1Key3,
 						},
 					},
@@ -315,15 +317,15 @@ func Test_determineConfigDiff(t *testing.T) {
 		sensitiveDoguConfig := config.CreateDoguConfig(dogu1, sensitiveDoguConfigEntries)
 
 		//given blueprint config
-		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+		givenConfig := bpv2.Config{
+			Dogus: map[cescommons.SimpleName]bpv2.CombinedDoguConfig{
 				"dogu1": {
 					DoguName: "dogu1",
-					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+					SensitiveConfig: bpv2.SensitiveDoguConfig{
+						Present: map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue{
 							sensitiveDogu1Key1: "value",
 						},
-						Absent: []common.SensitiveDoguConfigKey{},
+						Absent: []bpv2.SensitiveDoguConfigKey{},
 					},
 				},
 			},
@@ -458,11 +460,11 @@ func Test_censorValues(t *testing.T) {
 				dogu1: {DoguConfigEntryDiff{
 					Key: dogu1Key1,
 					Actual: DoguConfigValueState{
-						Value:  censorValue,
+						Value:  bpv2.CensorValue,
 						Exists: true,
 					},
 					Expected: DoguConfigValueState{
-						Value:  censorValue,
+						Value:  bpv2.CensorValue,
 						Exists: true,
 					},
 					NeededAction: ConfigActionSet,

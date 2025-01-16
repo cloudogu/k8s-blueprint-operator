@@ -2,15 +2,18 @@ package v1
 
 import (
 	"cmp"
-	"github.com/Masterminds/semver/v3"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
 	"testing"
+
+	"github.com/Masterminds/semver/v3"
+	"github.com/stretchr/testify/assert"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 const testComponentName = "my-component"
@@ -22,8 +25,8 @@ var (
 	testVersionHigh    = semver.MustParse(testVersionHighRaw)
 	testDogu           = cescommons.SimpleName("testDogu")
 	testDogu2          = cescommons.SimpleName("testDogu2")
-	testDoguKey1       = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
-	testDoguKey2       = common.DoguConfigKey{DoguName: testDogu2, Key: "key2"}
+	testDoguKey1       = bpv2.DoguConfigKey{DoguName: testDogu, Key: "key1"}
+	testDoguKey2       = bpv2.DoguConfigKey{DoguName: testDogu2, Key: "key2"}
 )
 
 func TestConvertToDTO(t *testing.T) {
@@ -39,12 +42,12 @@ func TestConvertToDTO(t *testing.T) {
 				Actual: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           mustParseVersion("1.1.1-1"),
-					InstallationState: domain.TargetStatePresent,
+					InstallationState: bpv2.TargetStatePresent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           mustParseVersion("1.2.3-1"),
-					InstallationState: domain.TargetStatePresent,
+					InstallationState: bpv2.TargetStatePresent,
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
@@ -71,12 +74,12 @@ func TestConvertToDTO(t *testing.T) {
 					DoguName: "ldap",
 					Actual: domain.DoguDiffState{
 						Namespace:         "official",
-						InstallationState: domain.TargetStateAbsent,
+						InstallationState: bpv2.TargetStateAbsent,
 					},
 					Expected: domain.DoguDiffState{
 						Namespace:         "official",
 						Version:           mustParseVersion("1.2.3-1"),
-						InstallationState: domain.TargetStatePresent,
+						InstallationState: bpv2.TargetStatePresent,
 					},
 					NeededActions: []domain.Action{domain.ActionInstall},
 				},
@@ -85,11 +88,11 @@ func TestConvertToDTO(t *testing.T) {
 					Actual: domain.DoguDiffState{
 						Namespace:         "k8s",
 						Version:           mustParseVersion("8.2.3-2"),
-						InstallationState: domain.TargetStatePresent,
+						InstallationState: bpv2.TargetStatePresent,
 					},
 					Expected: domain.DoguDiffState{
 						Namespace:         "k8s",
-						InstallationState: domain.TargetStateAbsent,
+						InstallationState: bpv2.TargetStateAbsent,
 					},
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
@@ -127,14 +130,14 @@ func TestConvertToDTO(t *testing.T) {
 				ComponentDiffs: []domain.ComponentDiff{
 					{
 						Name:          testComponentName,
-						Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
-						Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+						Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: bpv2.TargetStatePresent},
+						Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
 						NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionSwitchComponentNamespace},
 					},
 					{
 						Name:          "my-component-2",
-						Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-						Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+						Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
+						Expected:      domain.ComponentDiffState{InstallationState: bpv2.TargetStateAbsent},
 						NeededActions: []domain.Action{domain.ActionUninstall},
 					},
 				}},
@@ -475,23 +478,23 @@ func TestConvertToDomainModel(t *testing.T) {
 					Actual: domain.DoguDiffState{
 						Namespace:         "official",
 						Version:           mustParseVersion("1.2.3-4"),
-						InstallationState: domain.TargetStatePresent,
+						InstallationState: bpv2.TargetStatePresent,
 					},
 					Expected: domain.DoguDiffState{
 						Namespace:         "official",
-						InstallationState: domain.TargetStateAbsent,
+						InstallationState: bpv2.TargetStateAbsent,
 					}, NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 				{
 					DoguName: "postfix",
 					Actual: domain.DoguDiffState{Namespace: "official",
 						Version:           mustParseVersion("1.2.3-4"),
-						InstallationState: domain.TargetStatePresent,
+						InstallationState: bpv2.TargetStatePresent,
 					},
 					Expected: domain.DoguDiffState{
 						Namespace:         "official",
 						Version:           mustParseVersion("2.3.4-5"),
-						InstallationState: domain.TargetStatePresent,
+						InstallationState: bpv2.TargetStatePresent,
 					},
 					NeededActions: []domain.Action{domain.ActionUpgrade},
 				},
@@ -579,14 +582,14 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{ComponentDiffs: []domain.ComponentDiff{
 				{
 					Name:          testComponentName,
-					Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: domain.TargetStatePresent},
-					Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
+					Actual:        domain.ComponentDiffState{Version: testVersionLow, InstallationState: bpv2.TargetStatePresent},
+					Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
 					NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionSwitchComponentNamespace},
 				},
 				{
 					Name:          "my-component-2",
-					Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-					Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
+					Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
+					Expected:      domain.ComponentDiffState{InstallationState: bpv2.TargetStateAbsent},
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			},

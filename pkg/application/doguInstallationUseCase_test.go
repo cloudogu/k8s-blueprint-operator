@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -35,12 +36,12 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Actual: domain.DoguDiffState{
 				Namespace:         "official",
 				Version:           version3211,
-				InstallationState: domain.TargetStatePresent,
+				InstallationState: v2.TargetStatePresent,
 			},
 			Expected: domain.DoguDiffState{
 				Namespace:         "official",
 				Version:           version3211,
-				InstallationState: domain.TargetStatePresent,
+				InstallationState: v2.TargetStatePresent,
 			},
 			NeededActions: []domain.Action{},
 		}, &ecosystem.DoguInstallation{
@@ -75,12 +76,12 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				Actual: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           version3211,
-					InstallationState: domain.TargetStateAbsent,
+					InstallationState: v2.TargetStateAbsent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:          "official",
 					Version:            version3211,
-					InstallationState:  domain.TargetStatePresent,
+					InstallationState:  v2.TargetStatePresent,
 					MinVolumeSize:      &volumeSize,
 					ReverseProxyConfig: config,
 				},

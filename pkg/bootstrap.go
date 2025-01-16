@@ -2,12 +2,11 @@ package pkg
 
 import (
 	"fmt"
+	"github.com/cloudogu/blueprint-lib/v2"
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restartcr"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
-
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -35,7 +34,7 @@ type ApplicationContext struct {
 	Reconciler *reconciler.BlueprintReconciler
 }
 
-var blueprintOperatorName = common.QualifiedComponentName{
+var blueprintOperatorName = v2.QualifiedComponentName{
 	Namespace:  "k8s",
 	SimpleName: "k8s-blueprint-operator",
 }

@@ -3,10 +3,10 @@ package blueprintMaskV1
 import (
 	"errors"
 	"fmt"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
@@ -38,9 +38,9 @@ type MaskTargetDogu struct {
 	TargetState string `json:"targetState"`
 }
 
-func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error) {
+func ConvertToBlueprintMaskV1(spec v2.BlueprintMask) (BlueprintMaskV1, error) {
 	var errorList []error
-	convertedDogus := util.Map(spec.Dogus, func(dogu domain.MaskDogu) MaskTargetDogu {
+	convertedDogus := util.Map(spec.Dogus, func(dogu v2.MaskDogu) MaskTargetDogu {
 		newState, err := serializer.ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 		return MaskTargetDogu{
@@ -61,21 +61,21 @@ func ConvertToBlueprintMaskV1(spec domain.BlueprintMask) (BlueprintMaskV1, error
 	}, nil
 }
 
-func convertToBlueprintMask(blueprintMask BlueprintMaskV1) (domain.BlueprintMask, error) {
+func convertToBlueprintMask(blueprintMask BlueprintMaskV1) (v2.BlueprintMask, error) {
 	switch blueprintMask.API {
 	case serializer.BlueprintMaskAPIV1:
 	default:
-		return domain.BlueprintMask{}, fmt.Errorf("unsupported Blueprint Mask API Version: %s", blueprintMask.API)
+		return v2.BlueprintMask{}, fmt.Errorf("unsupported Blueprint Mask API Version: %s", blueprintMask.API)
 	}
 	convertedDogus, err := convertMaskDogus(blueprintMask.Dogus)
 	if err != nil {
-		return domain.BlueprintMask{}, fmt.Errorf("syntax of blueprintMaskV1 is not correct: %w", err)
+		return v2.BlueprintMask{}, fmt.Errorf("syntax of blueprintMaskV1 is not correct: %w", err)
 	}
-	return domain.BlueprintMask{Dogus: convertedDogus}, nil
+	return v2.BlueprintMask{Dogus: convertedDogus}, nil
 }
 
-func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
-	var convertedDogus []domain.MaskDogu
+func convertMaskDogus(dogus []MaskTargetDogu) ([]v2.MaskDogu, error) {
+	var convertedDogus []v2.MaskDogu
 	var errorList []error
 
 	for _, dogu := range dogus {
@@ -97,7 +97,7 @@ func convertMaskDogus(dogus []MaskTargetDogu) ([]domain.MaskDogu, error) {
 				continue
 			}
 		}
-		convertedDogus = append(convertedDogus, domain.MaskDogu{
+		convertedDogus = append(convertedDogus, v2.MaskDogu{
 			Name:        doguName,
 			Version:     version,
 			TargetState: state,

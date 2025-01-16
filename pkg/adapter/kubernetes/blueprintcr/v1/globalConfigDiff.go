@@ -1,8 +1,9 @@
 package v1
 
 import (
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 type GlobalConfigDiff []GlobalConfigEntryDiff
@@ -29,7 +30,7 @@ func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDi
 
 func convertToGlobalConfigEntryDiffDomain(dto GlobalConfigEntryDiff) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
-		Key: common.GlobalConfigKey(dto.Key),
+		Key: bpv2.GlobalConfigKey(dto.Key),
 		Actual: domain.GlobalConfigValueState{
 			Value:  dto.Actual.Value,
 			Exists: dto.Actual.Exists,

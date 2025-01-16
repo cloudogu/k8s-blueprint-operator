@@ -2,13 +2,14 @@ package ecosystem
 
 import (
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 )
 
 // ComponentInstallation represents an installed or to be installed component in the ecosystem.
 type ComponentInstallation struct {
 	// Name identifies the component by simple dogu name and namespace, e.g 'k8s/k8s-dogu-operator'.
-	Name common.QualifiedComponentName
+	Name bpv2.QualifiedComponentName
 	// ExpectedVersion is the version of the component which should be installed
 	ExpectedVersion *semver.Version
 	// ActualVersion is the version of the component which is actually installed
@@ -49,7 +50,7 @@ const (
 
 // InstallComponent is a factory for new ComponentInstallation's.
 func InstallComponent(
-	componentName common.QualifiedComponentName,
+	componentName bpv2.QualifiedComponentName,
 	expectedVersion *semver.Version,
 	deployConfig DeployConfig,
 ) *ComponentInstallation {

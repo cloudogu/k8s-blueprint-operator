@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"maps"
@@ -37,7 +38,7 @@ func countByAction(diffsByDogu map[cescommons.SimpleName]DoguConfigDiffs) map[Co
 }
 
 func determineConfigDiffs(
-	blueprintConfig Config,
+	blueprintConfig v2.Config,
 	globalConfig config.GlobalConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig,
@@ -52,7 +53,7 @@ func determineConfigDiffs(
 }
 
 func determineDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	combinedDoguConfigs map[cescommons.SimpleName]v2.CombinedDoguConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
@@ -63,7 +64,7 @@ func determineDogusConfigDiffs(
 }
 
 func determineSensitiveDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	combinedDoguConfigs map[cescommons.SimpleName]v2.CombinedDoguConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}

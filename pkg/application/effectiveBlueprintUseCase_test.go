@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"github.com/cloudogu/blueprint-lib/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,8 +24,8 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 	}, nil)
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 		Id:                 "testBlueprint1",
-		Blueprint:          domain.Blueprint{},
-		BlueprintMask:      domain.BlueprintMask{},
+		Blueprint:          v2.Blueprint{},
+		BlueprintMask:      v2.BlueprintMask{},
 		EffectiveBlueprint: domain.EffectiveBlueprint{},
 		StateDiff:          domain.StateDiff{},
 		Status:             domain.StatusPhaseEffectiveBlueprintGenerated,
@@ -88,8 +89,8 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 
 		repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 			Id:                 "testBlueprint1",
-			Blueprint:          domain.Blueprint{},
-			BlueprintMask:      domain.BlueprintMask{},
+			Blueprint:          v2.Blueprint{},
+			BlueprintMask:      v2.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          domain.StateDiff{},
 			Status:             domain.StatusPhaseEffectiveBlueprintGenerated,

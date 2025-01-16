@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"maps"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -100,7 +100,7 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 	entryDiffsToSet := globalConfigDiffsByAction[domain.ConfigActionSet]
 	for _, diff := range entryDiffsToSet {
 		var err error
-		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(diff.Expected.Value))
+		updatedEntries, err = updatedEntries.Set(diff.Key, v2.GlobalConfigValue(diff.Expected.Value))
 		errs = append(errs, err)
 	}
 

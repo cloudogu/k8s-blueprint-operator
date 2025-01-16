@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -23,7 +24,7 @@ type DoguDiff struct {
 type DoguDiffState struct {
 	Namespace          cescommons.Namespace
 	Version            core.Version
-	InstallationState  TargetState
+	InstallationState  v2.TargetState
 	MinVolumeSize      *ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 }
@@ -51,14 +52,14 @@ func (diff *DoguDiffState) String() string {
 
 // determineDoguDiffs creates DoguDiffs for all dogus in the blueprint and all installed dogus as well.
 // see determineDoguDiff for more information.
-func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[cescommons.SimpleName]*ecosystem.DoguInstallation) []DoguDiff {
+func determineDoguDiffs(blueprintDogus []v2.Dogu, installedDogus map[cescommons.SimpleName]*ecosystem.DoguInstallation) []DoguDiff {
 	var doguDiffs = map[cescommons.SimpleName]DoguDiff{}
 	for _, blueprintDogu := range blueprintDogus {
 		installedDogu := installedDogus[blueprintDogu.Name.SimpleName]
 		doguDiffs[blueprintDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
 	}
 	for _, installedDogu := range installedDogus {
-		_, found := FindDoguByName(blueprintDogus, installedDogu.Name.SimpleName)
+		_, found := v2.FindDoguByName(blueprintDogus, installedDogu.Name.SimpleName)
 		// Only create DoguDiff if the installed dogu is not found in the blueprint.
 		// If the installed dogu is in blueprint the DoguDiff was already determined above.
 		if !found {
@@ -72,20 +73,20 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[cescommons.Sim
 // if the Dogu is nil (was not in the blueprint), the actual state is also the expected state.
 // if the installedDogu is nil, it is considered to be not installed currently.
 // returns a DoguDiff
-func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstallation) DoguDiff {
+func determineDoguDiff(blueprintDogu *v2.Dogu, installedDogu *ecosystem.DoguInstallation) DoguDiff {
 	var expectedState, actualState DoguDiffState
 	var doguName cescommons.SimpleName = "" // either blueprintDogu or installedDogu could be nil
 
 	if installedDogu == nil {
 		actualState = DoguDiffState{
-			InstallationState: TargetStateAbsent,
+			InstallationState: v2.TargetStateAbsent,
 		}
 	} else {
 		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
 			Namespace:          installedDogu.Name.Namespace,
 			Version:            installedDogu.Version,
-			InstallationState:  TargetStatePresent,
+			InstallationState:  v2.TargetStatePresent,
 			MinVolumeSize:      installedDogu.MinVolumeSize,
 			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
 		}
@@ -115,18 +116,18 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action {
 	if expected.InstallationState == actual.InstallationState {
 		switch expected.InstallationState {
-		case TargetStatePresent:
+		case v2.TargetStatePresent:
 			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
 			return getActionsForPresentDoguDiffs(expected, actual)
-		case TargetStateAbsent:
+		case v2.TargetStateAbsent:
 			return []Action{}
 		}
 	} else {
 		// actual state is always the opposite
 		switch expected.InstallationState {
-		case TargetStatePresent:
+		case v2.TargetStatePresent:
 			return []Action{ActionInstall}
-		case TargetStateAbsent:
+		case v2.TargetStateAbsent:
 			return []Action{ActionUninstall}
 		}
 	}

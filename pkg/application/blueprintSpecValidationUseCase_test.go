@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 	"errors"
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -174,8 +175,8 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	}, nil)
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 		Id:                 "testBlueprint1",
-		Blueprint:          domain.Blueprint{},
-		BlueprintMask:      domain.BlueprintMask{},
+		Blueprint:          v2.Blueprint{},
+		BlueprintMask:      v2.BlueprintMask{},
 		EffectiveBlueprint: domain.EffectiveBlueprint{},
 		StateDiff:          domain.StateDiff{},
 		Status:             domain.StatusPhaseValidated,
@@ -200,10 +201,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	version, _ := core.ParseVersion("1.0.0-1")
 	blueprintSpec := &domain.BlueprintSpec{
 		Id: "testBlueprint1",
-		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
+		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []v2.Dogu{{
 			Name:        redmineQualifiedDoguName,
 			Version:     version,
-			TargetState: domain.TargetStatePresent,
+			TargetState: v2.TargetStatePresent,
 		}}},
 		Status: domain.StatusPhaseValidated,
 	}

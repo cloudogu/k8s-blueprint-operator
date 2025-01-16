@@ -3,24 +3,25 @@ package domain
 import (
 	"errors"
 	"fmt"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
-// BlueprintMask describes an abstraction of CES components that should alter a blueprint definition before
-// applying it to a CES system via a blueprint upgrade. The blueprint mask does not change the blueprint
-// itself, but is applied to the information in it to generate a new, effective blueprint.
-type BlueprintMask struct {
-	// Dogus contains a set of dogus which alters the states of the dogus in the blueprint this mask is applied on.
-	// The names and target states of all dogus must not be empty.
-	Dogus []MaskDogu
+type blueprintMaskValidator struct {
+	blueprintMask bpv2.BlueprintMask
+}
+
+func newBlueprintMaskValidator(blueprintMask bpv2.BlueprintMask) *blueprintMaskValidator {
+	return &blueprintMaskValidator{blueprintMask: blueprintMask}
 }
 
 // Validate checks the structure and data of a blueprint mask and returns an error if there are any problems
-func (blueprintMask *BlueprintMask) Validate() error {
+func (validator *blueprintMaskValidator) validate() error {
 	errorList := []error{
-		blueprintMask.validateDogus(),
-		blueprintMask.validateDoguUniqueness(),
+		validator.validateDogus(),
+		validator.validateDoguUniqueness(),
 	}
 	err := errors.Join(errorList...)
 	if err != nil {
@@ -29,14 +30,16 @@ func (blueprintMask *BlueprintMask) Validate() error {
 	return err
 }
 
-func (blueprintMask *BlueprintMask) validateDogus() error {
-	errorList := util.Map(blueprintMask.Dogus, func(maskDogu MaskDogu) error { return maskDogu.validate() })
+func (validator *blueprintMaskValidator) validateDogus() error {
+	errorList := util.Map(validator.blueprintMask.Dogus, func(maskDogu bpv2.MaskDogu) error {
+		return validateMask(maskDogu)
+	})
 	return errors.Join(errorList...)
 }
 
 // validateDoguUniqueness checks if dogus exist twice in the blueprint and returns an error if it's so.
-func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
-	doguNames := util.Map(blueprintMask.Dogus, func(dogu MaskDogu) cescommons.SimpleName { return dogu.Name.SimpleName })
+func (validator *blueprintMaskValidator) validateDoguUniqueness() error {
+	doguNames := util.Map(validator.blueprintMask.Dogus, func(dogu bpv2.MaskDogu) cescommons.SimpleName { return dogu.Name.SimpleName })
 	duplicates := util.GetDuplicates(doguNames)
 	if len(duplicates) != 0 {
 		return fmt.Errorf("there are duplicate dogus: %v", duplicates)
@@ -44,11 +47,11 @@ func (blueprintMask *BlueprintMask) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprintMask *BlueprintMask) FindDoguByName(name cescommons.SimpleName) (MaskDogu, error) {
-	for doguIndex, dogu := range blueprintMask.Dogus {
+func (validator *blueprintMaskValidator) FindDoguByName(name cescommons.SimpleName) (bpv2.MaskDogu, error) {
+	for doguIndex, dogu := range validator.blueprintMask.Dogus {
 		if dogu.Name.SimpleName == name {
-			return blueprintMask.Dogus[doguIndex], nil
+			return validator.blueprintMask.Dogus[doguIndex], nil
 		}
 	}
-	return MaskDogu{}, fmt.Errorf("could not find dogu name %q in blueprint", name)
+	return bpv2.MaskDogu{}, fmt.Errorf("could not find dogu name %q in blueprint", name)
 }

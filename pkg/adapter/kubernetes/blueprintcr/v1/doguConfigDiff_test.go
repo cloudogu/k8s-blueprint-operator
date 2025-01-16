@@ -1,8 +1,8 @@
 package v1
 
 import (
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -22,7 +22,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.DoguConfigDiffs{
 				{
-					Key: common.DoguConfigKey{
+					Key: bpv2.DoguConfigKey{
 						DoguName: "ldap",
 						Key:      "container_config/memory_limit",
 					},
@@ -37,7 +37,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				},
 				{
-					Key: common.DoguConfigKey{
+					Key: bpv2.DoguConfigKey{
 						DoguName: "ldap",
 						Key:      "container_config/swap_limit",
 					},
@@ -125,7 +125,7 @@ func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 			},
 			want: domain.DoguConfigDiffs{
 				{
-					Key: common.DoguConfigKey{
+					Key: bpv2.DoguConfigKey{
 						DoguName: "ldap",
 						Key:      "container_config/memory_limit",
 					},
@@ -140,7 +140,7 @@ func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				},
 				{
-					Key: common.DoguConfigKey{
+					Key: bpv2.DoguConfigKey{
 						DoguName: "ldap",
 						Key:      "container_config/swap_limit",
 					},

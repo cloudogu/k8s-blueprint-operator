@@ -4,9 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
@@ -123,15 +125,15 @@ func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (doma
 	}
 
 	return domain.ComponentDiff{
-		Name: common.SimpleComponentName(componentName),
+		Name: bpv2.SimpleComponentName(componentName),
 		Actual: domain.ComponentDiffState{
-			Namespace:         common.ComponentNamespace(actualDistributionNamespace),
+			Namespace:         bpv2.ComponentNamespace(actualDistributionNamespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
 			DeployConfig:      ecosystem.DeployConfig(dto.Actual.DeployConfig),
 		},
 		Expected: domain.ComponentDiffState{
-			Namespace:         common.ComponentNamespace(expectedDistributionNamespace),
+			Namespace:         bpv2.ComponentNamespace(expectedDistributionNamespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
 			DeployConfig:      ecosystem.DeployConfig(dto.Expected.DeployConfig),

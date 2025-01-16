@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
@@ -36,7 +36,7 @@ func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, e
 		resourceVersion: cr.GetResourceVersion(),
 	}
 
-	name, err := common.NewQualifiedComponentName(common.ComponentNamespace(cr.Spec.Namespace), common.SimpleComponentName(cr.Name))
+	name, err := v2.NewQualifiedComponentName(v2.ComponentNamespace(cr.Spec.Namespace), v2.SimpleComponentName(cr.Name))
 	if err != nil {
 		return nil, err
 	}

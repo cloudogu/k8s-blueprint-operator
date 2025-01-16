@@ -1,8 +1,8 @@
 package domain
 
 import (
+	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
@@ -46,7 +46,7 @@ type ConfigValueState struct {
 	Exists bool
 }
 type DoguConfigEntryDiff struct {
-	Key          common.DoguConfigKey
+	Key          v2.DoguConfigKey
 	Actual       DoguConfigValueState
 	Expected     DoguConfigValueState
 	NeededAction ConfigAction
@@ -54,10 +54,10 @@ type DoguConfigEntryDiff struct {
 type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newDoguConfigEntryDiff(
-	key common.DoguConfigKey,
+	key v2.DoguConfigKey,
 	actualValue config.Value,
 	actualExists bool,
-	expectedValue common.DoguConfigValue,
+	expectedValue v2.DoguConfigValue,
 	expectedExists bool,
 ) DoguConfigEntryDiff {
 	actual := DoguConfigValueState{
@@ -77,7 +77,7 @@ func newDoguConfigEntryDiff(
 }
 
 func determineDoguConfigDiffs(
-	wantedConfig DoguConfig,
+	wantedConfig v2.DoguConfig,
 	actualConfig map[cescommons.SimpleName]config.DoguConfig,
 ) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff

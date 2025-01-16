@@ -1,27 +1,29 @@
 package serializer
 
-import "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+import (
+	"github.com/cloudogu/blueprint-lib/v2"
+)
 
 // BlueprintSerializer can serialize a domain.Blueprint to a string. The format is implementation specific.
 // Add a new implementation if you want either another format, e.g. json, xml, or if you change your specific structure in that format.
 type BlueprintSerializer interface {
 	// Serialize translates a domain.Blueprint into a string representation.
 	// Returns an error if the blueprint cannot be deserialized for any reason.
-	Serialize(blueprint domain.Blueprint) (string, error)
+	Serialize(blueprint v2.Blueprint) (string, error)
 
 	// Deserialize translates a string into a domain.Blueprint.
 	// Returns a domain.InvalidBlueprintError if the given string has syntax or simple semantic errors.
-	Deserialize(rawBlueprint string) (domain.Blueprint, error)
+	Deserialize(rawBlueprint string) (v2.Blueprint, error)
 }
 
 type BlueprintMaskSerializer interface {
 	// Serialize translates a domain.BlueprintMask into a string representation.
 	// Returns an error if the blueprint cannot be deserialized for any reason.
-	Serialize(mask domain.BlueprintMask) (string, error)
+	Serialize(mask v2.BlueprintMask) (string, error)
 
 	// Deserialize translates a string into a domain.BlueprintMask.
 	// Returns a domain.InvalidBlueprintError if the given string has syntax or simple semantic errors.
-	Deserialize(rawBlueprintMask string) (domain.BlueprintMask, error)
+	Deserialize(rawBlueprintMask string) (v2.BlueprintMask, error)
 }
 
 // BlueprintApi represents an API version for a specific serialized format of domain.Blueprint.

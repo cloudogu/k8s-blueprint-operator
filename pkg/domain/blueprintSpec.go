@@ -3,18 +3,22 @@ package domain
 import (
 	"errors"
 	"fmt"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"maps"
 	"slices"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
+	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 type BlueprintSpec struct {
 	Id                 string
-	Blueprint          Blueprint
-	BlueprintMask      BlueprintMask
+	Blueprint          bpv2.Blueprint
+	BlueprintMask      bpv2.BlueprintMask
 	EffectiveBlueprint EffectiveBlueprint
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
@@ -77,9 +81,6 @@ const (
 	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
-// censorValue is the value for censoring sensitive blueprint configuration data.
-const censorValue = "*****"
-
 type BlueprintConfiguration struct {
 	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
 	IgnoreDoguHealth bool
@@ -108,7 +109,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 	if spec.Id == "" {
 		errorList = append(errorList, errors.New("blueprint spec doesn't have an ID"))
 	}
-	errorList = append(errorList, spec.Blueprint.Validate())
+	errorList = append(errorList, newbluValidate(spec.Blueprint))
 	errorList = append(errorList, spec.BlueprintMask.Validate())
 	errorList = append(errorList, spec.validateMaskAgainstBlueprint())
 	err := errors.Join(errorList...)
@@ -133,7 +134,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
-		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
+		if doguMask.TargetState == v2.TargetStatePresent && dogu.TargetState == v2.TargetStateAbsent {
 			errorList = append(errorList, fmt.Errorf("absent dogu %q cannot be present in blueprint mask", dogu.Name.SimpleName))
 		}
 		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Name.Namespace != doguMask.Name.Namespace {
@@ -202,8 +203,8 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	return nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
-	var effectiveDogus []Dogu
+func (spec *BlueprintSpec) calculateEffectiveDogus() ([]v2.Dogu, error) {
+	var effectiveDogus []v2.Dogu
 	for _, dogu := range spec.Blueprint.Dogus {
 		effectiveDogu, err := spec.calculateEffectiveDogu(dogu)
 		if err != nil {
@@ -214,8 +215,8 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 	return effectiveDogus, nil
 }
 
-func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
-	effectiveDogu := Dogu{
+func (spec *BlueprintSpec) calculateEffectiveDogu(dogu v2.Dogu) (v2.Dogu, error) {
+	effectiveDogu := v2.Dogu{
 		Name:               dogu.Name,
 		Version:            dogu.Version,
 		TargetState:        dogu.TargetState,
@@ -232,7 +233,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 			if spec.Config.AllowDoguNamespaceSwitch {
 				effectiveDogu.Name.Namespace = cescommons.Namespace(maskDogu.Name.Namespace)
 			} else {
-				return Dogu{}, fmt.Errorf(
+				return v2.Dogu{}, fmt.Errorf(
 					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.Name, maskDogu.Name)
 			}
 		}
@@ -243,16 +244,16 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 }
 
 // It is not allowed to have config without the corresponding dogu, so this will clean up the unnecessary config.
-func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
+func (spec *BlueprintSpec) removeConfigForMaskedDogus() v2.Config {
 	effectiveDoguConfig := maps.Clone(spec.Blueprint.Config.Dogus)
 
 	for _, dogu := range spec.BlueprintMask.Dogus {
-		if dogu.TargetState == TargetStateAbsent {
+		if dogu.TargetState == v2.TargetStateAbsent {
 			delete(effectiveDoguConfig, dogu.Name.SimpleName)
 		}
 	}
 
-	return Config{
+	return v2.Config{
 		Dogus:  effectiveDoguConfig,
 		Global: spec.Blueprint.Config.Global,
 	}

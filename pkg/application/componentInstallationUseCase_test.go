@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -62,7 +62,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			},
 		}
 
-		allComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+		allComponents := map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{
 			componentName1: nil,
 		}
 
@@ -165,7 +165,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			},
 		}
 
-		allComponents := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+		allComponents := map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{
 			componentName1: nil,
 		}
 
@@ -202,7 +202,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name:            v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			ExpectedVersion: semVer3212,
 		}
 
@@ -231,7 +231,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name: v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		componentRepoMock.EXPECT().Delete(testCtx, componentInstallation.Name.SimpleName).Return(nil)
@@ -263,7 +263,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name:            v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			ExpectedVersion: semVer3212,
 		}
 
@@ -302,7 +302,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name:            common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name:            v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 			ExpectedVersion: semVer3212,
 			DeployConfig: map[string]interface{}{
 				"deployNamespace": "longhorn-system",
@@ -337,7 +337,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name: v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		sut := &ComponentInstallationUseCase{
@@ -364,7 +364,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name: v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		sut := &ComponentInstallationUseCase{
@@ -391,7 +391,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 		}
 
 		componentInstallation := &ecosystem.ComponentInstallation{
-			Name: common.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
+			Name: v2.QualifiedComponentName{SimpleName: componentName1, Namespace: testNamespace},
 		}
 
 		sut := &ComponentInstallationUseCase{
@@ -442,7 +442,7 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 				componentRepoFn: func(t *testing.T) componentInstallationRepository {
 					componentMock := newMockComponentInstallationRepository(t)
 					componentMock.EXPECT().GetAll(testCtx).
-						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil)
+						Return(map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil)
 					return componentMock
 				},
 				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
@@ -464,9 +464,9 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 				componentRepoFn: func(t *testing.T) componentInstallationRepository {
 					componentMock := newMockComponentInstallationRepository(t)
 					componentMock.EXPECT().GetAll(testCtx).
-						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+						Return(map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{
 							"k8s-component-operator": {
-								Name:   common.QualifiedComponentName{SimpleName: "k8s-component-operator", Namespace: testNamespace},
+								Name:   v2.QualifiedComponentName{SimpleName: "k8s-component-operator", Namespace: testNamespace},
 								Health: ecosystem.UnavailableHealthStatus},
 						}, nil)
 					return componentMock
@@ -479,7 +479,7 @@ func TestComponentInstallationUseCase_CheckComponentHealth(t *testing.T) {
 				},
 			},
 			want: ecosystem.ComponentHealthResult{
-				ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
+				ComponentsByStatus: map[ecosystem.HealthStatus][]v2.SimpleComponentName{
 					ecosystem.NotInstalledHealthStatus: {"k8s-dogu-operator"},
 					ecosystem.UnavailableHealthStatus:  {"k8s-component-operator"},
 				}},
@@ -563,7 +563,7 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 				componentRepoFn: func(t *testing.T) componentInstallationRepository {
 					componentMock := newMockComponentInstallationRepository(t)
 					componentMock.EXPECT().GetAll(mock.Anything).
-						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil)
+						Return(map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil)
 					return componentMock
 				},
 				healthConfigRepoFn: func(t *testing.T) healthConfigProvider {
@@ -586,12 +586,12 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 				componentRepoFn: func(t *testing.T) componentInstallationRepository {
 					componentMock := newMockComponentInstallationRepository(t)
 					unsuccessfulCall := componentMock.EXPECT().GetAll(mock.Anything).
-						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil).Once()
+						Return(map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{}, nil).Once()
 					componentMock.EXPECT().GetAll(mock.Anything).
-						Return(map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
+						Return(map[v2.SimpleComponentName]*ecosystem.ComponentInstallation{
 							"k8s-dogu-operator": {
 
-								Name: common.QualifiedComponentName{SimpleName: "k8s-dogu-operator", Namespace: testNamespace}, Health: ecosystem.AvailableHealthStatus,
+								Name: v2.QualifiedComponentName{SimpleName: "k8s-dogu-operator", Namespace: testNamespace}, Health: ecosystem.AvailableHealthStatus,
 							},
 						}, nil).
 						Once().NotBefore(unsuccessfulCall)
@@ -605,7 +605,7 @@ func TestComponentInstallationUseCase_WaitForHealthyComponents(t *testing.T) {
 					return healthConfigMock
 				},
 			},
-			want: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
+			want: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]v2.SimpleComponentName{
 				ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
 			}},
 			wantErr: assert.NoError,

@@ -3,7 +3,7 @@
 package serializer
 
 import (
-	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	domain "github.com/cloudogu/blueprint-lib/v2"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,22 +21,22 @@ func (_m *MockBlueprintMaskSerializer) EXPECT() *MockBlueprintMaskSerializer_Exp
 }
 
 // Deserialize provides a mock function with given fields: rawBlueprintMask
-func (_m *MockBlueprintMaskSerializer) Deserialize(rawBlueprintMask string) (domain.BlueprintMask, error) {
+func (_m *MockBlueprintMaskSerializer) Deserialize(rawBlueprintMask string) (v2.BlueprintMask, error) {
 	ret := _m.Called(rawBlueprintMask)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Deserialize")
 	}
 
-	var r0 domain.BlueprintMask
+	var r0 v2.BlueprintMask
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (domain.BlueprintMask, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (v2.BlueprintMask, error)); ok {
 		return rf(rawBlueprintMask)
 	}
-	if rf, ok := ret.Get(0).(func(string) domain.BlueprintMask); ok {
+	if rf, ok := ret.Get(0).(func(string) v2.BlueprintMask); ok {
 		r0 = rf(rawBlueprintMask)
 	} else {
-		r0 = ret.Get(0).(domain.BlueprintMask)
+		r0 = ret.Get(0).(v2.BlueprintMask)
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
@@ -66,18 +66,18 @@ func (_c *MockBlueprintMaskSerializer_Deserialize_Call) Run(run func(rawBlueprin
 	return _c
 }
 
-func (_c *MockBlueprintMaskSerializer_Deserialize_Call) Return(_a0 domain.BlueprintMask, _a1 error) *MockBlueprintMaskSerializer_Deserialize_Call {
+func (_c *MockBlueprintMaskSerializer_Deserialize_Call) Return(_a0 v2.BlueprintMask, _a1 error) *MockBlueprintMaskSerializer_Deserialize_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockBlueprintMaskSerializer_Deserialize_Call) RunAndReturn(run func(string) (domain.BlueprintMask, error)) *MockBlueprintMaskSerializer_Deserialize_Call {
+func (_c *MockBlueprintMaskSerializer_Deserialize_Call) RunAndReturn(run func(string) (v2.BlueprintMask, error)) *MockBlueprintMaskSerializer_Deserialize_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Serialize provides a mock function with given fields: mask
-func (_m *MockBlueprintMaskSerializer) Serialize(mask domain.BlueprintMask) (string, error) {
+func (_m *MockBlueprintMaskSerializer) Serialize(mask v2.BlueprintMask) (string, error) {
 	ret := _m.Called(mask)
 
 	if len(ret) == 0 {
@@ -86,16 +86,16 @@ func (_m *MockBlueprintMaskSerializer) Serialize(mask domain.BlueprintMask) (str
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(domain.BlueprintMask) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(v2.BlueprintMask) (string, error)); ok {
 		return rf(mask)
 	}
-	if rf, ok := ret.Get(0).(func(domain.BlueprintMask) string); ok {
+	if rf, ok := ret.Get(0).(func(v2.BlueprintMask) string); ok {
 		r0 = rf(mask)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(domain.BlueprintMask) error); ok {
+	if rf, ok := ret.Get(1).(func(v2.BlueprintMask) error); ok {
 		r1 = rf(mask)
 	} else {
 		r1 = ret.Error(1)
@@ -115,9 +115,9 @@ func (_e *MockBlueprintMaskSerializer_Expecter) Serialize(mask interface{}) *Moc
 	return &MockBlueprintMaskSerializer_Serialize_Call{Call: _e.mock.On("Serialize", mask)}
 }
 
-func (_c *MockBlueprintMaskSerializer_Serialize_Call) Run(run func(mask domain.BlueprintMask)) *MockBlueprintMaskSerializer_Serialize_Call {
+func (_c *MockBlueprintMaskSerializer_Serialize_Call) Run(run func(mask v2.BlueprintMask)) *MockBlueprintMaskSerializer_Serialize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(domain.BlueprintMask))
+		run(args[0].(v2.BlueprintMask))
 	})
 	return _c
 }
@@ -127,7 +127,7 @@ func (_c *MockBlueprintMaskSerializer_Serialize_Call) Return(_a0 string, _a1 err
 	return _c
 }
 
-func (_c *MockBlueprintMaskSerializer_Serialize_Call) RunAndReturn(run func(domain.BlueprintMask) (string, error)) *MockBlueprintMaskSerializer_Serialize_Call {
+func (_c *MockBlueprintMaskSerializer_Serialize_Call) RunAndReturn(run func(v2.BlueprintMask) (string, error)) *MockBlueprintMaskSerializer_Serialize_Call {
 	_c.Call.Return(run)
 	return _c
 }

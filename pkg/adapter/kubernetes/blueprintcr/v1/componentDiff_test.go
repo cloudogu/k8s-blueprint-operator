@@ -2,10 +2,13 @@ package v1
 
 import (
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
+
+	bpv2 "github.com/cloudogu/blueprint-lib/v2"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 const testNamespace = "k8s"
@@ -17,8 +20,8 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		// given
 		domainDiff := domain.ComponentDiff{
 			Name:          testComponentName,
-			Actual:        domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent, Namespace: testNamespace, DeployConfig: testDeployConfig},
+			Actual:        domain.ComponentDiffState{Version: nil, InstallationState: bpv2.TargetStateAbsent},
+			Expected:      domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent, Namespace: testNamespace, DeployConfig: testDeployConfig},
 			NeededActions: []domain.Action{domain.ActionInstall}}
 
 		// when
@@ -36,8 +39,8 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		// given
 		domainDiff := domain.ComponentDiff{
 			Name:          testComponentName,
-			Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:      domain.ComponentDiffState{Version: nil, InstallationState: domain.TargetStateAbsent},
+			Actual:        domain.ComponentDiffState{Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Version: nil, InstallationState: bpv2.TargetStateAbsent},
 			NeededActions: []domain.Action{domain.ActionUninstall}}
 
 		// when
@@ -69,8 +72,8 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
 			Name:          testComponentName,
-			Actual:        domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
-			Expected:      domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent, DeployConfig: testDeployConfig},
+			Actual:        domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: bpv2.TargetStateAbsent},
+			Expected:      domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent, DeployConfig: testDeployConfig},
 			NeededActions: []domain.Action{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)
@@ -90,8 +93,8 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
 			Name:          testComponentName,
-			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: domain.TargetStatePresent},
-			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: testVersionHigh, InstallationState: bpv2.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: bpv2.TargetStateAbsent},
 			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
@@ -130,8 +133,8 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 		require.NoError(t, err)
 		expected := domain.ComponentDiff{
 			Name:          testComponentName,
-			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: compVersion080dev, InstallationState: domain.TargetStatePresent},
-			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: domain.TargetStateAbsent},
+			Actual:        domain.ComponentDiffState{Namespace: "k8s", Version: compVersion080dev, InstallationState: bpv2.TargetStatePresent},
+			Expected:      domain.ComponentDiffState{Namespace: "", Version: nil, InstallationState: bpv2.TargetStateAbsent},
 			NeededActions: []domain.Action{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
