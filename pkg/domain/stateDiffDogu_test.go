@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +14,7 @@ func Test_determineDoguDiff(t *testing.T) {
 	volumeSize2 := resource.MustParse("2Gi")
 
 	type args struct {
-		blueprintDogu *v2.Dogu
+		blueprintDogu *Dogu
 		installedDogu *ecosystem.DoguInstallation
 	}
 	quantity100M := resource.MustParse("100M")
@@ -30,10 +29,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "equal, no action",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3211,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
@@ -43,14 +42,14 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: nil,
 			},
@@ -58,22 +57,22 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "install",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3211,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 				},
 				installedDogu: nil,
 			},
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					InstallationState: v2.TargetStateAbsent,
+					InstallationState: TargetStateAbsent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: []Action{ActionInstall},
 			},
@@ -81,9 +80,9 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "uninstall",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
-					TargetState: v2.TargetStateAbsent,
+					TargetState: TargetStateAbsent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
@@ -93,13 +92,13 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
-					InstallationState: v2.TargetStateAbsent,
+					Namespace:         officialNamespace,
+					InstallationState: TargetStateAbsent,
 				},
 				NeededActions: []Action{ActionUninstall},
 			},
@@ -107,10 +106,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "namespace switch",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        premiumNexus,
 					Version:     version3211,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
@@ -120,14 +119,14 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
 					Namespace:         "premium",
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: []Action{ActionSwitchDoguNamespace},
 			},
@@ -135,10 +134,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "upgrade",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3212,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
@@ -148,14 +147,14 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: []Action{ActionUpgrade},
 			},
@@ -163,10 +162,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "multiple update actions",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3212,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
 						AdditionalConfig: "additional",
@@ -183,15 +182,15 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					MinVolumeSize:     &volumeSize1,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
 						AdditionalConfig: "additional",
@@ -205,10 +204,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "downgrade",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3211,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
@@ -218,14 +217,14 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: []Action{ActionDowngrade},
 			},
@@ -242,14 +241,14 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3211,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 				},
 				NeededActions: nil,
 			},
@@ -263,10 +262,10 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "",
 				Actual: DoguDiffState{
-					InstallationState: v2.TargetStateAbsent,
+					InstallationState: TargetStateAbsent,
 				},
 				Expected: DoguDiffState{
-					InstallationState: v2.TargetStateAbsent,
+					InstallationState: TargetStateAbsent,
 				},
 				NeededActions: []Action{},
 			},
@@ -274,10 +273,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "update proxy body size",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3212,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
@@ -293,17 +292,17 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
@@ -314,10 +313,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "update if proxy body size changed",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3212,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
@@ -333,17 +332,17 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity10MPtr,
 					},
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
@@ -354,10 +353,10 @@ func Test_determineDoguDiff(t *testing.T) {
 		{
 			name: "no update if body sizes are nil",
 			args: args{
-				blueprintDogu: &v2.Dogu{
+				blueprintDogu: &Dogu{
 					Name:        officialNexus,
 					Version:     version3212,
-					TargetState: v2.TargetStatePresent,
+					TargetState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
@@ -373,17 +372,17 @@ func Test_determineDoguDiff(t *testing.T) {
 			want: DoguDiff{
 				DoguName: "nexus",
 				Actual: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},
 				Expected: DoguDiffState{
-					Namespace:         v2.officialNamespace,
+					Namespace:         officialNamespace,
 					Version:           version3212,
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: TargetStatePresent,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
@@ -401,7 +400,7 @@ func Test_determineDoguDiff(t *testing.T) {
 
 func Test_determineDoguDiffs(t *testing.T) {
 	type args struct {
-		blueprintDogus []v2.Dogu
+		blueprintDogus []Dogu
 		installedDogus map[cescommons.SimpleName]*ecosystem.DoguInstallation
 	}
 	tests := []struct {
@@ -420,11 +419,11 @@ func Test_determineDoguDiffs(t *testing.T) {
 		{
 			name: "a not installed dogu in the blueprint",
 			args: args{
-				blueprintDogus: []v2.Dogu{
+				blueprintDogus: []Dogu{
 					{
 						Name:        officialNexus,
 						Version:     version3211,
-						TargetState: v2.TargetStatePresent,
+						TargetState: TargetStatePresent,
 					},
 				},
 				installedDogus: nil,
@@ -433,12 +432,12 @@ func Test_determineDoguDiffs(t *testing.T) {
 				{
 					DoguName: "nexus",
 					Actual: DoguDiffState{
-						InstallationState: v2.TargetStateAbsent,
+						InstallationState: TargetStateAbsent,
 					},
 					Expected: DoguDiffState{
-						Namespace:         v2.officialNamespace,
+						Namespace:         officialNamespace,
 						Version:           version3211,
-						InstallationState: v2.TargetStatePresent,
+						InstallationState: TargetStatePresent,
 					},
 					NeededActions: []Action{ActionInstall},
 				},
@@ -459,14 +458,14 @@ func Test_determineDoguDiffs(t *testing.T) {
 				{
 					DoguName: "nexus",
 					Actual: DoguDiffState{
-						Namespace:         v2.officialNamespace,
+						Namespace:         officialNamespace,
 						Version:           version3211,
-						InstallationState: v2.TargetStatePresent,
+						InstallationState: TargetStatePresent,
 					},
 					Expected: DoguDiffState{
-						Namespace:         v2.officialNamespace,
+						Namespace:         officialNamespace,
 						Version:           version3211,
-						InstallationState: v2.TargetStatePresent,
+						InstallationState: TargetStatePresent,
 					},
 					NeededActions: nil,
 				},
@@ -475,11 +474,11 @@ func Test_determineDoguDiffs(t *testing.T) {
 		{
 			name: "an installed dogu which is also in the blueprint",
 			args: args{
-				blueprintDogus: []v2.Dogu{
+				blueprintDogus: []Dogu{
 					{
 						Name:        officialNexus,
 						Version:     version3212,
-						TargetState: v2.TargetStatePresent,
+						TargetState: TargetStatePresent,
 					},
 				},
 				installedDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
@@ -493,14 +492,14 @@ func Test_determineDoguDiffs(t *testing.T) {
 				{
 					DoguName: "nexus",
 					Actual: DoguDiffState{
-						Namespace:         v2.officialNamespace,
+						Namespace:         officialNamespace,
 						Version:           version3211,
-						InstallationState: v2.TargetStatePresent,
+						InstallationState: TargetStatePresent,
 					},
 					Expected: DoguDiffState{
-						Namespace:         v2.officialNamespace,
+						Namespace:         officialNamespace,
 						Version:           version3212,
-						InstallationState: v2.TargetStatePresent,
+						InstallationState: TargetStatePresent,
 					},
 					NeededActions: []Action{ActionUpgrade},
 				},
@@ -518,12 +517,12 @@ func TestDoguDiff_String(t *testing.T) {
 	actual := DoguDiffState{
 		Namespace:         "official",
 		Version:           version3211,
-		InstallationState: v2.TargetStatePresent,
+		InstallationState: TargetStatePresent,
 	}
 	expected := DoguDiffState{
 		Namespace:         "premium",
 		Version:           version3212,
-		InstallationState: v2.TargetStatePresent,
+		InstallationState: TargetStatePresent,
 	}
 	diff := &DoguDiff{
 		DoguName:      "postgresql",
@@ -543,7 +542,7 @@ func TestDoguDiffState_String(t *testing.T) {
 	diff := &DoguDiffState{
 		Namespace:         "official",
 		Version:           version3211,
-		InstallationState: v2.TargetStatePresent,
+		InstallationState: TargetStatePresent,
 	}
 
 	assert.Equal(t, "{Version: \"3.2.1-1\", Namespace: \"official\", InstallationState: \"present\"}", diff.String())

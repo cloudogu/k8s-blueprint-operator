@@ -1,12 +1,10 @@
 package domain
 
 import (
-	"testing"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
@@ -19,28 +17,28 @@ var (
 )
 
 func Test_Validate(t *testing.T) {
-	dogus := []bpv2.MaskDogu{
-		{Name: officialDogu1, Version: version3_2_1_0, TargetState: bpv2.TargetStateAbsent},
-		{Name: officialDogu2, TargetState: bpv2.TargetStateAbsent},
-		{Name: officialDogu3, Version: version3_2_1_0, TargetState: bpv2.TargetStatePresent},
+	dogus := []MaskDogu{
+		{Name: officialDogu1, Version: version3_2_1_0, TargetState: TargetStateAbsent},
+		{Name: officialDogu2, TargetState: TargetStateAbsent},
+		{Name: officialDogu3, Version: version3_2_1_0, TargetState: TargetStatePresent},
 	}
-	blueprintMask := bpv2.BlueprintMask{
+	blueprintMask := BlueprintMask{
 		Dogus: dogus,
 	}
 
-	err := newBlueprintMaskValidator(blueprintMask).validate()
+	err := blueprintMask.Validate()
 
 	require.Nil(t, err)
 }
 
 func Test_ValidateWithDuplicatedDoguNames(t *testing.T) {
-	dogus := []bpv2.MaskDogu{
-		{Name: officialDogu1, TargetState: bpv2.TargetStatePresent},
-		{Name: officialDogu1, TargetState: bpv2.TargetStateAbsent},
+	dogus := []MaskDogu{
+		{Name: officialDogu1, TargetState: TargetStatePresent},
+		{Name: officialDogu1, TargetState: TargetStateAbsent},
 	}
-	blueprintMask := bpv2.BlueprintMask{Dogus: dogus}
+	blueprintMask := BlueprintMask{Dogus: dogus}
 
-	err := newBlueprintMaskValidator(blueprintMask).validate()
+	err := blueprintMask.Validate()
 
 	require.NotNil(t, err, "Multiple definitions for the same dogu should lead to an error")
 }

@@ -1,16 +1,14 @@
 package ecosystem
 
-import (
-	"github.com/cloudogu/blueprint-lib/v2"
-)
+import "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 type EcosystemConfigEntry interface {
 	*GlobalConfigEntry | *DoguConfigEntry | *SensitiveDoguConfigEntry
 }
 
 type GlobalConfigEntry struct {
-	Key   v2.GlobalConfigKey
-	Value v2.GlobalConfigValue
+	Key   common.GlobalConfigKey
+	Value common.GlobalConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -18,8 +16,8 @@ type GlobalConfigEntry struct {
 }
 
 type DoguConfigEntry struct {
-	Key   v2.DoguConfigKey
-	Value v2.DoguConfigValue
+	Key   common.DoguConfigKey
+	Value common.DoguConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -27,8 +25,8 @@ type DoguConfigEntry struct {
 }
 
 type SensitiveDoguConfigEntry struct {
-	Key   v2.SensitiveDoguConfigKey
-	Value v2.SensitiveDoguConfigValue
+	Key   common.SensitiveDoguConfigKey
+	Value common.SensitiveDoguConfigValue
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.

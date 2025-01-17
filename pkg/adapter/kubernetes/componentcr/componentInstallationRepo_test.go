@@ -2,6 +2,7 @@ package componentcr
 
 import (
 	"context"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/types"
 	"testing"
 
@@ -13,7 +14,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -27,7 +27,7 @@ const (
 	testNamespace        = "k8s"
 )
 
-var testComponentName = bpv2.QualifiedComponentName{
+var testComponentName = common.QualifiedComponentName{
 	Namespace:  testNamespace,
 	SimpleName: testComponentNameRaw,
 }
@@ -97,7 +97,7 @@ func Test_componentInstallationRepo_GetAll(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
-		expected := map[bpv2.SimpleComponentName]*ecosystem.ComponentInstallation{}
+		expected := map[common.SimpleComponentName]*ecosystem.ComponentInstallation{}
 		version, _ := semver.NewVersion("1.2.3-4")
 		expected[testComponentName.SimpleName] = &ecosystem.ComponentInstallation{
 			Name:               testComponentName,

@@ -1,14 +1,12 @@
 package domain
 
 import (
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
-	"testing"
-
 	"github.com/Masterminds/semver/v3"
+	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/cloudogu/cesapp-lib/core"
+	"testing"
 )
 
 var (
@@ -18,62 +16,62 @@ var (
 
 func TestComponent_Validate(t *testing.T) {
 	t.Run("errorOnMissingComponentVersion", func(t *testing.T) {
-		component := bpv2.Component{Name: testComponentName, TargetState: bpv2.TargetStatePresent}
+		component := Component{Name: testComponentName, TargetState: TargetStatePresent}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `version of component "k8s/my-component" must not be empty`)
 	})
 
 	t.Run("errorOnEmptyComponentVersion", func(t *testing.T) {
-		component := bpv2.Component{Name: testComponentName, Version: nil, TargetState: bpv2.TargetStatePresent}
+		component := Component{Name: testComponentName, Version: nil, TargetState: TargetStatePresent}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "version of component \"k8s/my-component\" must not be empty")
 	})
 
 	t.Run("errorOnMissingComponentName", func(t *testing.T) {
-		component := bpv2.Component{Version: compVersion123, TargetState: bpv2.TargetStatePresent}
+		component := Component{Version: compVersion123, TargetState: TargetStatePresent}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "component name must not be empty")
 	})
 
 	t.Run("errorOnEmptyComponentNamespace", func(t *testing.T) {
-		component := bpv2.Component{Name: bpv2.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: bpv2.TargetStatePresent}
-		err := NewComponentValidator(component).validate()
+		component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
+		err := component.Validate()
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "namespace of component \"test\" must not be empty")
 	})
 
 	t.Run("errorOnEmptyComponentName", func(t *testing.T) {
-		component := bpv2.Component{Name: bpv2.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, TargetState: bpv2.TargetStatePresent}
+		component := Component{Name: common.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, TargetState: TargetStatePresent}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "component name must not be empty")
 	})
 
 	t.Run("emptyComponentStateDefaultsToPresent", func(t *testing.T) {
-		component := bpv2.Component{Name: testComponentName, Version: compVersion123}
+		component := Component{Name: testComponentName, Version: compVersion123}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.NoError(t, err)
-		assert.Equal(t, bpv2.TargetState(bpv2.TargetStatePresent), component.TargetState)
+		assert.Equal(t, TargetState(TargetStatePresent), component.TargetState)
 	})
 
 	t.Run("missingComponentVersionOkayForAbsent", func(t *testing.T) {
-		component := bpv2.Component{Name: testComponentName, TargetState: bpv2.TargetStateAbsent}
+		component := Component{Name: testComponentName, TargetState: TargetStateAbsent}
 
-		err := NewComponentValidator(component).validate()
+		err := component.Validate()
 
 		require.NoError(t, err)
 	})

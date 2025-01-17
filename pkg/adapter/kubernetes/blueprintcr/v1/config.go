@@ -1,8 +1,9 @@
 package v1
 
 import (
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
@@ -27,7 +28,7 @@ type presentAbsentConfig struct {
 	Absent  []string          `json:"absent,omitempty"`
 }
 
-func ConvertToConfigDTO(config bpv2.Config) Config {
+func ConvertToConfigDTO(config domain.Config) Config {
 	var dogus map[string]CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -44,39 +45,39 @@ func ConvertToConfigDTO(config bpv2.Config) Config {
 	}
 }
 
-func ConvertToConfigDomain(config Config) bpv2.Config {
-	var dogus map[cescommons.SimpleName]bpv2.CombinedDoguConfig
+func ConvertToConfigDomain(config Config) domain.Config {
+	var dogus map[cescommons.SimpleName]domain.CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
-		dogus = make(map[cescommons.SimpleName]bpv2.CombinedDoguConfig, len(config.Dogus))
+		dogus = make(map[cescommons.SimpleName]domain.CombinedDoguConfig, len(config.Dogus))
 		for doguName, doguConfig := range config.Dogus {
 			dogus[cescommons.SimpleName(doguName)] = convertToCombinedDoguConfigDomain(doguName, doguConfig)
 		}
 	}
 
-	return bpv2.Config{
+	return domain.Config{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDomain(config.Global),
 	}
 }
 
-func convertToCombinedDoguConfigDTO(config bpv2.CombinedDoguConfig) CombinedDoguConfig {
+func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) CombinedDoguConfig {
 	return CombinedDoguConfig{
 		Config:          convertToDoguConfigDTO(config.Config),
 		SensitiveConfig: convertToSensitiveDoguConfigDTO(config.SensitiveConfig),
 	}
 }
 
-func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfig) bpv2.CombinedDoguConfig {
-	return bpv2.CombinedDoguConfig{
+func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfig) domain.CombinedDoguConfig {
+	return domain.CombinedDoguConfig{
 		DoguName:        cescommons.SimpleName(doguName),
 		Config:          convertToDoguConfigDomain(doguName, config.Config),
 		SensitiveConfig: convertToSensitiveDoguConfigDomain(doguName, config.SensitiveConfig),
 	}
 }
 
-func convertToDoguConfigDTO(config bpv2.DoguConfig) DoguConfig {
+func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -103,41 +104,41 @@ func convertToDoguConfigDTO(config bpv2.DoguConfig) DoguConfig {
 	}
 }
 
-func convertToDoguConfigDomain(doguName string, config DoguConfig) bpv2.DoguConfig {
-	var present map[bpv2.DoguConfigKey]bpv2.DoguConfigValue
+func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguConfig {
+	var present map[common.DoguConfigKey]common.DoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
-		present = make(map[bpv2.DoguConfigKey]bpv2.DoguConfigValue, len(config.Present))
+		present = make(map[common.DoguConfigKey]common.DoguConfigValue, len(config.Present))
 		for key, value := range config.Present {
-			present[convertToDoguConfigKeyDomain(doguName, key)] = bpv2.DoguConfigValue(value)
+			present[convertToDoguConfigKeyDomain(doguName, key)] = common.DoguConfigValue(value)
 		}
 	}
 
-	var absent []bpv2.DoguConfigKey
+	var absent []common.DoguConfigKey
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
-		absent = make([]bpv2.DoguConfigKey, len(config.Absent))
+		absent = make([]common.DoguConfigKey, len(config.Absent))
 		for i, key := range config.Absent {
 			absent[i] = convertToDoguConfigKeyDomain(doguName, key)
 		}
 	}
 
-	return bpv2.DoguConfig{
+	return domain.DoguConfig{
 		Present: present,
 		Absent:  absent,
 	}
 }
 
-func convertToDoguConfigKeyDomain(doguName, key string) bpv2.DoguConfigKey {
-	return bpv2.DoguConfigKey{
+func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
+	return common.DoguConfigKey{
 		DoguName: cescommons.SimpleName(doguName),
 		Key:      config.Key(key),
 	}
 }
 
-func convertToSensitiveDoguConfigDTO(config bpv2.SensitiveDoguConfig) SensitiveDoguConfig {
+func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) SensitiveDoguConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -164,44 +165,44 @@ func convertToSensitiveDoguConfigDTO(config bpv2.SensitiveDoguConfig) SensitiveD
 	}
 }
 
-func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDoguConfig) bpv2.SensitiveDoguConfig {
-	var present map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue
+func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDoguConfig) domain.SensitiveDoguConfig {
+	var present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(doguConfig.Present) != 0 {
-		present = make(map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue, len(doguConfig.Present))
+		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(doguConfig.Present))
 		for key, value := range doguConfig.Present {
-			present[convertToSensitiveDoguConfigKeyDomain(doguName, key)] = bpv2.SensitiveDoguConfigValue(value)
+			present[convertToSensitiveDoguConfigKeyDomain(doguName, key)] = common.SensitiveDoguConfigValue(value)
 		}
 	}
 
-	var absent []bpv2.SensitiveDoguConfigKey
+	var absent []common.SensitiveDoguConfigKey
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(doguConfig.Absent) != 0 {
-		absent = make([]bpv2.SensitiveDoguConfigKey, len(doguConfig.Absent))
+		absent = make([]common.SensitiveDoguConfigKey, len(doguConfig.Absent))
 		for i, key := range doguConfig.Absent {
-			absent[i] = bpv2.SensitiveDoguConfigKey{
+			absent[i] = common.SensitiveDoguConfigKey{
 				DoguName: cescommons.SimpleName(doguName),
 				Key:      config.Key(key),
 			}
 		}
 	}
 
-	return bpv2.SensitiveDoguConfig{
+	return domain.SensitiveDoguConfig{
 		Present: present,
 		Absent:  absent,
 	}
 }
 
-func convertToSensitiveDoguConfigKeyDomain(doguName, key string) bpv2.SensitiveDoguConfigKey {
-	return bpv2.SensitiveDoguConfigKey{
+func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.SensitiveDoguConfigKey {
+	return common.SensitiveDoguConfigKey{
 		DoguName: cescommons.SimpleName(doguName),
 		Key:      config.Key(key),
 	}
 }
 
-func convertToGlobalConfigDTO(config bpv2.GlobalConfig) GlobalConfig {
+func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -228,28 +229,28 @@ func convertToGlobalConfigDTO(config bpv2.GlobalConfig) GlobalConfig {
 	}
 }
 
-func convertToGlobalConfigDomain(config GlobalConfig) bpv2.GlobalConfig {
-	var present map[bpv2.GlobalConfigKey]bpv2.GlobalConfigValue
+func convertToGlobalConfigDomain(config GlobalConfig) domain.GlobalConfig {
+	var present map[common.GlobalConfigKey]common.GlobalConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
-		present = make(map[bpv2.GlobalConfigKey]bpv2.GlobalConfigValue, len(config.Present))
+		present = make(map[common.GlobalConfigKey]common.GlobalConfigValue, len(config.Present))
 		for key, value := range config.Present {
-			present[bpv2.GlobalConfigKey(key)] = bpv2.GlobalConfigValue(value)
+			present[common.GlobalConfigKey(key)] = common.GlobalConfigValue(value)
 		}
 	}
 
-	var absent []bpv2.GlobalConfigKey
+	var absent []common.GlobalConfigKey
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Absent) != 0 {
-		absent = make([]bpv2.GlobalConfigKey, len(config.Absent))
+		absent = make([]common.GlobalConfigKey, len(config.Absent))
 		for i, key := range config.Absent {
-			absent[i] = bpv2.GlobalConfigKey(key)
+			absent[i] = common.GlobalConfigKey(key)
 		}
 	}
 
-	return bpv2.GlobalConfig{
+	return domain.GlobalConfig{
 		Present: present,
 		Absent:  absent,
 	}

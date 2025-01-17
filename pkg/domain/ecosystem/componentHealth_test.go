@@ -1,33 +1,33 @@
 package ecosystem
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 var (
-	k8sK8sBlueprintOperator = v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-blueprint-operator"}
-	k8sK8sDoguOperator      = v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-dogu-operator"}
-	k8sK8sLonghorn          = v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-longhorn"}
-	k8sK8sVelero            = v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-velero"}
+	k8sK8sBlueprintOperator = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-blueprint-operator"}
+	k8sK8sDoguOperator      = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-dogu-operator"}
+	k8sK8sLonghorn          = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-longhorn"}
+	k8sK8sVelero            = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-velero"}
 )
 
 func TestComponentHealthResult_String(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]v2.SimpleComponentName
+		healthStates map[HealthStatus][]common.SimpleComponentName
 		contains     []string
 		notContains  []string
 	}{
 		{
 			name:         "no components should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{},
+			healthStates: map[HealthStatus][]common.SimpleComponentName{},
 			contains:     []string{"0 component(s) are unhealthy: "},
 		},
 		{
 			name: "only available components should result in 0 components unhealthy",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{
+			healthStates: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus: {"k8s-dogu-operator"},
 			},
 			contains:    []string{"0 component(s) are unhealthy: "},
@@ -35,7 +35,7 @@ func TestComponentHealthResult_String(t *testing.T) {
 		},
 		{
 			name: "any components not available should be unhealthy",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{
+			healthStates: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus:    {"k8s-blueprint-operator"},
 				UnavailableHealthStatus:  {"k8s-etcd", "k8s-dogu-operator"},
 				NotInstalledHealthStatus: {"k8s-service-discovery"},
@@ -68,24 +68,24 @@ func TestComponentHealthResult_String(t *testing.T) {
 func TestComponentHealthResult_AllHealthy(t *testing.T) {
 	tests := []struct {
 		name         string
-		healthStates map[HealthStatus][]v2.SimpleComponentName
+		healthStates map[HealthStatus][]common.SimpleComponentName
 		want         bool
 	}{
 		{
 			name:         "should be healthy if empty",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{},
+			healthStates: map[HealthStatus][]common.SimpleComponentName{},
 			want:         true,
 		},
 		{
 			name: "should be healthy if all are available",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{
+			healthStates: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus: {"k8s-blueprint-operator", "k8s-etcd", "k8s-service-discovery"},
 			},
 			want: true,
 		},
 		{
 			name: "should not be healthy if one is not available",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{
+			healthStates: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus:   {"k8s-blueprint-operator", "k8s-etcd", "k8s-service-discovery"},
 				UnavailableHealthStatus: {"k8s-dogu-operator"},
 			},
@@ -93,7 +93,7 @@ func TestComponentHealthResult_AllHealthy(t *testing.T) {
 		},
 		{
 			name: "should not be healthy if multiple are not available",
-			healthStates: map[HealthStatus][]v2.SimpleComponentName{
+			healthStates: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus:    {"k8s-blueprint-operator", "k8s-etcd", "k8s-service-discovery"},
 				UnavailableHealthStatus:  {"k8s-dogu-operator", "k8s-component-operator"},
 				PendingHealthStatus:      {"k8s-longhorn"},
@@ -113,7 +113,7 @@ func TestComponentHealthResult_AllHealthy(t *testing.T) {
 
 func TestCalculateComponentHealthResult(t *testing.T) {
 	type args struct {
-		installedComponents map[v2.SimpleComponentName]*ComponentInstallation
+		installedComponents map[common.SimpleComponentName]*ComponentInstallation
 		requiredComponents  []RequiredComponent
 	}
 	tests := []struct {
@@ -124,25 +124,25 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 		{
 			name: "result should be empty for no required and no installed components",
 			args: args{
-				installedComponents: map[v2.SimpleComponentName]*ComponentInstallation{},
+				installedComponents: map[common.SimpleComponentName]*ComponentInstallation{},
 				requiredComponents:  []RequiredComponent{},
 			},
-			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]v2.SimpleComponentName{}},
+			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{}},
 		},
 		{
 			name: "result should contain components that are not installed but required",
 			args: args{
-				installedComponents: map[v2.SimpleComponentName]*ComponentInstallation{},
+				installedComponents: map[common.SimpleComponentName]*ComponentInstallation{},
 				requiredComponents:  []RequiredComponent{{Name: "k8s-etcd"}, {Name: "k8s-service-discovery"}},
 			},
-			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]v2.SimpleComponentName{
+			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{
 				NotInstalledHealthStatus: {"k8s-etcd", "k8s-service-discovery"},
 			}},
 		},
 		{
 			name: "result should contain any components with their health state",
 			args: args{
-				installedComponents: map[v2.SimpleComponentName]*ComponentInstallation{
+				installedComponents: map[common.SimpleComponentName]*ComponentInstallation{
 					"k8s-blueprint-operator": {Name: k8sK8sBlueprintOperator, Health: AvailableHealthStatus},
 					"k8s-dogu-operator":      {Name: k8sK8sDoguOperator, Health: UnavailableHealthStatus},
 					"k8s-longhorn":           {Name: k8sK8sLonghorn, Health: PendingHealthStatus},
@@ -150,7 +150,7 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 				},
 				requiredComponents: []RequiredComponent{},
 			},
-			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]v2.SimpleComponentName{
+			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus:   {"k8s-blueprint-operator"},
 				UnavailableHealthStatus: {"k8s-dogu-operator"},
 				PendingHealthStatus:     {"k8s-longhorn"},
@@ -160,7 +160,7 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 		{
 			name: "result should contain any components with their health state and components that are not installed but required",
 			args: args{
-				installedComponents: map[v2.SimpleComponentName]*ComponentInstallation{
+				installedComponents: map[common.SimpleComponentName]*ComponentInstallation{
 					"k8s-blueprint-operator": {Name: k8sK8sBlueprintOperator, Health: AvailableHealthStatus},
 					"k8s-dogu-operator":      {Name: k8sK8sDoguOperator, Health: UnavailableHealthStatus},
 					"k8s-longhorn":           {Name: k8sK8sLonghorn, Health: PendingHealthStatus},
@@ -168,7 +168,7 @@ func TestCalculateComponentHealthResult(t *testing.T) {
 				},
 				requiredComponents: []RequiredComponent{{Name: "k8s-etcd"}, {Name: "k8s-service-discovery"}},
 			},
-			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]v2.SimpleComponentName{
+			want: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{
 				AvailableHealthStatus:    {"k8s-blueprint-operator"},
 				UnavailableHealthStatus:  {"k8s-dogu-operator"},
 				PendingHealthStatus:      {"k8s-longhorn"},

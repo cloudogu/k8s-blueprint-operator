@@ -2,7 +2,7 @@ package serializer
 
 import (
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -14,13 +14,13 @@ func Test_toDomainTargetState(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    v2.TargetState
+		want    domain.TargetState
 		wantErr assert.ErrorAssertionFunc
 	}{
-		{"convert present state", args{"present"}, v2.TargetState(v2.TargetStatePresent), assert.NoError},
-		{"convert absent state", args{"absent"}, v2.TargetState(v2.TargetStateAbsent), assert.NoError},
-		{"convert empty state", args{""}, v2.TargetState(v2.TargetStatePresent), assert.NoError},
-		{"error on unknown state", args{"unknown"}, v2.TargetState(v2.TargetStatePresent), assert.Error},
+		{"convert present state", args{"present"}, domain.TargetState(domain.TargetStatePresent), assert.NoError},
+		{"convert absent state", args{"absent"}, domain.TargetState(domain.TargetStateAbsent), assert.NoError},
+		{"convert empty state", args{""}, domain.TargetState(domain.TargetStatePresent), assert.NoError},
+		{"error on unknown state", args{"unknown"}, domain.TargetState(domain.TargetStatePresent), assert.Error},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -35,7 +35,7 @@ func Test_toDomainTargetState(t *testing.T) {
 
 func Test_toSerializerTargetState(t *testing.T) {
 	type args struct {
-		domainState v2.TargetState
+		domainState domain.TargetState
 	}
 	tests := []struct {
 		name    string
@@ -43,9 +43,9 @@ func Test_toSerializerTargetState(t *testing.T) {
 		want    string
 		wantErr assert.ErrorAssertionFunc
 	}{
-		{"convert present state", args{v2.TargetState(v2.TargetStatePresent)}, "present", assert.NoError},
-		{"convert absent state", args{v2.TargetState(v2.TargetStateAbsent)}, "absent", assert.NoError},
-		{"error on unknown state", args{v2.TargetState(-1)}, "", assert.Error},
+		{"convert present state", args{domain.TargetState(domain.TargetStatePresent)}, "present", assert.NoError},
+		{"convert absent state", args{domain.TargetState(domain.TargetStateAbsent)}, "absent", assert.NoError},
+		{"error on unknown state", args{domain.TargetState(-1)}, "", assert.Error},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

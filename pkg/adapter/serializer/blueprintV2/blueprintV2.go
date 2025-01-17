@@ -3,11 +3,9 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
-
 	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 // BlueprintV2 describes an abstraction of CES components that should be absent or present within one or more CES
@@ -34,7 +32,7 @@ type BlueprintV2 struct {
 
 type RegistryConfig map[string]map[string]interface{}
 
-func ConvertToBlueprintDTO(blueprint bpv2.Blueprint) (BlueprintV2, error) {
+func ConvertToBlueprintDTO(blueprint domain.Blueprint) (BlueprintV2, error) {
 	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, compError := serializer.ConvertToComponentDTOs(blueprint.Components)
 
@@ -51,23 +49,23 @@ func ConvertToBlueprintDTO(blueprint bpv2.Blueprint) (BlueprintV2, error) {
 	}, nil
 }
 
-func convertToBlueprintDomain(blueprint BlueprintV2) (bpv2.Blueprint, error) {
+func convertToBlueprintDomain(blueprint BlueprintV2) (domain.Blueprint, error) {
 	switch blueprint.API {
 	case serializer.V1:
-		return bpv2.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
+		return domain.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
 			"packages and cesapp version got removed in favour of components")
 	case serializer.V2:
 	default:
-		return bpv2.Blueprint{}, fmt.Errorf("unsupported Blueprint API Version: %s", blueprint.API)
+		return domain.Blueprint{}, fmt.Errorf("unsupported Blueprint API Version: %s", blueprint.API)
 	}
 	convertedDogus, doguErr := serializer.ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := serializer.ConvertComponents(blueprint.Components)
 	err := errors.Join(doguErr, compErr)
 	if err != nil {
-		return bpv2.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
+		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
 
-	return bpv2.Blueprint{
+	return domain.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config:     v1.ConvertToConfigDomain(blueprint.Config),

@@ -3,7 +3,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"slices"
@@ -14,19 +13,19 @@ import (
 type EffectiveBlueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []v2.Dogu
+	Dogus []Dogu
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
-	Components []v2.Component
+	Components []Component
 	// Config contains all config entries to set via blueprint.
-	Config v2.Config
+	Config Config
 }
 
 // GetWantedDogus returns a list of all dogus which should be installed
-func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []v2.Dogu {
-	var wantedDogus []v2.Dogu
+func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
+	var wantedDogus []Dogu
 	for _, dogu := range effectiveBlueprint.Dogus {
-		if dogu.TargetState == v2.TargetStatePresent {
+		if dogu.TargetState == TargetStatePresent {
 			wantedDogus = append(wantedDogus, dogu)
 		}
 	}
@@ -35,7 +34,7 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []v2.Dogu {
 
 // validateOnlyConfigForDogusInBlueprint checks that there is only config for dogus to install in the blueprint
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
-	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu v2.Dogu) cescommons.SimpleName {
+	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) cescommons.SimpleName {
 		return dogu.Name.SimpleName
 	})
 	var errorList []error

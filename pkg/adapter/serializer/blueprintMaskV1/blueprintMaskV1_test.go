@@ -1,10 +1,10 @@
 package blueprintMaskV1
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
@@ -15,13 +15,13 @@ var version3212, _ = core.ParseVersion("3.2.1-2")
 var version1_2_3_3, _ = core.ParseVersion("1.2.3-3")
 
 func Test_ConvertToBlueprintMaskV1_ok(t *testing.T) {
-	dogus := []v2.MaskDogu{
-		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu1"}, Version: version3211, TargetState: v2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu2"}, TargetState: v2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu3"}, Version: version3212, TargetState: v2.TargetStatePresent},
+	dogus := []domain.MaskDogu{
+		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
-	blueprint := v2.BlueprintMask{Dogus: dogus}
+	blueprint := domain.BlueprintMask{Dogus: dogus}
 
 	maskV1, err := ConvertToBlueprintMaskV1(blueprint)
 
@@ -40,10 +40,10 @@ func Test_ConvertToBlueprintMaskV1_ok(t *testing.T) {
 }
 
 func Test_ConvertToBlueprintMaskV1_error(t *testing.T) {
-	dogus := []v2.MaskDogu{
+	dogus := []domain.MaskDogu{
 		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu1"}, Version: version3211, TargetState: -1},
 	}
-	blueprint := v2.BlueprintMask{Dogus: dogus}
+	blueprint := domain.BlueprintMask{Dogus: dogus}
 
 	_, err := ConvertToBlueprintMaskV1(blueprint)
 
@@ -74,14 +74,14 @@ func Test_ConvertToBlueprintMask(t *testing.T) {
 
 	require.Nil(t, err)
 
-	convertedDogus := []v2.MaskDogu{
-		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu1"}, Version: version3211, TargetState: v2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu2"}, TargetState: v2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu3"}, Version: version3212, TargetState: v2.TargetStatePresent},
+	convertedDogus := []domain.MaskDogu{
+		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "absent", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "present", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
-	assert.Equal(t, v2.BlueprintMask{
+	assert.Equal(t, domain.BlueprintMask{
 		Dogus: convertedDogus,
 	}, blueprint)
 }

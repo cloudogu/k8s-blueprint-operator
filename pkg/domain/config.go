@@ -3,49 +3,111 @@ package domain
 import (
 	"errors"
 	"fmt"
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"golang.org/x/exp/maps"
 	"slices"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
-type configValidator struct {
-	config bpv2.Config
+type Config struct {
+	Dogus  map[cescommons.SimpleName]CombinedDoguConfig
+	Global GlobalConfig
 }
 
-func newConfigValidator(config bpv2.Config) *configValidator {
-	return &configValidator{config: config}
+type CombinedDoguConfig struct {
+	DoguName        cescommons.SimpleName
+	Config          DoguConfig
+	SensitiveConfig SensitiveDoguConfig
 }
 
-func (configValidator *configValidator) validate() error {
+type DoguConfig struct {
+	Present map[common.DoguConfigKey]common.DoguConfigValue
+	Absent  []common.DoguConfigKey
+}
+
+type SensitiveDoguConfig = DoguConfig
+
+type GlobalConfig struct {
+	Present map[common.GlobalConfigKey]common.GlobalConfigValue
+	Absent  []common.GlobalConfigKey
+}
+
+func (config GlobalConfig) GetGlobalConfigKeys() []common.GlobalConfigKey {
+	var keys []common.GlobalConfigKey
+	keys = append(keys, maps.Keys(config.Present)...)
+	keys = append(keys, config.Absent...)
+	return keys
+}
+
+func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
+	var keys []common.DoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		keys = append(keys, maps.Keys(doguConfig.Config.Present)...)
+		keys = append(keys, doguConfig.Config.Absent...)
+	}
+	return keys
+}
+
+func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKey {
+	var keys []common.SensitiveDoguConfigKey
+	for _, doguConfig := range config.Dogus {
+		keys = append(keys, maps.Keys(doguConfig.SensitiveConfig.Present)...)
+		keys = append(keys, doguConfig.SensitiveConfig.Absent...)
+	}
+	return keys
+}
+
+// GetDogusWithChangedConfig returns a list of dogus for which possible config changes are needed.
+func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
+	for dogu, doguConfig := range config.Dogus {
+		if len(doguConfig.Config.Present) != 0 || len(doguConfig.Config.Absent) != 0 {
+			dogus = append(dogus, dogu)
+		}
+	}
+	return dogus
+}
+
+// GetDogusWithChangedSensitiveConfig returns a list of dogus for which possible sensitive config changes are needed.
+func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleName {
+	var dogus []cescommons.SimpleName
+	for dogu, doguConfig := range config.Dogus {
+		if len(doguConfig.SensitiveConfig.Present) != 0 || len(doguConfig.SensitiveConfig.Absent) != 0 {
+			dogus = append(dogus, dogu)
+		}
+	}
+	return dogus
+}
+
+// censorValues censors all sensitive configuration data to make them unrecognisable.
+func (config Config) censorValues() Config {
+	for _, doguConfig := range config.Dogus {
+		for k := range doguConfig.SensitiveConfig.Present {
+			doguConfig.SensitiveConfig.Present[k] = censorValue
+		}
+	}
+	return config
+}
+
+func (config Config) validate() error {
 	var errs []error
-	for doguName, doguConfig := range configValidator.config.Dogus {
+	for doguName, doguConfig := range config.Dogus {
 		if doguName != doguConfig.DoguName {
 			errs = append(errs, fmt.Errorf("dogu name %q in map and dogu name %q in value are not equal", doguName, doguConfig.DoguName))
 		}
-		newConfigValidator()
 		errs = append(errs, doguConfig.validate())
 	}
-	errs = append(errs, configValidator.config.Global.validate())
+	errs = append(errs, config.Global.validate())
 
 	return errors.Join(errs...)
 }
 
-type combinedDoguConfigValidator struct {
-}
-
-func newCombinedDoguConfigValidator() *combinedDoguConfigValidator {
-	return &combinedDoguConfigValidator{}
-}
-
-func (configValidator *configValidator) validateCombined(config bpv2.Config) error {
+func (config CombinedDoguConfig) validate() error {
 	err := errors.Join(
-		configValidator.config.Config.validate(config.DoguName),
-		configValidator.config.SensitiveConfig.validate(config.DoguName),
-		configValidator.config.validateConflictingConfigKeys(),
+		config.Config.validate(config.DoguName),
+		config.SensitiveConfig.validate(config.DoguName),
+		config.validateConflictingConfigKeys(),
 	)
 
 	if err != nil {
@@ -78,7 +140,7 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 	return errors.Join(errorList...)
 }
 
-func (config bpv2.DoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
+func (config DoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
 	var errs []error
 
 	for configKey := range config.Present {

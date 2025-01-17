@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
@@ -15,7 +15,7 @@ import (
 )
 
 func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
-	var blueprintOperatorName = v2.SimpleComponentName("k8s-blueprint-operator")
+	var blueprintOperatorName = common.SimpleComponentName("k8s-blueprint-operator")
 	blueprintId := "myBlueprint"
 	testCtx := context.TODO()
 	version1, _ := semver.NewVersion("1.0")

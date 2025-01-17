@@ -3,8 +3,8 @@ package application
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -140,7 +140,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 		switch action {
 		case domain.ActionInstall:
 			logger.Info("install component")
-			newComponent := ecosystem.InstallComponent(v2.QualifiedComponentName{
+			newComponent := ecosystem.InstallComponent(common.QualifiedComponentName{
 				Namespace:  componentDiff.Expected.Namespace,
 				SimpleName: componentDiff.Name,
 			}, componentDiff.Expected.Version, componentDiff.Expected.DeployConfig)

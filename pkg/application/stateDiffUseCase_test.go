@@ -1,10 +1,10 @@
 package application
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -44,8 +44,8 @@ var (
 
 var (
 	internalTestError                      = domainservice.NewInternalError(assert.AnError, "internal error")
-	nginxStaticConfigKeyNginxKey1          = v2.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey1"}
-	nginxStaticConfigKeyNginxKey2          = v2.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey2"}
+	nginxStaticConfigKeyNginxKey1          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey1"}
+	nginxStaticConfigKeyNginxKey2          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey2"}
 	nginxStaticSensitiveConfigKeyNginxKey1 = nginxStaticConfigKeyNginxKey1
 	nginxStaticSensitiveConfigKeyNginxKey2 = nginxStaticConfigKeyNginxKey2
 )
@@ -312,25 +312,25 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id: "testBlueprint1",
 			EffectiveBlueprint: domain.EffectiveBlueprint{
-				Dogus: []v2.Dogu{
+				Dogus: []domain.Dogu{
 					{
 						Name:        postfixQualifiedDoguName,
 						Version:     mustParseVersion(t, "2.9.0"),
-						TargetState: v2.TargetStatePresent,
+						TargetState: domain.TargetStatePresent,
 					},
 					{
 						Name:        ldapQualifiedDoguName,
 						Version:     mustParseVersion(t, "1.2.3"),
-						TargetState: v2.TargetStatePresent,
+						TargetState: domain.TargetStatePresent,
 					},
 					{
 						Name:        nginxIngressQualifiedDoguName,
 						Version:     mustParseVersion(t, "1.8.5"),
-						TargetState: v2.TargetStatePresent,
+						TargetState: domain.TargetStatePresent,
 					},
 					{
 						Name:        nginxStaticQualifiedDoguName,
-						TargetState: v2.TargetStateAbsent,
+						TargetState: domain.TargetStateAbsent,
 					},
 				},
 			},
@@ -372,11 +372,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		expectedDoguDiffs := []domain.DoguDiff{
 			{
 				DoguName: "postfix",
-				Actual:   domain.DoguDiffState{InstallationState: v2.TargetStateAbsent},
+				Actual:   domain.DoguDiffState{InstallationState: domain.TargetStateAbsent},
 				Expected: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           mustParseVersion(t, "2.9.0"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				NeededActions: []domain.Action{domain.ActionInstall},
 			},
@@ -385,12 +385,12 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				Actual: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           mustParseVersion(t, "1.1.1"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:         "official",
 					Version:           mustParseVersion(t, "1.2.3"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			},
@@ -399,12 +399,12 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				Actual: domain.DoguDiffState{
 					Namespace:         "k8s",
 					Version:           mustParseVersion(t, "1.8.5"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:         "k8s",
 					Version:           mustParseVersion(t, "1.8.5"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				NeededActions: nil,
 			},
@@ -413,11 +413,11 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				Actual: domain.DoguDiffState{
 					Namespace:         "k8s",
 					Version:           mustParseVersion(t, "1.8.6"),
-					InstallationState: v2.TargetStatePresent,
+					InstallationState: domain.TargetStatePresent,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:         "k8s",
-					InstallationState: v2.TargetStateAbsent,
+					InstallationState: domain.TargetStateAbsent,
 				},
 				NeededActions: []domain.Action{domain.ActionUninstall},
 			},
@@ -429,12 +429,12 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id: "testBlueprint1",
 			EffectiveBlueprint: domain.EffectiveBlueprint{
-				Config: v2.Config{
-					Global: v2.GlobalConfig{
-						Present: map[v2.GlobalConfigKey]v2.GlobalConfigValue{
+				Config: domain.Config{
+					Global: domain.GlobalConfig{
+						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 							"globalKey1": "globalValue",
 						},
-						Absent: []v2.GlobalConfigKey{
+						Absent: []common.GlobalConfigKey{
 							"globalKey2",
 						},
 					},
@@ -494,19 +494,19 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id: "testBlueprint1",
 			EffectiveBlueprint: domain.EffectiveBlueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						nginxStaticQualifiedDoguName.SimpleName: {
 							DoguName: nginxStaticQualifiedDoguName.SimpleName,
-							Config: v2.DoguConfig{
-								Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
+							Config: domain.DoguConfig{
+								Present: map[common.DoguConfigKey]common.DoguConfigValue{
 									nginxStaticConfigKeyNginxKey1: "nginxVal1",
 								},
-								Absent: []v2.DoguConfigKey{
+								Absent: []common.DoguConfigKey{
 									nginxStaticConfigKeyNginxKey2,
 								},
 							},
-							SensitiveConfig: v2.SensitiveDoguConfig{},
+							SensitiveConfig: domain.SensitiveDoguConfig{},
 						},
 					},
 				},
@@ -579,15 +579,15 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id: "testBlueprint1",
 			EffectiveBlueprint: domain.EffectiveBlueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						nginxStatic: {
 							DoguName: nginxStatic,
-							SensitiveConfig: v2.SensitiveDoguConfig{
-								Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
+							SensitiveConfig: domain.SensitiveDoguConfig{
+								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 									nginxStaticSensitiveConfigKeyNginxKey1: "nginxVal1",
 								},
-								Absent: []v2.SensitiveDoguConfigKey{
+								Absent: []common.SensitiveDoguConfigKey{
 									nginxStaticSensitiveConfigKeyNginxKey2,
 								},
 							},
@@ -670,31 +670,31 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 	t.Run("all ok", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
-			Config: v2.Config{
-				Global: v2.GlobalConfig{
-					Present: map[v2.GlobalConfigKey]v2.GlobalConfigValue{
+			Config: domain.Config{
+				Global: domain.GlobalConfig{
+					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 						"globalKey1": "globalValue",
 					},
-					Absent: []v2.GlobalConfigKey{
+					Absent: []common.GlobalConfigKey{
 						"globalKey2",
 					},
 				},
-				Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 					nginxStaticQualifiedDoguName.SimpleName: {
 						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: v2.DoguConfig{
-							Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
+						Config: domain.DoguConfig{
+							Present: map[common.DoguConfigKey]common.DoguConfigValue{
 								nginxStaticConfigKeyNginxKey1: "nginxVal1",
 							},
-							Absent: []v2.DoguConfigKey{
+							Absent: []common.DoguConfigKey{
 								nginxStaticConfigKeyNginxKey2,
 							},
 						},
-						SensitiveConfig: v2.SensitiveDoguConfig{
-							Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
+						SensitiveConfig: domain.SensitiveDoguConfig{
+							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 								nginxStaticSensitiveConfigKeyNginxKey1: "nginxVal1",
 							},
-							Absent: []v2.SensitiveDoguConfigKey{
+							Absent: []common.SensitiveDoguConfigKey{
 								nginxStaticSensitiveConfigKeyNginxKey2,
 							},
 						},
@@ -747,31 +747,31 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 	t.Run("fail with internalError and notFoundError", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
-			Config: v2.Config{
-				Global: v2.GlobalConfig{
-					Present: map[v2.GlobalConfigKey]v2.GlobalConfigValue{
+			Config: domain.Config{
+				Global: domain.GlobalConfig{
+					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 						"globalKey1": "globalValue",
 					},
-					Absent: []v2.GlobalConfigKey{
+					Absent: []common.GlobalConfigKey{
 						"globalKey2",
 					},
 				},
-				Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 					nginxStaticQualifiedDoguName.SimpleName: {
 						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: v2.DoguConfig{
-							Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
+						Config: domain.DoguConfig{
+							Present: map[common.DoguConfigKey]common.DoguConfigValue{
 								nginxStaticConfigKeyNginxKey1: "nginxVal1",
 							},
-							Absent: []v2.DoguConfigKey{
+							Absent: []common.DoguConfigKey{
 								nginxStaticConfigKeyNginxKey2,
 							},
 						},
-						SensitiveConfig: v2.SensitiveDoguConfig{
-							Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
+						SensitiveConfig: domain.SensitiveDoguConfig{
+							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 								nginxStaticSensitiveConfigKeyNginxKey1: "nginxVal1",
 							},
-							Absent: []v2.SensitiveDoguConfigKey{
+							Absent: []common.SensitiveDoguConfigKey{
 								nginxStaticSensitiveConfigKeyNginxKey2,
 							},
 						},

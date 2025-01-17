@@ -1,9 +1,6 @@
 package ecosystem
 
-import (
-	"fmt"
-	"k8s.io/apimachinery/pkg/api/resource"
-)
+import "k8s.io/apimachinery/pkg/api/resource"
 
 type VolumeSize = resource.Quantity
 
@@ -21,7 +18,7 @@ func GetQuantityReference(quantityStr string) (*resource.Quantity, error) {
 	return quantityPtr, err
 }
 
-func GetQuantityString(quantity fmt.Stringer) string {
+func GetQuantityString(quantity *resource.Quantity) string {
 	if quantity == nil {
 		return ""
 	}

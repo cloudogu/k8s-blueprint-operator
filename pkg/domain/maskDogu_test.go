@@ -1,18 +1,15 @@
 package domain
 
 import (
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testing.T) {
-	dogu := bpv2.MaskDogu{Name: officialDogu1, TargetState: TargetStatePresent}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: TargetStatePresent}
 
 	err := dogu.validate()
 
@@ -20,7 +17,7 @@ func Test_MaskTargetDogu_validate_noErrorOnMissingVersionForPresentDogu(t *testi
 }
 
 func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := bpv2.MaskDogu{Name: officialDogu1, TargetState: TargetStateAbsent}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: TargetStateAbsent}
 
 	err := dogu.validate()
 
@@ -29,7 +26,7 @@ func Test_MaskTargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) 
 
 func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 	version, _ := core.ParseVersion("2018-1")
-	dogu := bpv2.MaskDogu{Name: officialDogu1, Version: version}
+	dogu := MaskDogu{Name: officialDogu1, Version: version}
 
 	err := dogu.validate()
 
@@ -38,7 +35,7 @@ func Test_MaskTargetDogu_validate_defaultToPresentState(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
-	dogu := bpv2.MaskDogu{Name: cescommons.QualifiedName{Namespace: "official"}}
+	dogu := MaskDogu{Name: cescommons.QualifiedName{Namespace: "official"}}
 
 	err := dogu.validate()
 
@@ -47,7 +44,7 @@ func Test_MaskTargetDogu_validate_errorOnMissingNameForDogu(t *testing.T) {
 }
 
 func Test_MaskTargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
-	dogu := bpv2.MaskDogu{Name: officialDogu1, TargetState: -1}
+	dogu := MaskDogu{Name: officialDogu1, TargetState: -1}
 
 	err := dogu.validate()
 

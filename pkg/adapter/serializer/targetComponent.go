@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/blueprint-lib/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
@@ -55,8 +56,8 @@ func (in *DeployConfig) DeepCopyInto(out *DeployConfig) {
 }
 
 // ConvertComponents takes a slice of TargetComponent and returns a new slice with their DTO equivalent.
-func ConvertComponents(components []TargetComponent) ([]v2.Component, error) {
-	var convertedComponents []v2.Component
+func ConvertComponents(components []TargetComponent) ([]domain.Component, error) {
+	var convertedComponents []domain.Component
 	var errorList []error
 
 	for _, component := range components {
@@ -75,13 +76,13 @@ func ConvertComponents(components []TargetComponent) ([]v2.Component, error) {
 			}
 		}
 
-		name, err := v2.QualifiedComponentNameFromString(component.Name)
+		name, err := common.QualifiedComponentNameFromString(component.Name)
 		if err != nil {
 			errorList = append(errorList, err)
 			continue
 		}
 
-		convertedComponents = append(convertedComponents, v2.Component{
+		convertedComponents = append(convertedComponents, domain.Component{
 			Name:         name,
 			Version:      version,
 			TargetState:  newState,
@@ -98,9 +99,9 @@ func ConvertComponents(components []TargetComponent) ([]v2.Component, error) {
 }
 
 // ConvertToComponentDTOs takes a slice of Component DTOs and returns a new slice with their domain equivalent.
-func ConvertToComponentDTOs(components []v2.Component) ([]TargetComponent, error) {
+func ConvertToComponentDTOs(components []domain.Component) ([]TargetComponent, error) {
 	var errorList []error
-	converted := util.Map(components, func(component v2.Component) TargetComponent {
+	converted := util.Map(components, func(component domain.Component) TargetComponent {
 		newState, err := ToSerializerTargetState(component.TargetState)
 		errorList = append(errorList, err)
 

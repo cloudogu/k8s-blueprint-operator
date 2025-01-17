@@ -2,7 +2,7 @@ package ecosystem
 
 import (
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/blueprint-lib/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -16,7 +16,7 @@ var (
 
 func TestInstallComponent(t *testing.T) {
 	type args struct {
-		componentName v2.QualifiedComponentName
+		componentName common.QualifiedComponentName
 		version       *semver.Version
 		deployConfig  DeployConfig
 	}
@@ -48,7 +48,7 @@ func TestInstallComponent(t *testing.T) {
 
 func TestComponentInstallation_Upgrade(t *testing.T) {
 	type fields struct {
-		Name               v2.QualifiedComponentName
+		Name               common.QualifiedComponentName
 		Version            *semver.Version
 		Status             string
 		PersistenceContext map[string]interface{}

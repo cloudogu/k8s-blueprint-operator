@@ -3,7 +3,6 @@ package application
 import (
 	"context"
 	"errors"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"testing"
 
@@ -131,8 +130,8 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
 			Status: domain.StatusPhaseNew,
-			Blueprint: v2.Blueprint{Dogus: []v2.Dogu{
-				{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: v2.TargetStatePresent},
+			Blueprint: domain.Blueprint{Dogus: []domain.Dogu{
+				{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "DoguWithNoVersion"}, TargetState: domain.TargetStatePresent},
 			}},
 		}, nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(assert.AnError)

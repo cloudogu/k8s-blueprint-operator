@@ -1,10 +1,10 @@
 package application
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	liberrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -479,9 +479,9 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 
-		updatedEntries, err := globalConfig.Set(diff1.Key, v2.GlobalConfigValue(diff1.Expected.Value))
+		updatedEntries, err := globalConfig.Set(diff1.Key, common.GlobalConfigValue(diff1.Expected.Value))
 		require.NoError(t, err)
-		updatedEntries, err = updatedEntries.Set(diff2.Key, v2.GlobalConfigValue(diff2.Expected.Value))
+		updatedEntries, err = updatedEntries.Set(diff2.Key, common.GlobalConfigValue(diff2.Expected.Value))
 		require.NoError(t, err)
 
 		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
@@ -706,7 +706,7 @@ func TestNewEcosystemConfigUseCase(t *testing.T) {
 
 func getSetDoguConfigEntryDiff(key, value string, doguName cescommons.SimpleName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
-		Key: v2.DoguConfigKey{
+		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},
@@ -719,7 +719,7 @@ func getSetDoguConfigEntryDiff(key, value string, doguName cescommons.SimpleName
 
 func getRemoveDoguConfigEntryDiff(key string, doguName cescommons.SimpleName) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
-		Key: v2.DoguConfigKey{
+		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},
@@ -729,7 +729,7 @@ func getRemoveDoguConfigEntryDiff(key string, doguName cescommons.SimpleName) do
 
 func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescommons.SimpleName, action domain.ConfigAction) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
-		Key: v2.SensitiveDoguConfigKey{
+		Key: common.SensitiveDoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},
@@ -742,7 +742,7 @@ func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescom
 
 func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName cescommons.SimpleName) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
-		Key: v2.SensitiveDoguConfigKey{
+		Key: common.SensitiveDoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},
@@ -752,7 +752,7 @@ func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName cescommons.Simpl
 
 func getSetGlobalConfigEntryDiff(key, value string) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
-		Key: v2.GlobalConfigKey(key),
+		Key: common.GlobalConfigKey(key),
 		Expected: domain.GlobalConfigValueState{
 			Value: value,
 		},
@@ -762,7 +762,7 @@ func getSetGlobalConfigEntryDiff(key, value string) domain.GlobalConfigEntryDiff
 
 func getRemoveGlobalConfigEntryDiff(key string) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
-		Key:          v2.GlobalConfigKey(key),
+		Key:          common.GlobalConfigKey(key),
 		NeededAction: domain.ConfigActionRemove,
 	}
 }

@@ -3,10 +3,10 @@ package blueprintV2
 import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +27,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 	serializer := Serializer{}
 	quantity := resource.MustParse("2Gi")
 	type args struct {
-		spec v2.Blueprint
+		spec domain.Blueprint
 	}
 	tests := []struct {
 		name    string
@@ -37,16 +37,16 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 	}{
 		{
 			"empty blueprint",
-			args{spec: v2.Blueprint{}},
+			args{spec: domain.Blueprint{}},
 			`{"blueprintApi":"v2","config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
 			"dogus in blueprint",
-			args{spec: v2.Blueprint{
-				Dogus: []v2.Dogu{
-					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: v2.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
-					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: v2.TargetStateAbsent},
+			args{spec: domain.Blueprint{
+				Dogus: []domain.Dogu{
+					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
+					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present","platformConfig":{"resource":{"minVolumeSize":"2Gi"},"reverseProxy":{"maxBodySize":"2Gi","rewriteTarget":"/","additionalConfig":"additional"}}},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent","platformConfig":{"resource":{},"reverseProxy":{}}}],"config":{"global":{}}}`,
@@ -54,10 +54,10 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		},
 		{
 			"components in blueprint",
-			args{spec: v2.Blueprint{
-				Components: []v2.Component{
-					{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: v2.TargetStatePresent},
-					{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: v2.TargetStateAbsent, DeployConfig: map[string]interface{}{"deployNamespace": "ecosystem", "overwriteConfig": map[string]string{"key": "value"}}},
+			args{spec: domain.Blueprint{
+				Components: []domain.Component{
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent, DeployConfig: map[string]interface{}{"deployNamespace": "ecosystem", "overwriteConfig": map[string]string{"key": "value"}}},
 				},
 			}},
 			`{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"","targetState":"absent","deployConfig":{"deployNamespace":"ecosystem","overwriteConfig":{"key":"value"}}}],"config":{"global":{}}}`,
@@ -65,12 +65,12 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		},
 		{
 			"regular dogu config in blueprint",
-			args{spec: v2.Blueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+			args{spec: domain.Blueprint{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						"ldap": {
-							Config: v2.DoguConfig{
-								Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
+							Config: domain.DoguConfig{
+								Present: map[common.DoguConfigKey]common.DoguConfigValue{
 									{
 										DoguName: "ldap",
 										Key:      "container_config/memory_limit",
@@ -84,7 +84,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 										Key:      "password_change/notification_enabled",
 									}: "true",
 								},
-								Absent: []v2.DoguConfigKey{
+								Absent: []common.DoguConfigKey{
 									{
 										DoguName: "ldap",
 										Key:      "password_change/mail_subject",
@@ -108,12 +108,12 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		},
 		{
 			"sensitive dogu config in blueprint",
-			args{spec: v2.Blueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+			args{spec: domain.Blueprint{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						"redmine": {
-							SensitiveConfig: v2.SensitiveDoguConfig{
-								Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
+							SensitiveConfig: domain.SensitiveDoguConfig{
+								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 									{
 										DoguName: "redmine",
 										Key:      "my-secret-password",
@@ -123,7 +123,7 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 										Key:      "my-secret-password-2",
 									}: "password-value-2",
 								},
-								Absent: []v2.SensitiveDoguConfigKey{{
+								Absent: []common.SensitiveDoguConfigKey{{
 									DoguName: "redmine",
 									Key:      "my-secret-password-3",
 								}},
@@ -137,15 +137,15 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		},
 		{
 			"global config in blueprint",
-			args{spec: v2.Blueprint{
-				Config: v2.Config{
-					Global: v2.GlobalConfig{
-						Present: map[v2.GlobalConfigKey]v2.GlobalConfigValue{
+			args{spec: domain.Blueprint{
+				Config: domain.Config{
+					Global: domain.GlobalConfig{
+						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 							"key_provider": "pkcs1v15",
 							"fqdn":         "ces.example.com",
 							"admin_group":  "ces-admin",
 						},
-						Absent: []v2.GlobalConfigKey{
+						Absent: []common.GlobalConfigKey{
 							"default_dogu",
 							"some_other_key",
 						},
@@ -158,9 +158,9 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 		{
 			name: "component config",
 			args: args{
-				spec: v2.Blueprint{
-					Components: []v2.Component{
-						{Name: v2.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
+				spec: domain.Blueprint{
+					Components: []domain.Component{
+						{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
 					},
 				},
 			},
@@ -181,8 +181,8 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 
 func TestSerializeBlueprint_error(t *testing.T) {
 	serializer := Serializer{}
-	blueprint := v2.Blueprint{
-		Dogus: []v2.Dogu{
+	blueprint := domain.Blueprint{
+		Dogus: []domain.Dogu{
 			{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: -1},
 		},
 	}
@@ -202,32 +202,32 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    v2.Blueprint
+		want    domain.Blueprint
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			"empty blueprint",
 			args{spec: `{"blueprintApi":"v2"}`},
-			v2.Blueprint{},
+			domain.Blueprint{},
 			assert.NoError,
 		},
 		{
 			"dogus in blueprint",
 			args{spec: `{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
-			v2.Blueprint{
-				Dogus: []v2.Dogu{
-					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: v2.TargetStatePresent},
-					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: v2.TargetStateAbsent},
+			domain.Blueprint{
+				Dogus: []domain.Dogu{
+					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent},
+					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},
 		{
 			"components in blueprint",
 			args{spec: `{"blueprintApi":"v2","components":[{"name":"k8s/blueprint-operator","version":"0.2.1-1","targetState":"present"},{"name":"k8s/dogu-operator","version":"3.2.1-1","targetState":"absent"}]}`},
-			v2.Blueprint{
-				Components: []v2.Component{
-					{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: v2.TargetStatePresent},
-					{Name: v2.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: v2.TargetStateAbsent},
+			domain.Blueprint{
+				Components: []domain.Component{
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "blueprint-operator"}, Version: compVersion0211, TargetState: domain.TargetStatePresent},
+					{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "dogu-operator"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
 				},
 			},
 			assert.NoError,
@@ -235,13 +235,13 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		{
 			"regular dogu config in blueprint",
 			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"ldap":{"config":{"present":{"container_config/memory_limit":"500m","container_config/swap_limit":"500m","password_change/notification_enabled":"true"},"absent":["password_change/mail_subject","password_change/mail_text","user_search_size_limit"]}}}}}`},
-			v2.Blueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+			domain.Blueprint{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						"ldap": {
 							DoguName: "ldap",
-							Config: v2.DoguConfig{
-								Present: map[v2.DoguConfigKey]v2.DoguConfigValue{
+							Config: domain.DoguConfig{
+								Present: map[common.DoguConfigKey]common.DoguConfigValue{
 									{
 										DoguName: "ldap",
 										Key:      "container_config/memory_limit",
@@ -255,7 +255,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 										Key:      "password_change/notification_enabled",
 									}: "true",
 								},
-								Absent: []v2.DoguConfigKey{
+								Absent: []common.DoguConfigKey{
 									{
 										DoguName: "ldap",
 										Key:      "password_change/mail_subject",
@@ -279,13 +279,13 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		{
 			"sensitive dogu config in blueprint",
 			args{spec: `{"blueprintApi":"v2","config":{"dogus":{"redmine":{"sensitiveConfig":{"present":{"my-secret-password":"password-value","my-secret-password-2":"password-value-2"},"absent":["my-secret-password-3"]}}}}}`},
-			v2.Blueprint{
-				Config: v2.Config{
-					Dogus: map[cescommons.SimpleName]v2.CombinedDoguConfig{
+			domain.Blueprint{
+				Config: domain.Config{
+					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 						"redmine": {
 							DoguName: "redmine",
-							SensitiveConfig: v2.SensitiveDoguConfig{
-								Present: map[v2.SensitiveDoguConfigKey]v2.SensitiveDoguConfigValue{
+							SensitiveConfig: domain.SensitiveDoguConfig{
+								Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 									{
 										DoguName: "redmine",
 										Key:      "my-secret-password",
@@ -295,7 +295,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 										Key:      "my-secret-password-2",
 									}: "password-value-2",
 								},
-								Absent: []v2.SensitiveDoguConfigKey{{
+								Absent: []common.SensitiveDoguConfigKey{{
 									DoguName: "redmine",
 									Key:      "my-secret-password-3",
 								}},
@@ -309,15 +309,15 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		{
 			"global config in blueprint",
 			args{spec: `{"blueprintApi":"v2","config":{"global":{"present":{"admin_group":"ces-admin","fqdn":"ces.example.com","key_provider":"pkcs1v15"},"absent":["default_dogu","some_other_key"]}}}`},
-			v2.Blueprint{
-				Config: v2.Config{
-					Global: v2.GlobalConfig{
-						Present: map[v2.GlobalConfigKey]v2.GlobalConfigValue{
+			domain.Blueprint{
+				Config: domain.Config{
+					Global: domain.GlobalConfig{
+						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
 							"key_provider": "pkcs1v15",
 							"fqdn":         "ces.example.com",
 							"admin_group":  "ces-admin",
 						},
-						Absent: []v2.GlobalConfigKey{
+						Absent: []common.GlobalConfigKey{
 							"default_dogu",
 							"some_other_key",
 						},
@@ -329,9 +329,9 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		{
 			"component package config",
 			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\":\"value\"}}],\"config\":{\"global\":{}}}"},
-			v2.Blueprint{
-				Components: []v2.Component{
-					{Name: v2.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
+			domain.Blueprint{
+				Components: []domain.Component{
+					{Name: common.QualifiedComponentName{SimpleName: "name", Namespace: "k8s"}, Version: compVersion3211, DeployConfig: map[string]interface{}{"key": "value"}},
 				},
 			},
 			assert.NoError,
@@ -339,7 +339,7 @@ func TestDeserializeBlueprint_ok(t *testing.T) {
 		{
 			"component package config error",
 			args{spec: "{\"blueprintApi\":\"v2\",\"components\":[{\"name\":\"k8s/name\",\"version\":\"3.2.1-1\",\"targetState\":\"present\",\"deployConfig\":{\"key\"\":\"\"::\"value:{\"}}],\"config\":{\"global\":{}}}"},
-			v2.Blueprint{},
+			domain.Blueprint{},
 			assert.Error,
 		},
 	}

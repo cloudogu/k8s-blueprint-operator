@@ -2,10 +2,10 @@ package application
 
 import (
 	"context"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,8 +29,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
@@ -70,8 +70,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
@@ -125,8 +125,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
@@ -167,8 +167,8 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
@@ -213,7 +213,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			ComponentDiffs: domain.ComponentDiffs{},
 			DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 				testDoguSimpleName: {{
-					Key:          v2.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
 					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
 					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 					NeededAction: domain.ConfigActionSet}},
@@ -221,16 +221,16 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
-		testDogu := v2.Dogu{
+		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
-			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []v2.Dogu{testDogu}},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{testDogu}},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
 			Status:             "",
@@ -261,7 +261,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			ComponentDiffs: domain.ComponentDiffs{},
 			DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 				testDoguSimpleName: {{
-					Key:          v2.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
 					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
 					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 					NeededAction: domain.ConfigActionSet}},
@@ -269,16 +269,16 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
-		testDogu := v2.Dogu{
+		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
-			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []v2.Dogu{testDogu}},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{testDogu}},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
 			Status:             "",
@@ -309,7 +309,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			ComponentDiffs: domain.ComponentDiffs{},
 			DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 				testDoguSimpleName: {{
-					Key:          v2.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
 					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
 					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 					NeededAction: domain.ConfigActionSet}},
@@ -317,16 +317,16 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
-		testDogu := v2.Dogu{
+		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
-			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []v2.Dogu{testDogu}},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{testDogu}},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
 			Status:             "",
@@ -358,7 +358,7 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			ComponentDiffs: domain.ComponentDiffs{},
 			DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 				testDoguSimpleName: {{
-					Key:          v2.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
+					Key:          common.DoguConfigKey{DoguName: testDoguSimpleName, Key: "testKey"},
 					Actual:       domain.DoguConfigValueState{Value: "changed", Exists: true},
 					Expected:     domain.DoguConfigValueState{Value: "initial", Exists: true},
 					NeededAction: domain.ConfigActionSet}},
@@ -366,16 +366,16 @@ func TestDoguRestartUseCase_TriggerDoguRestarts(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
 			GlobalConfigDiffs:        domain.GlobalConfigDiffs{},
 		}
-		testDogu := v2.Dogu{
+		testDogu := domain.Dogu{
 			Name:        cescommons.QualifiedName{SimpleName: testDoguSimpleName, Namespace: "testing"},
 			Version:     core.Version{Raw: "1.0.0-1", Major: 1, Extra: 1},
 			TargetState: 0,
 		}
 		testBlueprint := domain.BlueprintSpec{
 			Id:                 testBlueprintId,
-			Blueprint:          v2.Blueprint{},
-			BlueprintMask:      v2.BlueprintMask{},
-			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []v2.Dogu{testDogu}},
+			Blueprint:          domain.Blueprint{},
+			BlueprintMask:      domain.BlueprintMask{},
+			EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{testDogu}},
 			StateDiff:          testStateDiff,
 			Config:             domain.BlueprintConfiguration{},
 			Status:             "",

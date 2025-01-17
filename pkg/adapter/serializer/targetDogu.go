@@ -3,11 +3,9 @@ package serializer
 import (
 	"errors"
 	"fmt"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
@@ -40,8 +38,8 @@ type PlatformConfig struct {
 	ReverseProxyConfig ReverseProxyConfig `json:"reverseProxy,omitempty"`
 }
 
-func ConvertDogus(dogus []TargetDogu) ([]bpv2.Dogu, error) {
-	var convertedDogus []bpv2.Dogu
+func ConvertDogus(dogus []TargetDogu) ([]domain.Dogu, error) {
+	var convertedDogus []domain.Dogu
 	var errorList []error
 
 	for _, dogu := range dogus {
@@ -78,15 +76,15 @@ func ConvertDogus(dogus []TargetDogu) ([]bpv2.Dogu, error) {
 			continue
 		}
 
-		convertedDogus = append(convertedDogus, bpv2.Dogu{
+		convertedDogus = append(convertedDogus, domain.Dogu{
 			Name:          name,
 			Version:       version,
 			TargetState:   newState,
 			MinVolumeSize: minVolumeSize,
-			ReverseProxyConfig: bpv2.ReverseProxyConfig{
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      maxBodySize,
-				RewriteTarget:    bpv2.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
-				AdditionalConfig: bpv2.AdditionalConfig(dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig),
+				RewriteTarget:    ecosystem.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig),
 			},
 		})
 	}
@@ -99,9 +97,9 @@ func ConvertDogus(dogus []TargetDogu) ([]bpv2.Dogu, error) {
 	return convertedDogus, err
 }
 
-func ConvertToDoguDTOs(dogus []bpv2.Dogu) ([]TargetDogu, error) {
+func ConvertToDoguDTOs(dogus []domain.Dogu) ([]TargetDogu, error) {
 	var errorList []error
-	converted := util.Map(dogus, func(dogu bpv2.Dogu) TargetDogu {
+	converted := util.Map(dogus, func(dogu domain.Dogu) TargetDogu {
 		newState, err := ToSerializerTargetState(dogu.TargetState)
 		errorList = append(errorList, err)
 
@@ -115,7 +113,7 @@ func ConvertToDoguDTOs(dogus []bpv2.Dogu) ([]TargetDogu, error) {
 	return converted, errors.Join(errorList...)
 }
 
-func convertPlatformConfigDTO(dogu bpv2.Dogu) PlatformConfig {
+func convertPlatformConfigDTO(dogu domain.Dogu) PlatformConfig {
 	config := PlatformConfig{}
 	config.ResourceConfig = convertResourceConfigDTO(dogu)
 	config.ReverseProxyConfig = convertReverseProxyConfigDTO(dogu)
@@ -123,7 +121,7 @@ func convertPlatformConfigDTO(dogu bpv2.Dogu) PlatformConfig {
 	return config
 }
 
-func convertReverseProxyConfigDTO(dogu bpv2.Dogu) ReverseProxyConfig {
+func convertReverseProxyConfigDTO(dogu domain.Dogu) ReverseProxyConfig {
 	config := ReverseProxyConfig{}
 	config.RewriteTarget = string(dogu.ReverseProxyConfig.RewriteTarget)
 	config.AdditionalConfig = string(dogu.ReverseProxyConfig.AdditionalConfig)
@@ -132,7 +130,7 @@ func convertReverseProxyConfigDTO(dogu bpv2.Dogu) ReverseProxyConfig {
 	return config
 }
 
-func convertResourceConfigDTO(dogu bpv2.Dogu) ResourceConfig {
+func convertResourceConfigDTO(dogu domain.Dogu) ResourceConfig {
 	config := ResourceConfig{}
 	config.MinVolumeSize = ecosystem.GetQuantityString(dogu.MinVolumeSize)
 

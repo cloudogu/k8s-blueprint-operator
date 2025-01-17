@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
 
@@ -43,14 +43,14 @@ type ComponentInstallationRepository interface {
 	//  - the ecosystem.ComponentInstallation or
 	//  - a NotFoundError if the component is not installed or
 	//  - an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName v2.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
+	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
 	// GetAll returns
 	//  - the installation info of all installed components or
 	//  - an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[v2.SimpleComponentName]*ecosystem.ComponentInstallation, error)
+	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
 	// Delete deletes the component by name from the ecosystem.
 	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName v2.SimpleComponentName) error
+	Delete(ctx context.Context, componentName common.SimpleComponentName) error
 	// Create creates the ecosystem.ComponentInstallation in the ecosystem.
 	// returns an InternalError if there is an error.
 	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error

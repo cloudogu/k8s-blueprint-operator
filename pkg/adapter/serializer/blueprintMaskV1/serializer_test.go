@@ -2,7 +2,6 @@ package blueprintMaskV1
 
 import (
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -19,7 +18,7 @@ var (
 func TestSerializeBlueprintMask_ok(t *testing.T) {
 	serializer := Serializer{}
 	type args struct {
-		spec v2.BlueprintMask
+		spec domain.BlueprintMask
 	}
 	tests := []struct {
 		name    string
@@ -29,16 +28,16 @@ func TestSerializeBlueprintMask_ok(t *testing.T) {
 	}{
 		{
 			"empty blueprint mask",
-			args{spec: v2.BlueprintMask{}},
+			args{spec: domain.BlueprintMask{}},
 			`{"blueprintMaskApi":"v1","blueprintMaskId":"","dogus":[]}`,
 			assert.NoError,
 		},
 		{
 			"dogus in blueprint mask",
-			args{spec: v2.BlueprintMask{
-				Dogus: []v2.MaskDogu{
-					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1_2_0_1, TargetState: v2.TargetStatePresent},
-					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3_0_2_2, TargetState: v2.TargetStateAbsent},
+			args{spec: domain.BlueprintMask{
+				Dogus: []domain.MaskDogu{
+					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				},
 			}},
 			`{"blueprintMaskApi":"v1","blueprintMaskId":"","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`,
@@ -58,8 +57,8 @@ func TestSerializeBlueprintMask_ok(t *testing.T) {
 
 func TestSerializeBlueprintMask_error(t *testing.T) {
 	serializer := Serializer{}
-	mask := v2.BlueprintMask{
-		Dogus: []v2.MaskDogu{
+	mask := domain.BlueprintMask{
+		Dogus: []domain.MaskDogu{
 			{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1_2_0_1, TargetState: -1},
 		},
 	}
@@ -79,22 +78,22 @@ func TestDeserializeBlueprintMask_ok(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    v2.BlueprintMask
+		want    domain.BlueprintMask
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			"empty blueprint mask",
 			args{spec: `{"blueprintMaskApi":"v1"}`},
-			v2.BlueprintMask{},
+			domain.BlueprintMask{},
 			assert.NoError,
 		},
 		{
 			"dogus in blueprint mask",
 			args{spec: `{"blueprintMaskApi":"v1","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present"},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent"}]}`},
-			v2.BlueprintMask{
-				Dogus: []v2.MaskDogu{
-					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1_2_0_1, TargetState: v2.TargetStatePresent},
-					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3_0_2_2, TargetState: v2.TargetStateAbsent},
+			domain.BlueprintMask{
+				Dogus: []domain.MaskDogu{
+					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1_2_0_1, TargetState: domain.TargetStatePresent},
+					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3_0_2_2, TargetState: domain.TargetStateAbsent},
 				}},
 			assert.NoError,
 		},

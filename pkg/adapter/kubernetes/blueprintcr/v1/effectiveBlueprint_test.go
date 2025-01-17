@@ -1,17 +1,15 @@
 package v1
 
 import (
-	"testing"
-
 	"github.com/Masterminds/semver/v3"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
-	bpv2 "github.com/cloudogu/blueprint-lib/v2"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"testing"
 )
 
 var (
@@ -28,35 +26,35 @@ var (
 
 func TestConvertToEffectiveBlueprint(t *testing.T) {
 	//given
-	dogus := []bpv2.Dogu{
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: bpv2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: bpv2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: bpv2.TargetStatePresent},
+	dogus := []domain.Dogu{
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
-	components := []bpv2.Component{
-		{Name: bpv2.QualifiedComponentName{SimpleName: "component1", Namespace: "k8s"}, Version: nil, TargetState: bpv2.TargetStateAbsent},
-		{Name: bpv2.QualifiedComponentName{SimpleName: "component2", Namespace: "k8s"}, Version: nil, TargetState: bpv2.TargetStateAbsent},
-		{Name: bpv2.QualifiedComponentName{SimpleName: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: bpv2.TargetStatePresent},
-		{Name: bpv2.QualifiedComponentName{SimpleName: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
+	components := []domain.Component{
+		{Name: common.QualifiedComponentName{SimpleName: "component1", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component2", Namespace: "k8s"}, Version: nil, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{SimpleName: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{SimpleName: "component4", Namespace: "k8s-testing"}, Version: compVersion1233},
 	}
 	blueprint := domain.EffectiveBlueprint{
 		Dogus:      dogus,
 		Components: components,
-		Config: bpv2.Config{
-			Dogus: map[cescommons.SimpleName]bpv2.CombinedDoguConfig{
+		Config: domain.Config{
+			Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 				"my-dogu": {
-					Config: bpv2.DoguConfig{
-						Present: map[bpv2.DoguConfigKey]bpv2.DoguConfigValue{
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config",
 							}: "42",
 						},
 					},
-					SensitiveConfig: bpv2.SensitiveDoguConfig{
-						Present: map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue{
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
@@ -65,7 +63,7 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 					},
 				},
 			},
-			Global: bpv2.GlobalConfig{Absent: []bpv2.GlobalConfigKey{"test/key"}},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}
 
@@ -154,36 +152,36 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	blueprint, err := ConvertToEffectiveBlueprintDomain(dto)
 
 	//then
-	dogus := []bpv2.Dogu{
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: bpv2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: bpv2.TargetStateAbsent},
-		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: bpv2.TargetStatePresent},
+	dogus := []domain.Dogu{
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
+		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
 	}
 
-	components := []bpv2.Component{
-		{Name: bpv2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: bpv2.TargetStateAbsent},
-		{Name: bpv2.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: bpv2.TargetStateAbsent},
-		{Name: bpv2.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, TargetState: bpv2.TargetStatePresent},
-		{Name: bpv2.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
+	components := []domain.Component{
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, TargetState: domain.TargetStateAbsent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, TargetState: domain.TargetStatePresent},
+		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
 	}
 	expected := domain.EffectiveBlueprint{
 		Dogus:      dogus,
 		Components: components,
-		Config: bpv2.Config{
-			Dogus: map[cescommons.SimpleName]bpv2.CombinedDoguConfig{
+		Config: domain.Config{
+			Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
 				"my-dogu": {
 					DoguName: "my-dogu",
-					Config: bpv2.DoguConfig{
-						Present: map[bpv2.DoguConfigKey]bpv2.DoguConfigValue{
+					Config: domain.DoguConfig{
+						Present: map[common.DoguConfigKey]common.DoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config",
 							}: "42",
 						},
 					},
-					SensitiveConfig: bpv2.SensitiveDoguConfig{
-						Present: map[bpv2.SensitiveDoguConfigKey]bpv2.SensitiveDoguConfigValue{
+					SensitiveConfig: domain.SensitiveDoguConfig{
+						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 							{
 								DoguName: "my-dogu",
 								Key:      "config-encrypted",
@@ -192,7 +190,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 					},
 				},
 			},
-			Global: bpv2.GlobalConfig{Absent: []bpv2.GlobalConfigKey{"test/key"}},
+			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
 		},
 	}
 
