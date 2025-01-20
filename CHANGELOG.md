@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- [#103] Extract blueprint structs and associated functionality and move it into blueprint-lib 
+  - only that code was extracted that handles JSON parsing and superficial conversion in order to enable other modules
+  - to parse different blueprint versions.
+
+### Fixed
+- Fix autogeneration boilerplate text to match with the current make target ``
+
+### Security
+- Fix CVE-2024-45338 from golang.org/x/net
 
 ## [v2.2.2] - 2024-12-19
 ### Fixed
