@@ -1,10 +1,12 @@
 package v1
 
 import (
+	bpentities "github.com/cloudogu/blueprint-lib/v2/entities"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-registry-lib/config"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type Config struct {
@@ -28,24 +30,24 @@ type presentAbsentConfig struct {
 	Absent  []string          `json:"absent,omitempty"`
 }
 
-func ConvertToConfigDTO(config domain.Config) Config {
-	var dogus map[string]CombinedDoguConfig
+func ConvertToConfigDTO(config domain.Config) bpentities.TargetConfig {
+	var dogus map[string]bpentities.CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
-		dogus = make(map[string]CombinedDoguConfig, len(config.Dogus))
+		dogus = make(map[string]bpentities.CombinedDoguConfig, len(config.Dogus))
 		for doguName, doguConfig := range config.Dogus {
 			dogus[string(doguName)] = convertToCombinedDoguConfigDTO(doguConfig)
 		}
 	}
 
-	return Config{
+	return bpentities.TargetConfig{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDTO(config.Global),
 	}
 }
 
-func ConvertToConfigDomain(config Config) domain.Config {
+func ConvertToConfigDomain(config bpentities.TargetConfig) domain.Config {
 	var dogus map[cescommons.SimpleName]domain.CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -62,14 +64,14 @@ func ConvertToConfigDomain(config Config) domain.Config {
 	}
 }
 
-func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) CombinedDoguConfig {
-	return CombinedDoguConfig{
+func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) bpentities.CombinedDoguConfig {
+	return bpentities.CombinedDoguConfig{
 		Config:          convertToDoguConfigDTO(config.Config),
 		SensitiveConfig: convertToSensitiveDoguConfigDTO(config.SensitiveConfig),
 	}
 }
 
-func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfig) domain.CombinedDoguConfig {
+func convertToCombinedDoguConfigDomain(doguName string, config bpentities.CombinedDoguConfig) domain.CombinedDoguConfig {
 	return domain.CombinedDoguConfig{
 		DoguName:        cescommons.SimpleName(doguName),
 		Config:          convertToDoguConfigDomain(doguName, config.Config),
@@ -77,7 +79,7 @@ func convertToCombinedDoguConfigDomain(doguName string, config CombinedDoguConfi
 	}
 }
 
-func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
+func convertToDoguConfigDTO(config domain.DoguConfig) bpentities.DoguConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -98,13 +100,13 @@ func convertToDoguConfigDTO(config domain.DoguConfig) DoguConfig {
 		}
 	}
 
-	return DoguConfig{
+	return bpentities.DoguConfig{
 		Present: present,
 		Absent:  absent,
 	}
 }
 
-func convertToDoguConfigDomain(doguName string, config DoguConfig) domain.DoguConfig {
+func convertToDoguConfigDomain(doguName string, config bpentities.DoguConfig) domain.DoguConfig {
 	var present map[common.DoguConfigKey]common.DoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -138,7 +140,7 @@ func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
 	}
 }
 
-func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) SensitiveDoguConfig {
+func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) bpentities.SensitiveDoguConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -159,13 +161,13 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) Sensitiv
 		}
 	}
 
-	return SensitiveDoguConfig{
+	return bpentities.SensitiveDoguConfig{
 		Present: present,
 		Absent:  absent,
 	}
 }
 
-func convertToSensitiveDoguConfigDomain(doguName string, doguConfig SensitiveDoguConfig) domain.SensitiveDoguConfig {
+func convertToSensitiveDoguConfigDomain(doguName string, doguConfig bpentities.SensitiveDoguConfig) domain.SensitiveDoguConfig {
 	var present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -202,7 +204,7 @@ func convertToSensitiveDoguConfigKeyDomain(doguName, key string) common.Sensitiv
 	}
 }
 
-func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
+func convertToGlobalConfigDTO(config domain.GlobalConfig) bpentities.GlobalConfig {
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -223,13 +225,13 @@ func convertToGlobalConfigDTO(config domain.GlobalConfig) GlobalConfig {
 		}
 	}
 
-	return GlobalConfig{
+	return bpentities.GlobalConfig{
 		Present: present,
 		Absent:  absent,
 	}
 }
 
-func convertToGlobalConfigDomain(config GlobalConfig) domain.GlobalConfig {
+func convertToGlobalConfigDomain(config bpentities.GlobalConfig) domain.GlobalConfig {
 	var present map[common.GlobalConfigKey]common.GlobalConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier

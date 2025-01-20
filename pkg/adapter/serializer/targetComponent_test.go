@@ -2,11 +2,15 @@ package serializer
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/Masterminds/semver/v3"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/cloudogu/blueprint-lib/v2/entities"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
@@ -16,7 +20,7 @@ var (
 
 func TestConvertComponents(t *testing.T) {
 	type args struct {
-		components []TargetComponent
+		components []entities.TargetComponent
 	}
 	tests := []struct {
 		name    string
@@ -32,37 +36,37 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "empty list",
-			args:    args{components: []TargetComponent{}},
+			args:    args{components: []entities.TargetComponent{}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "normal component",
-			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present", DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
+			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present", DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
 			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: 0, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: "1.", TargetState: "present"}}},
+			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: "1.", TargetState: "present"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "invalid component name",
-			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0", TargetState: "present"}}},
+			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0", TargetState: "present"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "unknown target state",
-			args:    args{components: []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
+			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "does not contain distribution namespace",
-			args:    args{components: []TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
+			args:    args{components: []entities.TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -85,25 +89,25 @@ func TestConvertToComponentDTOs(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []TargetComponent
+		want    []entities.TargetComponent
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "nil",
 			args:    args{},
-			want:    []TargetComponent{},
+			want:    []entities.TargetComponent{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "empty list",
 			args:    args{components: []domain.Component{}},
-			want:    []TargetComponent{},
+			want:    []entities.TargetComponent{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "ok",
 			args:    args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
-			want:    []TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
+			want:    []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
 			wantErr: assert.NoError,
 		},
 	}

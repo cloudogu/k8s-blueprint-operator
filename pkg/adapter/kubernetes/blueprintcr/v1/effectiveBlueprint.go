@@ -3,9 +3,12 @@ package v1
 import (
 	"errors"
 	"fmt"
+	"strings"
+
+	"github.com/cloudogu/blueprint-lib/v2/entities"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"strings"
 )
 
 var configKeySeparator = "/"
@@ -18,13 +21,13 @@ var configKeySeparator = "/"
 type EffectiveBlueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
-	Dogus []serializer.TargetDogu `json:"dogus,omitempty"`
+	Dogus []entities.TargetDogu `json:"dogus,omitempty"`
 	// Components contains a set of exact component versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
-	Components []serializer.TargetComponent `json:"components,omitempty"`
+	Components []entities.TargetComponent `json:"components,omitempty"`
 	// Config is used for ecosystem configuration to be applied.
 	// Optional.
-	Config Config `json:"config,omitempty"`
+	Config entities.TargetConfig `json:"config,omitempty"`
 }
 
 func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (EffectiveBlueprint, error) {

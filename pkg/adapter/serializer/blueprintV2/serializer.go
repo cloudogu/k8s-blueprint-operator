@@ -3,6 +3,7 @@ package blueprintV2
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/cloudogu/blueprint-lib/v2/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
@@ -24,7 +25,7 @@ func (b Serializer) Serialize(blueprint domain.Blueprint) (string, error) {
 }
 
 func (b Serializer) Deserialize(rawBlueprint string) (domain.Blueprint, error) {
-	blueprintDTO := BlueprintV2{}
+	blueprintDTO := blueprintV2.BlueprintV2{}
 
 	err := json.Unmarshal([]byte(rawBlueprint), &blueprintDTO)
 
