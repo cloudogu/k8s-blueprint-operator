@@ -4,7 +4,6 @@ go 1.23.4
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.0
-	github.com/cloudogu/blueprint-lib v0.0.0-20250120164210-a12216cc0a7c
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.0
 	github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250121125505-af360fea0bc6
