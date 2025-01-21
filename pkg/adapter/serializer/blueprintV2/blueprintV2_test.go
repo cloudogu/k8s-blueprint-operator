@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/cloudogu/blueprint-lib/bpcore"
-	bpv2 "github.com/cloudogu/blueprint-lib/v2/blueprintV2"
-	"github.com/cloudogu/blueprint-lib/v2/entities"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/json/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-lib/json/bpcore"
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"

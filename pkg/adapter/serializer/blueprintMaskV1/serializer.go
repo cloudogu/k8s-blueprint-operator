@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	bpmask "github.com/cloudogu/blueprint-lib/v2/blueprintMaskV1"
+	bpmask "github.com/cloudogu/k8s-blueprint-lib/json/blueprintMaskV1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )

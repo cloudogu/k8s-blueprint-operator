@@ -9,7 +9,7 @@ This file was generated with "make generate-deepcopy".
 package v1
 
 import (
-	"github.com/cloudogu/blueprint-lib/v2/entities"
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 

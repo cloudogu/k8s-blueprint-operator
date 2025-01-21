@@ -1,8 +1,8 @@
 package v1
 
 import (
-	bpentities "github.com/cloudogu/blueprint-lib/v2/entities"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	bpentities "github.com/cloudogu/k8s-blueprint-lib/json/entities"
 	"github.com/cloudogu/k8s-registry-lib/config"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"

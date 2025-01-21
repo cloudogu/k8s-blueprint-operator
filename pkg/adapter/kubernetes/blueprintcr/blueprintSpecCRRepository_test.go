@@ -14,7 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/cloudogu/blueprint-lib/v2/entities"
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"

@@ -3,11 +3,11 @@ package blueprintMaskV1
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/bpcore"
 
-	bpmask "github.com/cloudogu/blueprint-lib/v2/blueprintMaskV1"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	bpmask "github.com/cloudogu/k8s-blueprint-lib/json/blueprintMaskV1"
+	"github.com/cloudogu/k8s-blueprint-lib/json/bpcore"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"

@@ -3,9 +3,9 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/bpcore"
 
-	bpv2 "github.com/cloudogu/blueprint-lib/v2/blueprintV2"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/json/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-lib/json/bpcore"
 
 	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
@@ -31,7 +31,7 @@ func ConvertToBlueprintDTO(blueprint domain.Blueprint) (bpv2.BlueprintV2, error)
 
 func convertToBlueprintDomain(blueprint bpv2.BlueprintV2) (domain.Blueprint, error) {
 	switch blueprint.API {
-	case bpcore.V1:
+	case "v1":
 		return domain.Blueprint{}, fmt.Errorf("blueprint API V1 is deprecated and got removed: " +
 			"packages and cesapp version got removed in favour of components")
 	case bpcore.V2:

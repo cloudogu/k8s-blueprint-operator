@@ -3,7 +3,9 @@ package blueprintV2
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/cloudogu/blueprint-lib/v2/blueprintV2"
+
+	"github.com/cloudogu/k8s-blueprint-lib/json/blueprintV2"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 

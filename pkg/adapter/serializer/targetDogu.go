@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	bpentities "github.com/cloudogu/blueprint-lib/v2/entities"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	bpentities "github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"

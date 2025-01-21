@@ -6,7 +6,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 
-	"github.com/cloudogu/blueprint-lib/v2/entities"
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
