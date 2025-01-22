@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - only that code was extracted that handles JSON parsing and superficial conversion in order to enable other modules to parse different blueprint versions.
 
 ### Fixed
-- Fix autogeneration boilerplate text to match with the current make target `generator-deepcopy`
+- Fix autogeneration boilerplate text to match with the current make target `generate-deepcopy`
 
 ### Security
 - Fix CVE-2024-45338 from golang.org/x/net
