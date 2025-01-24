@@ -11,6 +11,8 @@ manager:
   env:
     logLevel: info
     stage: production
+    proxy:
+    #      url: http://user:password@host:port
   resourceLimits:
     cpu: 500m
     memory: 128Mi
