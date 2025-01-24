@@ -62,6 +62,12 @@ spec:
                 key: urlschema
                 name: k8s-dogu-operator-dogu-registry
                 optional: true
+          - name: PROXY_URL
+            valueFrom:
+              secretKeyRef:
+                name: ces-proxy
+                key: url
+                optional: true
           image: "{{ .Values.manager.image.registry }}/{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}"
           livenessProbe:
             httpGet:
