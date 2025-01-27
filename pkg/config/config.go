@@ -2,7 +2,9 @@ package config
 
 import (
 	"fmt"
+	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
@@ -114,11 +116,48 @@ func GetRemoteConfiguration() (*core.Remote, error) {
 		endpoint = strings.TrimSuffix(endpoint, "dogus")
 	}
 
+	proxyURL, b := os.LookupEnv("PROXY_URL")
+
+	proxySettings := core.ProxySettings{}
+	if b && len(proxyURL) > 0 {
+		var err error
+		if proxySettings, err = configureProxySettings(proxyURL); err != nil {
+			return nil, err
+		}
+	}
+
 	return &core.Remote{
-		Endpoint:  endpoint,
-		CacheDir:  registryCacheDir,
-		URLSchema: urlSchema,
+		Endpoint:      endpoint,
+		CacheDir:      registryCacheDir,
+		URLSchema:     urlSchema,
+		ProxySettings: proxySettings,
 	}, nil
+}
+
+func configureProxySettings(proxyURL string) (core.ProxySettings, error) {
+	parsedURL, err := url.Parse(proxyURL)
+	if err != nil {
+		return core.ProxySettings{}, fmt.Errorf("invalid proxy url: %w", err)
+	}
+
+	proxySettings := core.ProxySettings{}
+	proxySettings.Enabled = true
+	if parsedURL.User != nil {
+		proxySettings.Username = parsedURL.User.Username()
+		if password, set := parsedURL.User.Password(); set {
+			proxySettings.Password = password
+		}
+	}
+
+	proxySettings.Server = parsedURL.Hostname()
+
+	port, err := strconv.Atoi(parsedURL.Port())
+	if err != nil {
+		return core.ProxySettings{}, fmt.Errorf("invalid port %s: %w", parsedURL.Port(), err)
+	}
+	proxySettings.Port = port
+
+	return proxySettings, nil
 }
 
 // GetRemoteCredentials creates a remote credential pair with the configured values.
