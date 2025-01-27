@@ -6,22 +6,22 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	corev1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-
-	corev1 "k8s.io/api/core/v1"
-	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var ctx = context.Background()
@@ -150,9 +150,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expectedStatus := v1.BlueprintStatus{
 			Phase: domain.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []serializer.TargetDogu{},
-				Components: []serializer.TargetComponent{},
-				Config:     v1.Config{},
+				Dogus:      []entities.TargetDogu{},
+				Components: []entities.TargetComponent{},
+				Config:     entities.TargetConfig{},
 			},
 			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 		}
@@ -286,9 +286,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expectedStatus := v1.BlueprintStatus{
 			Phase: domain.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []serializer.TargetDogu{},
-				Components: []serializer.TargetComponent{},
-				Config:     v1.Config{},
+				Dogus:      []entities.TargetDogu{},
+				Components: []entities.TargetComponent{},
+				Config:     entities.TargetConfig{},
 			},
 			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 		}
@@ -387,9 +387,9 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expectedStatus := v1.BlueprintStatus{
 			Phase: domain.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []serializer.TargetDogu{},
-				Components: []serializer.TargetComponent{},
-				Config:     v1.Config{},
+				Dogus:      []entities.TargetDogu{},
+				Components: []entities.TargetComponent{},
+				Config:     entities.TargetConfig{},
 			},
 			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
 		}
