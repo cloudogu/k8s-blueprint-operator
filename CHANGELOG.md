@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.3.0] - 2025-01-27
+### Added
+- [#105] Proxy support for the dogu registry. The proxy will be used from the secret `ces-proxy` which will be created by the setup.
+
 ## [v2.2.2] - 2024-12-19
 ### Fixed
 - [#101] Fix CVE-2024-45337

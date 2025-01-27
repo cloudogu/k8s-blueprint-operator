@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/cloudogu/cesapp-lib/core"
 	"os"
 	"testing"
 
@@ -86,35 +87,131 @@ func TestNewOperatorConfig(t *testing.T) {
 }
 
 func TestGetRemoteConfiguration(t *testing.T) {
-	t.Run("index config", func(t *testing.T) {
+	type args struct {
+		endpoint  string
+		urlSchema string
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    *core.Remote
+		wantErr assert.ErrorAssertionFunc
+		setEnv  func(t *testing.T)
+	}{
+		{
+			name:    "test default url schema",
+			want:    &core.Remote{Endpoint: "https://example.com/", URLSchema: "default", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "default")
+			},
+		},
+		{
+			name:    "test dogu registry endpoint environment variable not set",
+			want:    nil,
+			wantErr: assert.Error,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "default")
+			},
+		},
+		{
+			name:    "test default url schema with 'dogus' suffix",
+			want:    &core.Remote{Endpoint: "https://example.com/", URLSchema: "default", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "default")
+			},
+		},
+		{
+			name:    "test default url schema with 'dogus/' suffix",
+			want:    &core.Remote{Endpoint: "https://example.com/", URLSchema: "default", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "default")
+			},
+		},
+		{
+			name:    "test non-default url schema",
+			want:    &core.Remote{Endpoint: "https://example.com/", URLSchema: "index", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+			},
+		},
+		{
+			name:    "test non-default url schema with 'dogus' suffix",
+			want:    &core.Remote{Endpoint: "https://example.com/dogus", URLSchema: "index", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+			},
+		},
+		{
+			name:    "test non-default url schema with 'dogus/' suffix",
+			want:    &core.Remote{Endpoint: "https://example.com/dogus/", URLSchema: "index", CacheDir: "/tmp/dogu-registry-cache"},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+			},
+		},
+		{
+			name: "test with proxy",
+			want: &core.Remote{Endpoint: "https://example.com/dogus/", URLSchema: "index", CacheDir: "/tmp/dogu-registry-cache", ProxySettings: core.ProxySettings{
+				Enabled:  true,
+				Server:   "host",
+				Port:     3128,
+				Username: "user",
+				Password: "password",
+			}},
+			wantErr: assert.NoError,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+				t.Setenv("PROXY_URL", "https://user:password@host:3128")
+			},
+		},
+		{
+			name:    "test proxy invalid url",
+			args:    args{endpoint: "https://example.com/dogus/", urlSchema: "index"},
+			want:    nil,
+			wantErr: assert.Error,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+				t.Setenv("PROXY_URL", "://f")
+			},
+		},
+		{
+			name:    "test proxy invalid port",
+			args:    args{endpoint: "https://example.com/dogus/", urlSchema: "index"},
+			want:    nil,
+			wantErr: assert.Error,
+			setEnv: func(t *testing.T) {
+				t.Setenv("DOGU_REGISTRY_ENDPOINT", "https://example.com/dogus/")
+				t.Setenv("DOGU_REGISTRY_URLSCHEMA", "index")
+				t.Setenv("PROXY_URL", "https://user:password@host:invalid")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setEnv != nil {
+				tt.setEnv(t)
+			}
 
-		t.Setenv(doguRegistryURLSchemaEnvVar, "index")
-		t.Setenv(doguRegistryEndpointEnvVar, "endpoint/dogus")
+			config, err := GetRemoteConfiguration()
 
-		config, err := GetRemoteConfiguration()
+			tt.wantErr(t, err)
 
-		require.NoError(t, err)
-		assert.Equal(t, "endpoint/dogus", config.Endpoint)
-		assert.Equal(t, registryCacheDir, config.CacheDir)
-		assert.Equal(t, "index", config.URLSchema)
-	})
-
-	t.Run("default config", func(t *testing.T) {
-		t.Setenv(doguRegistryEndpointEnvVar, "endpoint/dogus")
-		config, err := GetRemoteConfiguration()
-
-		require.NoError(t, err)
-		assert.Equal(t, "endpoint/", config.Endpoint)
-		assert.Equal(t, registryCacheDir, config.CacheDir)
-		assert.Equal(t, "default", config.URLSchema)
-	})
-
-	t.Run("no endpoint env var", func(t *testing.T) {
-		_, err := GetRemoteConfiguration()
-
-		require.Error(t, err)
-	})
-
+			assert.Equalf(t, tt.want, config, "getRemoteConfig(%v, %v)", tt.args.endpoint, tt.args.urlSchema)
+		})
+	}
 }
 
 func TestGetRemoteCredentials(t *testing.T) {
