@@ -3,7 +3,11 @@ package v1
 import (
 	"errors"
 	"fmt"
+
 	"github.com/Masterminds/semver/v3"
+
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -38,7 +42,7 @@ type ComponentDiffState struct {
 	// DeployConfig contains generic properties for the component.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	DeployConfig serializer.DeployConfig `json:"deployConfig,omitempty"`
+	DeployConfig entities.DeployConfig `json:"deployConfig,omitempty"`
 }
 
 // ComponentAction is the action that needs to be done for a component
@@ -67,13 +71,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			DeployConfig:      serializer.DeployConfig(domainModel.Actual.DeployConfig),
+			DeployConfig:      entities.DeployConfig(domainModel.Actual.DeployConfig),
 		},
 		Expected: ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			DeployConfig:      serializer.DeployConfig(domainModel.Expected.DeployConfig),
+			DeployConfig:      entities.DeployConfig(domainModel.Expected.DeployConfig),
 		},
 		NeededActions: componentActions,
 	}

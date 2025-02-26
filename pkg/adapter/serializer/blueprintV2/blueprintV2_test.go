@@ -1,16 +1,20 @@
 package blueprintV2
 
 import (
+	"testing"
+
 	"github.com/Masterminds/semver/v3"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/cesapp-lib/core"
-	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/json/blueprintV2"
+	"github.com/cloudogu/k8s-blueprint-lib/json/bpcore"
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 var (
@@ -70,14 +74,14 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 	blueprintV2, err := ConvertToBlueprintDTO(blueprint)
 
-	convertedDogus := []serializer.TargetDogu{
+	convertedDogus := []entities.TargetDogu{
 		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "official/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "official/dogu4", Version: version1233.Raw, TargetState: "present"},
 	}
 
-	convertedComponents := []serializer.TargetComponent{
+	convertedComponents := []entities.TargetComponent{
 		{Name: "k8s/component1", Version: "", TargetState: "absent"},
 		{Name: "k8s/component2", Version: "", TargetState: "absent"},
 		{Name: "k8s/component3", Version: compVersion3212.String(), TargetState: "present"},
@@ -85,26 +89,26 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 	}
 
 	require.NoError(t, err)
-	assert.Equal(t, BlueprintV2{
-		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
+	assert.Equal(t, bpv2.BlueprintV2{
+		GeneralBlueprint: bpcore.GeneralBlueprint{API: bpcore.V2},
 		Dogus:            convertedDogus,
 		Components:       convertedComponents,
-		Config: v1.Config{
-			Dogus: map[string]v1.CombinedDoguConfig{
+		Config: entities.TargetConfig{
+			Dogus: entities.DoguConfigMap{
 				"my-dogu": {
-					Config: v1.DoguConfig{
+					Config: entities.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
 					},
-					SensitiveConfig: v1.SensitiveDoguConfig{
+					SensitiveConfig: entities.SensitiveDoguConfig{
 						Present: map[string]string{
 							"config-encrypted": "42",
 						},
 					},
 				},
 			},
-			Global: v1.GlobalConfig{
+			Global: entities.GlobalConfig{
 				Absent: []string{"test/key"},
 			},
 		},
@@ -112,40 +116,40 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 }
 
 func Test_ConvertToBlueprint(t *testing.T) {
-	dogus := []serializer.TargetDogu{
+	dogus := []entities.TargetDogu{
 		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "official/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "official/dogu4", Version: version1233.Raw},
 	}
 
-	components := []serializer.TargetComponent{
+	components := []entities.TargetComponent{
 		{Name: "k8s/component1", Version: compVersion3211.String(), TargetState: "absent"},
 		{Name: "k8s/component2", TargetState: "absent"},
 		{Name: "k8s/component3", Version: compVersion3212.String(), TargetState: "present"},
 		{Name: "k8s/component4", Version: compVersion1233.String()},
 	}
 
-	blueprintV2 := BlueprintV2{
-		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
+	blueprintV2 := bpv2.BlueprintV2{
+		GeneralBlueprint: bpcore.GeneralBlueprint{API: bpcore.V2},
 		Dogus:            dogus,
 		Components:       components,
-		Config: v1.Config{
-			Dogus: map[string]v1.CombinedDoguConfig{
+		Config: entities.TargetConfig{
+			Dogus: entities.DoguConfigMap{
 				"my-dogu": {
-					Config: v1.DoguConfig{
+					Config: entities.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
 					},
-					SensitiveConfig: v1.SensitiveDoguConfig{
+					SensitiveConfig: entities.SensitiveDoguConfig{
 						Present: map[string]string{
 							"config-encrypted": "42",
 						},
 					},
 				},
 			},
-			Global: v1.GlobalConfig{Absent: []string{"test/key"}},
+			Global: entities.GlobalConfig{Absent: []string{"test/key"}},
 		},
 	}
 	blueprint, err := convertToBlueprintDomain(blueprintV2)
@@ -197,15 +201,15 @@ func Test_ConvertToBlueprint(t *testing.T) {
 }
 
 func Test_ConvertToBlueprint_errors(t *testing.T) {
-	blueprintV2 := BlueprintV2{
-		GeneralBlueprint: serializer.GeneralBlueprint{API: serializer.V2},
-		Dogus: []serializer.TargetDogu{
+	blueprintV2 := bpv2.BlueprintV2{
+		GeneralBlueprint: bpcore.GeneralBlueprint{API: bpcore.V2},
+		Dogus: []entities.TargetDogu{
 			{Name: "dogu1", Version: version3211.Raw},
 			{Name: "official/dogu1", Version: version3211.Raw, TargetState: "unknown"},
 			{Name: "name/space/dogu2", Version: version3212.Raw},
 			{Name: "official/dogu3", Version: "abc"},
 		},
-		Components: []serializer.TargetComponent{
+		Components: []entities.TargetComponent{
 			{Name: "component1", Version: compVersion3211.String(), TargetState: "not known state"},
 			{Name: "k8s/component2", Version: "abc"},
 		},
