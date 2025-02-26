@@ -6,6 +6,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.3.1] - 2025-02-26
+### Changed
+- [#103] Extract blueprint structs and associated functionality and move it into blueprint-lib 
+  - only that code was extracted that handles JSON parsing and superficial conversion in order to enable other modules to parse different blueprint versions.
+
+### Fixed
+- Fix autogeneration boilerplate text to match with the current make target `generate-deepcopy`
+
+### Security
+- Fix CVE-2024-45338 from golang.org/x/net
+
 ## [v2.3.0] - 2025-01-27
 ### Added
 - [#105] Proxy support for the dogu registry. The proxy will be used from the secret `ces-proxy` which will be created by the setup.

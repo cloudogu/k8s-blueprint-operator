@@ -3,6 +3,9 @@ package blueprintMaskV1
 import (
 	"encoding/json"
 	"fmt"
+
+	bpmask "github.com/cloudogu/k8s-blueprint-lib/json/blueprintMaskV1"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
@@ -24,7 +27,7 @@ func (b Serializer) Serialize(mask domain.BlueprintMask) (string, error) {
 }
 
 func (b Serializer) Deserialize(rawBlueprintMask string) (domain.BlueprintMask, error) {
-	blueprintMaskDTO := BlueprintMaskV1{}
+	blueprintMaskDTO := bpmask.BlueprintMaskV1{}
 
 	err := json.Unmarshal([]byte(rawBlueprintMask), &blueprintMaskDTO)
 

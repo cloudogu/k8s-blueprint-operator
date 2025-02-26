@@ -2,13 +2,17 @@ package serializer
 
 import (
 	"fmt"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
+
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
+
+	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 var (
@@ -17,7 +21,7 @@ var (
 
 func TestConvertDogus(t *testing.T) {
 	type args struct {
-		dogus []TargetDogu
+		dogus []entities.TargetDogu
 	}
 	proxyBodySize := resource.MustParse("1G")
 	volumeSize := resource.MustParse("1Gi")
@@ -35,67 +39,67 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "empty list",
-			args:    args{dogus: []TargetDogu{}},
+			args:    args{dogus: []entities.TargetDogu{}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "normal dogu",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present"}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with max proxy body size",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ReverseProxyConfig: ReverseProxyConfig{MaxBodySize: "1G"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ReverseProxyConfig: entities.ReverseProxyConfig{MaxBodySize: "1G"}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with proxy rewrite target",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ReverseProxyConfig: ReverseProxyConfig{RewriteTarget: "/"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ReverseProxyConfig: entities.ReverseProxyConfig{RewriteTarget: "/"}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, ReverseProxyConfig: ecosystem.ReverseProxyConfig{RewriteTarget: "/"}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with proxy additional config",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ReverseProxyConfig: ReverseProxyConfig{AdditionalConfig: "additional"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ReverseProxyConfig: entities.ReverseProxyConfig{AdditionalConfig: "additional"}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, ReverseProxyConfig: ecosystem.ReverseProxyConfig{AdditionalConfig: "additional"}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with invalid proxy body size",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ReverseProxyConfig: ReverseProxyConfig{MaxBodySize: "1GE"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ReverseProxyConfig: entities.ReverseProxyConfig{MaxBodySize: "1GE"}}}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "dogu with min volume size",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ResourceConfig: ResourceConfig{MinVolumeSize: "1Gi"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ResourceConfig: entities.ResourceConfig{MinVolumeSize: "1Gi"}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: &volumeSize}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with invalid volume size",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ResourceConfig: ResourceConfig{MinVolumeSize: "1GIE"}}}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ResourceConfig: entities.ResourceConfig{MinVolumeSize: "1GIE"}}}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "no namespace",
-			args:    args{dogus: []TargetDogu{{Name: "postgres", Version: version3211.Raw, TargetState: "present"}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "postgres", Version: version3211.Raw, TargetState: "present"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: "1.", TargetState: "present"}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: "1.", TargetState: "present"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "unknown target state",
-			args:    args{dogus: []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "unknown"}}},
+			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -120,25 +124,25 @@ func TestConvertToDoguDTOs(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []TargetDogu
+		want    []entities.TargetDogu
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "nil",
 			args:    args{},
-			want:    []TargetDogu{},
+			want:    []entities.TargetDogu{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "empty list",
 			args:    args{dogus: []domain.Dogu{}},
-			want:    []TargetDogu{},
+			want:    []entities.TargetDogu{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "ok",
 			args:    args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: &volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"}}}},
-			want:    []TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: PlatformConfig{ResourceConfig: ResourceConfig{MinVolumeSize: "1G"}, ReverseProxyConfig: ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"}}}},
+			want:    []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ResourceConfig: entities.ResourceConfig{MinVolumeSize: "1G"}, ReverseProxyConfig: entities.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"}}}},
 			wantErr: assert.NoError,
 		},
 	}
