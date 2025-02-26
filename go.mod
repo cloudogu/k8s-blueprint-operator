@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.0
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.0
-	github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250121125505-af360fea0bc6
+	github.com/cloudogu/k8s-blueprint-lib v1.0.0
 	github.com/cloudogu/k8s-component-operator v1.2.0
 	github.com/cloudogu/k8s-dogu-operator/v3 v3.0.1
 	github.com/cloudogu/k8s-registry-lib v0.5.1
