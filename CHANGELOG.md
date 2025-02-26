@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v2.3.1] - 2025-02-26
 ### Changed
 - [#103] Extract blueprint structs and associated functionality and move it into blueprint-lib 
   - only that code was extracted that handles JSON parsing and superficial conversion in order to enable other modules to parse different blueprint versions.
