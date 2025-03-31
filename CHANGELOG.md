@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.4.0] - 2025-03-31
+### Added
+- [#107] Add additional print columns and aliases to CRDs
+
 ## [v2.3.1] - 2025-02-26
 ### Changed
 - [#103] Extract blueprint structs and associated functionality and move it into blueprint-lib 
