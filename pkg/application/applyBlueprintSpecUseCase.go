@@ -53,7 +53,7 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx contex
 		return fmt.Errorf("cannot load blueprint spec %q to check ecosystem health: %w", blueprintId, err)
 	}
 
-	healthResult, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprintSpec.Config.IgnoreDoguHealth, blueprintSpec.Config.IgnoreComponentHealth)
+	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot check ecosystem health upfront of applying the blueprint %q: %w", blueprintId, err)
 	}
