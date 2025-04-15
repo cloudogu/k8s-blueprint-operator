@@ -134,9 +134,11 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 	type fields struct {
-		doguUseCaseFn        func(t *testing.T) doguInstallationUseCase
-		componentUseCaseFn   func(t *testing.T) componentInstallationUseCase
-		waitConfigProviderFn func(t *testing.T) healthWaitConfigProvider
+		doguUseCaseFn         func(t *testing.T) doguInstallationUseCase
+		componentUseCaseFn    func(t *testing.T) componentInstallationUseCase
+		waitConfigProviderFn  func(t *testing.T) healthWaitConfigProvider
+		ignoreDoguHealth      bool
+		ignoreComponenthealth bool
 	}
 	tests := []struct {
 		name    string
@@ -358,7 +360,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 				componentUseCase:   tt.fields.componentUseCaseFn(t),
 				waitConfigProvider: tt.fields.waitConfigProviderFn(t),
 			}
-			got, err := useCase.WaitForHealthyEcosystem(testCtx)
+			got, err := useCase.WaitForHealthyEcosystem(testCtx, tt.fields.ignoreDoguHealth, tt.fields.ignoreComponenthealth)
 			tt.wantErr(t, err)
 			assert.Equal(t, tt.want, got)
 		})

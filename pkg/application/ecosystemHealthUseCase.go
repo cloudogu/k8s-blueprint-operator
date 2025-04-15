@@ -49,7 +49,7 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context,
 }
 
 // WaitForHealthyEcosystem waits for a healthy ecosystem and returns an HealthResult.
-func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error) {
+func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error) {
 	waitConfig, err := useCase.waitConfigProvider.GetWaitConfig(ctx)
 	if err != nil {
 		return ecosystem.HealthResult{}, fmt.Errorf("failed to get health check timeout: %w", err)
@@ -60,11 +60,21 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 
 	doguHealthChan := make(chan ecosystem.DoguHealthResult)
 	doguErrChan := make(chan error)
-	go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
+	if !ignoreDoguHealth {
+		go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
+	} else {
+		//send empty result, so that wait routine terminates
+		doguHealthChan <- ecosystem.DoguHealthResult{}
+	}
 
 	componentHealthChan := make(chan ecosystem.ComponentHealthResult)
 	componentErrChan := make(chan error)
-	go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
+	if !ignoreComponentHealth {
+		go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
+	} else {
+		//send empty result, so that wait routine terminates
+		componentHealthChan <- ecosystem.ComponentHealthResult{}
+	}
 
 	return waitForHealthResult(doguHealthChan, doguErrChan, componentHealthChan, componentErrChan)
 }
