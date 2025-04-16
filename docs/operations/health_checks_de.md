@@ -1,26 +1,23 @@
 # Health-Checks
 
-Vor und nach dem Anwenden des Blueprints werden Health-Checks für die Dogus als auch die Komponenten ausgeführt.
+Vor und nach dem Anwenden des Blueprints wird gewartet, dass das Ecosystem healthy ist.
+Dabei wird folgendes geprüft:
+- Health aller Dogus anhand der Dogu-CRs
+- Health aller Components anhand der Component-CRs
+- Überprüfung, ob alle notwendigen Components installiert sind, die für das Blueprint gebraucht werden
 
-Bei den Checks nach dem Anwenden des Blueprints wird gewartet, bis alle Health-Checks in Ordnung sind.
+Die Health-Checks verwenden einen eingebauten Retry. 
 Timeout und Check-Interval lassen sich dafür in der [Health-Config](#health-config) festlegen.
 
-## Dogus
+## Health ignorieren
 
-Es wird die Health aller installierten Dogus geprüft.
+Die Health-Checks vor der Ausführung des Blueprints können deaktiviert werden:
+- für Dogus, wenn `spec.ignoreDoguHealth` auf `true` gesetzt wird,
+- für Components, wenn `spec.ignoreComponentHealth` auf `true` gesetzt wird.
 
-Wird dies nicht gewünscht, können die Dogu-Health-Checks in der Blueprint deaktiviert werden,
-indem `spec.ignoreDoguHealth` auf `true` gesetzt wird.
-
-## Komponenten
-
-Zunächst wird überprüft, dass benötigte Komponenten installiert sind.
-Dann wird die Health aller installierten Komponenten geprüft.
-
-Für die Konfiguration benötigter Komponenten, siehe [Health-Config](#health-config).
-
-Sollen die Komponenten-Health-Checks nicht ausgeführt werden, können sie in der Blueprint deaktiviert werden,
-indem `spec.ignoreComponentHealth` auf `true` gesetzt wird.
+So ist es möglich, per Blueprint Fehler an Dogus und Komponenten zu beheben.
+Für ein Dogu-Upgrade muss ein Dogu allerdings healthy sein, um Pre-Upgrade-Skripte ausführen zu können.
+Das Ignorieren der Dogu-Health kann also zu Folgefehlern während der Ausführung des Blueprints führen.
 
 ## Health-Config
 
@@ -32,7 +29,6 @@ valuesYamlOverwrite: |
   healthConfig:
     components:
       required: # These components are required for health checks to succeed.
-      - name: k8s-etcd
       - name: k8s-dogu-operator
       - name: k8s-service-discovery
       - name: k8s-component-operator

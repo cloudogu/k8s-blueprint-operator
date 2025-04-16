@@ -1,26 +1,23 @@
 # Health checks
 
-Health checks are carried out for the Dogus and the components before and after the blueprint is applied.
+Before and after applying the blueprint, the ecosystem is checked to ensure that it is healthy.
+The following is checked:
+- Health of all Dogus based on the Dogu-CRs
+- Health of all components based on the component CRs
+- Check whether all necessary components required for the blueprint are installed
 
-The checks after applying the blueprint wait until all health checks are OK.
-The timeout and check interval can be set in the [Health-Config](#health-config).
+The health checks use a built-in retry.
+The timeout and check interval can be defined in the [Health-Config](#health-config).
 
-## Dogus
+## Ignoring health
 
-The health of all installed Dogus is checked.
+Upfront health checks can be deactivated:
+- for Dogus, if `spec.ignoreDoguHealth` is set to `true`,
+- for components, if `spec.ignoreComponentHealth` is set to `true`.
 
-If this is not desired, the Dogu health checks can be deactivated in the blueprint,
-by setting `spec.ignoreDoguHealth` to `true`.
-
-## Components
-
-First, it is checked that the required components are installed.
-Then the health of all installed components is checked.
-
-For the configuration of required components, see [Health-Config](#health-config).
-
-If the component health checks are not to be executed, they can be deactivated in the blueprint,
-by setting `spec.ignoreComponentHealth` to `true`.
+This makes it possible to fix errors on Dogus and components via Blueprint.
+For a Dogu upgrade, however, a Dogu must be healthy in order to be able to execute pre-upgrade scripts.
+Ignoring the dogu health can therefore lead to subsequent errors during the execution of the blueprint.
 
 ## Health-Config
 
@@ -32,7 +29,6 @@ valuesYamlOverwrite: |
   healthConfig:
     components:
       required: # These components are required for health checks to succeed.
-      - name: k8s-etcd
       - name: k8s-dogu-operator
       - name: k8s-service-discovery
       - name: k8s-component-operator
