@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type EcosystemHealthUseCase struct {
@@ -49,7 +50,12 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context,
 }
 
 // WaitForHealthyEcosystem waits for a healthy ecosystem and returns an HealthResult.
-func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context) (ecosystem.HealthResult, error) {
+func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error) {
+	logger := log.FromContext(ctx).
+		WithName("EcosystemHealthUseCase.WaitForHealthyEcosystem").
+		WithValues("ignoreDoguHealth", ignoreDoguHealth, "ignoreComponentHealth", ignoreComponentHealth)
+	logger.Info("wait for a healthy ecosystem")
+
 	waitConfig, err := useCase.waitConfigProvider.GetWaitConfig(ctx)
 	if err != nil {
 		return ecosystem.HealthResult{}, fmt.Errorf("failed to get health check timeout: %w", err)
@@ -58,15 +64,30 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 	timedCtx, cancel := context.WithTimeout(ctx, waitConfig.Timeout)
 	defer cancel()
 
-	doguHealthChan := make(chan ecosystem.DoguHealthResult)
+	// size 1 so we can send a value without a receiver yet if we ignore health
+	doguHealthChan := make(chan ecosystem.DoguHealthResult, 1)
 	doguErrChan := make(chan error)
-	go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
+	if !ignoreDoguHealth {
+		go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
+	} else {
+		// send empty result, so that wait routine terminates
+		logger.Info("ignore dogu health")
+		doguHealthChan <- ecosystem.DoguHealthResult{}
+	}
 
-	componentHealthChan := make(chan ecosystem.ComponentHealthResult)
+	// size 1 so we can send a value without a receiver yet if we ignore health
+	componentHealthChan := make(chan ecosystem.ComponentHealthResult, 1)
 	componentErrChan := make(chan error)
-	go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
-
-	return waitForHealthResult(doguHealthChan, doguErrChan, componentHealthChan, componentErrChan)
+	if !ignoreComponentHealth {
+		go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
+	} else {
+		// send empty result, so that wait routine terminates
+		logger.Info("ignore component health")
+		componentHealthChan <- ecosystem.ComponentHealthResult{}
+	}
+	result, err := waitForHealthResult(doguHealthChan, doguErrChan, componentHealthChan, componentErrChan)
+	logger.Info("finished waiting for ecosystem health")
+	return result, err
 }
 
 func waitForHealthResult(
