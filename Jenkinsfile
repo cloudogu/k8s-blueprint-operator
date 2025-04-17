@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('github.com/cloudogu/ces-build-lib@3.0.0')
+@Library('github.com/cloudogu/ces-build-lib@4.2.0')
 import com.cloudogu.ces.cesbuildlib.*
 
 // Creating necessary git objects
@@ -32,6 +32,17 @@ currentBranch = "${env.BRANCH_NAME}"
 
 node('docker') {
     timestamps {
+        properties([
+                // Keep only the last x builds to preserve space
+                buildDiscarder(logRotator(numToKeepStr: '10')),
+                // Don't run concurrent builds for a branch, because they use the same workspace directory
+                disableConcurrentBuilds(),
+                parameters([
+                        choice(name: 'TrivySeverityLevels', choices: [TrivySeverityLevel.CRITICAL, TrivySeverityLevel.HIGH_AND_ABOVE, TrivySeverityLevel.MEDIUM_AND_ABOVE, TrivySeverityLevel.ALL], description: 'The levels to scan with trivy'),
+                        choice(name: 'TrivyStrategy', choices: [TrivyScanStrategy.UNSTABLE, TrivyScanStrategy.FAIL, TrivyScanStrategy.IGNORE], description: 'Define whether the build should be unstable, fail or whether the error should be ignored if any vulnerability was found.'),
+                ])
+        ])
+
         stage('Checkout') {
             checkout scm
             make 'clean'
@@ -85,8 +96,9 @@ node('docker') {
             }
 
             def imageName
+            String namespace = "cloudogu"
             stage('Build & Push Image') {
-                imageName = k3d.buildAndPushToLocalRegistry("cloudogu/${repositoryName}", controllerVersion)
+                imageName = k3d.buildAndPushToLocalRegistry("${namespace}/${repositoryName}", controllerVersion)
             }
 
             stage('Update development resources') {
@@ -105,6 +117,15 @@ node('docker') {
 
             stage('Wait for Ready Rollout') {
                 k3d.kubectl("--namespace default wait --for=condition=Ready pods --all")
+            }
+
+            stage('Trivy scan') {
+                Trivy trivy = new Trivy(this)
+                // We do not build the dogu in the single node ecosystem, therefore we just use scanImage here with the build from the k3s step.
+                trivy.scanImage("${namespace}/${repositoryName}:${controllerVersion}", params.TrivySeverityLevels, params.TrivyStrategy)
+                trivy.saveFormattedTrivyReport(TrivyScanFormat.TABLE)
+                trivy.saveFormattedTrivyReport(TrivyScanFormat.JSON)
+                trivy.saveFormattedTrivyReport(TrivyScanFormat.HTML)
             }
 
             stageAutomaticRelease(makefile)
