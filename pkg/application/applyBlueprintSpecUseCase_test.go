@@ -465,7 +465,7 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront(t *testing.T) {
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "cannot save blueprint spec \"blueprint1\" after checking the ecosystem health")
 	})
-	t.Run("should succeed, ignoring dogu nad component health", func(t *testing.T) {
+	t.Run("should succeed, ignoring dogu and component health", func(t *testing.T) {
 		// given
 		blueprintSpec := &domain.BlueprintSpec{Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:      true,

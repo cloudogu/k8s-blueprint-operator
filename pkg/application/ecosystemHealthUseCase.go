@@ -70,7 +70,7 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 	if !ignoreDoguHealth {
 		go useCase.asyncWaitForHealthyDogus(timedCtx, doguErrChan, doguHealthChan)
 	} else {
-		//send empty result, so that wait routine terminates
+		// send empty result, so that wait routine terminates
 		logger.Info("ignore dogu health")
 		doguHealthChan <- ecosystem.DoguHealthResult{}
 	}
@@ -81,7 +81,7 @@ func (useCase *EcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Conte
 	if !ignoreComponentHealth {
 		go useCase.asyncWaitForHealthyComponents(timedCtx, componentErrChan, componentHealthChan)
 	} else {
-		//send empty result, so that wait routine terminates
+		// send empty result, so that wait routine terminates
 		logger.Info("ignore component health")
 		componentHealthChan <- ecosystem.ComponentHealthResult{}
 	}
