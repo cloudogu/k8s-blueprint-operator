@@ -134,9 +134,11 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 	type fields struct {
-		doguUseCaseFn        func(t *testing.T) doguInstallationUseCase
-		componentUseCaseFn   func(t *testing.T) componentInstallationUseCase
-		waitConfigProviderFn func(t *testing.T) healthWaitConfigProvider
+		doguUseCaseFn         func(t *testing.T) doguInstallationUseCase
+		componentUseCaseFn    func(t *testing.T) componentInstallationUseCase
+		waitConfigProviderFn  func(t *testing.T) healthWaitConfigProvider
+		ignoreDoguHealth      bool
+		ignoreComponentHealth bool
 	}
 	tests := []struct {
 		name    string
@@ -350,6 +352,31 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 			},
 			wantErr: assert.NoError,
 		},
+		{
+			name: "should succeed while ignoring dogu and component health",
+			fields: fields{
+				ignoreComponentHealth: true,
+				ignoreDoguHealth:      true,
+				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
+					// nothing to mock, should not be called with ignore flag
+					return newMockDoguInstallationUseCase(t)
+				},
+				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
+					// nothing to mock, should not be called with ignore flag
+					return newMockComponentInstallationUseCase(t)
+				},
+				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
+					waitConfigMock := newMockHealthWaitConfigProvider(t)
+					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
+					return waitConfigMock
+				},
+			},
+			want: ecosystem.HealthResult{
+				DoguHealth:      ecosystem.DoguHealthResult{},
+				ComponentHealth: ecosystem.ComponentHealthResult{},
+			},
+			wantErr: assert.NoError,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -358,7 +385,7 @@ func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
 				componentUseCase:   tt.fields.componentUseCaseFn(t),
 				waitConfigProvider: tt.fields.waitConfigProviderFn(t),
 			}
-			got, err := useCase.WaitForHealthyEcosystem(testCtx)
+			got, err := useCase.WaitForHealthyEcosystem(testCtx, tt.fields.ignoreDoguHealth, tt.fields.ignoreComponentHealth)
 			tt.wantErr(t, err)
 			assert.Equal(t, tt.want, got)
 		})

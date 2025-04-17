@@ -53,7 +53,7 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx contex
 		return fmt.Errorf("cannot load blueprint spec %q to check ecosystem health: %w", blueprintId, err)
 	}
 
-	healthResult, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprintSpec.Config.IgnoreDoguHealth, blueprintSpec.Config.IgnoreComponentHealth)
+	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx, blueprintSpec.Config.IgnoreDoguHealth, blueprintSpec.Config.IgnoreComponentHealth)
 	if err != nil {
 		return fmt.Errorf("cannot check ecosystem health upfront of applying the blueprint %q: %w", blueprintId, err)
 	}
@@ -81,7 +81,9 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 		return fmt.Errorf("cannot load blueprint spec %q to check ecosystem health: %w", blueprintId, err)
 	}
 
-	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx)
+	// do not ignore the health states of dogus and components here, as we want to set the blueprint status according to the result.
+	// The blueprint is already executed here.
+	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx, false, false)
 	if err != nil {
 		return fmt.Errorf("cannot check ecosystem health after applying the blueprint %q: %w", blueprintId, err)
 	}
