@@ -1,6 +1,6 @@
 # Set these to the desired values
 ARTIFACT_ID=k8s-blueprint-operator
-VERSION=2.4.1
+VERSION=2.5.0
 IMAGE=cloudogu/${ARTIFACT_ID}:${VERSION}
 GOTAG=1.24.2
 MAKEFILES_VERSION=9.9.1
