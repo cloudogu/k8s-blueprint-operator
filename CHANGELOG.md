@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.5.0] - 2025-04-22
+### Changed
+- [#110] Set resource requests and limits to sensible defaults
+
 ## [v2.4.1] - 2025-04-17
 ### Changed
 - [#109] Use retry for upfront health checks
