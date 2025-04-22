@@ -1,7 +1,0 @@
-apiVersion: k8s.cloudogu.com/v1
-kind: Backup
-metadata:
-  name: backup-sample
-  namespace: ecosystem
-spec:
-  provider: velero

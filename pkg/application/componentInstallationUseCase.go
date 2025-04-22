@@ -78,6 +78,8 @@ func (useCase *ComponentInstallationUseCase) WaitForHealthyComponents(ctx contex
 	if err != nil {
 		err = fmt.Errorf("stop waiting for component health: %w", err)
 		logger.Error(err, "stop waiting for component health because of an error or time out")
+	} else {
+		logger.Info("finished waiting for component health")
 	}
 
 	return result, err

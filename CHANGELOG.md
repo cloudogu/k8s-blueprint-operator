@@ -5,9 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
 ### Changed
 - [#110] Resource requests and limits to sensible defaults
+
+## [v2.4.1] - 2025-04-17
+### Changed
+- [#109] Use retry for upfront health checks
+   - blueprints will now not fail immediately if a dogu or component is not yet healthy, no workaround needed anymore
 
 ## [v2.4.0] - 2025-03-31
 ### Added

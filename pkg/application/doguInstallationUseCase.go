@@ -65,6 +65,8 @@ func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context)
 	if err != nil {
 		err = fmt.Errorf("stop waiting for dogu health: %w", err)
 		logger.Error(err, "stop waiting for dogu health because of an error or time out")
+	} else {
+		logger.Info("finished waiting for dogu health")
 	}
 
 	return result, err
