@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Changed
-- [#110] Resource requests and limits to sensible defaults
+- [#110] Set resource requests and limits to sensible defaults
 
 ## [v2.4.1] - 2025-04-17
 ### Changed
