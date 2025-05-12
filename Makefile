@@ -2,10 +2,11 @@
 ARTIFACT_ID=k8s-blueprint-operator
 VERSION=2.5.0
 IMAGE=cloudogu/${ARTIFACT_ID}:${VERSION}
-GOTAG=1.24.2
+GOTAG=1.24.3
 MAKEFILES_VERSION=9.9.1
 LINT_VERSION=v1.61.0
 STAGE?=production
+MOCKERY_VERSION?=v2.53.3
 
 
 ADDITIONAL_CLEAN=dist-clean
@@ -30,7 +31,14 @@ CRD_POST_MANIFEST_TARGETS = crd-add-labels
 CHECK_VAR_TARGETS=check-all-vars
 IMAGE_IMPORT_TARGET=image-import
 
+MOCKERY_VERSION=v2.53.3
+
 include build/make/k8s-controller.mk
+
+.PHONY: mocks
+mocks: ${MOCKERY_BIN} ${MOCKERY_YAML} ## target is used to generate mocks for all interfaces in a project.
+	${MOCKERY_BIN}
+	@echo "Mocks successfully created."
 
 .PHONY: build-boot
 build-boot: helm-apply kill-operator-pod ## Builds a new version of the operator and deploys it into the K8s-EcoSystem.

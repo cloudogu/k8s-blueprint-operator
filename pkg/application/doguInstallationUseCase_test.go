@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -175,7 +176,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		)
 
 		// then
-		require.ErrorContains(t, err, getNoDowngradesExplanationTextForDogus())
+		require.ErrorContains(t, err, fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus"))
 		assert.Equal(t, version3212, dogu.Version)
 	})
 
@@ -603,7 +604,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		err := sut.ApplyDoguStates(testCtx, blueprintId)
 
 		// then
-		require.ErrorContains(t, err, getNoDowngradesExplanationTextForDogus())
+		require.ErrorContains(t, err, fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus"))
 		require.ErrorContains(t, err, "an error occurred while applying dogu state to the ecosystem")
 	})
 }
