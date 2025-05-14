@@ -9,8 +9,9 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	"github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	kubernetes "github.com/cloudogu/k8s-blueprint-lib/client"
+	converter "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -60,12 +61,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := v1.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+	effectiveBlueprint, err := converter.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
 		return nil, err
 	}
 
-	stateDiff, err := v1.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
+	stateDiff, err := converter.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 			DryRun:                   blueprintCR.Spec.DryRun,
 		},
-		Status: blueprintCR.Status.Phase,
+		Status: domain.StatusPhase(blueprintCR.Status.Phase),
 	}
 
 	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
@@ -114,7 +115,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	effectiveBlueprint, err := v1.ConvertToEffectiveBlueprintDTO(spec.EffectiveBlueprint)
+	effectiveBlueprint, err := converter.ConvertToEffectiveBlueprintDTO(spec.EffectiveBlueprint)
 	if err != nil {
 		return err
 	}
@@ -155,9 +156,9 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	}
 
 	blueprintStatus := v1.BlueprintStatus{
-		Phase:              spec.Status,
+		Phase:              v1.StatusPhase(spec.Status),
 		EffectiveBlueprint: effectiveBlueprint,
-		StateDiff:          v1.ConvertToStateDiffDTO(spec.StateDiff),
+		StateDiff:          converter.ConvertToStateDiffDTO(spec.StateDiff),
 	}
 
 	CRAfterUpdate.Status = blueprintStatus

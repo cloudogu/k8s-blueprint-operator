@@ -5,6 +5,7 @@ import (
 	"github.com/Masterminds/semver/v3"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"

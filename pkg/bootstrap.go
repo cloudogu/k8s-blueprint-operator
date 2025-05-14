@@ -13,8 +13,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
+	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
-	adapterk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"

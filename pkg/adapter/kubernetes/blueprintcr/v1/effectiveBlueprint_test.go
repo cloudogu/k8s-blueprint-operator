@@ -11,6 +11,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
