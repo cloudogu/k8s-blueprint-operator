@@ -11,7 +11,6 @@ require (
 	github.com/cloudogu/k8s-blueprint-lib v1.0.0
 	github.com/cloudogu/k8s-component-operator v1.9.0
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900
-	github.com/cloudogu/k8s-dogu-operator/v3 v3.5.1
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
 	github.com/cloudogu/retry-lib v0.1.0
@@ -159,6 +158,7 @@ require (
 	google.golang.org/protobuf v1.36.5 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	gotest.tools/v3 v3.5.1 // indirect
 	helm.sh/helm/v3 v3.16.4 // indirect
 	k8s.io/apiextensions-apiserver v0.32.1 // indirect
 	k8s.io/apiserver v0.32.1 // indirect
