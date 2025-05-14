@@ -52,6 +52,8 @@ github.com/cloudogu/k8s-blueprint-lib v1.0.0 h1:dGaa4PaZi2Zzt606NzwvBSJqhWyWVElm
 github.com/cloudogu/k8s-blueprint-lib v1.0.0/go.mod h1:j/Ch1eV2y575+1LFnaUo3ljHdxQ+u3HO/m+1Np7aSpc=
 github.com/cloudogu/k8s-component-operator v1.9.0 h1:b1/gMcAPQBP93EIVTE1ctmAKFdVOqnTST+x6LOqu08g=
 github.com/cloudogu/k8s-component-operator v1.9.0/go.mod h1:BdWqwpZWHoSFOduQ3FzcVV4uGJNb+t0DUYlLBHQ9wwQ=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900 h1:0nY6IyMeggleCaadTlvTkqVf1TeOOkkkadurlSltFqo=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900/go.mod h1:XvnrQKqCh+ksGc+tFkv+EXfKeZC7P1jPInidSElh5CM=
 github.com/cloudogu/k8s-dogu-operator/v3 v3.5.1 h1:bMDTzE2s4BdCZtNib9+07tYc5bLxQGovfl0s7trW8k4=
 github.com/cloudogu/k8s-dogu-operator/v3 v3.5.1/go.mod h1:AFpY+5Kr1CHfAMO6h8KJ7jcAooR+5b5MSFHlrPFP+1o=
 github.com/cloudogu/k8s-registry-lib v0.5.1 h1:gbdrhETUm53GP65LoljrS1kekDDl/onBPfrOQTQpt1s=

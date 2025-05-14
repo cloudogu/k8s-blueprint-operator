@@ -1,7 +1,7 @@
 package restartcr
 
 import (
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-lib/v2/client"
 )
 
 type DoguRestartInterface interface {
