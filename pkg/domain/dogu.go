@@ -10,6 +10,16 @@ import (
 	"slices"
 )
 
+type DataSourceType string
+
+//goland:noinspection GoUnusedConst
+const (
+	// DataSourceConfigMap mounts a config map as a data source.
+	DataSourceConfigMap DataSourceType = "ConfigMap"
+	// DataSourceSecret mounts a secret as a data source.
+	DataSourceSecret DataSourceType = "Secret"
+)
+
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
 // was applied.
 type Dogu struct {
@@ -25,6 +35,24 @@ type Dogu struct {
 	MinVolumeSize *ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	// AdditionalMounts provides the possibility to mount additional data into the dogu.
+	AdditionalMounts []AdditionalMount
+}
+
+// AdditionalMount is a description of what data should be mounted to a specific Dogu volume (already defined in dogu.json).
+type AdditionalMount struct {
+	// SourceType defines where the data is coming from.
+	// Valid options are:
+	//   ConfigMap - data stored in a kubernetes ConfigMap.
+	//   Secret - data stored in a kubernetes Secret.
+	SourceType DataSourceType
+	// Name is the name of the data source.
+	Name string
+	// Volume is the name of the volume to which the data should be mounted. It is defined in the respective dogu.json.
+	Volume string
+	// Subfolder defines a subfolder in which the data should be put within the volume.
+	// +optional
+	Subfolder string
 }
 
 // validate checks if the Dogu is semantically correct.

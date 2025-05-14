@@ -8,7 +8,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.3.1
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.1
-	github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514090107-2e1f995ee062
+	github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514132344-229abb53849d
 	github.com/cloudogu/k8s-component-operator v1.9.0
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900
 	github.com/cloudogu/k8s-registry-lib v0.5.1

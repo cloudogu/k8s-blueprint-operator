@@ -61,6 +61,7 @@ func ConvertDogus(dogus []bpentities.TargetDogu) ([]domain.Dogu, error) {
 				RewriteTarget:    ecosystem.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsFromDTOToDomain(dogu.PlatformConfig.AdditionalMountsConfig),
 		})
 	}
 
@@ -70,6 +71,20 @@ func ConvertDogus(dogus []bpentities.TargetDogu) ([]domain.Dogu, error) {
 	}
 
 	return convertedDogus, err
+}
+
+func convertAdditionalMountsFromDTOToDomain(mounts []bpentities.AdditionalMount) []domain.AdditionalMount {
+	var result []domain.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, domain.AdditionalMount{
+			SourceType: domain.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+
+	return result
 }
 
 func ConvertToDoguDTOs(dogus []domain.Dogu) ([]bpentities.TargetDogu, error) {
@@ -92,6 +107,7 @@ func convertPlatformConfigDTO(dogu domain.Dogu) bpentities.PlatformConfig {
 	config := bpentities.PlatformConfig{}
 	config.ResourceConfig = convertResourceConfigDTO(dogu)
 	config.ReverseProxyConfig = convertReverseProxyConfigDTO(dogu)
+	config.AdditionalMountsConfig = convertAdditionalMountsConfig(dogu)
 
 	return config
 }
@@ -109,5 +125,18 @@ func convertResourceConfigDTO(dogu domain.Dogu) bpentities.ResourceConfig {
 	config := bpentities.ResourceConfig{}
 	config.MinVolumeSize = ecosystem.GetQuantityString(dogu.MinVolumeSize)
 
+	return config
+}
+
+func convertAdditionalMountsConfig(dogu domain.Dogu) []bpentities.AdditionalMount {
+	var config []bpentities.AdditionalMount
+	for _, m := range dogu.AdditionalMounts {
+		config = append(config, bpentities.AdditionalMount{
+			SourceType: bpentities.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
 	return config
 }

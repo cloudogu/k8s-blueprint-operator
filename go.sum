@@ -50,6 +50,8 @@ github.com/cloudogu/cesapp-lib v0.18.1 h1:LMdGktIefm/PuhdPqpLTPvjY1smO06EEGBbRSA
 github.com/cloudogu/cesapp-lib v0.18.1/go.mod h1:J05eXFxnz4enZblABlmiVTZaUtJ+LIhlJ2UF6l9jpDw=
 github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514090107-2e1f995ee062 h1:+Du/s+s3P4/ZFJ8zwqy8YnsOKJWbq+WdqFIdygzFqOY=
 github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514090107-2e1f995ee062/go.mod h1:zxwPZqAzWirLRrrtwPcb2+DTW4n+6n8raJIhQrMbN20=
+github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514132344-229abb53849d h1:phavZYOwwS71HMr64Jt/pGwdxVWc/HxiGbDy3CkE94o=
+github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514132344-229abb53849d/go.mod h1:zxwPZqAzWirLRrrtwPcb2+DTW4n+6n8raJIhQrMbN20=
 github.com/cloudogu/k8s-component-operator v1.9.0 h1:b1/gMcAPQBP93EIVTE1ctmAKFdVOqnTST+x6LOqu08g=
 github.com/cloudogu/k8s-component-operator v1.9.0/go.mod h1:BdWqwpZWHoSFOduQ3FzcVV4uGJNb+t0DUYlLBHQ9wwQ=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900 h1:0nY6IyMeggleCaadTlvTkqVf1TeOOkkkadurlSltFqo=
