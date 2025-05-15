@@ -130,15 +130,15 @@ func TestConvertDogus(t *testing.T) {
 				Name:        cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
 				Version:     version3211,
 				TargetState: domain.TargetStatePresent,
-				AdditionalMounts: []domain.AdditionalMount{
+				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
-						SourceType: domain.DataSourceConfigMap,
+						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configMap",
 						Volume:     "volume",
 						Subfolder:  "subfolder",
 					},
 					{
-						SourceType: domain.DataSourceSecret,
+						SourceType: ecosystem.DataSourceSecret,
 						Name:       "sec",
 						Volume:     "secvolume",
 						Subfolder:  "secsubfolder",
@@ -214,15 +214,15 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				TargetState:        domain.TargetStatePresent,
 				MinVolumeSize:      &volumeSize,
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"},
-				AdditionalMounts: []domain.AdditionalMount{
+				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
-						SourceType: domain.DataSourceConfigMap,
+						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configMap",
 						Volume:     "volume",
 						Subfolder:  "subfolder",
 					},
 					{
-						SourceType: domain.DataSourceSecret,
+						SourceType: ecosystem.DataSourceSecret,
 						Name:       "sec",
 						Volume:     "secvolume",
 						Subfolder:  "secsubfolder",

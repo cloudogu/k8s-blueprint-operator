@@ -73,11 +73,11 @@ func ConvertDogus(dogus []bpentities.TargetDogu) ([]domain.Dogu, error) {
 	return convertedDogus, err
 }
 
-func convertAdditionalMountsFromDTOToDomain(mounts []bpentities.AdditionalMount) []domain.AdditionalMount {
-	var result []domain.AdditionalMount
+func convertAdditionalMountsFromDTOToDomain(mounts []bpentities.AdditionalMount) []ecosystem.AdditionalMount {
+	var result []ecosystem.AdditionalMount
 	for _, m := range mounts {
-		result = append(result, domain.AdditionalMount{
-			SourceType: domain.DataSourceType(m.SourceType),
+		result = append(result, ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
 			Subfolder:  m.Subfolder,
