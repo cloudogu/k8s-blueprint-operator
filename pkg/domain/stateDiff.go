@@ -29,6 +29,7 @@ const (
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
 	ActionSwitchComponentNamespace        = "component namespace switch"
 	ActionUpdateComponentDeployConfig     = "update component package config"
+	ActionUpdateAdditionalMounts          = "update additional mounts"
 )
 
 func (a Action) IsDoguProxyAction() bool {

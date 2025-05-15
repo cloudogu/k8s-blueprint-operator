@@ -50,7 +50,21 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		MinVolumeSize:      volumeSize,
 		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
+		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
 	}, nil
+}
+
+func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
+	var result []ecosystem.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+	return result
 }
 
 func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
@@ -97,9 +111,23 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				ForceUpgrade:         false,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
+			AdditionalMounts:             toDoguCRAdditionalMounts(dogu.AdditionalMounts),
 		},
 		Status: v2.DoguStatus{},
 	}
+}
+
+func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount {
+	var result []v2.DataMount
+	for _, m := range mounts {
+		result = append(result, v2.DataMount{
+			SourceType: v2.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+	return result
 }
 
 func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {

@@ -90,6 +90,55 @@ func Test_parseDoguCR(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "parse additional mounts",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					AdditionalMounts: []v2.DataMount{
+						{
+							SourceType: v2.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: v2.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configmap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "secret",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -142,6 +191,56 @@ func Test_toDoguCR(t *testing.T) {
 						ForceUpgrade:         false,
 					},
 					AdditionalIngressAnnotations: nil,
+				},
+				Status: v2.DoguStatus{},
+			},
+		},
+		{
+			name: "convert additional mounts",
+			dogu: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configmap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "secret",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			},
+			want: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgresql",
+					Labels: map[string]string{
+						"app":       "ces",
+						"dogu.name": "postgresql",
+					},
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					AdditionalMounts: []v2.DataMount{
+						{
+							SourceType: v2.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: v2.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
 				},
 				Status: v2.DoguStatus{},
 			},

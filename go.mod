@@ -10,7 +10,7 @@ require (
 	github.com/cloudogu/cesapp-lib v0.18.1
 	github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250514132344-229abb53849d
 	github.com/cloudogu/k8s-component-operator v1.9.0
-	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250513082038-eec453d54900
+	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250514132724-8e6c57b8fbad
 	github.com/cloudogu/k8s-registry-lib v0.5.1
 	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
 	github.com/cloudogu/retry-lib v0.1.0

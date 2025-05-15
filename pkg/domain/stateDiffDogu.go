@@ -26,6 +26,7 @@ type DoguDiffState struct {
 	InstallationState  TargetState
 	MinVolumeSize      *ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	AdditionalMounts   []ecosystem.AdditionalMount
 }
 
 // String returns a string representation of the DoguDiff.
@@ -88,6 +89,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  TargetStatePresent,
 			MinVolumeSize:      installedDogu.MinVolumeSize,
 			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
+			AdditionalMounts:   installedDogu.AdditionalMounts,
 		}
 	}
 
@@ -101,6 +103,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  blueprintDogu.TargetState,
 			MinVolumeSize:      blueprintDogu.MinVolumeSize,
 			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
+			AdditionalMounts:   blueprintDogu.AdditionalMounts,
 		}
 	}
 
@@ -142,6 +145,7 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 
 	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
 	neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
+	neededActions = appendActionForAdditionalMounts(neededActions, expected.AdditionalMounts, actual.AdditionalMounts)
 
 	if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
 		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
@@ -179,6 +183,13 @@ func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecos
 		if expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
 			return append(actions, ActionUpdateDoguProxyBodySize)
 		}
+	}
+	return actions
+}
+
+func appendActionForAdditionalMounts(actions []Action, expectedMounts []ecosystem.AdditionalMount, actualMounts []ecosystem.AdditionalMount) []Action {
+	if len(expectedMounts) != len(actualMounts) {
+		return append(actions, ActionUpdateAdditionalMounts)
 	}
 	return actions
 }

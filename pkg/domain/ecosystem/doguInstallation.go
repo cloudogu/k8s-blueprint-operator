@@ -27,6 +27,8 @@ type DoguInstallation struct {
 	MinVolumeSize *VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ReverseProxyConfig
+	// AdditionalMounts provides the possibility to mount additional data into the dogu.
+	AdditionalMounts []AdditionalMount
 }
 
 // TODO: Unused constants needed?

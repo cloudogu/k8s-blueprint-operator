@@ -390,6 +390,314 @@ func Test_determineDoguDiff(t *testing.T) {
 				NeededActions: nil,
 			},
 		},
+		{
+			name: "no action if additional mounts are equal",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				NeededActions: nil,
+			},
+		},
+		{
+			name: "no action if additional mounts are equal but order is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				NeededActions: nil,
+			},
+		},
+		{
+			name: "needs update action for additional mounts if the size is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				NeededActions: []Action{ActionUpdateAdditionalMounts},
+			},
+		},
+		{
+			name: "needs update action for additional mounts if an element is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				NeededActions: []Action{ActionUpdateAdditionalMounts},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
