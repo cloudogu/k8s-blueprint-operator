@@ -6,6 +6,8 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
+	"slices"
+	"strings"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -191,7 +193,35 @@ func appendActionForAdditionalMounts(actions []Action, expectedMounts []ecosyste
 	if len(expectedMounts) != len(actualMounts) {
 		return append(actions, ActionUpdateAdditionalMounts)
 	}
+
+	if !areAdditionalMountsEqual(expectedMounts, actualMounts) {
+		return append(actions, ActionUpdateAdditionalMounts)
+	}
 	return actions
+}
+
+func serializeAdditionalMount(mount ecosystem.AdditionalMount) string {
+	data := strings.Join([]string{string(mount.SourceType), mount.Name, mount.Volume, mount.Subfolder}, "")
+	return data
+}
+
+func areAdditionalMountsEqual(first []ecosystem.AdditionalMount, second []ecosystem.AdditionalMount) bool {
+	firstHashList := serializeAdditionalMounts(first)
+	slices.Sort(firstHashList)
+
+	secondHashList := serializeAdditionalMounts(second)
+	slices.Sort(secondHashList)
+
+	return slices.Equal(firstHashList, secondHashList)
+}
+
+func serializeAdditionalMounts(mounts []ecosystem.AdditionalMount) []string {
+	var result []string
+	for _, m := range mounts {
+		result = append(result, serializeAdditionalMount(m))
+	}
+
+	return result
 }
 
 func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {

@@ -31,6 +31,7 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
 		},
 		Expected: DoguDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
@@ -44,9 +45,23 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}
+}
+
+func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []AdditionalMount {
+	var result []AdditionalMount
+	for _, m := range mounts {
+		result = append(result, AdditionalMount{
+			SourceType: DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+	return result
 }
 
 func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, error) {
@@ -119,6 +134,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Actual.AdditionalMounts),
 		},
 		Expected: domain.DoguDiffState{
 			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
@@ -130,7 +146,22 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}, nil
+}
+
+func convertAdditionalMountsToDoguDiffDomain(mounts []AdditionalMount) []ecosystem.AdditionalMount {
+	var result []ecosystem.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+
+	return result
 }

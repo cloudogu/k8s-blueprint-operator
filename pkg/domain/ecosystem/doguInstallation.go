@@ -90,13 +90,19 @@ type AdditionalMount struct {
 }
 
 // InstallDogu is a factory for new DoguInstallation's.
-func InstallDogu(name cescommons.QualifiedName, version core.Version, minVolumeSize *VolumeSize, reverseProxyConfig ReverseProxyConfig) *DoguInstallation {
+func InstallDogu(
+	name cescommons.QualifiedName,
+	version core.Version,
+	minVolumeSize *VolumeSize,
+	reverseProxyConfig ReverseProxyConfig,
+	additionalMounts []AdditionalMount) *DoguInstallation {
 	return &DoguInstallation{
 		Name:               name,
 		Version:            version,
 		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
 		MinVolumeSize:      minVolumeSize,
 		ReverseProxyConfig: reverseProxyConfig,
+		AdditionalMounts:   additionalMounts,
 	}
 }
 
@@ -132,4 +138,8 @@ func (dogu *DoguInstallation) UpdateProxyRewriteTarget(value RewriteTarget) {
 
 func (dogu *DoguInstallation) UpdateProxyAdditionalConfig(value AdditionalConfig) {
 	dogu.ReverseProxyConfig.AdditionalConfig = value
+}
+
+func (dogu *DoguInstallation) UpdateAdditionalMounts(mounts []AdditionalMount) {
+	dogu.AdditionalMounts = mounts
 }

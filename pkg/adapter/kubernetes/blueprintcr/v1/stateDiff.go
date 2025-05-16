@@ -59,14 +59,14 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) StateDiff {
 func ConvertToStateDiffDomain(dto StateDiff) (domain.StateDiff, error) {
 	var errs []error
 
-	doguDiffs := make([]domain.DoguDiff, 0)
+	var doguDiffs []domain.DoguDiff
 	for doguName, doguDiff := range dto.DoguDiffs {
 		doguDiffDomainModel, err := convertToDoguDiffDomain(doguName, doguDiff)
 		errs = append(errs, err)
 		doguDiffs = append(doguDiffs, doguDiffDomainModel)
 	}
 
-	componentDiffs := make([]domain.ComponentDiff, 0)
+	var componentDiffs []domain.ComponentDiff
 	for componentName, componentDiff := range dto.ComponentDiffs {
 		componentDiffDomainModel, err := convertToComponentDiffDomain(componentName, componentDiff)
 		errs = append(errs, err)

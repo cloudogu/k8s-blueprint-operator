@@ -24,7 +24,6 @@ var postgresqlQualifiedName = cescommons.QualifiedName{
 	SimpleName: "postgresql",
 }
 
-// TODO Add test for proxy and volume actions
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
@@ -61,9 +60,19 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			RewriteTarget:    "/",
 			AdditionalConfig: "additional",
 		}
+		additionalMounts := []ecosystem.AdditionalMount{
+			{
+				SourceType: ecosystem.DataSourceConfigMap,
+				Name:       "configmap",
+				Volume:     "volume",
+				Subfolder:  "different_subfolder",
+			},
+		}
+
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
-			Create(testCtx, ecosystem.InstallDogu(postgresqlQualifiedName, version3211, &volumeSize, config)).
+			Create(testCtx,
+				ecosystem.InstallDogu(postgresqlQualifiedName, version3211, &volumeSize, config, additionalMounts)).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
@@ -84,6 +93,14 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 					InstallationState:  domain.TargetStatePresent,
 					MinVolumeSize:      &volumeSize,
 					ReverseProxyConfig: config,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+					},
 				},
 				NeededActions: []domain.Action{domain.ActionInstall},
 			},
@@ -337,6 +354,76 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			dogu,
 			domain.BlueprintConfiguration{},
 		)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should update additional mounts", func(t *testing.T) {
+		expectedDogu := &ecosystem.DoguInstallation{
+			Name: postgresqlQualifiedName,
+			AdditionalMounts: []ecosystem.AdditionalMount{
+				{
+					SourceType: ecosystem.DataSourceConfigMap,
+					Name:       "configmap",
+					Volume:     "volume",
+					Subfolder:  "different_subfolder",
+				},
+				{
+					SourceType: ecosystem.DataSourceSecret,
+					Name:       "secret",
+					Volume:     "secvolume",
+					Subfolder:  "secsubfolder",
+				},
+			},
+		}
+
+		dogu := &ecosystem.DoguInstallation{
+			Name: postgresqlQualifiedName,
+			AdditionalMounts: []ecosystem.AdditionalMount{
+				{
+					SourceType: ecosystem.DataSourceConfigMap,
+					Name:       "configmap",
+					Volume:     "volume",
+					Subfolder:  "subfolder",
+				},
+				{
+					SourceType: ecosystem.DataSourceSecret,
+					Name:       "secret",
+					Volume:     "secvolume",
+					Subfolder:  "secsubfolder",
+				},
+			},
+		}
+
+		diff := domain.DoguDiff{
+			DoguName: "postgresql",
+			Expected: domain.DoguDiffState{
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configmap",
+						Volume:     "volume",
+						Subfolder:  "different_subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "secret",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			},
+			NeededActions: []domain.Action{domain.ActionUpdateAdditionalMounts},
+		}
+
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
+
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
+
+		// when
+		err := sut.applyDoguState(testCtx, diff, dogu, domain.BlueprintConfiguration{})
 
 		// then
 		require.NoError(t, err)
