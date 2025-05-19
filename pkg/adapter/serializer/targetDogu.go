@@ -128,6 +128,7 @@ func convertResourceConfigDTO(dogu domain.Dogu) bpentities.ResourceConfig {
 	return config
 }
 
+// FIXME effective blueprint is missing additional mounts
 func convertAdditionalMountsConfig(dogu domain.Dogu) []bpentities.AdditionalMount {
 	var config []bpentities.AdditionalMount
 	for _, m := range dogu.AdditionalMounts {
