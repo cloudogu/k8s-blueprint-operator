@@ -52,8 +52,8 @@ github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250516091554-232b1d78f5f9 h1:6d3l
 github.com/cloudogu/k8s-blueprint-lib v0.0.0-20250516091554-232b1d78f5f9/go.mod h1:zxwPZqAzWirLRrrtwPcb2+DTW4n+6n8raJIhQrMbN20=
 github.com/cloudogu/k8s-component-operator v1.9.0 h1:b1/gMcAPQBP93EIVTE1ctmAKFdVOqnTST+x6LOqu08g=
 github.com/cloudogu/k8s-component-operator v1.9.0/go.mod h1:BdWqwpZWHoSFOduQ3FzcVV4uGJNb+t0DUYlLBHQ9wwQ=
-github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250514132724-8e6c57b8fbad h1:wLVpxvfYMWjE/InZoshVJ7WhRAhOwpsX2n1pkXpPSc0=
-github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250514132724-8e6c57b8fbad/go.mod h1:XvnrQKqCh+ksGc+tFkv+EXfKeZC7P1jPInidSElh5CM=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.7.0 h1:0ROtBFJ0QVAVmg5R03dIYffznFamk5puWwS7hnMxy4w=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.7.0/go.mod h1:XvnrQKqCh+ksGc+tFkv+EXfKeZC7P1jPInidSElh5CM=
 github.com/cloudogu/k8s-registry-lib v0.5.1 h1:gbdrhETUm53GP65LoljrS1kekDDl/onBPfrOQTQpt1s=
 github.com/cloudogu/k8s-registry-lib v0.5.1/go.mod h1:mdMOgknEOrGQH1zc/3K859iPhwpqwtzigK9QrjM3Vk0=
 github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1 h1:NWoBvBwiE8yO8HqSId0+nOTBMGSjzX0yM8m6fC7Ll6E=
