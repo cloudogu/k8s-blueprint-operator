@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- dogus now support additionalMounts for configMaps and secrets
+
+### Changed
+- update to go 1.24
+- extract Blueprint-CRD into bluerpint-lib
+- extract Blueprint-k8s rest client into blueprint-lib
+- update k8s.io/client-go to v0.33.0
+  - it was a difficult update in combination with the dependency to the component-operator
+
 ## [v2.5.0] - 2025-04-22
 ### Changed
 - [#110] Set resource requests and limits to sensible defaults
