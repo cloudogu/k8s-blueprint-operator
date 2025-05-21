@@ -122,7 +122,8 @@ func TestConvertToDTO(t *testing.T) {
 					NeededActions: []DoguAction{"uninstall"},
 				},
 			}, ComponentDiffs: map[string]ComponentDiff{}},
-		}, {
+		},
+		{
 			name: "should convert multiple component diffs",
 			domainModel: domain.StateDiff{
 				DoguDiffs: domain.DoguDiffs{},
@@ -154,7 +155,8 @@ func TestConvertToDTO(t *testing.T) {
 						NeededActions: []ComponentAction{"uninstall"},
 					},
 				}},
-		}, {
+		},
+		{
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
@@ -232,9 +234,9 @@ func TestConvertToDTO(t *testing.T) {
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,
-							Name:       "configmap",
-							Volume:     "volume",
-							Subfolder:  "different_subfolder",
+							Name:       "secret",
+							Volume:     "volume2",
+							Subfolder:  "different_subfolder2",
 						},
 					},
 				},
@@ -264,9 +266,9 @@ func TestConvertToDTO(t *testing.T) {
 							AdditionalMounts: []AdditionalMount{
 								{
 									SourceType: DataSourceConfigMap,
-									Name:       "configmap",
-									Volume:     "volume",
-									Subfolder:  "different_subfolder",
+									Name:       "secret",
+									Volume:     "volume2",
+									Subfolder:  "different_subfolder2",
 								},
 							},
 						},

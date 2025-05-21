@@ -110,7 +110,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
-	logger.Info("args", "spec", spec)
 
 	persistenceContext, err := getPersistenceContext(ctx, spec)
 	if err != nil {
@@ -148,7 +147,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		},
 	}
 
-	logger.Info("update blueprint", "updatedBlueprint", updatedBlueprint)
+	logger.Info("update blueprint CR spec")
 
 	CRAfterUpdate, err := repo.blueprintClient.Update(ctx, &updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
@@ -165,7 +164,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	}
 
 	CRAfterUpdate.Status = blueprintStatus
-	logger.Info("update status", "arg", fmt.Sprintf("%+v\n", CRAfterUpdate))
+	logger.Info("update blueprint CR status")
 
 	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
 	if err != nil {
