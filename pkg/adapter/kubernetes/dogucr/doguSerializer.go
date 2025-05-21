@@ -160,12 +160,14 @@ type doguCRPatch struct {
 }
 
 type doguSpecPatch struct {
+	// do not use omitempty, because we cannot delete things then
 	Name                         string             `json:"name"`
 	Version                      string             `json:"version"`
 	Resources                    doguResourcesPatch `json:"resources"`
 	SupportMode                  bool               `json:"supportMode"`
 	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
 	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
+	AdditionalMounts             []v2.DataMount     `json:"additionalMounts"`
 }
 
 type upgradeConfigPatch struct {
@@ -194,6 +196,7 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 				// this is a useful default as long as blueprints itself have no forceUpgrade flag implemented
 				ForceUpgrade: false,
 			},
+			AdditionalMounts: toDoguCRAdditionalMounts(dogu.AdditionalMounts),
 		},
 	}
 }
