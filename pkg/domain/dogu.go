@@ -53,6 +53,11 @@ func (dogu Dogu) validate() error {
 		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
 	}
 
+	for _, mount := range dogu.AdditionalMounts {
+		//TODO: validate source spelling
+		//TODO: find right place to validate volume name
+	}
+
 	err := errors.Join(errorList...)
 	if err != nil {
 		err = fmt.Errorf("dogu is invalid: %w", err)
