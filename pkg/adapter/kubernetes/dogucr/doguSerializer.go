@@ -100,6 +100,10 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
+	minVolumeSize := resource.Quantity{}
+	if dogu.MinVolumeSize != nil {
+		minVolumeSize = *dogu.MinVolumeSize
+	}
 	return &v2.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -113,7 +117,8 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			Resources: v2.DoguResources{
-				DataVolumeSize: ecosystem.GetQuantityString(dogu.MinVolumeSize),
+				// always set MinDataVolumeSize instead of the deprecated DataVolumeSize
+				MinDataVolumeSize: minVolumeSize,
 			},
 			SupportMode: false,
 			UpgradeConfig: v2.UpgradeConfig{
@@ -187,16 +192,25 @@ type upgradeConfigPatch struct {
 
 // DoguResources defines the physical resources used by the dogu.
 type doguResourcesPatch struct {
-	DataVolumeSize string `json:"dataVolumeSize"`
+	// DataVolumeSize
+	// Deprecated: use MinDataVolumeSize instead. Only set it to correct possibly wrong dogu CRs
+	DataVolumeSize    string            `json:"dataVolumeSize"`
+	MinDataVolumeSize resource.Quantity `json:"minDataVolumeSize"`
 }
 
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
+	minVolumeSize := resource.Quantity{}
+	if dogu.MinVolumeSize != nil {
+		minVolumeSize = *dogu.MinVolumeSize
+	}
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			Resources: doguResourcesPatch{
-				DataVolumeSize: ecosystem.GetQuantityString(dogu.MinVolumeSize),
+				// remove the deprecated value from the dogu CR and replace it with the new one
+				DataVolumeSize:    "",
+				MinDataVolumeSize: minVolumeSize,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode

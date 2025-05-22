@@ -450,7 +450,8 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 			"\"name\":\"official/postgresql\"," +
 			"\"version\":\"3.2.1-4\"," +
 			"\"resources\":{" +
-			"\"dataVolumeSize\":\"\"}," +
+			"\"dataVolumeSize\":\"\"," +
+			"\"minDataVolumeSize\":\"0\"}," +
 			"\"supportMode\":false," +
 			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
 			"\"additionalIngressAnnotations\":null," +
