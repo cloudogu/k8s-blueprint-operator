@@ -16,6 +16,7 @@ var postgresDoguName = cescommons.QualifiedName{
 	Namespace:  cescommons.Namespace("official"),
 	SimpleName: cescommons.SimpleName("postgresql"),
 }
+var volSize25G = resource.MustParse("25G")
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
@@ -139,6 +140,79 @@ func Test_parseDoguCR(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "parse deprecated DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						DataVolumeSize: "25G",
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      &volSize25G,
+			},
+			wantErr: false,
+		},
+		{
+			name: "prefer MinDataVolumeSize over DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						DataVolumeSize:    "20G",
+						MinDataVolumeSize: volSize25G,
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      &volSize25G,
+			},
+			wantErr: false,
+		},
+		{
+			name: "parse MinDataVolumeSize without DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						MinDataVolumeSize: volSize25G,
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      &volSize25G,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -148,7 +222,7 @@ func Test_parseDoguCR(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseDoguCR() got = %v, want %v", got, tt.want)
+				t.Errorf("parseDoguCR() got = %+v, want %+v", got, tt.want)
 			}
 		})
 	}

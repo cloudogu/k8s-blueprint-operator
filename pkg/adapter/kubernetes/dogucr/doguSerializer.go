@@ -24,7 +24,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
 	doguName, nameErr := cescommons.QualifiedNameFromString(cr.Spec.Name)
 
-	volumeSize, volumeSizeErr := ecosystem.GetQuantityReference(cr.Spec.Resources.DataVolumeSize)
+	minVolumeSize, volumeSizeErr := parseMinDataVolumeSize(cr)
 
 	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
 
@@ -47,11 +47,21 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
-		MinVolumeSize:      volumeSize,
+		MinVolumeSize:      minVolumeSize,
 		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
 		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
 	}, nil
+}
+
+func parseMinDataVolumeSize(cr *v2.Dogu) (*ecosystem.VolumeSize, error) {
+	emptySize := resource.Quantity{}
+	//only use the deprecated value, if the new value is not set
+	if cr.Spec.Resources.MinDataVolumeSize == emptySize {
+		return ecosystem.GetQuantityReference(cr.Spec.Resources.DataVolumeSize)
+	} else {
+		return &cr.Spec.Resources.MinDataVolumeSize, nil
+	}
 }
 
 func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
