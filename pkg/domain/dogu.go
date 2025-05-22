@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"slices"
+	"strings"
 )
 
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -54,7 +55,17 @@ func (dogu Dogu) validate() error {
 	}
 
 	for _, mount := range dogu.AdditionalMounts {
-		//TODO: validate source spelling
+		if mount.SourceType != ecosystem.DataSourceConfigMap && mount.SourceType != ecosystem.DataSourceSecret {
+			errorList = append(errorList, fmt.Errorf(
+				"dogu additional mounts sourceType must be one of '%s', '%s': %s",
+				ecosystem.DataSourceConfigMap,
+				ecosystem.DataSourceSecret,
+				dogu.Name,
+			))
+		}
+		if strings.HasPrefix(mount.Subfolder, "/") {
+			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
+		}
 		//TODO: find right place to validate volume name
 	}
 

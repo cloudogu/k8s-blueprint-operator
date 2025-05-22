@@ -86,3 +86,56 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 		assert.Equal(t, resource.DecimalSI, dogu.ReverseProxyConfig.MaxBodySize.Format)
 	})
 }
+
+func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
+	t.Run("additionalMounts ok", func(t *testing.T) {
+		// given
+		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+			{
+				SourceType: ecosystem.DataSourceConfigMap,
+				Name:       "html-config",
+				Volume:     "customhtml",
+				Subfolder:  "test",
+			},
+		}}
+		// when
+		err := dogu.validate()
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("unknown sourceType", func(t *testing.T) {
+		// given
+		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+			{
+				SourceType: "unsupportedType",
+				Name:       "html-config",
+				Volume:     "customhtml",
+				Subfolder:  "test",
+			},
+		}}
+		// when
+		err := dogu.validate()
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts sourceType must be one of 'ConfigMap', 'Secret': k8s/nginx-static")
+	})
+
+	t.Run("subfolder is no relative path", func(t *testing.T) {
+		// given
+		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+			{
+				SourceType: ecosystem.DataSourceConfigMap,
+				Name:       "html-config",
+				Volume:     "customhtml",
+				Subfolder:  "/test",
+			},
+		}}
+		// when
+		err := dogu.validate()
+		// then
+		require.Error(t, err)
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts Subfolder must be a relative path : k8s/nginx-static")
+	})
+
+}
