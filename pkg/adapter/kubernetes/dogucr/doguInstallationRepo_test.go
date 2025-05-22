@@ -446,7 +446,16 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 		doguClientMock := NewMockDoguInterface(t)
 		repo := &doguInstallationRepo{doguClient: doguClientMock}
 
-		expectedDoguPatch := "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null}}"
+		expectedDoguPatch := "{\"spec\":{" +
+			"\"name\":\"official/postgresql\"," +
+			"\"version\":\"3.2.1-4\"," +
+			"\"resources\":{" +
+			"\"dataVolumeSize\":\"\"}," +
+			"\"supportMode\":false," +
+			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
+			"\"additionalIngressAnnotations\":null," +
+			"\"additionalMounts\":null}" +
+			"}"
 		doguClientMock.EXPECT().Patch(testCtx, "postgresql", types.MergePatchType, []byte(expectedDoguPatch), metav1.PatchOptions{}).Return(nil, nil)
 		dogu := &ecosystem.DoguInstallation{
 			Name:    postgresDoguName,
