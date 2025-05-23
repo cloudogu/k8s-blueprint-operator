@@ -171,12 +171,12 @@ func Test_determineDoguDiff(t *testing.T) {
 						AdditionalConfig: "additional",
 						RewriteTarget:    "/",
 					},
-					MinVolumeSize: &volumeSize2,
+					MinVolumeSize: volumeSize2,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:          officialNexus,
 					Version:       version3211,
-					MinVolumeSize: &volumeSize1,
+					MinVolumeSize: volumeSize1,
 				},
 			},
 			want: DoguDiff{
@@ -185,7 +185,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					Namespace:         officialNamespace,
 					Version:           version3211,
 					InstallationState: TargetStatePresent,
-					MinVolumeSize:     &volumeSize1,
+					MinVolumeSize:     volumeSize1,
 				},
 				Expected: DoguDiffState{
 					Namespace:         officialNamespace,
@@ -196,7 +196,7 @@ func Test_determineDoguDiff(t *testing.T) {
 						AdditionalConfig: "additional",
 						RewriteTarget:    "/",
 					},
-					MinVolumeSize: &volumeSize2,
+					MinVolumeSize: volumeSize2,
 				},
 				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig, ActionUpgrade},
 			},

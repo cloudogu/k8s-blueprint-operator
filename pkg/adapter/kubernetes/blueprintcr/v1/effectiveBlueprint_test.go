@@ -88,17 +88,22 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	blueprintV2, err := ConvertToEffectiveBlueprintDTO(blueprint)
 
 	//then
+	emptyPlatformConfig := entities.PlatformConfig{
+		ResourceConfig: entities.ResourceConfig{
+			MinVolumeSize: "0",
+		},
+	}
 	convertedDogus := []entities.TargetDogu{
-		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "official/dogu2", TargetState: "absent"},
-		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent", PlatformConfig: emptyPlatformConfig},
+		{Name: "official/dogu2", TargetState: "absent", PlatformConfig: emptyPlatformConfig},
+		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present", PlatformConfig: emptyPlatformConfig},
+		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present", PlatformConfig: emptyPlatformConfig},
 		{
 			Name:        "premium/dogu5",
 			Version:     version1_2_3_3.Raw,
 			TargetState: "present",
 			PlatformConfig: entities.PlatformConfig{
-				ResourceConfig:     entities.ResourceConfig{},
+				ResourceConfig:     emptyPlatformConfig.ResourceConfig,
 				ReverseProxyConfig: entities.ReverseProxyConfig{},
 				AdditionalMountsConfig: []entities.AdditionalMount{
 					{

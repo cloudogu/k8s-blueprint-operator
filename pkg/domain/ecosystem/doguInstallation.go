@@ -24,7 +24,7 @@ type DoguInstallation struct {
 	PersistenceContext map[string]interface{}
 	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
 	// storage is needed.
-	MinVolumeSize *VolumeSize
+	MinVolumeSize VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
@@ -93,7 +93,7 @@ type AdditionalMount struct {
 func InstallDogu(
 	name cescommons.QualifiedName,
 	version core.Version,
-	minVolumeSize *VolumeSize,
+	minVolumeSize VolumeSize,
 	reverseProxyConfig ReverseProxyConfig,
 	additionalMounts []AdditionalMount) *DoguInstallation {
 	return &DoguInstallation{
@@ -128,7 +128,7 @@ func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
 	dogu.ReverseProxyConfig.MaxBodySize = value
 }
 
-func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
+func (dogu *DoguInstallation) UpdateMinVolumeSize(size VolumeSize) {
 	dogu.MinVolumeSize = size
 }
 

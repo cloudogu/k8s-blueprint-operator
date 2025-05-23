@@ -58,7 +58,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 	t.Run("error on invalid volume size format", func(t *testing.T) {
 		// given
 		parse := resource.MustParse("1M")
-		dogu := Dogu{Name: officialDogu1, MinVolumeSize: &parse}
+		dogu := Dogu{Name: officialDogu1, MinVolumeSize: parse}
 		// when
 		err := dogu.validate()
 		// then

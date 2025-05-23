@@ -24,7 +24,11 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
 	doguName, nameErr := cescommons.QualifiedNameFromString(cr.Spec.Name)
 
-	minVolumeSize, volumeSizeErr := parseMinDataVolumeSize(cr)
+	// the dogu-operator has a default of 2Gi if this field is 0 or not set
+	// this getter gives us 2Gi if the field is 0 and also respects the deprecated field
+	// for the state diff, we want the 2Gi but the consequence is,
+	// that we maybe override an empty value with the default 2Gi if we update the Dogu CR for any reason.
+	minVolumeSize, volumeSizeErr := cr.GetMinDataVolumeSize()
 
 	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
 
@@ -52,16 +56,6 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		PersistenceContext: persistenceContext,
 		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
 	}, nil
-}
-
-func parseMinDataVolumeSize(cr *v2.Dogu) (*ecosystem.VolumeSize, error) {
-	emptySize := resource.Quantity{}
-	//only use the deprecated value, if the new value is not set
-	if cr.Spec.Resources.MinDataVolumeSize == emptySize {
-		return ecosystem.GetQuantityReference(cr.Spec.Resources.DataVolumeSize)
-	} else {
-		return &cr.Spec.Resources.MinDataVolumeSize, nil
-	}
 }
 
 func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
@@ -100,10 +94,7 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
-	minVolumeSize := resource.Quantity{}
-	if dogu.MinVolumeSize != nil {
-		minVolumeSize = *dogu.MinVolumeSize
-	}
+	minVolumeSize := dogu.MinVolumeSize
 	return &v2.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -118,6 +109,8 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 			Version: dogu.Version.Raw,
 			Resources: v2.DoguResources{
 				// always set MinDataVolumeSize instead of the deprecated DataVolumeSize
+				// the dogu-operator has a default of 2GiB if this field is 0 or not set
+				// we just always set this value, if a new dogu CR is created via blueprint
 				MinDataVolumeSize: minVolumeSize,
 			},
 			SupportMode: false,
@@ -199,16 +192,15 @@ type doguResourcesPatch struct {
 }
 
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
-	minVolumeSize := resource.Quantity{}
-	if dogu.MinVolumeSize != nil {
-		minVolumeSize = *dogu.MinVolumeSize
-	}
+	minVolumeSize := dogu.MinVolumeSize
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
 			Name:    dogu.Name.String(),
 			Version: dogu.Version.Raw,
 			Resources: doguResourcesPatch{
-				// remove the deprecated value from the dogu CR and replace it with the new one
+				// replace the deprecated value from the dogu CR with an empty string and also set the new one
+				// the dogu-operator has a default of 2Gi if this field is 0 or not set
+				// we just always set this value, if a new dogu CR is created via blueprint
 				DataVolumeSize:    "",
 				MinDataVolumeSize: minVolumeSize,
 			},

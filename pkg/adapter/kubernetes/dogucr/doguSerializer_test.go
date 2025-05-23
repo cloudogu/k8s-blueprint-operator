@@ -17,6 +17,7 @@ var postgresDoguName = cescommons.QualifiedName{
 	SimpleName: cescommons.SimpleName("postgresql"),
 }
 var volSize25G = resource.MustParse("25G")
+var defaultVolSize = resource.MustParse(v2.DefaultVolumeSize)
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
@@ -63,6 +64,7 @@ func Test_parseDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				MinVolumeSize:      defaultVolSize,
 				PersistenceContext: persistenceContext,
 			},
 			wantErr: false,
@@ -123,6 +125,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
+				MinVolumeSize:      defaultVolSize,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
 						SourceType: ecosystem.DataSourceConfigMap,
@@ -160,7 +163,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      &volSize25G,
+				MinVolumeSize:      volSize25G,
 			},
 			wantErr: false,
 		},
@@ -185,7 +188,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      &volSize25G,
+				MinVolumeSize:      volSize25G,
 			},
 			wantErr: false,
 		},
@@ -209,7 +212,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      &volSize25G,
+				MinVolumeSize:      volSize25G,
 			},
 			wantErr: false,
 		},
@@ -222,7 +225,7 @@ func Test_parseDoguCR(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseDoguCR() got = %+v, want %+v", got, tt.want)
+				t.Errorf("parseDoguCR() \ngot = %+v \nwant= %+v", got, tt.want)
 			}
 		})
 	}
@@ -329,7 +332,7 @@ func Test_toDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: &volSize25G,
+				MinVolumeSize: volSize25G,
 			},
 			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
@@ -421,7 +424,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: &quantity2,
+				MinVolumeSize: quantity2,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
 				},

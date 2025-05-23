@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,8 +32,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
-		pvcClientMock := NewMockPvcInterface(t)
-		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		repo := NewDoguInstallationRepo(doguClientMock)
 
 		// when
 		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
@@ -63,18 +61,6 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 				},
 			}, nil)
 		quantity2 := resource.MustParse("2Gi")
-		expectedPVCList := &corev1.PersistentVolumeClaimList{
-			Items: []corev1.PersistentVolumeClaim{
-				{
-					ObjectMeta: metav1.ObjectMeta{Name: "postgresql", Labels: map[string]string{"app": "ces"}},
-					Status: corev1.PersistentVolumeClaimStatus{
-						Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: quantity2},
-					},
-				},
-			},
-		}
-		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(expectedPVCList, nil)
-
 		dogu, err := repo.GetByName(testCtx, "postgresql")
 
 		// then
@@ -87,7 +73,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{},
 			PersistenceContext: persistenceContext,
-			MinVolumeSize:      &quantity2,
+			MinVolumeSize:      quantity2,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
 				RewriteTarget:    "/",
@@ -99,8 +85,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("not found error", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
-		pvcClientMock := NewMockPvcInterface(t)
-		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		repo := NewDoguInstallationRepo(doguClientMock)
 		// when
 		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
@@ -118,8 +103,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 	t.Run("internal error", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
-		pvcClientMock := NewMockPvcInterface(t)
-		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
+		repo := NewDoguInstallationRepo(doguClientMock)
 		// when
 		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(
 			nil,
@@ -132,24 +116,6 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		require.Error(t, err)
 		var expectedError *domainservice.InternalError
 		assert.ErrorAs(t, err, &expectedError)
-	})
-
-	t.Run("should return internal error on error getting pvcs", func(t *testing.T) {
-		// given
-		doguClientMock := NewMockDoguInterface(t)
-		pvcClientMock := NewMockPvcInterface(t)
-		repo := NewDoguInstallationRepo(doguClientMock, pvcClientMock)
-		// when
-		doguClientMock.EXPECT().Get(testCtx, "postgresql", metav1.GetOptions{}).Return(&v2.Dogu{}, nil)
-		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(nil, assert.AnError)
-
-		_, err := repo.GetByName(testCtx, "postgresql")
-
-		// then
-		require.Error(t, err)
-		var expectedError *domainservice.InternalError
-		assert.ErrorAs(t, err, &expectedError)
-		assert.ErrorContains(t, err, "error while listing dogu PVCs")
 	})
 }
 
@@ -171,27 +137,6 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 		assert.ErrorAs(t, err, &expectedError)
 		assert.ErrorContains(t, err, "error while listing dogu CRs")
 	})
-
-	t.Run("should return error on error getting pvcs", func(t *testing.T) {
-		// given
-		doguClientMock := NewMockDoguInterface(t)
-		pvcClientMock := NewMockPvcInterface(t)
-		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(nil, nil)
-		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(nil, assert.AnError)
-
-		sut := &doguInstallationRepo{doguClient: doguClientMock, pvcClient: pvcClientMock}
-
-		// when
-		_, err := sut.GetAll(testCtx)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		expectedError := &domainservice.InternalError{}
-		assert.ErrorAs(t, err, &expectedError)
-		assert.ErrorContains(t, err, "error while listing dogu PVCs")
-	})
-
 	t.Run("should fail for multiple dogus", func(t *testing.T) {
 		// given
 		doguClientMock := NewMockDoguInterface(t)
@@ -217,15 +162,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 		}}
 		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
 
-		volumeQuantity2 := resource.MustParse("2Gi")
-		volumeQuantity3 := resource.MustParse("3Gi")
-		pvcClientMock := NewMockPvcInterface(t)
-		postgresqlPvc := corev1.PersistentVolumeClaim{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity2}}}
-		ldapPvc := corev1.PersistentVolumeClaim{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity3}}}
-		list := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{postgresqlPvc, ldapPvc}}
-		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(list, nil)
-
-		sut := &doguInstallationRepo{doguClient: doguClientMock, pvcClient: pvcClientMock}
+		sut := &doguInstallationRepo{doguClient: doguClientMock}
 
 		// when
 		_, err := sut.GetAll(testCtx)
@@ -262,13 +199,8 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
 		volumeQuantity2 := resource.MustParse("2Gi")
 		volumeQuantity3 := resource.MustParse("3Gi")
-		pvcClientMock := NewMockPvcInterface(t)
-		postgresqlPvc := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "postgresql"}, Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity2}}}
-		ldapPvc := corev1.PersistentVolumeClaim{ObjectMeta: metav1.ObjectMeta{Name: "ldap"}, Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: volumeQuantity3}}}
-		list := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{postgresqlPvc, ldapPvc}}
-		pvcClientMock.EXPECT().List(testCtx, metav1.ListOptions{LabelSelector: "app=ces"}).Return(list, nil)
 
-		sut := &doguInstallationRepo{doguClient: doguClientMock, pvcClient: pvcClientMock}
+		sut := &doguInstallationRepo{doguClient: doguClientMock}
 
 		// when
 		actual, err := sut.GetAll(testCtx)
@@ -279,7 +211,7 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
-				MinVolumeSize:      &volumeQuantity2,
+				MinVolumeSize:      volumeQuantity2,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
@@ -288,68 +220,11 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 					SimpleName: "ldap",
 				},
 				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
-				MinVolumeSize:      &volumeQuantity3,
+				MinVolumeSize:      volumeQuantity3,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 		}
 		assert.Equal(t, expectedDoguInstallations, actual)
-	})
-}
-
-func Test_doguInstallationRepo_appendVolumeSize(t *testing.T) {
-	t.Run("should set volume size from pvc in dogu cr", func(t *testing.T) {
-		// given
-		sut := doguInstallationRepo{}
-		cr := &v2.Dogu{}
-		size := resource.MustParse("2Gi")
-		pvcList := corev1.PersistentVolumeClaimList{
-			Items: []corev1.PersistentVolumeClaim{{Status: corev1.PersistentVolumeClaimStatus{Capacity: map[corev1.ResourceName]resource.Quantity{corev1.ResourceStorage: size}}}},
-		}
-
-		// when
-		sut.appendVolumeSizeIfNotSet(cr, &pvcList)
-
-		// then
-		assert.Equal(t, size.String(), cr.Spec.Resources.DataVolumeSize)
-	})
-
-	t.Run("should do nothing if the volume size is already defined in dogu cr", func(t *testing.T) {
-		// given
-		sut := doguInstallationRepo{}
-		cr := &v2.Dogu{
-			Spec: v2.DoguSpec{
-				Resources: v2.DoguResources{
-					DataVolumeSize: "2Gi",
-				},
-			},
-		}
-
-		// when
-		sut.appendVolumeSizeIfNotSet(cr, nil)
-
-		// then
-		assert.Equal(t, "2Gi", cr.Spec.Resources.DataVolumeSize)
-	})
-
-	t.Run("should do nothing if volume size is not defined and no volume exists", func(t *testing.T) {
-		// given
-		sut := doguInstallationRepo{}
-		cr := &v2.Dogu{
-			Spec: v2.DoguSpec{
-				Resources: v2.DoguResources{
-					DataVolumeSize: "",
-				},
-			},
-		}
-		pvcList := corev1.PersistentVolumeClaimList{
-			Items: []corev1.PersistentVolumeClaim{},
-		}
-
-		// when
-		sut.appendVolumeSizeIfNotSet(cr, &pvcList)
-
-		// then
-		assert.Equal(t, "", cr.Spec.Resources.DataVolumeSize)
 	})
 }
 

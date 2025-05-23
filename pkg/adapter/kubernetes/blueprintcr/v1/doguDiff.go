@@ -24,7 +24,7 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 			ResourceConfig: ResourceConfig{
-				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Actual.MinVolumeSize),
+				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Actual.MinVolumeSize),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
@@ -38,7 +38,7 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
 			ResourceConfig: ResourceConfig{
-				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Expected.MinVolumeSize),
+				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Expected.MinVolumeSize),
 			},
 			ReverseProxyConfig: ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Expected.ReverseProxyConfig.MaxBodySize),
@@ -48,6 +48,14 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
+	}
+}
+
+func convertMinimumVolumeSizeToDTO(minVolSize ecosystem.VolumeSize) string {
+	if minVolSize.IsZero() {
+		return ""
+	} else {
+		return minVolSize.String()
 	}
 }
 
@@ -93,11 +101,11 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}
 
-	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetQuantityReference(dto.Actual.ResourceConfig.MinVolumeSize)
+	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Actual.ResourceConfig.MinVolumeSize)
 	if actualVolumeSizeErr != nil {
 		actualVolumeSizeErr = fmt.Errorf("failed to parse actual minimum volume size %q: %w", dto.Actual.ResourceConfig.MinVolumeSize, actualVolumeSizeErr)
 	}
-	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetQuantityReference(dto.Expected.ResourceConfig.MinVolumeSize)
+	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Expected.ResourceConfig.MinVolumeSize)
 	if expectedVolumeSizeErr != nil {
 		expectedVolumeSizeErr = fmt.Errorf("failed to parse expected minimum volume size %q: %w", dto.Expected.ResourceConfig.MinVolumeSize, expectedVolumeSizeErr)
 	}
@@ -128,7 +136,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 			Namespace:         cescommons.Namespace(dto.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
-			MinVolumeSize:     actualMinVolumeSize,
+			MinVolumeSize:     *actualMinVolumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      actualMaxBodySize,
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
@@ -140,7 +148,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
-			MinVolumeSize:     expectedMinVolumeSize,
+			MinVolumeSize:     *expectedMinVolumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      expectedMaxBodySize,
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),

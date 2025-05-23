@@ -21,9 +21,9 @@ type Dogu struct {
 	Version core.Version
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
-	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
-	// storage is needed.
-	MinVolumeSize *ecosystem.VolumeSize
+	// MinVolumeSize is the minimum storage of the dogu. 0 indicates that the default size should be set.
+	// Reducing this value below the actual volume size has no impact as we do not support downsizing.
+	MinVolumeSize ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
@@ -40,13 +40,7 @@ func (dogu Dogu) validate() error {
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
-
-	// Storage is usually expressed in Binary SI. Using Decimal SI can cause problems because sizes will be
-	// rounded up (longhorn does this in volume resize).
-	minVolumeSize := dogu.MinVolumeSize
-	if minVolumeSize != nil && !minVolumeSize.IsZero() && minVolumeSize.Format != resource.BinarySI {
-		errorList = append(errorList, fmt.Errorf("dogu minimum volume size is not in Binary SI (\"Mi\" or \"Gi\"): %s", dogu.Name))
-	}
+	// minVolumeSize is already checked while unmarshalling json/yaml
 
 	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.
 	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize

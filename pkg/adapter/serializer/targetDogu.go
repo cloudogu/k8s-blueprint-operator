@@ -38,7 +38,7 @@ func ConvertDogus(dogus []bpentities.TargetDogu) ([]domain.Dogu, error) {
 		}
 
 		minVolumeSizeStr := dogu.PlatformConfig.ResourceConfig.MinVolumeSize
-		minVolumeSize, minVolumeSizeErr := ecosystem.GetQuantityReference(minVolumeSizeStr)
+		minVolumeSize, minVolumeSizeErr := ecosystem.GetNonNilQuantityRef(minVolumeSizeStr)
 		if minVolumeSizeErr != nil {
 			errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", minVolumeSizeStr, dogu.Name))
 			continue
@@ -55,7 +55,7 @@ func ConvertDogus(dogus []bpentities.TargetDogu) ([]domain.Dogu, error) {
 			Name:          name,
 			Version:       version,
 			TargetState:   newState,
-			MinVolumeSize: minVolumeSize,
+			MinVolumeSize: *minVolumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      maxBodySize,
 				RewriteTarget:    ecosystem.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
@@ -123,7 +123,7 @@ func convertReverseProxyConfigDTO(dogu domain.Dogu) bpentities.ReverseProxyConfi
 
 func convertResourceConfigDTO(dogu domain.Dogu) bpentities.ResourceConfig {
 	config := bpentities.ResourceConfig{}
-	config.MinVolumeSize = ecosystem.GetQuantityString(dogu.MinVolumeSize)
+	config.MinVolumeSize = ecosystem.GetQuantityString(&dogu.MinVolumeSize)
 
 	return config
 }

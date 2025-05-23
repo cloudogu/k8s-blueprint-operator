@@ -26,7 +26,7 @@ type DoguDiffState struct {
 	Namespace          cescommons.Namespace
 	Version            core.Version
 	InstallationState  TargetState
-	MinVolumeSize      *ecosystem.VolumeSize
+	MinVolumeSize      ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	AdditionalMounts   []ecosystem.AdditionalMount
 }
@@ -166,13 +166,10 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	return neededActions
 }
 
-func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
-	if expectedSize != nil && actualSize != nil {
-		if expectedSize.Cmp(*actualSize) == 1 {
-			return append(actions, ActionUpdateDoguResourceMinVolumeSize)
-		}
+func appendActionForMinVolumeSize(actions []Action, expectedSize ecosystem.VolumeSize, actualSize ecosystem.VolumeSize) []Action {
+	if expectedSize != actualSize {
+		return append(actions, ActionUpdateDoguResourceMinVolumeSize)
 	}
-
 	return actions
 }
 
