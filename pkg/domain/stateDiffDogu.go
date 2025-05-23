@@ -6,6 +6,8 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
+	"slices"
+	"strings"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -26,6 +28,7 @@ type DoguDiffState struct {
 	InstallationState  TargetState
 	MinVolumeSize      *ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	AdditionalMounts   []ecosystem.AdditionalMount
 }
 
 // String returns a string representation of the DoguDiff.
@@ -88,6 +91,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  TargetStatePresent,
 			MinVolumeSize:      installedDogu.MinVolumeSize,
 			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
+			AdditionalMounts:   installedDogu.AdditionalMounts,
 		}
 	}
 
@@ -101,6 +105,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  blueprintDogu.TargetState,
 			MinVolumeSize:      blueprintDogu.MinVolumeSize,
 			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
+			AdditionalMounts:   blueprintDogu.AdditionalMounts,
 		}
 	}
 
@@ -142,6 +147,7 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 
 	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
 	neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
+	neededActions = appendActionForAdditionalMounts(neededActions, expected.AdditionalMounts, actual.AdditionalMounts)
 
 	if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
 		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
@@ -181,6 +187,41 @@ func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecos
 		}
 	}
 	return actions
+}
+
+func appendActionForAdditionalMounts(actions []Action, expectedMounts []ecosystem.AdditionalMount, actualMounts []ecosystem.AdditionalMount) []Action {
+	if len(expectedMounts) != len(actualMounts) {
+		return append(actions, ActionUpdateAdditionalMounts)
+	}
+
+	if !areAdditionalMountsEqual(expectedMounts, actualMounts) {
+		return append(actions, ActionUpdateAdditionalMounts)
+	}
+	return actions
+}
+
+func serializeAdditionalMount(mount ecosystem.AdditionalMount) string {
+	data := strings.Join([]string{string(mount.SourceType), mount.Name, mount.Volume, mount.Subfolder}, "")
+	return data
+}
+
+func areAdditionalMountsEqual(first []ecosystem.AdditionalMount, second []ecosystem.AdditionalMount) bool {
+	firstHashList := serializeAdditionalMounts(first)
+	slices.Sort(firstHashList)
+
+	secondHashList := serializeAdditionalMounts(second)
+	slices.Sort(secondHashList)
+
+	return slices.Equal(firstHashList, secondHashList)
+}
+
+func serializeAdditionalMounts(mounts []ecosystem.AdditionalMount) []string {
+	var result []string
+	for _, m := range mounts {
+		result = append(result, serializeAdditionalMount(m))
+	}
+
+	return result
 }
 
 func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {

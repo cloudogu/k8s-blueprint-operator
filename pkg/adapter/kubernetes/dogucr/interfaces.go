@@ -1,7 +1,7 @@
 package dogucr
 
 import (
-	ecosystemclient "github.com/cloudogu/k8s-dogu-operator/v3/api/ecoSystem"
+	ecosystemclient "github.com/cloudogu/k8s-dogu-lib/v2/client"
 	v2 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 

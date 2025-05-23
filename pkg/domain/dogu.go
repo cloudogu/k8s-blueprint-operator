@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"slices"
+	"strings"
 )
 
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -25,6 +26,8 @@ type Dogu struct {
 	MinVolumeSize *ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	// AdditionalMounts provides the possibility to mount additional data into the dogu.
+	AdditionalMounts []ecosystem.AdditionalMount
 }
 
 // validate checks if the Dogu is semantically correct.
@@ -49,6 +52,21 @@ func (dogu Dogu) validate() error {
 	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
 	if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
 		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
+	}
+
+	for _, mount := range dogu.AdditionalMounts {
+		if mount.SourceType != ecosystem.DataSourceConfigMap && mount.SourceType != ecosystem.DataSourceSecret {
+			errorList = append(errorList, fmt.Errorf(
+				"dogu additional mounts sourceType must be one of '%s', '%s': %s",
+				ecosystem.DataSourceConfigMap,
+				ecosystem.DataSourceSecret,
+				dogu.Name,
+			))
+		}
+		if strings.HasPrefix(mount.Subfolder, "/") {
+			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
+		}
+		//TODO: find right place to validate volume name
 	}
 
 	err := errors.Join(errorList...)

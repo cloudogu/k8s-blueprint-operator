@@ -5,30 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
-
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 var configKeySeparator = "/"
-
-// EffectiveBlueprint describes an abstraction of CES components that should be absent or present within one or more CES
-// instances after combining the blueprint with the blueprint mask.
-//
-// In general additions without changing the version are fine, as long as they don't change semantics. Removal or
-// renaming are breaking changes and require a new blueprint API version.
-type EffectiveBlueprint struct {
-	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
-	// blueprint was applied. Optional.
-	Dogus []entities.TargetDogu `json:"dogus,omitempty"`
-	// Components contains a set of exact component versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. Optional.
-	Components []entities.TargetComponent `json:"components,omitempty"`
-	// Config is used for ecosystem configuration to be applied.
-	// Optional.
-	Config entities.TargetConfig `json:"config,omitempty"`
-}
 
 func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (EffectiveBlueprint, error) {
 	var errorList []error

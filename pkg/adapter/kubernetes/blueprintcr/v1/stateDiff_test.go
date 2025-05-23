@@ -5,8 +5,10 @@ import (
 	"github.com/Masterminds/semver/v3"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -120,7 +122,8 @@ func TestConvertToDTO(t *testing.T) {
 					NeededActions: []DoguAction{"uninstall"},
 				},
 			}, ComponentDiffs: map[string]ComponentDiff{}},
-		}, {
+		},
+		{
 			name: "should convert multiple component diffs",
 			domainModel: domain.StateDiff{
 				DoguDiffs: domain.DoguDiffs{},
@@ -152,7 +155,8 @@ func TestConvertToDTO(t *testing.T) {
 						NeededActions: []ComponentAction{"uninstall"},
 					},
 				}},
-		}, {
+		},
+		{
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
@@ -172,7 +176,8 @@ func TestConvertToDTO(t *testing.T) {
 					"postfix": {},
 				},
 			},
-		}, {
+		},
+		{
 			name: "should convert global config diff",
 			domainModel: domain.StateDiff{
 				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
@@ -205,7 +210,74 @@ func TestConvertToDTO(t *testing.T) {
 				}},
 			},
 		},
-	}
+		{
+			name: "should convert additional mounts in diff",
+			domainModel: domain.StateDiff{DoguDiffs: []domain.DoguDiff{{
+				DoguName: "ldap",
+				Actual: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion("1.1.1-1"),
+					InstallationState: domain.TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+					},
+				},
+				Expected: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion("1.2.3-1"),
+					InstallationState: domain.TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "secret",
+							Volume:     "volume2",
+							Subfolder:  "different_subfolder2",
+						},
+					},
+				},
+				NeededActions: []domain.Action{domain.ActionUpgrade},
+			}}},
+			want: StateDiff{
+				ComponentDiffs: map[string]ComponentDiff{},
+				DoguDiffs: map[string]DoguDiff{
+					"ldap": {
+						Actual: DoguDiffState{
+							Namespace:         "official",
+							Version:           "1.1.1-1",
+							InstallationState: "present",
+							AdditionalMounts: []AdditionalMount{
+								{
+									SourceType: DataSourceConfigMap,
+									Name:       "configmap",
+									Volume:     "volume",
+									Subfolder:  "different_subfolder",
+								},
+							},
+						},
+						Expected: DoguDiffState{
+							Namespace:         "official",
+							Version:           "1.2.3-1",
+							InstallationState: "present",
+							AdditionalMounts: []AdditionalMount{
+								{
+									SourceType: DataSourceConfigMap,
+									Name:       "secret",
+									Volume:     "volume2",
+									Subfolder:  "different_subfolder2",
+								},
+							},
+						},
+						NeededActions: []DoguAction{"upgrade"},
+					},
+				},
+			},
+		}}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ConvertToStateDiffDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
@@ -484,7 +556,8 @@ func TestConvertToDomainModel(t *testing.T) {
 				},
 				{
 					DoguName: "postfix",
-					Actual: domain.DoguDiffState{Namespace: "official",
+					Actual: domain.DoguDiffState{
+						Namespace:         "official",
 						Version:           mustParseVersion("1.2.3-4"),
 						InstallationState: domain.TargetStatePresent,
 					},
@@ -495,9 +568,7 @@ func TestConvertToDomainModel(t *testing.T) {
 					},
 					NeededActions: []domain.Action{domain.ActionUpgrade},
 				},
-			},
-				ComponentDiffs: []domain.ComponentDiff{},
-			},
+			}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
@@ -506,20 +577,24 @@ func TestConvertToDomainModel(t *testing.T) {
 			name: "succeed for multiple dogu config diffs",
 			dto: StateDiff{
 				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
-					"ldap":    {},
-					"postfix": {},
+					"ldap": {
+						DoguConfigDiff:          DoguConfigDiff{},
+						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{},
+					},
+					"postfix": {
+						DoguConfigDiff:          DoguConfigDiff{},
+						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{},
+					},
 				},
 			},
 			want: domain.StateDiff{
-				DoguDiffs:      []domain.DoguDiff{},
-				ComponentDiffs: []domain.ComponentDiff{},
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
-					"ldap":    {},
-					"postfix": {},
+					"ldap":    nil,
+					"postfix": nil,
 				},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
-					"ldap":    {},
-					"postfix": {},
+					"ldap":    nil,
+					"postfix": nil,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -589,8 +664,7 @@ func TestConvertToDomainModel(t *testing.T) {
 					Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
-			},
-				DoguDiffs: []domain.DoguDiff{}},
+			}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
@@ -631,6 +705,74 @@ func TestConvertToDomainModel(t *testing.T) {
 					assert.ErrorContains(t, err, "failed to convert component diff dto \"my-component-2\" to domain model")
 			},
 		},
+
+		{
+			name: "should convert additional mounts",
+			dto: StateDiff{
+				DoguDiffs: map[string]DoguDiff{
+					"ldap": {
+						Actual: DoguDiffState{
+							Namespace:         "official",
+							InstallationState: "present",
+							AdditionalMounts: []AdditionalMount{
+								{
+									SourceType: DataSourceConfigMap,
+									Name:       "config",
+									Volume:     "volume",
+									Subfolder:  "subfolder",
+								},
+							},
+						},
+						Expected: DoguDiffState{
+							Namespace:         "official",
+							InstallationState: "present",
+							AdditionalMounts: []AdditionalMount{
+								{
+									SourceType: DataSourceConfigMap,
+									Name:       "config-different",
+									Volume:     "volume",
+									Subfolder:  "subfolder",
+								},
+							},
+						},
+						NeededActions: []DoguAction{"update additional mounts"},
+					},
+				},
+			},
+			want: domain.StateDiff{DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName: "ldap",
+					Actual: domain.DoguDiffState{
+						Namespace:         "official",
+						InstallationState: domain.TargetStatePresent,
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "config",
+								Volume:     "volume",
+								Subfolder:  "subfolder",
+							},
+						},
+					},
+					Expected: domain.DoguDiffState{
+						Namespace:         "official",
+						InstallationState: domain.TargetStatePresent,
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "config-different",
+								Volume:     "volume",
+								Subfolder:  "subfolder",
+							},
+						},
+					},
+					NeededActions: []domain.Action{domain.ActionUpdateAdditionalMounts},
+				},
+			}},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -640,6 +782,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
 				return cmp.Compare(a.DoguName, b.DoguName)
 			})
+			assert.Equalf(t, tt.want, got, "ConvertToStateDiffDomain(%v)", tt.dto)
 		})
 	}
 }

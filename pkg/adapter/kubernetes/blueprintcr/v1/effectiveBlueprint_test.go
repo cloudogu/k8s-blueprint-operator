@@ -1,6 +1,7 @@
 package v1
 
 import (
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
@@ -11,6 +12,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
@@ -34,6 +36,18 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
+		{
+			Name:    cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu5"},
+			Version: version1_2_3_3,
+			AdditionalMounts: []ecosystem.AdditionalMount{
+				{
+					SourceType: ecosystem.DataSourceConfigMap,
+					Name:       "config",
+					Volume:     "volume",
+					Subfolder:  "subfolder",
+				},
+			},
+		},
 	}
 
 	components := []domain.Component{
@@ -79,6 +93,23 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{
+			Name:        "premium/dogu5",
+			Version:     version1_2_3_3.Raw,
+			TargetState: "present",
+			PlatformConfig: entities.PlatformConfig{
+				ResourceConfig:     entities.ResourceConfig{},
+				ReverseProxyConfig: entities.ReverseProxyConfig{},
+				AdditionalMountsConfig: []entities.AdditionalMount{
+					{
+						SourceType: entities.DataSourceConfigMap,
+						Name:       "config",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+				},
+			},
+		},
 	}
 
 	convertedComponents := []entities.TargetComponent{
@@ -121,6 +152,23 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		{Name: "official/dogu2", TargetState: "absent"},
 		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
 		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+		{
+			Name:        "premium/dogu5",
+			Version:     version1_2_3_3.Raw,
+			TargetState: "present",
+			PlatformConfig: entities.PlatformConfig{
+				ResourceConfig:     entities.ResourceConfig{},
+				ReverseProxyConfig: entities.ReverseProxyConfig{},
+				AdditionalMountsConfig: []entities.AdditionalMount{
+					{
+						SourceType: entities.DataSourceConfigMap,
+						Name:       "config",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+				},
+			},
+		},
 	}
 
 	convertedComponents := []entities.TargetComponent{
@@ -160,6 +208,18 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
 		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: version1_2_3_3},
+		{
+			Name:    cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu5"},
+			Version: version1_2_3_3,
+			AdditionalMounts: []ecosystem.AdditionalMount{
+				{
+					SourceType: ecosystem.DataSourceConfigMap,
+					Name:       "config",
+					Volume:     "volume",
+					Subfolder:  "subfolder",
+				},
+			},
+		},
 	}
 
 	components := []domain.Component{

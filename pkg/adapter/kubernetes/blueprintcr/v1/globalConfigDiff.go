@@ -1,19 +1,10 @@
 package v1
 
 import (
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
-
-type GlobalConfigDiff []GlobalConfigEntryDiff
-
-type GlobalConfigValueState ConfigValueState
-type GlobalConfigEntryDiff struct {
-	Key          string                 `json:"key"`
-	Actual       GlobalConfigValueState `json:"actual"`
-	Expected     GlobalConfigValueState `json:"expected"`
-	NeededAction ConfigAction           `json:"neededAction"`
-}
 
 func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDiffs {
 	if len(dto) == 0 {

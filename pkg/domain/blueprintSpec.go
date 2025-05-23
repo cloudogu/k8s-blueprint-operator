@@ -221,6 +221,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 		TargetState:        dogu.TargetState,
 		MinVolumeSize:      dogu.MinVolumeSize,
 		ReverseProxyConfig: dogu.ReverseProxyConfig,
+		AdditionalMounts:   dogu.AdditionalMounts,
 	}
 	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.SimpleName)
 	if noMaskDoguErr == nil {

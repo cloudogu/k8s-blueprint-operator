@@ -7,7 +7,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -446,7 +446,17 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 		doguClientMock := NewMockDoguInterface(t)
 		repo := &doguInstallationRepo{doguClient: doguClientMock}
 
-		expectedDoguPatch := "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null}}"
+		expectedDoguPatch := "{\"spec\":{" +
+			"\"name\":\"official/postgresql\"," +
+			"\"version\":\"3.2.1-4\"," +
+			"\"resources\":{" +
+			"\"dataVolumeSize\":\"\"," +
+			"\"minDataVolumeSize\":\"0\"}," +
+			"\"supportMode\":false," +
+			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
+			"\"additionalIngressAnnotations\":null," +
+			"\"additionalMounts\":null}" +
+			"}"
 		doguClientMock.EXPECT().Patch(testCtx, "postgresql", types.MergePatchType, []byte(expectedDoguPatch), metav1.PatchOptions{}).Return(nil, nil)
 		dogu := &ecosystem.DoguInstallation{
 			Name:    postgresDoguName,

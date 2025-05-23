@@ -5,41 +5,11 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
-
-// DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
-// It contains the operation that needs to be done to achieve this desired state.
-type DoguDiff struct {
-	Actual        DoguDiffState `json:"actual"`
-	Expected      DoguDiffState `json:"expected"`
-	NeededActions []DoguAction  `json:"neededActions"`
-}
-
-// DoguDiffState is either the actual or desired state of a dogu in the cluster.
-type DoguDiffState struct {
-	Namespace          string             `json:"namespace,omitempty"`
-	Version            string             `json:"version,omitempty"`
-	InstallationState  string             `json:"installationState"`
-	ResourceConfig     ResourceConfig     `json:"resourceConfig,omitempty"`
-	ReverseProxyConfig ReverseProxyConfig `json:"reverseProxyConfig,omitempty"`
-}
-
-type ResourceConfig struct {
-	MinVolumeSize string `json:"minVolumeSize,omitempty"`
-}
-
-type ReverseProxyConfig struct {
-	MaxBodySize      string `json:"maxBodySize,omitempty"`
-	RewriteTarget    string `json:"rewriteTarget,omitempty"`
-	AdditionalConfig string `json:"additionalConfig,omitempty"`
-}
-
-// DoguAction is the action that needs to be done for a dogu
-// to achieve the desired state in the cluster.
-type DoguAction string
 
 func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 	neededActions := domainModel.NeededActions
@@ -61,6 +31,7 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
 		},
 		Expected: DoguDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
@@ -74,9 +45,23 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}
+}
+
+func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []AdditionalMount {
+	var result []AdditionalMount
+	for _, m := range mounts {
+		result = append(result, AdditionalMount{
+			SourceType: DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+	return result
 }
 
 func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, error) {
@@ -149,6 +134,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Actual.AdditionalMounts),
 		},
 		Expected: domain.DoguDiffState{
 			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
@@ -160,7 +146,22 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}, nil
+}
+
+func convertAdditionalMountsToDoguDiffDomain(mounts []AdditionalMount) []ecosystem.AdditionalMount {
+	var result []ecosystem.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+
+	return result
 }
