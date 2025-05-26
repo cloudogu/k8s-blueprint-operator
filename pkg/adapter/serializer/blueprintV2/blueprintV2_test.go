@@ -1,6 +1,7 @@
 package blueprintV2
 
 import (
+	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
 
 	"github.com/Masterminds/semver/v3"
@@ -35,7 +36,7 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: version3211, TargetState: domain.TargetStateAbsent},
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, TargetState: domain.TargetStateAbsent},
 		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu3"}, Version: version3212, TargetState: domain.TargetStatePresent},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233},
+		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu4"}, Version: version1233, MinVolumeSize: resource.MustParse("5Gi")},
 	}
 
 	components := []domain.Component{
@@ -74,11 +75,24 @@ func Test_ConvertToBlueprintV2(t *testing.T) {
 
 	blueprintV2, err := ConvertToBlueprintDTO(blueprint)
 
+	emptyPlatformConfig := entities.PlatformConfig{
+		ResourceConfig: entities.ResourceConfig{
+			MinVolumeSize: "0",
+		},
+		ReverseProxyConfig:     entities.ReverseProxyConfig{},
+		AdditionalMountsConfig: nil,
+	}
 	convertedDogus := []entities.TargetDogu{
-		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "official/dogu2", TargetState: "absent"},
-		{Name: "official/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "official/dogu4", Version: version1233.Raw, TargetState: "present"},
+		{Name: "official/dogu1", PlatformConfig: emptyPlatformConfig, Version: version3211.Raw, TargetState: "absent"},
+		{Name: "official/dogu2", PlatformConfig: emptyPlatformConfig, TargetState: "absent"},
+		{Name: "official/dogu3", PlatformConfig: emptyPlatformConfig, Version: version3212.Raw, TargetState: "present"},
+		{Name: "official/dogu4", PlatformConfig: entities.PlatformConfig{
+			ResourceConfig: entities.ResourceConfig{
+				MinVolumeSize: "5Gi",
+			},
+			ReverseProxyConfig:     entities.ReverseProxyConfig{},
+			AdditionalMountsConfig: nil,
+		}, Version: version1233.Raw, TargetState: "present"},
 	}
 
 	convertedComponents := []entities.TargetComponent{

@@ -16,6 +16,10 @@ var postgresDoguName = cescommons.QualifiedName{
 	Namespace:  cescommons.Namespace("official"),
 	SimpleName: cescommons.SimpleName("postgresql"),
 }
+var ldapDoguName = cescommons.QualifiedName{
+	Namespace:  "official",
+	SimpleName: "ldap",
+}
 var volSize25G = resource.MustParse("25G")
 var defaultVolSize = resource.MustParse(v2.DefaultVolumeSize)
 

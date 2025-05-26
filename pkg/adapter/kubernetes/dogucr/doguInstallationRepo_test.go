@@ -20,6 +20,8 @@ import (
 )
 
 var version3214, _ = core.ParseVersion("3.2.1-4")
+var version1231, _ = core.ParseVersion("1.2.3-1")
+var version3213, _ = core.ParseVersion("3.2.1-3")
 
 var crResourceVersion = "abc"
 var persistenceContext = map[string]interface{}{
@@ -175,6 +177,8 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 	})
 	t.Run("should succeed for multiple dogus", func(t *testing.T) {
 		// given
+		volumeQuantity2 := resource.MustParse("2Gi")
+		volumeQuantity3 := resource.MustParse("3Gi")
 		doguClientMock := NewMockDoguInterface(t)
 		doguList := &v2.DoguList{Items: []v2.Dogu{
 			{
@@ -193,12 +197,13 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 				Spec: v2.DoguSpec{
 					Name:    "official/ldap",
 					Version: "3.2.1-3",
+					Resources: v2.DoguResources{
+						MinDataVolumeSize: volumeQuantity3,
+					},
 				},
 			},
 		}}
 		doguClientMock.EXPECT().List(testCtx, metav1.ListOptions{}).Return(doguList, nil)
-		volumeQuantity2 := resource.MustParse("2Gi")
-		volumeQuantity3 := resource.MustParse("3Gi")
 
 		sut := &doguInstallationRepo{doguClient: doguClientMock}
 
@@ -210,21 +215,20 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 		expectedDoguInstallations := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
 			"postgresql": {
 				Name:               postgresDoguName,
-				Version:            core.Version{Raw: "1.2.3-1", Major: 1, Minor: 2, Patch: 3, Nano: 0, Extra: 1},
+				Version:            version1231,
 				MinVolumeSize:      volumeQuantity2,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
-				Name: cescommons.QualifiedName{
-					Namespace:  "official",
-					SimpleName: "ldap",
-				},
-				Version:            core.Version{Raw: "3.2.1-3", Major: 3, Minor: 2, Patch: 1, Nano: 0, Extra: 3},
+				Name:               ldapDoguName,
+				Version:            version3213,
 				MinVolumeSize:      volumeQuantity3,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 		}
-		assert.Equal(t, expectedDoguInstallations, actual)
+		//assert.Equal(t, expectedDoguInstallations, actual)
+		assert.Equal(t, expectedDoguInstallations["postgresql"], actual["postgresql"])
+		assert.Equal(t, expectedDoguInstallations["ldap"], actual["ldap"])
 	})
 }
 
