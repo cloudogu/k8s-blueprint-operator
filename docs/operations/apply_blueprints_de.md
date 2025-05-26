@@ -28,8 +28,8 @@ spec:
     }
 ```
 
-Das Dokument [Blueprint-Format](./blueprint_format_de.md) beschreibt die Struktur des Blueprint im Detail.
-Blueprint-CR-[Beispiele](../../samples/k8s_v1_blueprint.yaml) können dem [Sample-Verzeichnis](../../samples/) entnommen werden. Wenn `k8s-blueprint-operator` korrekt installiert wurde, lässt sich dies z. B. so auf den Cluster anwenden:
+Das Dokument [Blueprint-Format](https://github.com/cloudogu/k8s-blueprint-lib/blob/develop/docs/operations/blueprintV2_format_de.md) beschreibt die Struktur des Blueprint im Detail.
+Blueprint-CR-Beispiele können dem [Sample-Repository](https://github.com/cloudogu/k8s-ecosystem-samples/tree/main/blueprints) entnommen werden. Wenn `k8s-blueprint-operator` korrekt installiert wurde, lässt sich dies z. B. so auf den Cluster anwenden:
 
 ```bash
 kubectl apply -n ecosystem -f k8s_v1_blueprint.yaml

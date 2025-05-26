@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#113] extract Blueprint-k8s rest client into blueprint-lib
 - [#113] update k8s.io/client-go to v0.33.0
   - it was a difficult update in combination with the dependency regarding the component-operator
+- [#113] Moved blueprint format docs to [crd repository](https://github.com/cloudogu/k8s-blueprint-lib)
 
 ## [v2.5.0] - 2025-04-22
 ### Changed
