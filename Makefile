@@ -6,7 +6,6 @@ GOTAG=1.24.3
 MAKEFILES_VERSION=9.9.1
 LINT_VERSION=v1.61.0
 STAGE?=production
-MOCKERY_VERSION?=v2.53.3
 
 
 ADDITIONAL_CLEAN=dist-clean
@@ -30,8 +29,6 @@ HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo template-stage templ
 CRD_POST_MANIFEST_TARGETS = crd-add-labels
 CHECK_VAR_TARGETS=check-all-vars
 IMAGE_IMPORT_TARGET=image-import
-
-MOCKERY_VERSION=v2.53.3
 
 include build/make/k8s-controller.mk
 
