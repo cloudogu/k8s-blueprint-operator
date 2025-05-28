@@ -12,7 +12,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
-	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
@@ -125,7 +125,7 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	require.NoError(t, err)
-	assert.Equal(t, EffectiveBlueprint{
+	assert.Equal(t, crd.EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config: entities.TargetConfig{
@@ -183,7 +183,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		{Name: "k8s-testing/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
 	}
 
-	dto := EffectiveBlueprint{
+	dto := crd.EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config: entities.TargetConfig{

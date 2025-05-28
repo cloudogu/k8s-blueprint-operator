@@ -17,7 +17,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	v1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
-	//v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"

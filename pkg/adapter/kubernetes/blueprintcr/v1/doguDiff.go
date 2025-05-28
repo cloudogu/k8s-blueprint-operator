@@ -5,42 +5,42 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
-func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
+func convertToDoguDiffDTO(domainModel domain.DoguDiff) crd.DoguDiff {
 	neededActions := domainModel.NeededActions
-	doguActions := make([]DoguAction, 0, len(neededActions))
+	doguActions := make([]crd.DoguAction, 0, len(neededActions))
 	for _, action := range neededActions {
-		doguActions = append(doguActions, DoguAction(action))
+		doguActions = append(doguActions, crd.DoguAction(action))
 	}
 
-	return DoguDiff{
-		Actual: DoguDiffState{
+	return crd.DoguDiff{
+		Actual: crd.DoguDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			ResourceConfig: ResourceConfig{
+			ResourceConfig: crd.ResourceConfig{
 				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Actual.MinVolumeSize),
 			},
-			ReverseProxyConfig: ReverseProxyConfig{
+			ReverseProxyConfig: crd.ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
 			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
 		},
-		Expected: DoguDiffState{
+		Expected: crd.DoguDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			ResourceConfig: ResourceConfig{
+			ResourceConfig: crd.ResourceConfig{
 				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Expected.MinVolumeSize),
 			},
-			ReverseProxyConfig: ReverseProxyConfig{
+			ReverseProxyConfig: crd.ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Expected.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
@@ -59,11 +59,11 @@ func convertMinimumVolumeSizeToDTO(minVolSize ecosystem.VolumeSize) string {
 	}
 }
 
-func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []AdditionalMount {
-	var result []AdditionalMount
+func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []crd.AdditionalMount {
+	var result []crd.AdditionalMount
 	for _, m := range mounts {
-		result = append(result, AdditionalMount{
-			SourceType: DataSourceType(m.SourceType),
+		result = append(result, crd.AdditionalMount{
+			SourceType: crd.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
 			Subfolder:  m.Subfolder,
@@ -72,7 +72,7 @@ func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []
 	return result
 }
 
-func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, error) {
+func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff, error) {
 	var actualVersion core.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {
@@ -160,7 +160,7 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 	}, nil
 }
 
-func convertAdditionalMountsToDoguDiffDomain(mounts []AdditionalMount) []ecosystem.AdditionalMount {
+func convertAdditionalMountsToDoguDiffDomain(mounts []crd.AdditionalMount) []ecosystem.AdditionalMount {
 	var result []ecosystem.AdditionalMount
 	for _, m := range mounts {
 		result = append(result, ecosystem.AdditionalMount{

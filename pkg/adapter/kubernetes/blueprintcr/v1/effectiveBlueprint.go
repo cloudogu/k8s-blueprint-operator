@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
-	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
 var configKeySeparator = "/"
 
-func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.EffectiveBlueprint, error) {
 	var errorList []error
 	convertedDogus, doguError := serializer.ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, componentError := serializer.ConvertToComponentDTOs(blueprint.Components)
@@ -20,17 +20,17 @@ func ConvertToEffectiveBlueprintDTO(blueprint domain.EffectiveBlueprint) (Effect
 
 	err := errors.Join(errorList...)
 	if err != nil {
-		return EffectiveBlueprint{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
+		return crd.EffectiveBlueprint{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
 	}
 
-	return EffectiveBlueprint{
+	return crd.EffectiveBlueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config:     ConvertToConfigDTO(blueprint.Config),
 	}, nil
 }
 
-func ConvertToEffectiveBlueprintDomain(blueprint EffectiveBlueprint) (domain.EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDomain(blueprint crd.EffectiveBlueprint) (domain.EffectiveBlueprint, error) {
 	convertedDogus, doguErr := serializer.ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := serializer.ConvertComponents(blueprint.Components)
 

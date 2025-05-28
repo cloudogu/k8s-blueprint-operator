@@ -2,13 +2,13 @@ package v1
 
 import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs DoguConfigDiff) domain.DoguConfigDiffs {
+func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs crd.DoguConfigDiff) domain.DoguConfigDiffs {
 	var doguConfigDiff domain.DoguConfigDiffs
 	for _, entryDiff := range dtoDiffs {
 		doguConfigDiff = append(doguConfigDiff, convertToDoguConfigEntryDiffDomain(doguName, entryDiff))
@@ -16,7 +16,7 @@ func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs DoguConfigDiff) do
 	return doguConfigDiff
 }
 
-func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
+func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
 			DoguName: cescommons.SimpleName(doguName),
@@ -34,25 +34,25 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto DoguConfigEntryDiff
 	}
 }
 
-func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs) []DoguConfigEntryDiff {
-	var dtoDiffs []DoguConfigEntryDiff
+func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs) []crd.DoguConfigEntryDiff {
+	var dtoDiffs []crd.DoguConfigEntryDiff
 	for _, domainDiff := range domainDiffs {
 		dtoDiffs = append(dtoDiffs, convertToDoguConfigEntryDiffDTO(domainDiff))
 	}
 	return dtoDiffs
 }
 
-func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff) DoguConfigEntryDiff {
-	return DoguConfigEntryDiff{
+func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff) crd.DoguConfigEntryDiff {
+	return crd.DoguConfigEntryDiff{
 		Key: string(domainModel.Key.Key),
-		Actual: DoguConfigValueState{
+		Actual: crd.DoguConfigValueState{
 			Value:  domainModel.Actual.Value,
 			Exists: domainModel.Actual.Exists,
 		},
-		Expected: DoguConfigValueState{
+		Expected: crd.DoguConfigValueState{
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},
-		NeededAction: ConfigAction(domainModel.NeededAction),
+		NeededAction: crd.ConfigAction(domainModel.NeededAction),
 	}
 }

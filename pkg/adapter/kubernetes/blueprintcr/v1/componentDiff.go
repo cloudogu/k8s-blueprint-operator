@@ -8,14 +8,14 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
-	. "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
-func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
+func convertToComponentDiffDTO(domainModel domain.ComponentDiff) crd.ComponentDiff {
 	actualVersion := ""
 	expectedVersion := ""
 
@@ -27,19 +27,19 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	}
 
 	neededActions := domainModel.NeededActions
-	componentActions := make([]ComponentAction, 0, len(neededActions))
+	componentActions := make([]crd.ComponentAction, 0, len(neededActions))
 	for _, action := range neededActions {
-		componentActions = append(componentActions, ComponentAction(action))
+		componentActions = append(componentActions, crd.ComponentAction(action))
 	}
 
-	return ComponentDiff{
-		Actual: ComponentDiffState{
+	return crd.ComponentDiff{
+		Actual: crd.ComponentDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 			DeployConfig:      entities.DeployConfig(domainModel.Actual.DeployConfig),
 		},
-		Expected: ComponentDiffState{
+		Expected: crd.ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
@@ -49,7 +49,7 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	}
 }
 
-func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (domain.ComponentDiff, error) {
+func convertToComponentDiffDomain(componentName string, dto crd.ComponentDiff) (domain.ComponentDiff, error) {
 	var actualVersion *semver.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {
