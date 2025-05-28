@@ -71,13 +71,11 @@ node('docker') {
                             }
 
                             stage('Generate k8s Resources') {
-                                make 'crd-helm-generate'
                                 make 'helm-generate'
                                 archiveArtifacts "${helmTargetDir}/**/*"
                             }
 
                             stage("Lint helm") {
-                                make 'crd-helm-lint'
                                 make 'helm-lint'
                             }
                         }
