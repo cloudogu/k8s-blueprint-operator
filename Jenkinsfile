@@ -109,7 +109,6 @@ node('docker') {
             }
 
             stage('Deploy Manager') {
-                k3d.helm("install ${repositoryName}-crd ${helmCRDChartDir}")
                 k3d.helm("install ${repositoryName} ${helmChartDir}")
             }
 
@@ -221,16 +220,12 @@ void stageAutomaticRelease(Makefile makefile) {
                             {
                                 // Package operator-chart & crd-chart
                                 make 'helm-package'
-                                make 'crd-helm-package'
                                 archiveArtifacts "${helmTargetDir}/**/*"
 
                                 // Push charts
                                 withCredentials([usernamePassword(credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD')]) {
                                     sh ".bin/helm registry login ${registry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'"
-
                                     sh ".bin/helm push ${helmChartDir}/${repositoryName}-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
-// Don't release crd until it has it's own repository (to avoid unnecessary major version jump)
-//                                     sh ".bin/helm push ${helmCRDChartDir}/${repositoryName}-crd-${controllerVersion}.tgz oci://${registry}/${registry_namespace}/"
                                 }
                             }
         }
