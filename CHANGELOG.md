@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- [#113] blueprints now support additionalMounts for configMaps and secrets in dogus
+
+### Changed
+- [#114] Dependency: minimum version of `k8s-dogu-operator-crd` is now 2.8.0
+  - because we now set the new `minDataVolumeSize` field instead of `dataVolumeSize`
+- [#113] update to go 1.24
+- [#113] extract Blueprint-CRD into bluerpint-lib
+- [#113] extract Blueprint-k8s rest client into blueprint-lib
+- [#113] update k8s.io/client-go to v0.33.0
+- [#113] Moved blueprint format docs to [crd repository](https://github.com/cloudogu/k8s-blueprint-lib)
+
 ## [v2.5.0] - 2025-04-22
 ### Changed
 - [#110] Set resource requests and limits to sensible defaults

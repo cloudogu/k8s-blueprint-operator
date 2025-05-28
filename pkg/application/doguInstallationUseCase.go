@@ -124,10 +124,13 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		switch action {
 		case domain.ActionInstall:
 			logger.Info("install dogu")
-			newDogu := ecosystem.InstallDogu(cescommons.QualifiedName{
-				Namespace:  doguDiff.Expected.Namespace,
-				SimpleName: doguDiff.DoguName,
-			}, doguDiff.Expected.Version, doguDiff.Expected.MinVolumeSize, doguDiff.Expected.ReverseProxyConfig)
+			newDogu := ecosystem.InstallDogu(
+				cescommons.QualifiedName{Namespace: doguDiff.Expected.Namespace, SimpleName: doguDiff.DoguName},
+				doguDiff.Expected.Version,
+				doguDiff.Expected.MinVolumeSize,
+				doguDiff.Expected.ReverseProxyConfig,
+				doguDiff.Expected.AdditionalMounts,
+			)
 			return useCase.doguRepo.Create(ctx, newDogu)
 		case domain.ActionUninstall:
 			logger.Info("uninstall dogu")
@@ -137,7 +140,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			continue
 		case domain.ActionDowngrade:
 			logger.Info("downgrade dogu")
-			return fmt.Errorf(getNoDowngradesExplanationTextForDogus())
+			return fmt.Errorf(noDowngradesExplanationTextFmt, "dogu", "dogus")
 		case domain.ActionSwitchDoguNamespace:
 			logger.Info("do namespace switch for dogu")
 			err := doguInstallation.SwitchNamespace(
@@ -164,6 +167,10 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			logger.Info("update proxy additional config for dogu")
 			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig.AdditionalConfig)
 			continue
+		case domain.ActionUpdateAdditionalMounts:
+			logger.Info("update additional mounts")
+			doguInstallation.UpdateAdditionalMounts(doguDiff.Expected.AdditionalMounts)
+			continue
 		default:
 			return fmt.Errorf("cannot perform unknown action %q for dogu %q", action, doguDiff.DoguName)
 		}
@@ -176,8 +183,4 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	}
 
 	return nil
-}
-
-func getNoDowngradesExplanationTextForDogus() string {
-	return fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus")
 }

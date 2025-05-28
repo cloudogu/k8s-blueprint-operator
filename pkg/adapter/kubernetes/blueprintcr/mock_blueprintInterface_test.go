@@ -10,7 +10,7 @@ import (
 
 	types "k8s.io/apimachinery/pkg/types"
 
-	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	v1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 
 	watch "k8s.io/apimachinery/pkg/watch"
 )

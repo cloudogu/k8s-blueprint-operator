@@ -1,6 +1,7 @@
 package v1
 
 import (
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +12,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 	tests := []struct {
 		name        string
 		domainModel domain.DoguConfigDiffs
-		want        []DoguConfigEntryDiff
+		want        []crd.DoguConfigEntryDiff
 	}{
 		{
 			name:        "should exit early if slices are empty",
@@ -51,14 +52,14 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				},
 			},
-			want: []DoguConfigEntryDiff{
+			want: []crd.DoguConfigEntryDiff{
 				{
 					Key: "container_config/memory_limit",
-					Actual: DoguConfigValueState{
+					Actual: crd.DoguConfigValueState{
 						Value:  "512m",
 						Exists: true,
 					},
-					Expected: DoguConfigValueState{
+					Expected: crd.DoguConfigValueState{
 						Value:  "1024m",
 						Exists: true,
 					},
@@ -66,10 +67,10 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 				},
 				{
 					Key: "container_config/swap_limit",
-					Actual: DoguConfigValueState{
+					Actual: crd.DoguConfigValueState{
 						Exists: false,
 					},
-					Expected: DoguConfigValueState{
+					Expected: crd.DoguConfigValueState{
 						Value:  "512m",
 						Exists: true,
 					},
@@ -88,24 +89,24 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 	tests := []struct {
 		name string
-		dto  DoguConfigDiff
+		dto  crd.DoguConfigDiff
 		want domain.DoguConfigDiffs
 	}{
 		{
 			name: "should exit early if slices are empty",
-			dto:  DoguConfigDiff{},
+			dto:  crd.DoguConfigDiff{},
 			want: nil,
 		},
 		{
 			name: "should convert multiple dogu config diffs",
-			dto: DoguConfigDiff{
+			dto: crd.DoguConfigDiff{
 				{
 					Key: "container_config/memory_limit",
-					Actual: DoguConfigValueState{
+					Actual: crd.DoguConfigValueState{
 						Value:  "512m",
 						Exists: true,
 					},
-					Expected: DoguConfigValueState{
+					Expected: crd.DoguConfigValueState{
 						Value:  "1024m",
 						Exists: true,
 					},
@@ -113,10 +114,10 @@ func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 				},
 				{
 					Key: "container_config/swap_limit",
-					Actual: DoguConfigValueState{
+					Actual: crd.DoguConfigValueState{
 						Exists: false,
 					},
-					Expected: DoguConfigValueState{
+					Expected: crd.DoguConfigValueState{
 						Value:  "512m",
 						Exists: true,
 					},

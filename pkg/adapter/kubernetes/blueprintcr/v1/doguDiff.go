@@ -5,81 +5,74 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
-// DoguDiff is the comparison of a Dogu's desired state vs. its cluster state.
-// It contains the operation that needs to be done to achieve this desired state.
-type DoguDiff struct {
-	Actual        DoguDiffState `json:"actual"`
-	Expected      DoguDiffState `json:"expected"`
-	NeededActions []DoguAction  `json:"neededActions"`
-}
-
-// DoguDiffState is either the actual or desired state of a dogu in the cluster.
-type DoguDiffState struct {
-	Namespace          string             `json:"namespace,omitempty"`
-	Version            string             `json:"version,omitempty"`
-	InstallationState  string             `json:"installationState"`
-	ResourceConfig     ResourceConfig     `json:"resourceConfig,omitempty"`
-	ReverseProxyConfig ReverseProxyConfig `json:"reverseProxyConfig,omitempty"`
-}
-
-type ResourceConfig struct {
-	MinVolumeSize string `json:"minVolumeSize,omitempty"`
-}
-
-type ReverseProxyConfig struct {
-	MaxBodySize      string `json:"maxBodySize,omitempty"`
-	RewriteTarget    string `json:"rewriteTarget,omitempty"`
-	AdditionalConfig string `json:"additionalConfig,omitempty"`
-}
-
-// DoguAction is the action that needs to be done for a dogu
-// to achieve the desired state in the cluster.
-type DoguAction string
-
-func convertToDoguDiffDTO(domainModel domain.DoguDiff) DoguDiff {
+func convertToDoguDiffDTO(domainModel domain.DoguDiff) crd.DoguDiff {
 	neededActions := domainModel.NeededActions
-	doguActions := make([]DoguAction, 0, len(neededActions))
+	doguActions := make([]crd.DoguAction, 0, len(neededActions))
 	for _, action := range neededActions {
-		doguActions = append(doguActions, DoguAction(action))
+		doguActions = append(doguActions, crd.DoguAction(action))
 	}
 
-	return DoguDiff{
-		Actual: DoguDiffState{
+	return crd.DoguDiff{
+		Actual: crd.DoguDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           domainModel.Actual.Version.Raw,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			ResourceConfig: ResourceConfig{
-				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Actual.MinVolumeSize),
+			ResourceConfig: crd.ResourceConfig{
+				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Actual.MinVolumeSize),
 			},
-			ReverseProxyConfig: ReverseProxyConfig{
+			ReverseProxyConfig: crd.ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
 		},
-		Expected: DoguDiffState{
+		Expected: crd.DoguDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           domainModel.Expected.Version.Raw,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			ResourceConfig: ResourceConfig{
-				MinVolumeSize: ecosystem.GetQuantityString(domainModel.Expected.MinVolumeSize),
+			ResourceConfig: crd.ResourceConfig{
+				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Expected.MinVolumeSize),
 			},
-			ReverseProxyConfig: ReverseProxyConfig{
+			ReverseProxyConfig: crd.ReverseProxyConfig{
 				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Expected.ReverseProxyConfig.MaxBodySize),
 				RewriteTarget:    string(domainModel.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: string(domainModel.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}
 }
 
-func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, error) {
+func convertMinimumVolumeSizeToDTO(minVolSize ecosystem.VolumeSize) string {
+	if minVolSize.IsZero() {
+		return ""
+	} else {
+		return minVolSize.String()
+	}
+}
+
+func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []crd.AdditionalMount {
+	var result []crd.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, crd.AdditionalMount{
+			SourceType: crd.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+	return result
+}
+
+func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff, error) {
 	var actualVersion core.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {
@@ -108,11 +101,11 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}
 
-	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetQuantityReference(dto.Actual.ResourceConfig.MinVolumeSize)
+	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Actual.ResourceConfig.MinVolumeSize)
 	if actualVolumeSizeErr != nil {
 		actualVolumeSizeErr = fmt.Errorf("failed to parse actual minimum volume size %q: %w", dto.Actual.ResourceConfig.MinVolumeSize, actualVolumeSizeErr)
 	}
-	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetQuantityReference(dto.Expected.ResourceConfig.MinVolumeSize)
+	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Expected.ResourceConfig.MinVolumeSize)
 	if expectedVolumeSizeErr != nil {
 		expectedVolumeSizeErr = fmt.Errorf("failed to parse expected minimum volume size %q: %w", dto.Expected.ResourceConfig.MinVolumeSize, expectedVolumeSizeErr)
 	}
@@ -143,24 +136,40 @@ func convertToDoguDiffDomain(doguName string, dto DoguDiff) (domain.DoguDiff, er
 			Namespace:         cescommons.Namespace(dto.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: actualState,
-			MinVolumeSize:     actualMinVolumeSize,
+			MinVolumeSize:     *actualMinVolumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      actualMaxBodySize,
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Actual.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Actual.AdditionalMounts),
 		},
 		Expected: domain.DoguDiffState{
 			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: expectedState,
-			MinVolumeSize:     expectedMinVolumeSize,
+			MinVolumeSize:     *expectedMinVolumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      expectedMaxBodySize,
 				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),
 				AdditionalConfig: ecosystem.AdditionalConfig(dto.Expected.ReverseProxyConfig.AdditionalConfig),
 			},
+			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Expected.AdditionalMounts),
 		},
 		NeededActions: doguActions,
 	}, nil
+}
+
+func convertAdditionalMountsToDoguDiffDomain(mounts []crd.AdditionalMount) []ecosystem.AdditionalMount {
+	var result []ecosystem.AdditionalMount
+	for _, m := range mounts {
+		result = append(result, ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(m.SourceType),
+			Name:       m.Name,
+			Volume:     m.Volume,
+			Subfolder:  m.Subfolder,
+		})
+	}
+
+	return result
 }

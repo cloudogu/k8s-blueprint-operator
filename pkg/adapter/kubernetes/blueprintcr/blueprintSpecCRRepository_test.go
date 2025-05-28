@@ -16,7 +16,7 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
+	v1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -63,7 +63,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				AllowDoguNamespaceSwitch: true,
 				DryRun:                   true,
 			},
-			StateDiff:          domain.StateDiff{DoguDiffs: make(domain.DoguDiffs, 0), ComponentDiffs: make(domain.ComponentDiffs, 0)},
+			StateDiff:          domain.StateDiff{},
 			PersistenceContext: persistenceContext,
 		}, spec)
 	})
@@ -148,7 +148,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expectedStatus := v1.BlueprintStatus{
-			Phase: domain.StatusPhaseValidated,
+			Phase: v1.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
 				Dogus:      []entities.TargetDogu{},
 				Components: []entities.TargetComponent{},
@@ -284,7 +284,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expectedStatus := v1.BlueprintStatus{
-			Phase: domain.StatusPhaseValidated,
+			Phase: v1.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
 				Dogus:      []entities.TargetDogu{},
 				Components: []entities.TargetComponent{},
@@ -385,7 +385,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
 		expectedStatus := v1.BlueprintStatus{
-			Phase: domain.StatusPhaseValidated,
+			Phase: v1.StatusPhaseValidated,
 			EffectiveBlueprint: v1.EffectiveBlueprint{
 				Dogus:      []entities.TargetDogu{},
 				Components: []entities.TargetComponent{},

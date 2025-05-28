@@ -14,7 +14,14 @@ func GetQuantityReference(quantityStr string) (*resource.Quantity, error) {
 			quantityPtr = &quantityValue
 		}
 	}
+	return quantityPtr, err
+}
 
+func GetNonNilQuantityRef(quantityStr string) (*resource.Quantity, error) {
+	quantityPtr, err := GetQuantityReference(quantityStr)
+	if quantityPtr == nil {
+		quantityPtr = &resource.Quantity{}
+	}
 	return quantityPtr, err
 }
 
