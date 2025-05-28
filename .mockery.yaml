@@ -1,8 +1,3 @@
-#inpackage: True
-#testonly: True
-#with-expecter: True
-#keeptree: False
-
 with-expecter: true
 all: true
 exclude: ["vendor"]
