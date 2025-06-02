@@ -166,7 +166,8 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 }
 
 func appendActionForMinVolumeSize(actions []Action, expectedSize ecosystem.VolumeSize, actualSize ecosystem.VolumeSize) []Action {
-	if expectedSize != actualSize {
+	// if expected > actual = update needed
+	if expectedSize.Cmp(actualSize) > 0 {
 		return append(actions, ActionUpdateDoguResourceMinVolumeSize)
 	}
 	return actions
