@@ -60,14 +60,19 @@ func convertMinimumVolumeSizeToDTO(minVolSize ecosystem.VolumeSize) string {
 }
 
 func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []crd.AdditionalMount {
-	var result []crd.AdditionalMount
-	for _, m := range mounts {
-		result = append(result, crd.AdditionalMount{
-			SourceType: crd.DataSourceType(m.SourceType),
-			Name:       m.Name,
-			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
-		})
+	if len(mounts) == 0 {
+		// an empty slice and nil are serialized differently
+		// we want no entry instead of an empty json list if there are no mounts given
+		return nil
+	}
+	result := make([]crd.AdditionalMount, len(mounts))
+	for index, mount := range mounts {
+		result[index] = crd.AdditionalMount{
+			SourceType: crd.DataSourceType(mount.SourceType),
+			Name:       mount.Name,
+			Volume:     mount.Volume,
+			Subfolder:  mount.Subfolder,
+		}
 	}
 	return result
 }
@@ -161,14 +166,20 @@ func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff
 }
 
 func convertAdditionalMountsToDoguDiffDomain(mounts []crd.AdditionalMount) []ecosystem.AdditionalMount {
-	var result []ecosystem.AdditionalMount
-	for _, m := range mounts {
-		result = append(result, ecosystem.AdditionalMount{
-			SourceType: ecosystem.DataSourceType(m.SourceType),
-			Name:       m.Name,
-			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
-		})
+	if len(mounts) == 0 {
+		// an empty slice and nil are serialized differently
+		// we want no entry instead of an empty json list if there are no mounts given
+		return nil
+	}
+	result := make([]ecosystem.AdditionalMount, len(mounts))
+
+	for index, mount := range mounts {
+		result[index] = ecosystem.AdditionalMount{
+			SourceType: ecosystem.DataSourceType(mount.SourceType),
+			Name:       mount.Name,
+			Volume:     mount.Volume,
+			Subfolder:  mount.Subfolder,
+		}
 	}
 
 	return result
