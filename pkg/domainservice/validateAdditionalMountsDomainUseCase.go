@@ -1,0 +1,88 @@
+package domainservice
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
+	"sigs.k8s.io/controller-runtime/pkg/log"
+	"slices"
+)
+
+type ValidateAdditionalMountsDomainUseCase struct {
+	remoteDoguRegistry RemoteDoguRegistry
+}
+
+func NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry RemoteDoguRegistry) *ValidateAdditionalMountsDomainUseCase {
+	return &ValidateAdditionalMountsDomainUseCase{
+		remoteDoguRegistry,
+	}
+}
+
+// ValidateAdditionalMounts checks if for all additional mounts of dogus fit to their volumes described in the dogu specifications.
+// The dependencies are validated against dogu specifications in a remote dogu registry.
+// This functions returns no error if everything is ok or
+// a domain.InvalidBlueprintError if there are invalid additional mounts
+// an InternalError if there is any other error, e.g. with the connection to the remote dogu registry
+func (useCase *ValidateAdditionalMountsDomainUseCase) ValidateAdditionalMounts(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error {
+	logger := log.FromContext(ctx).WithName("ValidateAdditionalMountsDomainUseCase.ValidateAdditionalMounts")
+	dogusWithMounts := filterDogusWithAdditionalMounts(effectiveBlueprint.GetWantedDogus())
+	logger.Info("load dogu specifications...", "dogusWithMounts", dogusWithMounts)
+	doguSpecs, err := loadDoguSpecifications(ctx, useCase.remoteDoguRegistry, dogusWithMounts)
+	if err != nil {
+		return err
+	}
+	logger.Info("dogu specifications loaded", "specs", doguSpecs)
+
+	var errorList []error
+	for _, wantedDogu := range dogusWithMounts {
+		doguSpec := doguSpecs[wantedDogu.Name]
+		errorList = append(errorList, validateAdditionalMountsForDogu(wantedDogu, doguSpec))
+	}
+	err = errors.Join(errorList...)
+	if err != nil {
+		err = &domain.InvalidBlueprintError{
+			WrappedError: err,
+			Message:      "additionalMounts are invalid in effective blueprint",
+		}
+	}
+	return err
+}
+
+func filterDogusWithAdditionalMounts(dogus []domain.Dogu) []domain.Dogu {
+	var result []domain.Dogu
+	for _, dogu := range dogus {
+		if len(dogu.AdditionalMounts) > 0 {
+			result = append(result, dogu)
+		}
+	}
+	return result
+}
+
+func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) error {
+	possibleVolumes := filterVolumesWithBackup(filterVolumesWithBackup(doguSpec.Volumes))
+	possibleVolumeNames := util.Map(possibleVolumes, func(volume core.Volume) string {
+		return volume.Name
+	})
+	var errorList []error
+	for _, mount := range dogu.AdditionalMounts {
+		if !slices.Contains(possibleVolumeNames, mount.Volume) {
+			errorList = append(errorList, fmt.Errorf("volume %s in additional mount for dogu %s is invalid "+
+				"because either the volume does not exist or it is not backupped. "+
+				"It needs to be one of %+q", mount.Volume, doguSpec.Name, possibleVolumeNames))
+		}
+	}
+	return errors.Join(errorList...)
+}
+
+func filterVolumesWithBackup(volumes []core.Volume) []core.Volume {
+	var result []core.Volume
+	for _, volume := range volumes {
+		if volume.NeedsBackup {
+			result = append(result, volume)
+		}
+	}
+	return result
+}
