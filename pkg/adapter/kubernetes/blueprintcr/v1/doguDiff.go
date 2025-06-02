@@ -78,53 +78,17 @@ func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []
 }
 
 func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff, error) {
-	var actualVersion core.Version
-	var actualVersionErr error
-	if dto.Actual.Version != "" {
-		actualVersion, actualVersionErr = core.ParseVersion(dto.Actual.Version)
-		if actualVersionErr != nil {
-			actualVersionErr = fmt.Errorf("failed to parse actual version %q: %w", dto.Actual.Version, actualVersionErr)
-		}
-	}
 
-	var expectedVersion core.Version
-	var expectedVersionErr error
-	if dto.Expected.Version != "" {
-		expectedVersion, expectedVersionErr = core.ParseVersion(dto.Expected.Version)
-		if expectedVersionErr != nil {
-			expectedVersionErr = fmt.Errorf("failed to parse expected version %q: %w", dto.Expected.Version, expectedVersionErr)
-		}
-	}
-
-	actualState, actualStateErr := serializer.ToDomainTargetState(dto.Actual.InstallationState)
+	actualState, actualStateErr := convertDoguDiffStateDomain(dto.Actual)
 	if actualStateErr != nil {
-		actualStateErr = fmt.Errorf("failed to parse actual installation state %q: %w", dto.Actual.InstallationState, actualStateErr)
+		actualStateErr = fmt.Errorf("failed to convert actual dogu diff state: %w", actualStateErr)
+	}
+	expectedState, expectedStateErr := convertDoguDiffStateDomain(dto.Expected)
+	if actualStateErr != nil {
+		actualStateErr = fmt.Errorf("failed to convert expected dogu diff state: %w", actualStateErr)
 	}
 
-	expectedState, expectedStateErr := serializer.ToDomainTargetState(dto.Expected.InstallationState)
-	if expectedStateErr != nil {
-		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
-	}
-
-	actualMinVolumeSize, actualVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Actual.ResourceConfig.MinVolumeSize)
-	if actualVolumeSizeErr != nil {
-		actualVolumeSizeErr = fmt.Errorf("failed to parse actual minimum volume size %q: %w", dto.Actual.ResourceConfig.MinVolumeSize, actualVolumeSizeErr)
-	}
-	expectedMinVolumeSize, expectedVolumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.Expected.ResourceConfig.MinVolumeSize)
-	if expectedVolumeSizeErr != nil {
-		expectedVolumeSizeErr = fmt.Errorf("failed to parse expected minimum volume size %q: %w", dto.Expected.ResourceConfig.MinVolumeSize, expectedVolumeSizeErr)
-	}
-
-	actualMaxBodySize, actualBodySizeErr := ecosystem.GetQuantityReference(dto.Actual.ReverseProxyConfig.MaxBodySize)
-	if actualBodySizeErr != nil {
-		actualBodySizeErr = fmt.Errorf("failed to parse actual maximum proxy body size %q: %w", dto.Actual.ReverseProxyConfig.MaxBodySize, actualBodySizeErr)
-	}
-	expectedMaxBodySize, expectedBodySizeErr := ecosystem.GetQuantityReference(dto.Expected.ReverseProxyConfig.MaxBodySize)
-	if expectedBodySizeErr != nil {
-		expectedBodySizeErr = fmt.Errorf("failed to parse expected maximum proxy body size %q: %w", dto.Expected.ReverseProxyConfig.MaxBodySize, expectedBodySizeErr)
-	}
-
-	err := errors.Join(actualVersionErr, expectedVersionErr, actualStateErr, expectedStateErr, actualVolumeSizeErr, expectedVolumeSizeErr, actualBodySizeErr, expectedBodySizeErr)
+	err := errors.Join(actualStateErr, expectedStateErr)
 	if err != nil {
 		return domain.DoguDiff{}, fmt.Errorf("failed to convert dogu diff dto %q to domain model: %w", doguName, err)
 	}
@@ -136,33 +100,53 @@ func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff
 	}
 
 	return domain.DoguDiff{
-		DoguName: cescommons.SimpleName(doguName),
-		Actual: domain.DoguDiffState{
-			Namespace:         cescommons.Namespace(dto.Actual.Namespace),
-			Version:           actualVersion,
-			InstallationState: actualState,
-			MinVolumeSize:     *actualMinVolumeSize,
-			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      actualMaxBodySize,
-				RewriteTarget:    ecosystem.RewriteTarget(dto.Actual.ReverseProxyConfig.RewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(dto.Actual.ReverseProxyConfig.AdditionalConfig),
-			},
-			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Actual.AdditionalMounts),
-		},
-		Expected: domain.DoguDiffState{
-			Namespace:         cescommons.Namespace(dto.Expected.Namespace),
-			Version:           expectedVersion,
-			InstallationState: expectedState,
-			MinVolumeSize:     *expectedMinVolumeSize,
-			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      expectedMaxBodySize,
-				RewriteTarget:    ecosystem.RewriteTarget(dto.Expected.ReverseProxyConfig.RewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(dto.Expected.ReverseProxyConfig.AdditionalConfig),
-			},
-			AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.Expected.AdditionalMounts),
-		},
+		DoguName:      cescommons.SimpleName(doguName),
+		Expected:      expectedState,
+		Actual:        actualState,
 		NeededActions: doguActions,
 	}, nil
+}
+
+func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, error) {
+	var errorList []error
+
+	var version core.Version
+	var versionErr error
+	if dto.Version != "" {
+		version, versionErr = core.ParseVersion(dto.Version)
+		if versionErr != nil {
+			versionErr = fmt.Errorf("failed to parse version %q: %w", dto.Version, versionErr)
+		}
+	}
+	errorList = append(errorList, versionErr)
+
+	state, stateErr := serializer.ToDomainTargetState(dto.InstallationState)
+	if stateErr != nil {
+		errorList = append(errorList, fmt.Errorf("failed to parse installation state %q: %w", dto.InstallationState, stateErr))
+	}
+
+	minVolumeSize, volumeSizeErr := ecosystem.GetNonNilQuantityRef(dto.ResourceConfig.MinVolumeSize)
+	if volumeSizeErr != nil {
+		errorList = append(errorList, fmt.Errorf("failed to parse minimum volume size %q: %w", dto.ResourceConfig.MinVolumeSize, volumeSizeErr))
+	}
+
+	maxBodySize, bodySizeErr := ecosystem.GetQuantityReference(dto.ReverseProxyConfig.MaxBodySize)
+	if bodySizeErr != nil {
+		errorList = append(errorList, fmt.Errorf("failed to parse maximum proxy body size %q: %w", dto.ReverseProxyConfig.MaxBodySize, bodySizeErr))
+	}
+
+	return domain.DoguDiffState{
+		Namespace:         cescommons.Namespace(dto.Namespace),
+		Version:           version,
+		InstallationState: state,
+		MinVolumeSize:     *minVolumeSize,
+		ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+			MaxBodySize:      maxBodySize,
+			RewriteTarget:    ecosystem.RewriteTarget(dto.ReverseProxyConfig.RewriteTarget),
+			AdditionalConfig: ecosystem.AdditionalConfig(dto.ReverseProxyConfig.AdditionalConfig),
+		},
+		AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.AdditionalMounts),
+	}, errors.Join(errorList...)
 }
 
 func convertAdditionalMountsToDoguDiffDomain(mounts []crd.AdditionalMount) []ecosystem.AdditionalMount {

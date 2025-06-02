@@ -325,7 +325,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -350,7 +350,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected version \"a.b.c-d\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -375,7 +375,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -400,7 +400,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -425,10 +425,10 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse actual installation state \"invalid\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -466,7 +466,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -504,8 +504,8 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"postfix\" to domain model")
 			},
@@ -665,9 +665,7 @@ func TestConvertToDomainModel(t *testing.T) {
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			}},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.NoError(t, err)
-			},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "fail for multiple component diffs",
