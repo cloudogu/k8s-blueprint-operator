@@ -94,7 +94,6 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
-	minVolumeSize := dogu.MinVolumeSize
 	return &v2.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -111,7 +110,7 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				// always set MinDataVolumeSize instead of the deprecated DataVolumeSize
 				// the dogu-operator has a default of 2GiB if this field is 0 or not set
 				// we just always set this value, if a new dogu CR is created via blueprint
-				MinDataVolumeSize: minVolumeSize,
+				MinDataVolumeSize: dogu.MinVolumeSize,
 			},
 			SupportMode: false,
 			UpgradeConfig: v2.UpgradeConfig{
@@ -192,7 +191,6 @@ type doguResourcesPatch struct {
 }
 
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
-	minVolumeSize := dogu.MinVolumeSize
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
 			Name:    dogu.Name.String(),
@@ -202,7 +200,7 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 				// the dogu-operator has a default of 2Gi if this field is 0 or not set
 				// we just always set this value, if a new dogu CR is created via blueprint
 				DataVolumeSize:    "",
-				MinDataVolumeSize: minVolumeSize,
+				MinDataVolumeSize: dogu.MinVolumeSize,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode

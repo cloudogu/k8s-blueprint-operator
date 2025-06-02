@@ -65,7 +65,6 @@ type UpgradeConfig struct {
 
 type DataSourceType string
 
-//goland:noinspection GoUnusedConst
 const (
 	// DataSourceConfigMap mounts a config map as a data source.
 	DataSourceConfigMap DataSourceType = "ConfigMap"
