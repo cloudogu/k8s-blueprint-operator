@@ -60,7 +60,6 @@ func (dogu Dogu) validate() error {
 		if strings.HasPrefix(mount.Subfolder, "/") {
 			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
 		}
-		//TODO: find right place to validate volume name
 	}
 
 	err := errors.Join(errorList...)
