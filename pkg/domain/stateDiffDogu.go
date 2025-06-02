@@ -7,7 +7,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
 	"slices"
-	"strings"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -187,38 +186,23 @@ func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecos
 }
 
 func appendActionForAdditionalMounts(actions []Action, expectedMounts []ecosystem.AdditionalMount, actualMounts []ecosystem.AdditionalMount) []Action {
-	if len(expectedMounts) != len(actualMounts) {
-		return append(actions, ActionUpdateAdditionalMounts)
-	}
-
 	if !areAdditionalMountsEqual(expectedMounts, actualMounts) {
 		return append(actions, ActionUpdateAdditionalMounts)
 	}
 	return actions
 }
 
-func serializeAdditionalMount(mount ecosystem.AdditionalMount) string {
-	data := strings.Join([]string{string(mount.SourceType), mount.Name, mount.Volume, mount.Subfolder}, "")
-	return data
-}
-
+// areAdditionalMountsEqual compare the additional mounts without order
 func areAdditionalMountsEqual(first []ecosystem.AdditionalMount, second []ecosystem.AdditionalMount) bool {
-	firstHashList := serializeAdditionalMounts(first)
-	slices.Sort(firstHashList)
-
-	secondHashList := serializeAdditionalMounts(second)
-	slices.Sort(secondHashList)
-
-	return slices.Equal(firstHashList, secondHashList)
-}
-
-func serializeAdditionalMounts(mounts []ecosystem.AdditionalMount) []string {
-	var result []string
-	for _, m := range mounts {
-		result = append(result, serializeAdditionalMount(m))
+	if len(first) != len(second) {
+		return false
 	}
-
-	return result
+	for _, mount := range first {
+		if !slices.Contains(second, mount) {
+			return false
+		}
+	}
+	return true
 }
 
 func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {
