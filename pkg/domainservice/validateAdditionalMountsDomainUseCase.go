@@ -29,6 +29,10 @@ func NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry RemoteDoguRegis
 func (useCase *ValidateAdditionalMountsDomainUseCase) ValidateAdditionalMounts(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error {
 	logger := log.FromContext(ctx).WithName("ValidateAdditionalMountsDomainUseCase.ValidateAdditionalMounts")
 	dogusWithMounts := filterDogusWithAdditionalMounts(effectiveBlueprint.GetWantedDogus())
+	if len(dogusWithMounts) == 0 {
+		logger.Info("skip additional mounts validation as no dogus have additional mounts")
+		return nil
+	}
 	logger.Info("load dogu specifications...", "dogusWithMounts", dogusWithMounts)
 	doguSpecs, err := loadDoguSpecifications(ctx, useCase.remoteDoguRegistry, dogusWithMounts)
 	if err != nil {
@@ -69,7 +73,7 @@ func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) erro
 	var errorList []error
 	for _, mount := range dogu.AdditionalMounts {
 		if !slices.Contains(possibleVolumeNames, mount.Volume) {
-			errorList = append(errorList, fmt.Errorf("volume %s in additional mount for dogu %s is invalid "+
+			errorList = append(errorList, fmt.Errorf("volume %q in additional mount for dogu %q is invalid "+
 				"because either the volume does not exist or it is not backupped. "+
 				"It needs to be one of %+q", mount.Volume, doguSpec.Name, possibleVolumeNames))
 		}

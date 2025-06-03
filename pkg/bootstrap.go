@@ -42,7 +42,7 @@ var blueprintOperatorName = common.QualifiedComponentName{
 
 var maintenanceModeOwner = "blueprint-operator"
 
-// Bootstrap creates the ApplicationContext.
+// Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
 	blueprintSerializer := blueprintV2.Serializer{}
 	blueprintMaskSerializer := blueprintMaskV1.Serializer{}
@@ -87,8 +87,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguRestartAdapter := dogusInterface.DoguRestarts(namespace)
 	restartRepository := restartcr.NewDoguRestartRepository(doguRestartAdapter)
 
-	blueprintSpecDomainUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
-	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, blueprintSpecDomainUseCase)
+	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
+	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
+	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
