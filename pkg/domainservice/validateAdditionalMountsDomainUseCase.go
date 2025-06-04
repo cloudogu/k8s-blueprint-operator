@@ -74,7 +74,7 @@ func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) erro
 	for _, mount := range dogu.AdditionalMounts {
 		if !slices.Contains(possibleVolumeNames, mount.Volume) {
 			errorList = append(errorList, fmt.Errorf("volume %q in additional mount for dogu %q is invalid "+
-				"because either the volume does not exist it has volume clients. "+
+				"because either the volume does not exist or it has volume clients. "+
 				"It needs to be one of %+q", mount.Volume, doguSpec.Name, possibleVolumeNames))
 		}
 	}
