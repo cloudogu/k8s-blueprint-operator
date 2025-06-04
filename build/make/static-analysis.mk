@@ -21,7 +21,7 @@ static-analysis-ci:
 
 static-analysis-ci-report-pr: $(REVIEW_DOG)
 	@if [ X"$(CI_PULL_REQUEST)" != X"" -a X"$(CI_PULL_REQUEST)" != X"null" ] ; then \
-  		cat $(STATIC_ANALYSIS_DIR)/static-analysis-cs.log | CI_COMMIT=$(COMMIT_ID) $(REVIEW_DOG) -f=checkstyle -reporter="github-pr-review"; \
+  		cat $(STATIC_ANALYSIS_DIR)/static-analysis-cs.log | CI_COMMIT=$(COMMIT_ID) $(REVIEW_DOG) -f=checkstyle -reporter="github-pr-review" -tee; \
   	fi
 
 .PHONY: static-analysis-local
