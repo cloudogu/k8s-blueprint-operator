@@ -2,7 +2,6 @@ package domainservice
 
 import (
 	_ "embed"
-	"fmt"
 	"github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -151,47 +150,6 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		//then
 		assert.ErrorContains(t, err, `additionalMounts are invalid`)
 		assert.ErrorContains(t, err, `volume "unknownVolume" in additional mount for dogu "k8s/nginx-static" is invalid`)
-		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "localConfig"]`)
-	})
-
-	t.Run("known volume but not in backup", func(t *testing.T) {
-		//given
-		registry := NewMockRemoteDoguRegistry(t)
-		useCase := NewValidateAdditionalMountsDomainUseCase(registry)
-		blueprint := domain.EffectiveBlueprint{
-			Dogus: []domain.Dogu{
-				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
-					AdditionalMounts: []ecosystem.AdditionalMount{
-						{
-							SourceType: ecosystem.DataSourceConfigMap,
-							Name:       "myConfigMap",
-							Volume:     "menu-json", //has "NeedsBackup": false
-						},
-					},
-				},
-			},
-		}
-
-		dogusToLoad := []dogu.QualifiedVersion{
-			{Name: k8sNginxStatic, Version: version1_26_3_2},
-		}
-		doguSpecsToReturn := map[dogu.QualifiedName]*core.Dogu{
-			k8sNginxStatic: doguSpecK8sNginxStatic,
-		}
-		registry.EXPECT().GetDogus(ctx, dogusToLoad).Return(doguSpecsToReturn, nil)
-
-		//when
-		err := useCase.ValidateAdditionalMounts(ctx, blueprint)
-		//then
-		//TODO: remove the output after debugging dogu.json parser
-		fmt.Printf("dogu.json: %+v\n", doguSpecK8sNginxStatic.Volumes)
-		assert.False(t, doguSpecK8sNginxStatic.Volumes[2].NeedsBackup, fmt.Sprintf("volume %q should not have backup: true", doguSpecK8sNginxStatic.Volumes[2].Name))
-
-		assert.ErrorContains(t, err, `additionalMounts are invalid`)
-		assert.ErrorContains(t, err, `volume "menu-json" in additional mount for dogu "k8s/nginx-static" is invalid`)
-		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "localConfig"]`)
+		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "menu-json" "localConfig"]`)
 	})
 }

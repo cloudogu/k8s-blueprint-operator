@@ -66,7 +66,7 @@ func filterDogusWithAdditionalMounts(dogus []domain.Dogu) []domain.Dogu {
 }
 
 func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) error {
-	possibleVolumes := filterVolumesWithBackup(filterVolumesWithBackup(doguSpec.Volumes))
+	possibleVolumes := doguSpec.Volumes
 	possibleVolumeNames := util.Map(possibleVolumes, func(volume core.Volume) string {
 		return volume.Name
 	})
@@ -79,14 +79,4 @@ func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) erro
 		}
 	}
 	return errors.Join(errorList...)
-}
-
-func filterVolumesWithBackup(volumes []core.Volume) []core.Volume {
-	var result []core.Volume
-	for _, volume := range volumes {
-		if volume.NeedsBackup {
-			result = append(result, volume)
-		}
-	}
-	return result
 }
