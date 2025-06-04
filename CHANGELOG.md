@@ -8,11 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - [#113] blueprints now support additionalMounts for configMaps and secrets in dogus
+- [#113] additionalMounts now get validated with explanations for possible problems
 
 ### Changed
 - [#114] Dependency: minimum version of `k8s-dogu-operator-crd` is now 2.8.0
   - because we now set the new `minDataVolumeSize` field instead of `dataVolumeSize`
-- [#113] update to go 1.24
+- [#113] Dependency: minimum version of `k8s-Blueprint-operator-crd` is now 1.3.0
+- because we now need the additional mounts fields for dogus
+- [#113] update to go 1.24.3
 - [#113] extract Blueprint-CRD into bluerpint-lib
 - [#113] extract Blueprint-k8s rest client into blueprint-lib
 - [#113] update k8s.io/client-go to v0.33.0
