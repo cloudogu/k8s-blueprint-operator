@@ -114,3 +114,13 @@ type sensitiveDoguConfigRepository interface {
 type doguRestartRepository interface {
 	domainservice.DoguRestartRepository
 }
+
+// validateDependenciesDomainUseCase is an interface for the domain service for better testability
+type validateDependenciesDomainUseCase interface {
+	ValidateDependenciesForAllDogus(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error
+}
+
+// validateAdditionalMountsDomainUseCase is an interface for the domain service for better testability
+type validateAdditionalMountsDomainUseCase interface {
+	ValidateAdditionalMounts(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error
+}

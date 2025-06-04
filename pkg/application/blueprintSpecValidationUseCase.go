@@ -11,14 +11,14 @@ import (
 
 type BlueprintSpecValidationUseCase struct {
 	repo                        blueprintSpecRepository
-	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase
-	ValidateMountsUseCase       *domainservice.ValidateAdditionalMountsDomainUseCase
+	validateDependenciesUseCase validateDependenciesDomainUseCase
+	ValidateMountsUseCase       validateAdditionalMountsDomainUseCase
 }
 
 func NewBlueprintSpecValidationUseCase(
 	repo domainservice.BlueprintSpecRepository,
-	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase,
-	ValidateMountsUseCase *domainservice.ValidateAdditionalMountsDomainUseCase,
+	validateDependenciesUseCase validateDependenciesDomainUseCase,
+	ValidateMountsUseCase validateAdditionalMountsDomainUseCase,
 ) *BlueprintSpecValidationUseCase {
 	return &BlueprintSpecValidationUseCase{
 		repo:                        repo,
