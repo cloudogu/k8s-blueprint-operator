@@ -66,7 +66,7 @@ func filterDogusWithAdditionalMounts(dogus []domain.Dogu) []domain.Dogu {
 }
 
 func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) error {
-	possibleVolumes := doguSpec.Volumes
+	possibleVolumes := filterClientVolumes(doguSpec.Volumes)
 	possibleVolumeNames := util.Map(possibleVolumes, func(volume core.Volume) string {
 		return volume.Name
 	})
@@ -74,9 +74,21 @@ func validateAdditionalMountsForDogu(dogu domain.Dogu, doguSpec *core.Dogu) erro
 	for _, mount := range dogu.AdditionalMounts {
 		if !slices.Contains(possibleVolumeNames, mount.Volume) {
 			errorList = append(errorList, fmt.Errorf("volume %q in additional mount for dogu %q is invalid "+
-				"because either the volume does not exist or it is not backupped. "+
+				"because either the volume does not exist it has volume clients. "+
 				"It needs to be one of %+q", mount.Volume, doguSpec.Name, possibleVolumeNames))
 		}
 	}
 	return errors.Join(errorList...)
+}
+
+func filterClientVolumes(volumes []core.Volume) []core.Volume {
+	// At the moment, clients can be just configMaps, and they get mounted directly without an empty dir volume etc.
+	// Therefore, additional mounts cannot work in this case.
+	var result []core.Volume
+	for _, volume := range volumes {
+		if len(volume.Clients) == 0 {
+			result = append(result, volume)
+		}
+	}
+	return result
 }

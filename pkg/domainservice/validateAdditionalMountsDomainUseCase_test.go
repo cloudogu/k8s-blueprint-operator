@@ -150,6 +150,44 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		//then
 		assert.ErrorContains(t, err, `additionalMounts are invalid`)
 		assert.ErrorContains(t, err, `volume "unknownVolume" in additional mount for dogu "k8s/nginx-static" is invalid`)
-		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "menu-json" "localConfig"]`)
+		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "localConfig"]`)
+	})
+
+	t.Run("volume with clients", func(t *testing.T) {
+		//given
+		registry := NewMockRemoteDoguRegistry(t)
+		useCase := NewValidateAdditionalMountsDomainUseCase(registry)
+		blueprint := domain.EffectiveBlueprint{
+			Dogus: []domain.Dogu{
+				{
+					Name:        k8sNginxStatic,
+					Version:     version1_26_3_2,
+					TargetState: domain.TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "myConfigMap",
+							Volume:     "menu-json",
+						},
+					},
+				},
+			},
+		}
+
+		dogusToLoad := []dogu.QualifiedVersion{
+			{Name: k8sNginxStatic, Version: version1_26_3_2},
+		}
+		doguSpecsToReturn := map[dogu.QualifiedName]*core.Dogu{
+			k8sNginxStatic: doguSpecK8sNginxStatic,
+		}
+		registry.EXPECT().GetDogus(ctx, dogusToLoad).Return(doguSpecsToReturn, nil)
+
+		//when
+		err := useCase.ValidateAdditionalMounts(ctx, blueprint)
+		//then
+		assert.ErrorContains(t, err, `additionalMounts are invalid`)
+		assert.ErrorContains(t, err, `volume "menu-json" in additional mount for dogu "k8s/nginx-static" is invalid`)
+		assert.ErrorContains(t, err, `it has volume clients`)
+		assert.ErrorContains(t, err, `["app.conf.d" "customhtml" "localConfig"]`)
 	})
 }
