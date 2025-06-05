@@ -6,6 +6,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
+	"slices"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -24,8 +25,9 @@ type DoguDiffState struct {
 	Namespace          cescommons.Namespace
 	Version            core.Version
 	InstallationState  TargetState
-	MinVolumeSize      *ecosystem.VolumeSize
+	MinVolumeSize      ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	AdditionalMounts   []ecosystem.AdditionalMount
 }
 
 // String returns a string representation of the DoguDiff.
@@ -88,6 +90,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  TargetStatePresent,
 			MinVolumeSize:      installedDogu.MinVolumeSize,
 			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
+			AdditionalMounts:   installedDogu.AdditionalMounts,
 		}
 	}
 
@@ -101,6 +104,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 			InstallationState:  blueprintDogu.TargetState,
 			MinVolumeSize:      blueprintDogu.MinVolumeSize,
 			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
+			AdditionalMounts:   blueprintDogu.AdditionalMounts,
 		}
 	}
 
@@ -142,6 +146,7 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 
 	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
 	neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
+	neededActions = appendActionForAdditionalMounts(neededActions, expected.AdditionalMounts, actual.AdditionalMounts)
 
 	if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
 		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
@@ -160,13 +165,11 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	return neededActions
 }
 
-func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
-	if expectedSize != nil && actualSize != nil {
-		if expectedSize.Cmp(*actualSize) == 1 {
-			return append(actions, ActionUpdateDoguResourceMinVolumeSize)
-		}
+func appendActionForMinVolumeSize(actions []Action, expectedSize ecosystem.VolumeSize, actualSize ecosystem.VolumeSize) []Action {
+	// if expected > actual = update needed
+	if expectedSize.Cmp(actualSize) > 0 {
+		return append(actions, ActionUpdateDoguResourceMinVolumeSize)
 	}
-
 	return actions
 }
 
@@ -181,6 +184,26 @@ func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecos
 		}
 	}
 	return actions
+}
+
+func appendActionForAdditionalMounts(actions []Action, expectedMounts []ecosystem.AdditionalMount, actualMounts []ecosystem.AdditionalMount) []Action {
+	if !areAdditionalMountsEqual(expectedMounts, actualMounts) {
+		return append(actions, ActionUpdateAdditionalMounts)
+	}
+	return actions
+}
+
+// areAdditionalMountsEqual compare the additional mounts without order
+func areAdditionalMountsEqual(first []ecosystem.AdditionalMount, second []ecosystem.AdditionalMount) bool {
+	if len(first) != len(second) {
+		return false
+	}
+	for _, mount := range first {
+		if !slices.Contains(second, mount) {
+			return false
+		}
+	}
+	return true
 }
 
 func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {

@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"slices"
+	"strings"
 )
 
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -20,11 +21,13 @@ type Dogu struct {
 	Version core.Version
 	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
 	TargetState TargetState
-	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
-	// storage is needed.
-	MinVolumeSize *ecosystem.VolumeSize
+	// MinVolumeSize is the minimum storage of the dogu. 0 indicates that the default size should be set.
+	// Reducing this value below the actual volume size has no impact as we do not support downsizing.
+	MinVolumeSize ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	// AdditionalMounts provides the possibility to mount additional data into the dogu.
+	AdditionalMounts []ecosystem.AdditionalMount
 }
 
 // validate checks if the Dogu is semantically correct.
@@ -37,18 +40,26 @@ func (dogu Dogu) validate() error {
 	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
-
-	// Storage is usually expressed in Binary SI. Using Decimal SI can cause problems because sizes will be
-	// rounded up (longhorn does this in volume resize).
-	minVolumeSize := dogu.MinVolumeSize
-	if minVolumeSize != nil && !minVolumeSize.IsZero() && minVolumeSize.Format != resource.BinarySI {
-		errorList = append(errorList, fmt.Errorf("dogu minimum volume size is not in Binary SI (\"Mi\" or \"Gi\"): %s", dogu.Name))
-	}
+	// minVolumeSize is already checked while unmarshalling json/yaml
 
 	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.
 	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
 	if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
 		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
+	}
+
+	for _, mount := range dogu.AdditionalMounts {
+		if mount.SourceType != ecosystem.DataSourceConfigMap && mount.SourceType != ecosystem.DataSourceSecret {
+			errorList = append(errorList, fmt.Errorf(
+				"dogu additional mounts sourceType must be one of '%s', '%s': %s",
+				ecosystem.DataSourceConfigMap,
+				ecosystem.DataSourceSecret,
+				dogu.Name,
+			))
+		}
+		if strings.HasPrefix(mount.Subfolder, "/") {
+			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
+		}
 	}
 
 	err := errors.Join(errorList...)

@@ -160,6 +160,90 @@ func Test_determineDoguDiff(t *testing.T) {
 			},
 		},
 		{
+			name: "update minVolSize if actual < expected",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:          officialNexus,
+					TargetState:   TargetStatePresent,
+					MinVolumeSize: quantity100M,
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name:          officialNexus,
+					MinVolumeSize: quantity10M,
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity100M,
+				},
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity10M,
+				},
+				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize},
+			},
+		},
+		{
+			name: "don't update minVolSize if actual == expected",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:          officialNexus,
+					TargetState:   TargetStatePresent,
+					MinVolumeSize: quantity100M,
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name:          officialNexus,
+					MinVolumeSize: quantity100M,
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity100M,
+				},
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity100M,
+				},
+				NeededActions: nil,
+			},
+		},
+		{
+			name: "don't update minVolSize if actual > expected",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:          officialNexus,
+					TargetState:   TargetStatePresent,
+					MinVolumeSize: quantity10M,
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name:          officialNexus,
+					MinVolumeSize: quantity100M,
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity10M,
+				},
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					MinVolumeSize:     quantity100M,
+				},
+				NeededActions: nil,
+			},
+		},
+		{
 			name: "multiple update actions",
 			args: args{
 				blueprintDogu: &Dogu{
@@ -171,12 +255,12 @@ func Test_determineDoguDiff(t *testing.T) {
 						AdditionalConfig: "additional",
 						RewriteTarget:    "/",
 					},
-					MinVolumeSize: &volumeSize2,
+					MinVolumeSize: volumeSize2,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:          officialNexus,
 					Version:       version3211,
-					MinVolumeSize: &volumeSize1,
+					MinVolumeSize: volumeSize1,
 				},
 			},
 			want: DoguDiff{
@@ -185,7 +269,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					Namespace:         officialNamespace,
 					Version:           version3211,
 					InstallationState: TargetStatePresent,
-					MinVolumeSize:     &volumeSize1,
+					MinVolumeSize:     volumeSize1,
 				},
 				Expected: DoguDiffState{
 					Namespace:         officialNamespace,
@@ -196,7 +280,7 @@ func Test_determineDoguDiff(t *testing.T) {
 						AdditionalConfig: "additional",
 						RewriteTarget:    "/",
 					},
-					MinVolumeSize: &volumeSize2,
+					MinVolumeSize: volumeSize2,
 				},
 				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig, ActionUpgrade},
 			},
@@ -388,6 +472,314 @@ func Test_determineDoguDiff(t *testing.T) {
 					},
 				},
 				NeededActions: nil,
+			},
+		},
+		{
+			name: "no action if additional mounts are equal",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				NeededActions: nil,
+			},
+		},
+		{
+			name: "no action if additional mounts are equal but order is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				NeededActions: nil,
+			},
+		},
+		{
+			name: "needs update action for additional mounts if the size is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+					},
+				},
+				NeededActions: []Action{ActionUpdateAdditionalMounts},
+			},
+		},
+		{
+			name: "needs update action for additional mounts if an element is different",
+			args: args{
+				blueprintDogu: &Dogu{
+					Name:        officialNexus,
+					TargetState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				installedDogu: &ecosystem.DoguInstallation{
+					Name: officialNexus,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			},
+			want: DoguDiff{
+				DoguName: "nexus",
+				Actual: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Expected: DoguDiffState{
+					Namespace:         officialNamespace,
+					InstallationState: TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+						{
+							SourceType: ecosystem.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				NeededActions: []Action{ActionUpdateAdditionalMounts},
 			},
 		},
 	}

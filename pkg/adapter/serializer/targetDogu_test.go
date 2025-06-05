@@ -76,7 +76,7 @@ func TestConvertDogus(t *testing.T) {
 		{
 			name:    "dogu with min volume size",
 			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ResourceConfig: entities.ResourceConfig{MinVolumeSize: "1Gi"}}}}},
-			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: &volumeSize}},
+			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: volumeSize}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -102,6 +102,67 @@ func TestConvertDogus(t *testing.T) {
 			args:    args{dogus: []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "unknown"}}},
 			want:    nil,
 			wantErr: assert.Error,
+		},
+		{
+			name: "should convert additionalMounts",
+			args: args{dogus: []entities.TargetDogu{{
+				Name:        "official/postgres",
+				Version:     version3211.Raw,
+				TargetState: "present",
+				PlatformConfig: entities.PlatformConfig{
+					AdditionalMountsConfig: []entities.AdditionalMount{
+						{
+							SourceType: entities.DataSourceConfigMap,
+							Name:       "configMap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: entities.DataSourceSecret,
+							Name:       "sec",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			}}},
+			want: []domain.Dogu{{
+				Name:        cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
+				Version:     version3211,
+				TargetState: domain.TargetStatePresent,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configMap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "sec",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				}}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return nil slice if dogu contains an nil slice",
+			args: args{dogus: []entities.TargetDogu{{
+				Name:        "official/postgres",
+				Version:     version3211.Raw,
+				TargetState: "present",
+				PlatformConfig: entities.PlatformConfig{
+					AdditionalMountsConfig: nil,
+				},
+			}}},
+			want: []domain.Dogu{{
+				Name:             cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
+				Version:          version3211,
+				TargetState:      domain.TargetStatePresent,
+				AdditionalMounts: nil,
+			}},
+			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
@@ -141,8 +202,76 @@ func TestConvertToDoguDTOs(t *testing.T) {
 		},
 		{
 			name:    "ok",
-			args:    args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: &volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"}}}},
+			args:    args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"}}}},
 			want:    []entities.TargetDogu{{Name: "official/postgres", Version: version3211.Raw, TargetState: "present", PlatformConfig: entities.PlatformConfig{ResourceConfig: entities.ResourceConfig{MinVolumeSize: "1G"}, ReverseProxyConfig: entities.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"}}}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "additionalMountsConfig",
+			args: args{dogus: []domain.Dogu{{
+				Name:               cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
+				Version:            version3211,
+				TargetState:        domain.TargetStatePresent,
+				MinVolumeSize:      volumeSize,
+				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"},
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configMap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "sec",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			}}},
+			want: []entities.TargetDogu{{
+				Name:        "official/postgres",
+				Version:     version3211.Raw,
+				TargetState: "present",
+				PlatformConfig: entities.PlatformConfig{
+					ResourceConfig:     entities.ResourceConfig{MinVolumeSize: "1G"},
+					ReverseProxyConfig: entities.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"},
+					AdditionalMountsConfig: []entities.AdditionalMount{
+						{
+							SourceType: entities.DataSourceConfigMap,
+							Name:       "configMap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: entities.DataSourceSecret,
+							Name:       "sec",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				}}},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should return nil slice if dogu contains an nil slice",
+			args: args{dogus: []domain.Dogu{{
+				Name:               cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
+				Version:            version3211,
+				TargetState:        domain.TargetStatePresent,
+				MinVolumeSize:      volumeSize,
+				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"},
+				AdditionalMounts:   nil,
+			}}},
+			want: []entities.TargetDogu{{
+				Name:        "official/postgres",
+				Version:     version3211.Raw,
+				TargetState: "present",
+				PlatformConfig: entities.PlatformConfig{
+					ResourceConfig:         entities.ResourceConfig{MinVolumeSize: "1G"},
+					ReverseProxyConfig:     entities.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"},
+					AdditionalMountsConfig: nil,
+				}}},
 			wantErr: assert.NoError,
 		},
 	}

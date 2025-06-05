@@ -5,8 +5,10 @@ import (
 	"github.com/Masterminds/semver/v3"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"reflect"
 	"slices"
@@ -30,7 +32,7 @@ func TestConvertToDTO(t *testing.T) {
 	tests := []struct {
 		name        string
 		domainModel domain.StateDiff
-		want        StateDiff
+		want        crd.StateDiff
 	}{
 		{
 			name: "should convert single dogu diff",
@@ -48,21 +50,21 @@ func TestConvertToDTO(t *testing.T) {
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
-			want: StateDiff{DoguDiffs: map[string]DoguDiff{
+			want: crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
 				"ldap": {
-					Actual: DoguDiffState{
+					Actual: crd.DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.1.1-1",
 						InstallationState: "present",
 					},
-					Expected: DoguDiffState{
+					Expected: crd.DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.2.3-1",
 						InstallationState: "present",
 					},
-					NeededActions: []DoguAction{"upgrade"},
+					NeededActions: []crd.DoguAction{"upgrade"},
 				},
-			}, ComponentDiffs: map[string]ComponentDiff{}},
+			}, ComponentDiffs: map[string]crd.ComponentDiff{}},
 		},
 		{
 			name: "should convert multiple dogu diffs",
@@ -94,33 +96,34 @@ func TestConvertToDTO(t *testing.T) {
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			}},
-			want: StateDiff{DoguDiffs: map[string]DoguDiff{
+			want: crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
 				"ldap": {
-					Actual: DoguDiffState{
+					Actual: crd.DoguDiffState{
 						Namespace:         "official",
 						InstallationState: "absent",
 					},
-					Expected: DoguDiffState{
+					Expected: crd.DoguDiffState{
 						Namespace:         "official",
 						Version:           "1.2.3-1",
 						InstallationState: "present",
 					},
-					NeededActions: []DoguAction{"install"},
+					NeededActions: []crd.DoguAction{"install"},
 				},
 				"nginx-ingress": {
-					Actual: DoguDiffState{
+					Actual: crd.DoguDiffState{
 						Namespace:         "k8s",
 						Version:           "8.2.3-2",
 						InstallationState: "present",
 					},
-					Expected: DoguDiffState{
+					Expected: crd.DoguDiffState{
 						Namespace:         "k8s",
 						InstallationState: "absent",
 					},
-					NeededActions: []DoguAction{"uninstall"},
+					NeededActions: []crd.DoguAction{"uninstall"},
 				},
-			}, ComponentDiffs: map[string]ComponentDiff{}},
-		}, {
+			}, ComponentDiffs: map[string]crd.ComponentDiff{}},
+		},
+		{
 			name: "should convert multiple component diffs",
 			domainModel: domain.StateDiff{
 				DoguDiffs: domain.DoguDiffs{},
@@ -138,21 +141,22 @@ func TestConvertToDTO(t *testing.T) {
 						NeededActions: []domain.Action{domain.ActionUninstall},
 					},
 				}},
-			want: StateDiff{
-				DoguDiffs: map[string]DoguDiff{},
-				ComponentDiffs: map[string]ComponentDiff{
+			want: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{
 					testComponentName: {
-						Actual:        ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
-						Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						NeededActions: []ComponentAction{"upgrade", "component namespace switch"},
+						Actual:        crd.ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:      crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededActions: []crd.ComponentAction{"upgrade", "component namespace switch"},
 					},
 					"my-component-2": {
-						Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						Expected:      ComponentDiffState{InstallationState: "absent"},
-						NeededActions: []ComponentAction{"uninstall"},
+						Actual:        crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:      crd.ComponentDiffState{InstallationState: "absent"},
+						NeededActions: []crd.ComponentAction{"uninstall"},
 					},
 				}},
-		}, {
+		},
+		{
 			name: "should convert multiple dogu config diffs",
 			domainModel: domain.StateDiff{
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
@@ -164,15 +168,16 @@ func TestConvertToDTO(t *testing.T) {
 					"postfix": {},
 				},
 			},
-			want: StateDiff{
-				DoguDiffs:      map[string]DoguDiff{},
-				ComponentDiffs: map[string]ComponentDiff{},
-				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+			want: crd.StateDiff{
+				DoguDiffs:      map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					"ldap":    {},
 					"postfix": {},
 				},
 			},
-		}, {
+		},
+		{
 			name: "should convert global config diff",
 			domainModel: domain.StateDiff{
 				GlobalConfigDiffs: []domain.GlobalConfigEntryDiff{{
@@ -188,16 +193,16 @@ func TestConvertToDTO(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				}},
 			},
-			want: StateDiff{
-				DoguDiffs:      map[string]DoguDiff{},
-				ComponentDiffs: map[string]ComponentDiff{},
-				GlobalConfigDiff: []GlobalConfigEntryDiff{{
+			want: crd.StateDiff{
+				DoguDiffs:      map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				GlobalConfigDiff: []crd.GlobalConfigEntryDiff{{
 					Key: "fqdn",
-					Actual: GlobalConfigValueState{
+					Actual: crd.GlobalConfigValueState{
 						Value:  "ces1.example.com",
 						Exists: true,
 					},
-					Expected: GlobalConfigValueState{
+					Expected: crd.GlobalConfigValueState{
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
@@ -205,7 +210,74 @@ func TestConvertToDTO(t *testing.T) {
 				}},
 			},
 		},
-	}
+		{
+			name: "should convert additional mounts in diff",
+			domainModel: domain.StateDiff{DoguDiffs: []domain.DoguDiff{{
+				DoguName: "ldap",
+				Actual: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion("1.1.1-1"),
+					InstallationState: domain.TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "different_subfolder",
+						},
+					},
+				},
+				Expected: domain.DoguDiffState{
+					Namespace:         "official",
+					Version:           mustParseVersion("1.2.3-1"),
+					InstallationState: domain.TargetStatePresent,
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "secret",
+							Volume:     "volume2",
+							Subfolder:  "different_subfolder2",
+						},
+					},
+				},
+				NeededActions: []domain.Action{domain.ActionUpgrade},
+			}}},
+			want: crd.StateDiff{
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguDiffs: map[string]crd.DoguDiff{
+					"ldap": {
+						Actual: crd.DoguDiffState{
+							Namespace:         "official",
+							Version:           "1.1.1-1",
+							InstallationState: "present",
+							AdditionalMounts: []crd.AdditionalMount{
+								{
+									SourceType: crd.DataSourceConfigMap,
+									Name:       "configmap",
+									Volume:     "volume",
+									Subfolder:  "different_subfolder",
+								},
+							},
+						},
+						Expected: crd.DoguDiffState{
+							Namespace:         "official",
+							Version:           "1.2.3-1",
+							InstallationState: "present",
+							AdditionalMounts: []crd.AdditionalMount{
+								{
+									SourceType: crd.DataSourceConfigMap,
+									Name:       "secret",
+									Volume:     "volume2",
+									Subfolder:  "different_subfolder2",
+								},
+							},
+						},
+						NeededActions: []crd.DoguAction{"upgrade"},
+					},
+				},
+			},
+		}}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ConvertToStateDiffDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
@@ -228,244 +300,244 @@ func mustParseVersion(raw string) core.Version {
 func TestConvertToDomainModel(t *testing.T) {
 	tests := []struct {
 		name    string
-		dto     StateDiff
+		dto     crd.StateDiff
 		want    domain.StateDiff
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name: "fail to parse actual version of single dogu diff",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail to parse expected version of single dogu diff",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"downgrade"},
+						NeededActions: []crd.DoguAction{"downgrade"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected version \"a.b.c-d\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail to parse actual installation state of single dogu diff",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "invalid",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"install"},
+						NeededActions: []crd.DoguAction{"install"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail to parse expected installation state of single dogu diff",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail with multiple errors in single dogu diff",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "invalid",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "invalid",
 						},
-						NeededActions: []DoguAction{"none"},
+						NeededActions: []crd.DoguAction{"none"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse actual installation state \"invalid\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail for one of multiple dogu diffs",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"postfix": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
 		{
 			name: "fail for multiple dogu diffs",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"postfix": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"none"},
+						NeededActions: []crd.DoguAction{"none"},
 					},
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 				},
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse actual version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse expected installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
+					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"postfix\" to domain model")
 			},
 		},
 		{
 			name: "succeed for multiple dogu diffs",
-			dto: StateDiff{
-				DoguDiffs: map[string]DoguDiff{
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
 					"postfix": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededActions: []DoguAction{"upgrade"},
+						NeededActions: []crd.DoguAction{"upgrade"},
 					},
 					"ldap": {
-						Actual: DoguDiffState{
+						Actual: crd.DoguDiffState{
 							Namespace:         "official",
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: DoguDiffState{
+						Expected: crd.DoguDiffState{
 							Namespace:         "official",
 							InstallationState: "absent",
 						},
-						NeededActions: []DoguAction{"uninstall"},
+						NeededActions: []crd.DoguAction{"uninstall"},
 					},
 				},
 			},
@@ -484,7 +556,8 @@ func TestConvertToDomainModel(t *testing.T) {
 				},
 				{
 					DoguName: "postfix",
-					Actual: domain.DoguDiffState{Namespace: "official",
+					Actual: domain.DoguDiffState{
+						Namespace:         "official",
 						Version:           mustParseVersion("1.2.3-4"),
 						InstallationState: domain.TargetStatePresent,
 					},
@@ -495,31 +568,33 @@ func TestConvertToDomainModel(t *testing.T) {
 					},
 					NeededActions: []domain.Action{domain.ActionUpgrade},
 				},
-			},
-				ComponentDiffs: []domain.ComponentDiff{},
-			},
+			}},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.NoError(t, err)
 			},
 		},
 		{
 			name: "succeed for multiple dogu config diffs",
-			dto: StateDiff{
-				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
-					"ldap":    {},
-					"postfix": {},
+			dto: crd.StateDiff{
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
+					"ldap": {
+						DoguConfigDiff:          crd.DoguConfigDiff{},
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{},
+					},
+					"postfix": {
+						DoguConfigDiff:          crd.DoguConfigDiff{},
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{},
+					},
 				},
 			},
 			want: domain.StateDiff{
-				DoguDiffs:      []domain.DoguDiff{},
-				ComponentDiffs: []domain.ComponentDiff{},
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
-					"ldap":    {},
-					"postfix": {},
+					"ldap":    nil,
+					"postfix": nil,
 				},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
-					"ldap":    {},
-					"postfix": {},
+					"ldap":    nil,
+					"postfix": nil,
 				},
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
@@ -528,14 +603,14 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "succeed for global config diffs",
-			dto: StateDiff{
-				GlobalConfigDiff: GlobalConfigDiff{{
+			dto: crd.StateDiff{
+				GlobalConfigDiff: crd.GlobalConfigDiff{{
 					Key: "fqdn",
-					Actual: GlobalConfigValueState{
+					Actual: crd.GlobalConfigValueState{
 						Value:  "ces1.example.com",
 						Exists: true,
 					},
-					Expected: GlobalConfigValueState{
+					Expected: crd.GlobalConfigValueState{
 						Value:  "ces2.example.com",
 						Exists: true,
 					},
@@ -562,17 +637,17 @@ func TestConvertToDomainModel(t *testing.T) {
 		},
 		{
 			name: "succeed for multiple component diffs",
-			dto: StateDiff{
-				ComponentDiffs: map[string]ComponentDiff{
+			dto: crd.StateDiff{
+				ComponentDiffs: map[string]crd.ComponentDiff{
 					testComponentName: {
-						Actual:        ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
-						Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						NeededActions: []ComponentAction{"upgrade", "component namespace switch"},
+						Actual:        crd.ComponentDiffState{Version: testVersionLowRaw, InstallationState: "present"},
+						Expected:      crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						NeededActions: []crd.ComponentAction{"upgrade", "component namespace switch"},
 					},
 					"my-component-2": {
-						Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-						Expected:      ComponentDiffState{InstallationState: "absent"},
-						NeededActions: []ComponentAction{"uninstall"},
+						Actual:        crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+						Expected:      crd.ComponentDiffState{InstallationState: "absent"},
+						NeededActions: []crd.ComponentAction{"uninstall"},
 					},
 				},
 			},
@@ -589,37 +664,34 @@ func TestConvertToDomainModel(t *testing.T) {
 					Expected:      domain.ComponentDiffState{InstallationState: domain.TargetStateAbsent},
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
-			},
-				DoguDiffs: []domain.DoguDiff{}},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.NoError(t, err)
-			},
+			}},
+			wantErr: assert.NoError,
 		},
 		{
 			name: "fail for multiple component diffs",
-			dto: StateDiff{
-				ComponentDiffs: map[string]ComponentDiff{
+			dto: crd.StateDiff{
+				ComponentDiffs: map[string]crd.ComponentDiff{
 					testComponentName: {
-						Actual: ComponentDiffState{
+						Actual: crd.ComponentDiffState{
 							Version:           "a.b.c-d",
 							InstallationState: "present",
 						},
-						Expected: ComponentDiffState{
+						Expected: crd.ComponentDiffState{
 							Version:           "2.3.4-5",
 							InstallationState: "present",
 						},
-						NeededActions: []ComponentAction{"none"},
+						NeededActions: []crd.ComponentAction{"none"},
 					},
 					"my-component-2": {
-						Actual: ComponentDiffState{
+						Actual: crd.ComponentDiffState{
 							Version:           "1.2.3-4",
 							InstallationState: "present",
 						},
-						Expected: ComponentDiffState{
+						Expected: crd.ComponentDiffState{
 							Version:           "2.3.4-5",
 							InstallationState: "invalid",
 						},
-						NeededActions: []ComponentAction{"upgrade"},
+						NeededActions: []crd.ComponentAction{"upgrade"},
 					},
 				},
 			},
@@ -631,6 +703,74 @@ func TestConvertToDomainModel(t *testing.T) {
 					assert.ErrorContains(t, err, "failed to convert component diff dto \"my-component-2\" to domain model")
 			},
 		},
+
+		{
+			name: "should convert additional mounts",
+			dto: crd.StateDiff{
+				DoguDiffs: map[string]crd.DoguDiff{
+					"ldap": {
+						Actual: crd.DoguDiffState{
+							Namespace:         "official",
+							InstallationState: "present",
+							AdditionalMounts: []crd.AdditionalMount{
+								{
+									SourceType: crd.DataSourceConfigMap,
+									Name:       "config",
+									Volume:     "volume",
+									Subfolder:  "subfolder",
+								},
+							},
+						},
+						Expected: crd.DoguDiffState{
+							Namespace:         "official",
+							InstallationState: "present",
+							AdditionalMounts: []crd.AdditionalMount{
+								{
+									SourceType: crd.DataSourceConfigMap,
+									Name:       "config-different",
+									Volume:     "volume",
+									Subfolder:  "subfolder",
+								},
+							},
+						},
+						NeededActions: []crd.DoguAction{"update additional mounts"},
+					},
+				},
+			},
+			want: domain.StateDiff{DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName: "ldap",
+					Actual: domain.DoguDiffState{
+						Namespace:         "official",
+						InstallationState: domain.TargetStatePresent,
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "config",
+								Volume:     "volume",
+								Subfolder:  "subfolder",
+							},
+						},
+					},
+					Expected: domain.DoguDiffState{
+						Namespace:         "official",
+						InstallationState: domain.TargetStatePresent,
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "config-different",
+								Volume:     "volume",
+								Subfolder:  "subfolder",
+							},
+						},
+					},
+					NeededActions: []domain.Action{domain.ActionUpdateAdditionalMounts},
+				},
+			}},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.NoError(t, err)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -640,6 +780,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
 				return cmp.Compare(a.DoguName, b.DoguName)
 			})
+			assert.Equalf(t, tt.want, got, "ConvertToStateDiffDomain(%v)", tt.dto)
 		})
 	}
 }
@@ -649,7 +790,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 	tests := []struct {
 		name  string
 		model domain.StateDiff
-		want  StateDiff
+		want  crd.StateDiff
 	}{
 		{
 			name: "ok",
@@ -689,40 +830,40 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 				},
 				GlobalConfigDiffs: nil,
 			},
-			want: StateDiff{
-				DoguDiffs:      map[string]DoguDiff{},
-				ComponentDiffs: map[string]ComponentDiff{},
-				DoguConfigDiffs: map[string]CombinedDoguConfigDiff{
+			want: crd.StateDiff{
+				DoguDiffs:      map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					testDogu.String(): {
-						DoguConfigDiff: DoguConfigDiff(nil),
-						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{
-							DoguConfigEntryDiff{
+						DoguConfigDiff: crd.DoguConfigDiff(nil),
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{
+							crd.DoguConfigEntryDiff{
 								Key: testDoguKey1.Key.String(),
-								Actual: DoguConfigValueState{
+								Actual: crd.DoguConfigValueState{
 									Value:  "1",
 									Exists: true,
 								},
-								Expected: DoguConfigValueState{
+								Expected: crd.DoguConfigValueState{
 									Value:  "123",
 									Exists: true,
 								},
-								NeededAction: ConfigAction("set"),
+								NeededAction: crd.ConfigAction("set"),
 							},
 						},
 					},
 					testDogu2.String(): {
-						SensitiveDoguConfigDiff: SensitiveDoguConfigDiff{
-							DoguConfigEntryDiff{
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{
+							crd.DoguConfigEntryDiff{
 								Key: testDoguKey2.Key.String(),
-								Actual: DoguConfigValueState{
+								Actual: crd.DoguConfigValueState{
 									Value:  "",
 									Exists: false,
 								},
-								Expected: DoguConfigValueState{
+								Expected: crd.DoguConfigValueState{
 									Value:  "123",
 									Exists: true,
 								},
-								NeededAction: ConfigAction("set"),
+								NeededAction: crd.ConfigAction("set"),
 							},
 						},
 					},

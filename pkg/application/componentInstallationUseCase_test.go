@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"fmt"
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -350,7 +351,7 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, getNoDowngradesExplanationTextForComponents())
+		assert.ErrorContains(t, err, fmt.Sprintf(noDowngradesExplanationTextFmt, "components", "components"))
 	})
 
 	t.Run("should return error on action distribution namespace switch", func(t *testing.T) {

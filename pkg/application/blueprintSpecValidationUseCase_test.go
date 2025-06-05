@@ -21,10 +21,10 @@ var redmineQualifiedDoguName = cescommons.QualifiedName{
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	//given
 	repoMock := newMockBlueprintSpecRepository(t)
-	registryMock := newMockRemoteDoguRegistry(t)
 	ctx := context.Background()
-	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 		Id:     "testBlueprint1",
@@ -46,10 +46,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing.T) {
 	//given
 	repoMock := newMockBlueprintSpecRepository(t)
-	registryMock := newMockRemoteDoguRegistry(t)
 	ctx := context.Background()
-	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 		Id:     "",
@@ -75,10 +75,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 	t.Run("blueprint spec not found while loading", func(t *testing.T) {
 		//given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.NotFoundError{Message: "test-error"})
 		//when
@@ -94,10 +94,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 	t.Run("cannot parse blueprint in repository", func(t *testing.T) {
 		//given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 		invalidError := domain.InvalidBlueprintError{Message: "test-error"}
 		var events []domain.Event
 		events = append(events, domain.BlueprintSpecInvalidEvent{ValidationError: &invalidError})
@@ -116,10 +116,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 	t.Run("internal error while loading blueprint spec", func(t *testing.T) {
 		//given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.InternalError{Message: "test-error"})
 		//when
@@ -135,10 +135,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 	t.Run("error while saving blueprint spec", func(t *testing.T) {
 		//given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -161,12 +161,13 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) {
 	// given
 	repoMock := newMockBlueprintSpecRepository(t)
-	registryMock := newMockRemoteDoguRegistry(t)
 	ctx := context.Background()
-	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
-	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedVersion{}).Return(map[cescommons.QualifiedName]*core.Dogu{}, nil)
+	DependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(nil)
+	MountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(nil)
 
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
 		Id:     "testBlueprint1",
@@ -192,10 +193,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testing.T) {
 	// given
 	repoMock := newMockBlueprintSpecRepository(t)
-	registryMock := newMockRemoteDoguRegistry(t)
 	ctx := context.Background()
-	validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 	version, _ := core.ParseVersion("1.0.0-1")
 	blueprintSpec := &domain.BlueprintSpec{
@@ -208,14 +209,11 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 		Status: domain.StatusPhaseValidated,
 	}
 	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(blueprintSpec, nil)
+	invalidDependencyError := errors.New("invalid dependencies")
+	invalidMountsError := errors.New("invalid mounts")
+	DependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(invalidDependencyError)
+	MountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(invalidMountsError)
 	repoMock.EXPECT().Update(ctx, mock.Anything).Return(nil)
-
-	registryMock.EXPECT().GetDogus(ctx, []cescommons.QualifiedVersion{
-		{
-			redmineQualifiedDoguName,
-			version,
-		},
-	}).Return(nil, errors.New("dogu not found for testing"))
 
 	// when
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, "testBlueprint1")
@@ -224,7 +222,9 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
-	assert.ErrorContains(t, err, "blueprint spec is invalid: cannot load dogu specifications from remote registry for dogu dependency validation: dogu not found for testing")
+	assert.ErrorIs(t, err, invalidDependencyError)
+	assert.ErrorIs(t, err, invalidMountsError)
+	assert.ErrorContains(t, err, "blueprint spec is invalid")
 
 	assert.Equal(t, "testBlueprint1", blueprintSpec.Id)
 	assert.Equal(t, domain.StatusPhaseInvalid, blueprintSpec.Status)
@@ -237,10 +237,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *test
 	t.Run("internal error", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.InternalError{Message: "test-error"})
 
@@ -256,10 +256,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_repoError(t *test
 	t.Run("not found error", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
-		registryMock := newMockRemoteDoguRegistry(t)
 		ctx := context.Background()
-		validateUseCase := domainservice.NewValidateDependenciesDomainUseCase(registryMock)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, validateUseCase)
+		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.NotFoundError{Message: "test-error"})
 

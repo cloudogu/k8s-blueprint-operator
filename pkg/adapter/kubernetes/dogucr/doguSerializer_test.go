@@ -4,7 +4,7 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	v2 "github.com/cloudogu/k8s-dogu-operator/v3/api/v2"
+	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -16,6 +16,12 @@ var postgresDoguName = cescommons.QualifiedName{
 	Namespace:  cescommons.Namespace("official"),
 	SimpleName: cescommons.SimpleName("postgresql"),
 }
+var ldapDoguName = cescommons.QualifiedName{
+	Namespace:  "official",
+	SimpleName: "ldap",
+}
+var volSize25G = resource.MustParse("25G")
+var defaultVolSize = resource.MustParse(v2.DefaultVolumeSize)
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
@@ -62,6 +68,7 @@ func Test_parseDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				MinVolumeSize:      defaultVolSize,
 				PersistenceContext: persistenceContext,
 			},
 			wantErr: false,
@@ -90,6 +97,129 @@ func Test_parseDoguCR(t *testing.T) {
 			want:    nil,
 			wantErr: true,
 		},
+		{
+			name: "parse additional mounts",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					AdditionalMounts: []v2.DataMount{
+						{
+							SourceType: v2.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: v2.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      defaultVolSize,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configmap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "secret",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "parse deprecated DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						DataVolumeSize: "25G",
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      volSize25G,
+			},
+			wantErr: false,
+		},
+		{
+			name: "prefer MinDataVolumeSize over DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						DataVolumeSize:    "20G",
+						MinDataVolumeSize: volSize25G,
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      volSize25G,
+			},
+			wantErr: false,
+		},
+		{
+			name: "parse MinDataVolumeSize without DataVolumeSize",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						MinDataVolumeSize: volSize25G,
+					},
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:               postgresDoguName,
+				Version:            version3214,
+				PersistenceContext: persistenceContext,
+				MinVolumeSize:      volSize25G,
+			},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -99,7 +229,7 @@ func Test_parseDoguCR(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("parseDoguCR() got = %v, want %v", got, tt.want)
+				t.Errorf("parseDoguCR() \ngot = %+v \nwant= %+v", got, tt.want)
 			}
 		})
 	}
@@ -136,6 +266,92 @@ func Test_toDoguCR(t *testing.T) {
 					Version: version3214.Raw,
 					Resources: v2.DoguResources{
 						DataVolumeSize: "",
+					},
+					UpgradeConfig: v2.UpgradeConfig{
+						AllowNamespaceSwitch: true,
+						ForceUpgrade:         false,
+					},
+					AdditionalIngressAnnotations: nil,
+				},
+				Status: v2.DoguStatus{},
+			},
+		},
+		{
+			name: "convert additional mounts",
+			dogu: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
+						Name:       "configmap",
+						Volume:     "volume",
+						Subfolder:  "subfolder",
+					},
+					{
+						SourceType: ecosystem.DataSourceSecret,
+						Name:       "secret",
+						Volume:     "secvolume",
+						Subfolder:  "secsubfolder",
+					},
+				},
+			},
+			want: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgresql",
+					Labels: map[string]string{
+						"app":       "ces",
+						"dogu.name": "postgresql",
+					},
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					AdditionalMounts: []v2.DataMount{
+						{
+							SourceType: v2.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  "subfolder",
+						},
+						{
+							SourceType: v2.DataSourceSecret,
+							Name:       "secret",
+							Volume:     "secvolume",
+							Subfolder:  "secsubfolder",
+						},
+					},
+				},
+				Status: v2.DoguStatus{},
+			},
+		},
+		{
+			name: "set MinDataVolumeSize instead of deprecated DataVolumeSize",
+			dogu: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
+				UpgradeConfig: ecosystem.UpgradeConfig{
+					AllowNamespaceSwitch: true,
+				},
+				MinVolumeSize: volSize25G,
+			},
+			want: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgresql",
+					Labels: map[string]string{
+						"app":       "ces",
+						"dogu.name": "postgresql",
+					},
+				},
+				Spec: v2.DoguSpec{
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						MinDataVolumeSize: volSize25G,
 					},
 					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: true,
@@ -212,9 +428,29 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: &quantity2,
+				MinVolumeSize: quantity2,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			wantErr: assert.NoError,
+		},
+		{
+			name: "test default minVolumeSize",
+			dogu: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
+				UpgradeConfig: ecosystem.UpgradeConfig{
+					AllowNamespaceSwitch: true,
+				},
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+				},
+			},
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 	}
