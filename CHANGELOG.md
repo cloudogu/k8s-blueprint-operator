@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.0] - 2025-06-05
+
 ### Added
 - [#113] blueprints now support additionalMounts for configMaps and secrets in dogus
 - [#113] additionalMounts now get validated with explanations for possible problems
