@@ -9,27 +9,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
-type Config struct {
-	Dogus  map[string]CombinedDoguConfig `json:"dogus,omitempty"`
-	Global GlobalConfig                  `json:"global,omitempty"`
-}
-
-type CombinedDoguConfig struct {
-	Config          DoguConfig          `json:"config,omitempty"`
-	SensitiveConfig SensitiveDoguConfig `json:"sensitiveConfig,omitempty"`
-}
-
-type DoguConfig presentAbsentConfig
-
-type SensitiveDoguConfig presentAbsentConfig
-
-type GlobalConfig presentAbsentConfig
-
-type presentAbsentConfig struct {
-	Present map[string]string `json:"present,omitempty"`
-	Absent  []string          `json:"absent,omitempty"`
-}
-
 func ConvertToConfigDTO(config domain.Config) bpentities.TargetConfig {
 	var dogus map[string]bpentities.CombinedDoguConfig
 	// we check for empty values to make good use of default values

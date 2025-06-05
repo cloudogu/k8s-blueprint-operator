@@ -25,6 +25,7 @@ const (
 	testChangeDistributionNamespace = "k8s-testing"
 )
 
+var k8sNginxStatic = cescommons.QualifiedName{Namespace: "k8s", SimpleName: "nginx-static"}
 var officialNexus = cescommons.QualifiedName{
 	Namespace:  "official",
 	SimpleName: "nexus",
@@ -319,6 +320,27 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
 		assert.Equal(t, spec.Status, StatusPhaseInvalid)
 		assert.Equal(t, spec.Events, []Event{BlueprintSpecInvalidEvent{err}})
+	})
+	t.Run("add additionalMounts", func(t *testing.T) {
+		dogus := []Dogu{
+			{
+				Name:        k8sNginxStatic,
+				Version:     version3211,
+				TargetState: TargetStatePresent,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "html-config", Volume: "customhtml", Subfolder: "test"},
+				},
+			},
+		}
+
+		spec := BlueprintSpec{
+			Blueprint: Blueprint{Dogus: dogus},
+			Status:    StatusPhaseValidated,
+		}
+		err := spec.CalculateEffectiveBlueprint()
+
+		require.Nil(t, err)
+		assert.Equal(t, dogus[0], spec.EffectiveBlueprint.Dogus[0], "effective blueprint should contain dogu with all field from the original blueprint")
 	})
 }
 

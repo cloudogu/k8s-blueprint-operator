@@ -15,16 +15,37 @@ var version1232, _ = core.ParseVersion("1.2.3-2")
 func TestInstallDogu(t *testing.T) {
 	volumeSize := resource.MustParse("1Gi")
 	proxyBodySize := resource.MustParse("1G")
-	dogu := InstallDogu(postgresqlQualifiedName, version1231, &volumeSize, ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: "/", AdditionalConfig: "additional"})
+	dogu := InstallDogu(
+		postgresqlQualifiedName,
+		version1231,
+		volumeSize,
+		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: "/", AdditionalConfig: "additional"},
+		[]AdditionalMount{
+			{
+				SourceType: DataSourceConfigMap,
+				Name:       "configmap",
+				Volume:     "volume",
+				Subfolder:  "different_subfolder",
+			},
+		},
+	)
 	assert.Equal(t, &DoguInstallation{
 		Name:          postgresqlQualifiedName,
 		Version:       version1231,
 		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
-		MinVolumeSize: &volumeSize,
+		MinVolumeSize: volumeSize,
 		ReverseProxyConfig: ReverseProxyConfig{
 			MaxBodySize:      &proxyBodySize,
 			RewriteTarget:    "/",
 			AdditionalConfig: "additional",
+		},
+		AdditionalMounts: []AdditionalMount{
+			{
+				SourceType: DataSourceConfigMap,
+				Name:       "configmap",
+				Volume:     "volume",
+				Subfolder:  "different_subfolder",
+			},
 		},
 	}, dogu)
 }
@@ -145,9 +166,9 @@ func TestDoguInstallation_UpdateMinVolumeSize(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateMinVolumeSize(&volumeSize)
+		dogu.UpdateMinVolumeSize(volumeSize)
 
 		// then
-		assert.Equal(t, &volumeSize, dogu.MinVolumeSize)
+		assert.Equal(t, volumeSize, dogu.MinVolumeSize)
 	})
 }

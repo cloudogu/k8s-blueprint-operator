@@ -11,14 +11,20 @@ import (
 
 type BlueprintSpecValidationUseCase struct {
 	repo                        blueprintSpecRepository
-	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase
+	validateDependenciesUseCase validateDependenciesDomainUseCase
+	ValidateMountsUseCase       validateAdditionalMountsDomainUseCase
 }
 
 func NewBlueprintSpecValidationUseCase(
 	repo domainservice.BlueprintSpecRepository,
-	validateDependenciesUseCase *domainservice.ValidateDependenciesDomainUseCase,
+	validateDependenciesUseCase validateDependenciesDomainUseCase,
+	ValidateMountsUseCase validateAdditionalMountsDomainUseCase,
 ) *BlueprintSpecValidationUseCase {
-	return &BlueprintSpecValidationUseCase{repo: repo, validateDependenciesUseCase: validateDependenciesUseCase}
+	return &BlueprintSpecValidationUseCase{
+		repo:                        repo,
+		validateDependenciesUseCase: validateDependenciesUseCase,
+		ValidateMountsUseCase:       ValidateMountsUseCase,
+	}
 }
 
 // ValidateBlueprintSpecStatically checks the blueprintSpec for semantic errors and persists it.
@@ -77,7 +83,11 @@ func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(
 
 	logger.Info("dynamically validate blueprint spec", "blueprintStatus", blueprintSpec.Status)
 
-	validationError := useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprintSpec.EffectiveBlueprint)
+	validationError := errors.Join(
+		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprintSpec.EffectiveBlueprint),
+		useCase.ValidateMountsUseCase.ValidateAdditionalMounts(ctx, blueprintSpec.EffectiveBlueprint),
+	)
+
 	if validationError != nil {
 		validationError = &domain.InvalidBlueprintError{
 			WrappedError: validationError,

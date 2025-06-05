@@ -8,48 +8,14 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
-// ComponentDiff is the comparison of a Component's desired state vs. its cluster state.
-// It contains the operation that needs to be done to achieve this desired state.
-type ComponentDiff struct {
-	// Actual contains the component's state in the current system.
-	Actual ComponentDiffState `json:"actual"`
-	// Expected contains the desired component's target state.
-	Expected ComponentDiffState `json:"expected"`
-	// NeededActions contains the refined actions as decided by the application's state determination automaton.
-	NeededActions []ComponentAction `json:"neededActions"`
-}
-
-// ComponentDiffState is either the actual or desired state of a component in the cluster. The fields will be used to
-// determine the kind of changed if there is a drift between actual or desired state.
-type ComponentDiffState struct {
-	// Namespace is part of the address under which the component will be obtained. This namespace must NOT
-	// to be confused with the K8s cluster namespace.
-	Namespace string `json:"distributionNamespace,omitempty"`
-	// Version contains the component's version.
-	Version string `json:"version,omitempty"`
-	// InstallationState contains the component's installation state. Such a state correlate with the domain Actions:
-	//
-	//  - domain.ActionInstall
-	//  - domain.ActionUninstall
-	//  - and so on
-	InstallationState string `json:"installationState"`
-	// DeployConfig contains generic properties for the component.
-	// +kubebuilder:pruning:PreserveUnknownFields
-	// +kubebuilder:validation:Schemaless
-	DeployConfig entities.DeployConfig `json:"deployConfig,omitempty"`
-}
-
-// ComponentAction is the action that needs to be done for a component
-// to achieve the desired state in the cluster.
-type ComponentAction string
-
-func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
+func convertToComponentDiffDTO(domainModel domain.ComponentDiff) crd.ComponentDiff {
 	actualVersion := ""
 	expectedVersion := ""
 
@@ -61,19 +27,19 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	}
 
 	neededActions := domainModel.NeededActions
-	componentActions := make([]ComponentAction, 0, len(neededActions))
+	componentActions := make([]crd.ComponentAction, 0, len(neededActions))
 	for _, action := range neededActions {
-		componentActions = append(componentActions, ComponentAction(action))
+		componentActions = append(componentActions, crd.ComponentAction(action))
 	}
 
-	return ComponentDiff{
-		Actual: ComponentDiffState{
+	return crd.ComponentDiff{
+		Actual: crd.ComponentDiffState{
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
 			DeployConfig:      entities.DeployConfig(domainModel.Actual.DeployConfig),
 		},
-		Expected: ComponentDiffState{
+		Expected: crd.ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
@@ -83,7 +49,7 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) ComponentDiff {
 	}
 }
 
-func convertToComponentDiffDomain(componentName string, dto ComponentDiff) (domain.ComponentDiff, error) {
+func convertToComponentDiffDomain(componentName string, dto crd.ComponentDiff) (domain.ComponentDiff, error) {
 	var actualVersion *semver.Version
 	var actualVersionErr error
 	if dto.Actual.Version != "" {

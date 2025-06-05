@@ -2,6 +2,7 @@ package v1
 
 import (
 	"github.com/Masterminds/semver/v3"
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,10 +26,10 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		actual := convertToComponentDiffDTO(domainDiff)
 
 		// then
-		expected := ComponentDiff{
-			Actual:        ComponentDiffState{Version: "", InstallationState: "absent"},
-			Expected:      ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present", Namespace: testNamespace, DeployConfig: testDeployConfig},
-			NeededActions: []ComponentAction{domain.ActionInstall},
+		expected := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Version: "", InstallationState: "absent"},
+			Expected:      crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present", Namespace: testNamespace, DeployConfig: testDeployConfig},
+			NeededActions: []crd.ComponentAction{domain.ActionInstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
@@ -44,10 +45,10 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		actual := convertToComponentDiffDTO(domainDiff)
 
 		// then
-		expected := ComponentDiff{
-			Actual:        ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
-			Expected:      ComponentDiffState{Version: "", InstallationState: "absent"},
-			NeededActions: []ComponentAction{domain.ActionUninstall},
+		expected := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Version: testVersionHighRaw, InstallationState: "present"},
+			Expected:      crd.ComponentDiffState{Version: "", InstallationState: "absent"},
+			NeededActions: []crd.ComponentAction{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)
 	})
@@ -56,10 +57,10 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 func Test_convertToComponentDiffDomain(t *testing.T) {
 	t.Run("should copy model diff to DTO diff - absent", func(t *testing.T) {
 		// given
-		diff := ComponentDiff{
-			Actual:        ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			Expected:      ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present", DeployConfig: testDeployConfig},
-			NeededActions: []ComponentAction{domain.ActionInstall},
+		diff := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			Expected:      crd.ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present", DeployConfig: testDeployConfig},
+			NeededActions: []crd.ComponentAction{domain.ActionInstall},
 		}
 
 		// when
@@ -77,10 +78,10 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 	})
 	t.Run("should copy model diff to DTO diff - present", func(t *testing.T) {
 		// given
-		diff := ComponentDiff{
-			Actual:        ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present"},
-			Expected:      ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			NeededActions: []ComponentAction{domain.ActionUninstall},
+		diff := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Namespace: "k8s", Version: testVersionHighRaw, InstallationState: "present"},
+			Expected:      crd.ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			NeededActions: []crd.ComponentAction{domain.ActionUninstall},
 		}
 
 		// when
@@ -98,10 +99,10 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 	})
 	t.Run("should fail in all ways", func(t *testing.T) {
 		// given
-		diff := ComponentDiff{
-			Actual:        ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
-			Expected:      ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
-			NeededActions: []ComponentAction{domain.ActionUninstall},
+		diff := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
+			Expected:      crd.ComponentDiffState{Namespace: "", Version: "a-b-c", InstallationState: "☹"},
+			NeededActions: []crd.ComponentAction{domain.ActionUninstall},
 		}
 
 		// when
@@ -117,10 +118,10 @@ func Test_convertToComponentDiffDomain(t *testing.T) {
 	t.Run("should accept dev version", func(t *testing.T) {
 		compVersion080dev := semver.MustParse("0.8.0-dev")
 		// given
-		diff := ComponentDiff{
-			Actual:        ComponentDiffState{Namespace: "k8s", Version: compVersion080dev.String(), InstallationState: "present"},
-			Expected:      ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
-			NeededActions: []ComponentAction{domain.ActionUninstall},
+		diff := crd.ComponentDiff{
+			Actual:        crd.ComponentDiffState{Namespace: "k8s", Version: compVersion080dev.String(), InstallationState: "present"},
+			Expected:      crd.ComponentDiffState{Namespace: "", Version: "", InstallationState: "absent"},
+			NeededActions: []crd.ComponentAction{domain.ActionUninstall},
 		}
 
 		// when

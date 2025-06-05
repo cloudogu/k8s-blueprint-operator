@@ -159,7 +159,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
 		case domain.ActionDowngrade:
 			logger.Info("downgrade component")
-			return fmt.Errorf(getNoDowngradesExplanationTextForComponents())
+			return fmt.Errorf(noDowngradesExplanationTextFmt, "components", "components")
 		default:
 			return fmt.Errorf("cannot perform unknown action %q", action)
 		}
@@ -172,8 +172,4 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 	}
 
 	return nil
-}
-
-func getNoDowngradesExplanationTextForComponents() string {
-	return fmt.Sprintf(noDowngradesExplanationTextFmt, "components", "components")
 }

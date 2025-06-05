@@ -1,21 +1,12 @@
 package v1
 
 import (
+	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
-type GlobalConfigDiff []GlobalConfigEntryDiff
-
-type GlobalConfigValueState ConfigValueState
-type GlobalConfigEntryDiff struct {
-	Key          string                 `json:"key"`
-	Actual       GlobalConfigValueState `json:"actual"`
-	Expected     GlobalConfigValueState `json:"expected"`
-	NeededAction ConfigAction           `json:"neededAction"`
-}
-
-func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDiffs {
+func convertToGlobalConfigDiffDomain(dto crd.GlobalConfigDiff) domain.GlobalConfigDiffs {
 	if len(dto) == 0 {
 		return nil
 	}
@@ -27,7 +18,7 @@ func convertToGlobalConfigDiffDomain(dto GlobalConfigDiff) domain.GlobalConfigDi
 	return globalConfigDiff
 }
 
-func convertToGlobalConfigEntryDiffDomain(dto GlobalConfigEntryDiff) domain.GlobalConfigEntryDiff {
+func convertToGlobalConfigEntryDiffDomain(dto crd.GlobalConfigEntryDiff) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
 		Key: common.GlobalConfigKey(dto.Key),
 		Actual: domain.GlobalConfigValueState{
@@ -42,29 +33,29 @@ func convertToGlobalConfigEntryDiffDomain(dto GlobalConfigEntryDiff) domain.Glob
 	}
 }
 
-func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) GlobalConfigDiff {
+func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) crd.GlobalConfigDiff {
 	if len(domainModel) == 0 {
 		return nil
 	}
 
-	globalConfigDiff := make(GlobalConfigDiff, len(domainModel))
+	globalConfigDiff := make(crd.GlobalConfigDiff, len(domainModel))
 	for i, entryDiff := range domainModel {
 		globalConfigDiff[i] = convertToGlobalConfigEntryDiffDTO(entryDiff)
 	}
 	return globalConfigDiff
 }
 
-func convertToGlobalConfigEntryDiffDTO(domainModel domain.GlobalConfigEntryDiff) GlobalConfigEntryDiff {
-	return GlobalConfigEntryDiff{
+func convertToGlobalConfigEntryDiffDTO(domainModel domain.GlobalConfigEntryDiff) crd.GlobalConfigEntryDiff {
+	return crd.GlobalConfigEntryDiff{
 		Key: string(domainModel.Key),
-		Actual: GlobalConfigValueState{
+		Actual: crd.GlobalConfigValueState{
 			Value:  domainModel.Actual.Value,
 			Exists: domainModel.Actual.Exists,
 		},
-		Expected: GlobalConfigValueState{
+		Expected: crd.GlobalConfigValueState{
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},
-		NeededAction: ConfigAction(domainModel.NeededAction),
+		NeededAction: crd.ConfigAction(domainModel.NeededAction),
 	}
 }

@@ -1,0 +1,150 @@
+{
+  "Name": "k8s/nginx-static",
+  "Version": "1.26.3-2",
+  "DisplayName": "Nginx Static",
+  "Description": "Nginx Static is a webserver responsible to provide static content in the multi node version of the Cloudogu EcoSystem.",
+  "Logo": "https://cloudogu.com/images/dogus/nginx.png",
+  "Category": "Base",
+  "Tags": [
+    "webserver",
+    "k8s"
+  ],
+  "Url": "http://nginx.org/",
+  "Image": "registry.cloudogu.com/k8s/nginx-static",
+  "Dependencies": [
+    {
+      "type": "dogu",
+      "name": "nginx-ingress"
+    },
+    {
+      "type": "client",
+      "name": "k8s-dogu-operator"
+    },
+    {
+      "type": "client",
+      "name": "cesapp",
+      "version": "<0.0.0"
+    }
+  ],
+  "Configuration": [
+    {
+      "Name": "logging/root",
+      "Description": "Set the root log level to one of ERROR, WARN, INFO, DEBUG.",
+      "Optional": true,
+      "Default": "WARN",
+      "Validation": {
+        "Type": "ONE_OF",
+        "Values": [
+          "WARN",
+          "DEBUG",
+          "INFO",
+          "ERROR"
+        ]
+      }
+    },
+    {
+      "Name": "disable_access_log",
+      "Description": "Disable logging of incoming requests",
+      "Optional": true
+    },
+    {
+      "Name": "html_content_url",
+      "Description": "URL path to reach all custom html content pages. Default value when unset: static",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/memory_limit",
+      "Description": "Limits the container's memory usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      },
+      "Default": "101m"
+    },
+    {
+      "Name": "container_config/memory_request",
+      "Description": "Requests the container's minimal memory requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      },
+      "Default": "101m"
+    },
+    {
+      "Name": "container_config/cpu_core_limit",
+      "Description": "Limits the container's CPU core usage. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true
+    },
+    {
+      "Name": "container_config/cpu_core_request",
+      "Description": "Requests the container's minimal CPU core requirement. Use a positive floating value describing a fraction of 1 CPU core. When you define a value of '0.5', you are requesting half as much CPU time compared to if you asked for '1.0' CPU.",
+      "Optional": true,
+      "Default": "0.015"
+    },
+    {
+      "Name": "container_config/storage_limit",
+      "Description": "Limits the container's ephemeral storage usage. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    },
+    {
+      "Name": "container_config/storage_request",
+      "Description": "Requests the container's minimal ephemeral storage requirement. Use a positive integer value followed by one of these units [b,k,m,g] (byte, kibibyte, mebibyte, gibibyte).",
+      "Optional": true,
+      "Validation": {
+        "Type": "BINARY_MEASUREMENT"
+      }
+    }
+  ],
+  "Volumes": [
+    {
+      "Name": "app.conf.d",
+      "Path": "/etc/nginx/app.conf.d",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    },
+    {
+      "Name": "customhtml",
+      "Path": "/var/www/customhtml",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    },
+    {
+      "Name": "menu-json",
+      "Path": "/var/www/html/warp/menu",
+      "Owner": "1000",
+      "Group": "1000",
+      "Clients": [
+        {
+          "Name": "k8s-dogu-operator",
+          "Params": {
+            "Type": "configmap",
+            "Content": {
+              "Name": "k8s-ces-menu-json"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "Name": "localConfig",
+      "Path": "/var/ces/config",
+      "Owner": "1000",
+      "Group": "1000",
+      "NeedsBackup": true
+    }
+  ],
+  "HealthChecks": [
+    {
+      "Type": "tcp",
+      "Port": 80
+    }
+  ],
+  "Properties": {
+    "stopAtBackup": "false"
+  }
+}

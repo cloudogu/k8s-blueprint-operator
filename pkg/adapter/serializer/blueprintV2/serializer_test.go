@@ -48,11 +48,11 @@ func TestSerializeBlueprint_ok(t *testing.T) {
 			"dogus in blueprint",
 			args{spec: domain.Blueprint{
 				Dogus: []domain.Dogu{
-					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: &quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
+					{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "nginx"}, Version: version1201, TargetState: domain.TargetStatePresent, MinVolumeSize: quantity, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &quantity, AdditionalConfig: "additional", RewriteTarget: "/"}},
 					{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "jira"}, Version: version3022, TargetState: domain.TargetStateAbsent},
 				},
 			}},
-			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present","platformConfig":{"resource":{"minVolumeSize":"2Gi"},"reverseProxy":{"maxBodySize":"2Gi","rewriteTarget":"/","additionalConfig":"additional"}}},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent","platformConfig":{"resource":{},"reverseProxy":{}}}],"config":{"global":{}}}`,
+			`{"blueprintApi":"v2","dogus":[{"name":"official/nginx","version":"1.2.0-1","targetState":"present","platformConfig":{"resource":{"minVolumeSize":"2Gi"},"reverseProxy":{"maxBodySize":"2Gi","rewriteTarget":"/","additionalConfig":"additional"}}},{"name":"premium/jira","version":"3.0.2-2","targetState":"absent","platformConfig":{"resource":{"minVolumeSize":"0"},"reverseProxy":{}}}],"config":{"global":{}}}`,
 			assert.NoError,
 		},
 		{
