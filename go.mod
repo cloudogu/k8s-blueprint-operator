@@ -4,8 +4,10 @@ go 1.24.3
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1
+	github.com/bombsimon/logrusr/v2 v2.0.1
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.1
+	github.com/cloudogu/k8s-apply-lib v0.5.0
 	github.com/cloudogu/k8s-blueprint-lib v1.3.0
 	github.com/cloudogu/k8s-component-operator v1.9.0
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.8.0
@@ -15,6 +17,7 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/onsi/ginkgo/v2 v2.22.1
 	github.com/onsi/gomega v1.36.2
+	github.com/sirupsen/logrus v1.9.3
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6
 	golang.org/x/net v0.40.0
@@ -125,7 +128,6 @@ require (
 	github.com/rubenv/sql-migrate v1.7.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect

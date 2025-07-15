@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/logging"
 	"os"
 	"time"
 
@@ -51,6 +52,12 @@ func init() {
 }
 
 func main() {
+	err := logging.ConfigureLogger()
+	if err != nil {
+		setupLog.Error(err, "unable to configure logger")
+		os.Exit(1)
+	}
+
 	ctx := ctrl.SetupSignalHandler()
 	restConfig := config2.GetConfigOrDie()
 	operatorConfig, err := config.NewOperatorConfig(Version)
