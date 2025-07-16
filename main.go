@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/logging"
 	"os"
 	"time"
 
@@ -24,7 +23,6 @@ import (
 	config2 "sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	// +kubebuilder:scaffold:imports
@@ -52,11 +50,7 @@ func init() {
 }
 
 func main() {
-	err := logging.ConfigureLogger()
-	if err != nil {
-		setupLog.Error(err, "unable to configure logger")
-		os.Exit(1)
-	}
+	config.ConfigureLogger()
 
 	ctx := ctrl.SetupSignalHandler()
 	restConfig := config2.GetConfigOrDie()
@@ -135,14 +129,12 @@ func getK8sManagerOptions(flags *flag.FlagSet, args []string, operatorConfig *co
 		LeaseDuration:    &leaseDuration,
 		RenewDeadline:    &renewDeadline,
 	}
-	controllerOpts, zapOpts := parseManagerFlags(flags, args, controllerOpts)
-
-	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&zapOpts)))
+	controllerOpts = parseManagerFlags(flags, args, controllerOpts)
 
 	return controllerOpts
 }
 
-func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options) (ctrl.Options, zap.Options) {
+func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options) ctrl.Options {
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
@@ -151,10 +143,7 @@ func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options
 	flags.BoolVar(&enableLeaderElection, "leader-elect", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	zapOpts := zap.Options{
-		Development: config.IsStageDevelopment(),
-	}
-	zapOpts.BindFlags(flags)
+
 	// Ignore errors; flags is set to exit on errors
 	_ = flags.Parse(args)
 
@@ -162,7 +151,7 @@ func parseManagerFlags(flags *flag.FlagSet, args []string, ctrlOpts ctrl.Options
 	ctrlOpts.HealthProbeBindAddress = probeAddr
 	ctrlOpts.LeaderElection = enableLeaderElection
 
-	return ctrlOpts, zapOpts
+	return ctrlOpts
 }
 
 func addChecks(k8sManager controllerManager) error {
