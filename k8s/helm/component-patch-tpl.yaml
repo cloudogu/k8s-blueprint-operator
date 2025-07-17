@@ -1,7 +1,7 @@
 apiVersion: v1
 values:
   images:
-    blueprintOperator: cloudogu/k8s-blueprint-operator:2.6.0
+    blueprintOperator: cloudogu/k8s-blueprint-operator:2.7.0
 patches:
   values.yaml:
     manager:
