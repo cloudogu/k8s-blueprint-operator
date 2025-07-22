@@ -1,4 +1,4 @@
-package v1
+package serializer
 
 import (
 	"github.com/Masterminds/semver/v3"

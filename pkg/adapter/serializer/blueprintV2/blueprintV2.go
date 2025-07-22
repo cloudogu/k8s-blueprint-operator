@@ -3,11 +3,11 @@ package blueprintV2
 import (
 	"errors"
 	"fmt"
+	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1/serializer"
 
 	bpv2 "github.com/cloudogu/k8s-blueprint-lib/json/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-lib/json/bpcore"
 
-	v1 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )

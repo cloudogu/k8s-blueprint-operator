@@ -1,4 +1,4 @@
-package v1
+package serializer
 
 import (
 	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"

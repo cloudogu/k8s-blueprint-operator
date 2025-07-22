@@ -1,4 +1,4 @@
-package blueprintcr
+package v1
 
 import (
 	client "github.com/cloudogu/k8s-blueprint-lib/client"

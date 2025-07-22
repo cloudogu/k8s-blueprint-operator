@@ -1,9 +1,10 @@
-package blueprintcr
+package v1
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	serializer2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1/serializer"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-lib/api/v1"
 	kubernetes "github.com/cloudogu/k8s-blueprint-lib/client"
-	converter "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -61,12 +61,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := converter.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+	effectiveBlueprint, err := serializer2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
 	if err != nil {
 		return nil, err
 	}
 
-	stateDiff, err := converter.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
+	stateDiff, err := serializer2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	effectiveBlueprint, err := converter.ConvertToEffectiveBlueprintDTO(spec.EffectiveBlueprint)
+	effectiveBlueprint, err := serializer2.ConvertToEffectiveBlueprintDTO(spec.EffectiveBlueprint)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	blueprintStatus := v1.BlueprintStatus{
 		Phase:              v1.StatusPhase(spec.Status),
 		EffectiveBlueprint: effectiveBlueprint,
-		StateDiff:          converter.ConvertToStateDiffDTO(spec.StateDiff),
+		StateDiff:          serializer2.ConvertToStateDiffDTO(spec.StateDiff),
 	}
 
 	CRAfterUpdate.Status = blueprintStatus

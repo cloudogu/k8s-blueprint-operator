@@ -1,4 +1,4 @@
-package v1
+package serializer
 
 import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"

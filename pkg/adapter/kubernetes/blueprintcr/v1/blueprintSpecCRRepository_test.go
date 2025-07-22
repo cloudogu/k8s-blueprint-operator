@@ -1,4 +1,4 @@
-package blueprintcr
+package v1
 
 import (
 	"context"
