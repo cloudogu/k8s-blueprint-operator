@@ -404,8 +404,6 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 // CensorSensitiveData censors all sensitive configuration data of the blueprint, effective blueprint and the statediff,
 // to make the values unrecognisable.
 func (spec *BlueprintSpec) CensorSensitiveData() {
-	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
-	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
 	spec.StateDiff.SensitiveDoguConfigDiffs = censorValues(spec.StateDiff.SensitiveDoguConfigDiffs)
 
 	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
