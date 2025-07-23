@@ -5,6 +5,7 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"maps"
@@ -273,6 +274,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
+	referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
 	switch spec.Status {
 	case StatusPhaseNew:
@@ -298,6 +300,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
 		ecosystemState.SensitiveConfigByDogu,
+		referencedSensitiveConfig,
 	)
 
 	spec.StateDiff = StateDiff{

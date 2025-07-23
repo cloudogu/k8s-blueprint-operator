@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -54,6 +55,15 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot load blueprint spec %q to determine state diff: %w", blueprintId, err)
 	}
 
+	//TODO: implement referenced config adapter
+	logger.Info("load referenced sensitive config")
+	referencedSensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+		common.SensitiveDoguConfigKey{
+			DoguName: "postgresql",
+			Key:      "myKey",
+		}: common.SensitiveDoguConfigValue("myValue"),
+	}
+
 	logger.Info("collect ecosystem state for state diff")
 	ecosystemState, err := useCase.collectEcosystemState(ctx, blueprintSpec.EffectiveBlueprint)
 	if err != nil {
@@ -62,7 +72,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 
 	// determine state diff
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
-	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState)
+	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
