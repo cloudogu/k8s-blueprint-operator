@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	v1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	serializerv2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2/serializer"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
@@ -77,13 +77,13 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		Status: domain.StatusPhase(blueprintCR.Status.Phase),
 	}
 
-	blueprint, blueprintErr := repo.blueprintSerializer.Deserialize(blueprintCR.Spec.Blueprint)
+	blueprint, blueprintErr := serializerv2.ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
 	if blueprintErr != nil {
 		blueprintErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: blueprintErr}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintErrorEvent.Name(), blueprintErrorEvent.Message())
 	}
 
-	blueprintMask, maskErr := repo.blueprintMaskSerializer.Deserialize(blueprintCR.Spec.BlueprintMask)
+	blueprintMask, maskErr := serializerv2.ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
 	if maskErr != nil {
 		blueprintMaskErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: maskErr}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintMaskErrorEvent.Name(), blueprintMaskErrorEvent.Message())
@@ -114,52 +114,22 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	blueprintJson, err := repo.blueprintSerializer.Serialize(spec.Blueprint)
-	if err != nil {
-		return domainservice.NewInternalError(err, "failed to serialize blueprint json")
-	}
-
-	blueprintMaskJson, err := repo.blueprintMaskSerializer.Serialize(spec.BlueprintMask)
-	if err != nil {
-		return domainservice.NewInternalError(err, "failed to serialize blueprint mask json")
-	}
-
-	updatedBlueprint := v1.Blueprint{
+	updatedBlueprint := &v2.BlueprintCR{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              spec.Id,
 			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
-		Spec: v1.BlueprintSpec{
-			Blueprint:                blueprintJson,
-			BlueprintMask:            blueprintMaskJson,
-			IgnoreDoguHealth:         spec.Config.IgnoreDoguHealth,
-			IgnoreComponentHealth:    spec.Config.IgnoreComponentHealth,
-			AllowDoguNamespaceSwitch: spec.Config.AllowDoguNamespaceSwitch,
-			DryRun:                   spec.Config.DryRun,
+		Status: v2.BlueprintStatus{
+			Phase:              v2.StatusPhase(spec.Status),
+			EffectiveBlueprint: effectiveBlueprint,
+			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
 		},
 	}
 
-	logger.Info("update blueprint CR spec")
-
-	CRAfterUpdate, err := repo.blueprintClient.Update(ctx, &updatedBlueprint, metav1.UpdateOptions{})
-	if err != nil {
-		if k8sErrors.IsConflict(err) {
-			return domainservice.NewConflictError(err, "cannot update blueprint CR %q as it was modified in the meantime", spec.Id)
-		}
-		return domainservice.NewInternalError(err, "cannot update blueprint CR %q", spec.Id)
-	}
-
-	blueprintStatus := v1.BlueprintStatus{
-		Phase:              v1.StatusPhase(spec.Status),
-		EffectiveBlueprint: effectiveBlueprint,
-		StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
-	}
-
-	CRAfterUpdate.Status = blueprintStatus
 	logger.Info("update blueprint CR status")
 
-	CRAfterUpdate, err = repo.blueprintClient.UpdateStatus(ctx, CRAfterUpdate, metav1.UpdateOptions{})
+	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {
 		if k8sErrors.IsConflict(err) {
 			return domainservice.NewConflictError(err, "cannot update blueprint CR status %q as it was modified in the meantime", spec.Id)
@@ -174,7 +144,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	return nil
 }
 
-func setPersistenceContext(blueprintCR *v1.Blueprint, spec *domain.BlueprintSpec) {
+func setPersistenceContext(blueprintCR *v2.BlueprintCR, spec *domain.BlueprintSpec) {
 	if spec.PersistenceContext == nil {
 		spec.PersistenceContext = make(map[string]interface{}, 1)
 	}
@@ -204,7 +174,7 @@ func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blu
 	}
 }
 
-func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v1.Blueprint, events []domain.Event) {
+func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v2.BlueprintCR, events []domain.Event) {
 	for _, event := range events {
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, event.Name(), event.Message())
 	}
