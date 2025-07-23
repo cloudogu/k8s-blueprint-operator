@@ -3,12 +3,8 @@ package serializer
 import (
 	"errors"
 	"fmt"
-
 	"github.com/Masterminds/semver/v3"
-
-	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
-
-	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -37,13 +33,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) crd.ComponentDi
 			Namespace:         string(domainModel.Actual.Namespace),
 			Version:           actualVersion,
 			InstallationState: domainModel.Actual.InstallationState.String(),
-			DeployConfig:      entities.DeployConfig(domainModel.Actual.DeployConfig),
+			DeployConfig:      crd.DeployConfig(domainModel.Actual.DeployConfig),
 		},
 		Expected: crd.ComponentDiffState{
 			Namespace:         string(domainModel.Expected.Namespace),
 			Version:           expectedVersion,
 			InstallationState: domainModel.Expected.InstallationState.String(),
-			DeployConfig:      entities.DeployConfig(domainModel.Expected.DeployConfig),
+			DeployConfig:      crd.DeployConfig(domainModel.Expected.DeployConfig),
 		},
 		NeededActions: componentActions,
 	}

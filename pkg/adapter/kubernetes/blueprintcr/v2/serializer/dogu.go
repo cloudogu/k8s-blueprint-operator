@@ -3,8 +3,6 @@ package serializer
 import (
 	"errors"
 	"fmt"
-	bpentities "github.com/cloudogu/k8s-blueprint-lib/json/entities"
-
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
@@ -70,6 +68,41 @@ func ConvertDogus(dogus []bpv2.Dogu) ([]domain.Dogu, error) {
 	return convertedDogus, err
 }
 
+func ConvertMaskDogus(dogus []bpv2.MaskDogu) ([]domain.MaskDogu, error) {
+	var convertedDogus []domain.MaskDogu
+	var errorList []error
+
+	for _, dogu := range dogus {
+		name, err := cescommons.QualifiedNameFromString(dogu.Name)
+		if err != nil {
+			errorList = append(errorList, err)
+			continue
+		}
+
+		var version core.Version
+		if dogu.Version != "" {
+			version, err = core.ParseVersion(dogu.Version)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("could not parse version of mask dogu %q: %w", dogu.Name, err))
+				continue
+			}
+		}
+
+		convertedDogus = append(convertedDogus, domain.MaskDogu{
+			Name:        name,
+			Version:     version,
+			TargetState: ToDomainTargetState(dogu.Absent),
+		})
+	}
+
+	err := errors.Join(errorList...)
+	if err != nil {
+		return convertedDogus, fmt.Errorf("cannot convert blueprint dogus: %w", err)
+	}
+
+	return convertedDogus, err
+}
+
 func convertAdditionalMountsFromDTOToDomain(mounts []bpv2.AdditionalMount) []ecosystem.AdditionalMount {
 	var result []ecosystem.AdditionalMount
 	for _, m := range mounts {
@@ -99,7 +132,7 @@ func ConvertToDoguDTOs(dogus []domain.Dogu) ([]bpv2.Dogu, error) {
 }
 
 func convertPlatformConfigDTO(dogu domain.Dogu) bpv2.PlatformConfig {
-	config := bpentities.PlatformConfig{}
+	config := bpv2.PlatformConfig{}
 	config.ResourceConfig = convertResourceConfigDTO(dogu)
 	config.ReverseProxyConfig = convertReverseProxyConfigDTO(dogu)
 	config.AdditionalMountsConfig = convertAdditionalMountsConfig(dogu)
@@ -107,8 +140,8 @@ func convertPlatformConfigDTO(dogu domain.Dogu) bpv2.PlatformConfig {
 	return config
 }
 
-func convertReverseProxyConfigDTO(dogu domain.Dogu) bpentities.ReverseProxyConfig {
-	config := bpentities.ReverseProxyConfig{}
+func convertReverseProxyConfigDTO(dogu domain.Dogu) bpv2.ReverseProxyConfig {
+	config := bpv2.ReverseProxyConfig{}
 	config.RewriteTarget = string(dogu.ReverseProxyConfig.RewriteTarget)
 	config.AdditionalConfig = string(dogu.ReverseProxyConfig.AdditionalConfig)
 	config.MaxBodySize = ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize)
@@ -116,18 +149,18 @@ func convertReverseProxyConfigDTO(dogu domain.Dogu) bpentities.ReverseProxyConfi
 	return config
 }
 
-func convertResourceConfigDTO(dogu domain.Dogu) bpentities.ResourceConfig {
-	config := bpentities.ResourceConfig{}
+func convertResourceConfigDTO(dogu domain.Dogu) bpv2.ResourceConfig {
+	config := bpv2.ResourceConfig{}
 	config.MinVolumeSize = ecosystem.GetQuantityString(&dogu.MinVolumeSize)
 
 	return config
 }
 
-func convertAdditionalMountsConfig(dogu domain.Dogu) []bpentities.AdditionalMount {
-	var config []bpentities.AdditionalMount
+func convertAdditionalMountsConfig(dogu domain.Dogu) []bpv2.AdditionalMount {
+	var config []bpv2.AdditionalMount
 	for _, m := range dogu.AdditionalMounts {
-		config = append(config, bpentities.AdditionalMount{
-			SourceType: bpentities.DataSourceType(m.SourceType),
+		config = append(config, bpv2.AdditionalMount{
+			SourceType: bpv2.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
 			Subfolder:  m.Subfolder,

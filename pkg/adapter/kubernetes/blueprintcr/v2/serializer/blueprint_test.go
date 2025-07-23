@@ -10,9 +10,8 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
-	crd "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
@@ -71,11 +70,14 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 						},
 					},
 					SensitiveConfig: domain.SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+						Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
 							{
 								DoguName: "my-dogu",
-								Key:      "config-encrypted",
-							}: "42",
+								Key:      "sensitive-config",
+							}: {
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
+							},
 						},
 					},
 				},
@@ -88,26 +90,26 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	blueprintV2, err := ConvertToBlueprintDTO(blueprint)
 
 	//then
-	emptyPlatformConfig := entities.PlatformConfig{
-		ResourceConfig: entities.ResourceConfig{
+	emptyPlatformConfig := crd.PlatformConfig{
+		ResourceConfig: crd.ResourceConfig{
 			MinVolumeSize: "0",
 		},
 	}
-	convertedDogus := []entities.TargetDogu{
-		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent", PlatformConfig: emptyPlatformConfig},
-		{Name: "official/dogu2", TargetState: "absent", PlatformConfig: emptyPlatformConfig},
-		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present", PlatformConfig: emptyPlatformConfig},
-		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present", PlatformConfig: emptyPlatformConfig},
+	convertedDogus := []crd.Dogu{
+		{Name: "official/dogu1", Version: version3211.Raw, Absent: true, PlatformConfig: emptyPlatformConfig},
+		{Name: "official/dogu2", Absent: true, PlatformConfig: emptyPlatformConfig},
+		{Name: "premium/dogu3", Version: version3212.Raw, Absent: false, PlatformConfig: emptyPlatformConfig},
+		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, Absent: false, PlatformConfig: emptyPlatformConfig},
 		{
-			Name:        "premium/dogu5",
-			Version:     version1_2_3_3.Raw,
-			TargetState: "present",
-			PlatformConfig: entities.PlatformConfig{
+			Name:    "premium/dogu5",
+			Version: version1_2_3_3.Raw,
+			Absent:  false,
+			PlatformConfig: crd.PlatformConfig{
 				ResourceConfig:     emptyPlatformConfig.ResourceConfig,
-				ReverseProxyConfig: entities.ReverseProxyConfig{},
-				AdditionalMountsConfig: []entities.AdditionalMount{
+				ReverseProxyConfig: crd.ReverseProxyConfig{},
+				AdditionalMountsConfig: []crd.AdditionalMount{
 					{
-						SourceType: entities.DataSourceConfigMap,
+						SourceType: crd.DataSourceConfigMap,
 						Name:       "config",
 						Volume:     "volume",
 						Subfolder:  "subfolder",
@@ -117,33 +119,37 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 		},
 	}
 
-	convertedComponents := []entities.TargetComponent{
-		{Name: "k8s/component1", TargetState: "absent"},
-		{Name: "k8s/component2", TargetState: "absent"},
-		{Name: "k8s-testing/component3", Version: compVersion3212.String(), TargetState: "present"},
-		{Name: "k8s-testing/component4", Version: compVersion1233.String(), TargetState: "present"},
+	convertedComponents := []crd.Component{
+		{Name: "k8s/component1", Absent: true},
+		{Name: "k8s/component2", Absent: true},
+		{Name: "k8s-testing/component3", Version: compVersion3212.String(), Absent: false},
+		{Name: "k8s-testing/component4", Version: compVersion1233.String(), Absent: false},
 	}
 
 	require.NoError(t, err)
-	assert.Equal(t, crd.EffectiveBlueprint{
+	assert.Equal(t, crd.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		Config: entities.TargetConfig{
-			Dogus: entities.DoguConfigMap{
+		Config: crd.Config{
+			Dogus: map[string]crd.CombinedDoguConfig{
 				"my-dogu": {
-					Config: entities.DoguConfig{
+					Config: &crd.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
 					},
-					SensitiveConfig: entities.SensitiveDoguConfig{
-						Present: map[string]string{
-							"config-encrypted": "42",
+					SensitiveConfig: &crd.SensitiveDoguConfig{
+						Present: []crd.SensitiveConfigEntry{
+							{
+								Key:        "sensitive-config",
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
+							},
 						},
 					},
 				},
 			},
-			Global: entities.GlobalConfig{
+			Global: crd.GlobalConfig{
 				Absent: []string{"test/key"},
 			},
 		},
@@ -152,21 +158,21 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 
 func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 	//given
-	convertedDogus := []entities.TargetDogu{
-		{Name: "official/dogu1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "official/dogu2", TargetState: "absent"},
-		{Name: "premium/dogu3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, TargetState: "present"},
+	convertedDogus := []crd.Dogu{
+		{Name: "official/dogu1", Version: version3211.Raw, Absent: true},
+		{Name: "official/dogu2", Absent: true},
+		{Name: "premium/dogu3", Version: version3212.Raw, Absent: false},
+		{Name: "premium/dogu4", Version: version1_2_3_3.Raw, Absent: false},
 		{
-			Name:        "premium/dogu5",
-			Version:     version1_2_3_3.Raw,
-			TargetState: "present",
-			PlatformConfig: entities.PlatformConfig{
-				ResourceConfig:     entities.ResourceConfig{},
-				ReverseProxyConfig: entities.ReverseProxyConfig{},
-				AdditionalMountsConfig: []entities.AdditionalMount{
+			Name:    "premium/dogu5",
+			Version: version1_2_3_3.Raw,
+			Absent:  false,
+			PlatformConfig: crd.PlatformConfig{
+				ResourceConfig:     crd.ResourceConfig{},
+				ReverseProxyConfig: crd.ReverseProxyConfig{},
+				AdditionalMountsConfig: []crd.AdditionalMount{
 					{
-						SourceType: entities.DataSourceConfigMap,
+						SourceType: crd.DataSourceConfigMap,
 						Name:       "config",
 						Volume:     "volume",
 						Subfolder:  "subfolder",
@@ -176,32 +182,36 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		},
 	}
 
-	convertedComponents := []entities.TargetComponent{
-		{Name: "k8s/component1", Version: version3211.Raw, TargetState: "absent"},
-		{Name: "k8s/component2", TargetState: "absent"},
-		{Name: "k8s-testing/component3", Version: version3212.Raw, TargetState: "present"},
-		{Name: "k8s-testing/component4", Version: version1_2_3_3.Raw, TargetState: "present"},
+	convertedComponents := []crd.Component{
+		{Name: "k8s/component1", Version: version3211.Raw, Absent: true},
+		{Name: "k8s/component2", Absent: true},
+		{Name: "k8s-testing/component3", Version: version3212.Raw, Absent: false},
+		{Name: "k8s-testing/component4", Version: version1_2_3_3.Raw, Absent: false},
 	}
 
-	dto := crd.EffectiveBlueprint{
+	dto := crd.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		Config: entities.TargetConfig{
-			Dogus: entities.DoguConfigMap{
+		Config: crd.Config{
+			Dogus: map[string]crd.CombinedDoguConfig{
 				"my-dogu": {
-					Config: entities.DoguConfig{
+					Config: &crd.DoguConfig{
 						Present: map[string]string{
 							"config": "42",
 						},
 					},
-					SensitiveConfig: entities.SensitiveDoguConfig{
-						Present: map[string]string{
-							"config-encrypted": "42",
+					SensitiveConfig: &crd.SensitiveDoguConfig{
+						Present: []crd.SensitiveConfigEntry{
+							{
+								Key:        "sensitive-config",
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
+							},
 						},
 					},
 				},
 			},
-			Global: entities.GlobalConfig{Absent: []string{"test/key"}},
+			Global: crd.GlobalConfig{Absent: []string{"test/key"}},
 		},
 	}
 	//when
@@ -249,11 +259,14 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 						},
 					},
 					SensitiveConfig: domain.SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+						Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
 							{
 								DoguName: "my-dogu",
-								Key:      "config-encrypted",
-							}: "42",
+								Key:      "sensitive-config",
+							}: {
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
+							},
 						},
 					},
 				},

@@ -16,5 +16,5 @@ func ToDomainTargetState(absent bool) domain.TargetState {
 // ToSerializerAbsentState maps a domain.TargetState to the absent state of dogus in the CR.
 // If the state is not present, it will be interpreted as absent
 func ToSerializerAbsentState(domainState domain.TargetState) bool {
-	return domainState == domain.TargetStatePresent
+	return domainState != domain.TargetStatePresent
 }

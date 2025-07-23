@@ -10,13 +10,19 @@ import (
 )
 
 func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) *v2.SensitiveDoguConfig {
-	var present []string
+	var present []v2.SensitiveConfigEntry
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Present) != 0 {
-		present = make(map[string]string, len(config.Present))
+		present = make([]v2.SensitiveConfigEntry, len(config.Present))
+		index := 0
 		for key, value := range config.Present {
-			present[string(key.Key)] = string(value)
+			present[index] = v2.SensitiveConfigEntry{
+				Key:        string(key.Key),
+				SecretName: value.SecretName,
+				SecretKey:  value.SecretKey,
+			}
+			index += 1
 		}
 	}
 
@@ -36,14 +42,20 @@ func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) *v2.Sens
 	}
 }
 
-func convertToSensitiveDoguConfigDomain(doguName string, doguConfig v2.SensitiveDoguConfig) domain.SensitiveDoguConfig {
-	var present map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
+func convertToSensitiveDoguConfigDomain(doguName string, doguConfig *v2.SensitiveDoguConfig) domain.SensitiveDoguConfig {
+	if doguConfig == nil {
+		return domain.SensitiveDoguConfig{}
+	}
+	var present map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(doguConfig.Present) != 0 {
-		present = make(map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, len(doguConfig.Present))
-		for key, value := range doguConfig.Present {
-			present[convertToSensitiveDoguConfigKeyDomain(doguName, key)] = common.SensitiveDoguConfigValue(value)
+		present = make(map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef, len(doguConfig.Present))
+		for _, value := range doguConfig.Present {
+			present[convertToSensitiveDoguConfigKeyDomain(doguName, value.Key)] = domain.SensitiveValueRef{
+				SecretName: value.SecretName,
+				SecretKey:  value.SecretKey,
+			}
 		}
 	}
 

@@ -2,25 +2,22 @@ package serializer
 
 import (
 	"fmt"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"testing"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
-
-	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 var (
-	compVersion3211    = semver.MustParse("3.2.1-1")
 	k8sK8sDoguOperator = common.QualifiedComponentName{Namespace: "k8s", SimpleName: "k8s-dogu-operator"}
 )
 
 func TestConvertComponents(t *testing.T) {
 	type args struct {
-		components []entities.TargetComponent
+		components []bpv2.Component
 	}
 	tests := []struct {
 		name    string
@@ -36,37 +33,37 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "empty list",
-			args:    args{components: []entities.TargetComponent{}},
+			args:    args{components: []bpv2.Component{}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "normal component",
-			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present", DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
-			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: 0, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
+			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "absent component",
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Absent: true}}},
+			want:    []domain.Component{{Name: k8sK8sDoguOperator, TargetState: domain.TargetStateAbsent}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: "1.", TargetState: "present"}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: "1."}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "invalid component name",
-			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0", TargetState: "present"}}},
-			want:    nil,
-			wantErr: assert.Error,
-		},
-		{
-			name:    "unknown target state",
-			args:    args{components: []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0"}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "does not contain distribution namespace",
-			args:    args{components: []entities.TargetComponent{{Name: "k8s-dogu-operator", Version: version3211.Raw, TargetState: "unknown"}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s-dogu-operator", Version: version3211.Raw}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -89,25 +86,25 @@ func TestConvertToComponentDTOs(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []entities.TargetComponent
+		want    []bpv2.Component
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
 			name:    "nil",
 			args:    args{},
-			want:    []entities.TargetComponent{},
+			want:    []bpv2.Component{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "empty list",
 			args:    args{components: []domain.Component{}},
-			want:    []entities.TargetComponent{},
+			want:    []bpv2.Component{},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "ok",
 			args:    args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
-			want:    []entities.TargetComponent{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, TargetState: "present"}},
+			want:    []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false}},
 			wantErr: assert.NoError,
 		},
 	}

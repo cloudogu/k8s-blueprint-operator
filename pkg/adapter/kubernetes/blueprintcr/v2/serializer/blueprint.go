@@ -3,10 +3,6 @@ package serializer
 import (
 	"errors"
 	"fmt"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"strings"
 
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
@@ -33,17 +29,24 @@ func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.Blueprint, 
 	}, nil
 }
 
-func convertToTargetState(absent bool) domain.TargetState {
-	if absent {
-		return domain.TargetStateAbsent
-	} else {
-		return domain.TargetStatePresent
+func ConvertToBlueprintDomain(blueprint crd.Blueprint) (domain.Blueprint, error) {
+	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
+	convertedComponents, compErr := ConvertComponents(blueprint.Components)
+
+	err := errors.Join(doguErr, compErr)
+	if err != nil {
+		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
 	}
+	return domain.Blueprint{
+		Dogus:      convertedDogus,
+		Components: convertedComponents,
+		Config:     ConvertToConfigDomain(blueprint.Config),
+	}, nil
 }
 
 func ConvertToEffectiveBlueprintDomain(blueprint crd.Blueprint) (domain.EffectiveBlueprint, error) {
-	convertedDogus, doguErr := serializer.ConvertDogus(blueprint.Dogus)
-	convertedComponents, compErr := serializer.ConvertComponents(blueprint.Components)
+	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
+	convertedComponents, compErr := ConvertComponents(blueprint.Components)
 
 	err := errors.Join(doguErr, compErr)
 	if err != nil {
@@ -53,6 +56,17 @@ func ConvertToEffectiveBlueprintDomain(blueprint crd.Blueprint) (domain.Effectiv
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config:     ConvertToConfigDomain(blueprint.Config),
+	}, nil
+}
+
+func ConvertToBlueprintMaskDomain(mask crd.BlueprintMask) (domain.BlueprintMask, error) {
+	convertedDogus, err := ConvertMaskDogus(mask.Dogus)
+
+	if err != nil {
+		return domain.BlueprintMask{}, fmt.Errorf("mask mask is invalid: %w", err)
+	}
+	return domain.BlueprintMask{
+		Dogus: convertedDogus,
 	}, nil
 }
 

@@ -61,7 +61,7 @@ func ConvertToComponentDTOs(components []domain.Component) ([]v2.Component, erro
 		// as the original blueprint json from the Blueprint resource.
 		joinedComponentName := component.Name.String()
 		version := ""
-		if !isAbsent {
+		if !isAbsent && component.Version != nil {
 			version = component.Version.String()
 		}
 
