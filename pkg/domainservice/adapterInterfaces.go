@@ -169,6 +169,28 @@ type SensitiveDoguConfigRepository interface {
 	DoguConfigRepository //interfaces are the same yet. Don't hesitate to split them if they diverge
 }
 
+// SensitiveConfigRefReader resolves given domain.SensitiveValueRef's and loads the referenced values.
+// As sensitive config should not be written directly into the blueprint, only references are used.
+// This way, the blueprint e.g. can securely get committed to git.
+type SensitiveConfigRefReader interface {
+	// ExistAll checks if the given domain.SensitiveValueRef's can be resolved and returns true or otherwise false.
+	// It can throw the following errors:
+	//  - InternalError if any error happens.
+	ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error)
+
+	// GetValues reads all common.SensitiveDoguConfigValue's from the given domain.SensitiveValueRef's by common.SensitiveDoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs []map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+	) (
+		map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+		error,
+	)
+}
+
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
 func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {
