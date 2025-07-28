@@ -2,16 +2,17 @@ package sensitiveConfigRef
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	"iter"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"maps"
+	"slices"
 )
 
 type SecretRefReader struct {
@@ -19,39 +20,52 @@ type SecretRefReader struct {
 }
 
 func (reader *SecretRefReader) ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error) {
-	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, refs)
-	_, keyErrors := reader.loadKeysFromSecrets(refs, secretsByName)
+	secretsByName, secretsError := reader.loadNeededSecrets(ctx, slices.Values(refs))
 
-	err := errors.Join(secretErrors, keyErrors)
 	var notFoundErr *domainservice.NotFoundError
 
-	if errors.As(err, &notFoundErr) {
-		return true, nil
+	if errors.As(secretsError, &notFoundErr) {
+		// if any secret was not found, we can just return false because at least one does not exist
+		return false, nil
+	} else if secretsError != nil {
+		// if it was another error, there could be connection problems, which we need to report to the caller
+		return false, secretsError
 	}
-	return false, err
+
+	for _, ref := range refs {
+		if !reader.existKeyInSecret(secretsByName[ref.SecretName], ref.SecretKey) {
+			return false, nil
+		}
+	}
+
+	return true, nil
 }
 
-func (reader *SecretRefReader) GetValues(ctx context.Context, refs []map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
-	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, refs)
+func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
+	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, maps.Values(refs))
 	sensitiveConfig, keyErrors := reader.loadKeysFromSecrets(refs, secretsByName)
 
 	err := errors.Join(secretErrors, keyErrors)
 	if err != nil {
-		err = fmt.Errorf("could not ")
+		err = fmt.Errorf("could not load sensitive config via references: %w", err)
+		return nil, err
 	}
 
-	return sensitiveConfig
+	return sensitiveConfig, nil
 }
 
 func (reader *SecretRefReader) loadKeysFromSecrets(
-	refs []map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+	refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
 	secretsByName map[string]*v1.Secret,
 ) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	var errs []error
+	loadedConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
 
-	for _, ref := range refs {
+	for configKey, ref := range refs {
 		secret, found := secretsByName[ref.SecretName]
 		if !found {
+			// no error here, because we already have an error for missing secrets in the loadNeededSecrets function
+			// we want error messages for missing keys too, even if a secret does not exist
 			continue
 		}
 		sensitiveConfigValue, err := reader.loadKeyFromSecret(secret, ref.SecretKey)
@@ -59,10 +73,12 @@ func (reader *SecretRefReader) loadKeysFromSecrets(
 			errs = append(errs, err)
 			continue
 		}
+		loadedConfig[configKey] = sensitiveConfigValue
 	}
+	return loadedConfig, errors.Join(errs...)
 }
 
-func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) (string, error) {
+func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) (common.SensitiveDoguConfigValue, error) {
 	valueBytes, exists := secret.Data[key]
 	if !exists {
 		return "", domainservice.NewNotFoundError(
@@ -72,14 +88,22 @@ func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) 
 	}
 	//TODO: check if the data is base64 encoded
 	//decodeString, err := base64.StdEncoding.DecodeString(secretData)
-	return string(valueBytes), nil
+	return common.SensitiveDoguConfigValue(valueBytes), nil
 }
 
-func (reader *SecretRefReader) loadNeededSecrets(ctx context.Context, refs []domain.SensitiveValueRef) (map[string]*v1.Secret, error) {
+func (reader *SecretRefReader) existKeyInSecret(secret *v1.Secret, key string) bool {
+	_, exists := secret.Data[key]
+	return exists
+}
+
+func (reader *SecretRefReader) loadNeededSecrets(
+	ctx context.Context,
+	refs iter.Seq[domain.SensitiveValueRef],
+) (map[string]*v1.Secret, error) {
 	secretsByName := map[string]*v1.Secret{}
 	var errs []error
 
-	for _, ref := range refs {
+	for ref := range refs {
 		_, alreadyLoaded := secretsByName[ref.SecretName]
 		if alreadyLoaded {
 			continue

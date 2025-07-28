@@ -184,7 +184,7 @@ type SensitiveConfigRefReader interface {
 	//  - InternalError if any other error happens.
 	GetValues(
 		ctx context.Context,
-		refs []map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+		refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
 	) (
 		map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 		error,
