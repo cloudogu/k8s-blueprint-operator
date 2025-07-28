@@ -84,7 +84,7 @@ func createDoguConfigFromReferencedValues(
 	referencedValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) DoguConfig {
 	configEntries := map[common.DoguConfigKey]common.DoguConfigValue{}
-	for key, _ := range sensitiveConfig.Present {
+	for key := range sensitiveConfig.Present {
 		// we checked previously that all referenced values exist. Therefore, we need no error here.
 		// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
 		configEntries[key] = referencedValues[key]
