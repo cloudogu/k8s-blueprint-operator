@@ -147,7 +147,7 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 			Key:      sensitiveKey.Key,
 		}
 		if slices.Contains(normalKeys, keyToSearch) {
-			errorList = append(errorList, fmt.Errorf("dogu config key %s cannot be in normal and sensitive configuration at the same time", keyToSearch))
+			errorList = append(errorList, fmt.Errorf("dogu config key %q of dogu %q cannot be in normal and sensitive configuration at the same time", keyToSearch.Key, keyToSearch.DoguName))
 		}
 	}
 	return errors.Join(errorList...)
@@ -158,12 +158,12 @@ func validateDoguConfigKeys(keys []common.DoguConfigKey, referencedDoguName cesc
 	for _, configKey := range keys {
 		err := configKey.Validate()
 		if err != nil {
-			errs = append(errs, fmt.Errorf("dogu config key invalid: %w", err))
+			errs = append(errs, fmt.Errorf("dogu config key is invalid: %w", err))
 		}
 
 		// validate that all keys are of the same dogu
 		if referencedDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("key %s does not match superordinate dogu name %q", configKey, referencedDoguName))
+			errs = append(errs, fmt.Errorf("key %q of dogu %q does not match superordinate dogu name %q", configKey.Key, configKey.DoguName, referencedDoguName))
 		}
 	}
 	return errors.Join(errs...)
@@ -174,13 +174,13 @@ func validateNoDuplicates(presentKeys []common.DoguConfigKey, absentKeys []commo
 	// no present keys in absent
 	for _, presentKey := range presentKeys {
 		if slices.Contains(absentKeys, presentKey) {
-			errs = append(errs, fmt.Errorf("key %s cannot be present and absent at the same time", presentKey))
+			errs = append(errs, fmt.Errorf("key %q of dogu %q cannot be present and absent at the same time", presentKey.Key, presentKey.DoguName))
 		}
 	}
 	// no absent keys in present
 	for _, absentKey := range absentKeys {
 		if slices.Contains(presentKeys, absentKey) {
-			errs = append(errs, fmt.Errorf("key %s cannot be present and absent at the same time", absentKey))
+			errs = append(errs, fmt.Errorf("key %q of dogu %q cannot be present and absent at the same time", absentKey.Key, absentKey.DoguName))
 		}
 	}
 
@@ -200,17 +200,17 @@ func (config DoguConfig) validate(referencedDoguName cescommons.SimpleName) erro
 
 	presentKeyErr := validateDoguConfigKeys(maps.Keys(config.Present), referencedDoguName)
 	if presentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("present dogu config is invalid: %w", presentKeyErr))
 	}
 
 	absentKeyErr := validateDoguConfigKeys(config.Absent, referencedDoguName)
 	if absentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("absent dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("absent dogu config is invalid: %w", absentKeyErr))
 	}
 
 	duplicatesErr := validateNoDuplicates(maps.Keys(config.Present), config.Absent)
 	if duplicatesErr != nil {
-		errs = append(errs, fmt.Errorf("absent dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", duplicatesErr))
 	}
 
 	return errors.Join(errs...)
@@ -221,17 +221,17 @@ func (config SensitiveDoguConfig) validate(referencedDoguName cescommons.SimpleN
 
 	presentKeyErr := validateDoguConfigKeys(maps.Keys(config.Present), referencedDoguName)
 	if presentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("sensitive dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("present sensitive dogu config is invalid: %w", presentKeyErr))
 	}
 
 	absentKeyErr := validateDoguConfigKeys(config.Absent, referencedDoguName)
 	if absentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("sensitive absent dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("absent sensitive dogu config is invalid: %w", absentKeyErr))
 	}
 
 	duplicatesErr := validateNoDuplicates(maps.Keys(config.Present), config.Absent)
 	if duplicatesErr != nil {
-		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", presentKeyErr))
+		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", duplicatesErr))
 	}
 
 	return errors.Join(errs...)

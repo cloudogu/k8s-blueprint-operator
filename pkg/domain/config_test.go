@@ -138,8 +138,8 @@ func TestDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu2")
-		assert.ErrorContains(t, err, "present key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
-		assert.ErrorContains(t, err, "absent key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "dogu config is invalid: key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "absent dogu config is invalid: key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
 	})
 	t.Run("combine errors", func(t *testing.T) {
 		config := DoguConfig{
@@ -151,8 +151,8 @@ func TestDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu1")
-		assert.ErrorContains(t, err, "present dogu config key invalid")
-		assert.ErrorContains(t, err, "absent dogu config key invalid")
+		assert.ErrorContains(t, err, "present dogu config is invalid")
+		assert.ErrorContains(t, err, "absent dogu config is invalid")
 	})
 }
 
@@ -212,8 +212,8 @@ func TestSensitiveDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu2")
-		assert.ErrorContains(t, err, "present key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
-		assert.ErrorContains(t, err, "absent key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "present sensitive dogu config is invalid: key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "absent sensitive dogu config is invalid: key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
 	})
 	t.Run("combine errors", func(t *testing.T) {
 		config := SensitiveDoguConfig{
@@ -225,8 +225,8 @@ func TestSensitiveDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu1")
-		assert.ErrorContains(t, err, "present dogu config key invalid")
-		assert.ErrorContains(t, err, "absent dogu config key invalid")
+		assert.ErrorContains(t, err, "present sensitive dogu config is invalid")
+		assert.ErrorContains(t, err, "absent sensitive dogu config is invalid")
 	})
 }
 
@@ -414,7 +414,7 @@ func TestCombinedDoguConfig_validate(t *testing.T) {
 
 	err := config.validate()
 
-	assert.ErrorContains(t, err, "dogu config key key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
+	assert.ErrorContains(t, err, "dogu config key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
 }
 
 func TestConfig_GetDogusWithChangedConfig(t *testing.T) {

@@ -1,4 +1,4 @@
-package sensitiveConfigRef
+package sensitiveconfigref
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type SecretRefReader struct {
 	secretClient k8sv1.SecretInterface
 }
 
-func NewSecretRefReader(secretClient k8sv1.SecretInterface) *SecretRefReader {
+func NewSecretRefReader(secretClient secretClient) *SecretRefReader {
 	return &SecretRefReader{
 		secretClient: secretClient,
 	}

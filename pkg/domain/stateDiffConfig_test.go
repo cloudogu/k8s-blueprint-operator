@@ -268,7 +268,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			//loaded referenced sensitive config
 			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
 				sensitiveDogu1Key1: "value",
-				sensitiveDogu1Key2: "value",
+				sensitiveDogu1Key2: "updated value",
 			},
 		)
 		//then

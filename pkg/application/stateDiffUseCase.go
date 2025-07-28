@@ -36,6 +36,7 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
+		sensitiveConfigRefReader:  sensitiveConfigRefReader,
 	}
 }
 
