@@ -18,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	config2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 )
 
@@ -427,7 +427,7 @@ func createScheme(t *testing.T) *runtime.Scheme {
 	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v1")
 	assert.NoError(t, err)
 
-	scheme.AddKnownTypes(gv, &v1.Blueprint{})
+	scheme.AddKnownTypes(gv, &bpv2.BlueprintCR{})
 	return scheme
 }
 

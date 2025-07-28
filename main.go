@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
@@ -45,7 +45,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(k8sv1.AddToScheme(scheme))
+	utilruntime.Must(bpv2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

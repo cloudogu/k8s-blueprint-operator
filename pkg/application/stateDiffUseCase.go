@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -18,6 +17,7 @@ type StateDiffUseCase struct {
 	globalConfigRepo          globalConfigRepository
 	doguConfigRepo            doguConfigRepository
 	sensitiveDoguConfigRepo   sensitiveDoguConfigRepository
+	sensitiveConfigRefReader  sensitiveConfigRefReader
 }
 
 func NewStateDiffUseCase(
@@ -27,6 +27,7 @@ func NewStateDiffUseCase(
 	globalConfigRepo domainservice.GlobalConfigRepository,
 	doguConfigRepo domainservice.DoguConfigRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
+	sensitiveConfigRefReader domainservice.SensitiveConfigRefReader,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -55,13 +56,14 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot load blueprint spec %q to determine state diff: %w", blueprintId, err)
 	}
 
-	//TODO: implement referenced config adapter
 	logger.Info("load referenced sensitive config")
-	referencedSensitiveConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-		common.SensitiveDoguConfigKey{
-			DoguName: "postgresql",
-			Key:      "myKey",
-		}: common.SensitiveDoguConfigValue("myValue"),
+	// load referenced config before collecting ecosystem state
+	// if an error happens here, we save a lot of heavy work
+	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
+		ctx, blueprintSpec.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
+	)
+	if err != nil {
+		return fmt.Errorf("could not load referenced sensitive config: %w", err)
 	}
 
 	logger.Info("collect ecosystem state for state diff")
@@ -70,7 +72,6 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	// determine state diff
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
 	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
 	var invalidError *domain.InvalidBlueprintError

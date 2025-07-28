@@ -19,6 +19,12 @@ type SecretRefReader struct {
 	secretClient k8sv1.SecretInterface
 }
 
+func NewSecretRefReader(secretClient k8sv1.SecretInterface) *SecretRefReader {
+	return &SecretRefReader{
+		secretClient: secretClient,
+	}
+}
+
 func (reader *SecretRefReader) ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error) {
 	secretsByName, secretsError := reader.loadNeededSecrets(ctx, slices.Values(refs))
 

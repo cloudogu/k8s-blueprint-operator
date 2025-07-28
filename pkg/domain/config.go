@@ -61,6 +61,16 @@ func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
 	return keys
 }
 
+func (config Config) GetSensitiveConfigReferences() map[common.SensitiveDoguConfigKey]SensitiveValueRef {
+	refs := map[common.SensitiveDoguConfigKey]SensitiveValueRef{}
+	for _, doguConfig := range config.Dogus {
+		for key, ref := range doguConfig.SensitiveConfig.Present {
+			refs[key] = ref
+		}
+	}
+	return refs
+}
+
 func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKey {
 	var keys []common.SensitiveDoguConfigKey
 	for _, doguConfig := range config.Dogus {
