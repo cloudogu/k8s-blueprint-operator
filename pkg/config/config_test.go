@@ -259,6 +259,14 @@ func TestGetLogLevel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if tt.want != "" {
 				t.Setenv(logLevelEnvVar, tt.want)
+			} else {
+				// first set it so it got rolled back afterward
+				t.Setenv(logLevelEnvVar, "")
+				// then unset it, so environments with this envVar also work with this test
+				err := os.Unsetenv(logLevelEnvVar)
+				if err != nil {
+					require.NoError(t, err)
+				}
 			}
 			got, err := GetLogLevel()
 			if !tt.wantErr(t, err, fmt.Sprintf("GetLogLevel()")) {
