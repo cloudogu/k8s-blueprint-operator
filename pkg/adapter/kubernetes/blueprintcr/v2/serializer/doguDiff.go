@@ -6,7 +6,6 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
@@ -120,7 +119,7 @@ func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, er
 	}
 	errorList = append(errorList, versionErr)
 
-	state, stateErr := serializer.ToDomainTargetState(dto.InstallationState)
+	state, stateErr := ToOldDomainTargetState(dto.InstallationState)
 	if stateErr != nil {
 		errorList = append(errorList, fmt.Errorf("failed to parse installation state %q: %w", dto.InstallationState, stateErr))
 	}

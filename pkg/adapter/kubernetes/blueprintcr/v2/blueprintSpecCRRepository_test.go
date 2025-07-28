@@ -14,11 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/cloudogu/k8s-blueprint-lib/json/entities"
-
-	v1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -33,19 +29,19 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
-		cr := &v1.Blueprint{
+		cr := &bpv2.BlueprintCR{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: v1.BlueprintSpec{
-				Blueprint:                `{"blueprintApi": "v2"}`,
-				BlueprintMask:            `{"blueprintMaskAPI": "v1"}`,
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:                bpv2.Blueprint{},
+				BlueprintMask:            bpv2.BlueprintMask{},
 				AllowDoguNamespaceSwitch: true,
 				IgnoreDoguHealth:         true,
 				DryRun:                   true,
 			},
-			Status: v1.BlueprintStatus{},
+			Status: bpv2.BlueprintStatus{},
 		}
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
@@ -73,18 +69,18 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 
-		cr := &v1.Blueprint{
+		cr := &bpv2.BlueprintCR{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     `{}`,
-				BlueprintMask: `{}`,
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
-			Status: v1.BlueprintStatus{},
+			Status: bpv2.BlueprintStatus{},
 		}
 		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint mask: unsupported Blueprint Mask API Version: ")
 		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint: unsupported Blueprint API Version: ")
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
 		// when
@@ -103,7 +99,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(nil, k8sErrors.NewInternalError(errors.New("test-error")))
 
@@ -122,7 +118,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
 		restClientMock.EXPECT().
 			Get(ctx, blueprintId, metav1.GetOptions{}).
@@ -146,36 +142,36 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		expectedStatus := v1.BlueprintStatus{
-			Phase: v1.StatusPhaseValidated,
-			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []entities.TargetDogu{},
-				Components: []entities.TargetComponent{},
-				Config:     entities.TargetConfig{},
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		expectedStatus := bpv2.BlueprintStatus{
+			Phase: bpv2.StatusPhaseValidated,
+			EffectiveBlueprint: bpv2.Blueprint{
+				Dogus:      []bpv2.Dogu{},
+				Components: []bpv2.Component{},
+				Config:     bpv2.Config{},
 			},
-			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
+			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 		}
-		expected := v1.Blueprint{
+		expected := bpv2.BlueprintCR{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            blueprintId,
 				ResourceVersion: "abc",
 			},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     "{\"blueprintApi\":\"v2\",\"config\":{\"global\":{}}}",
-				BlueprintMask: "{\"blueprintMaskApi\":\"v1\",\"blueprintMaskId\":\"\",\"dogus\":[]}",
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
 		}
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, &expected, blueprint)
 				return blueprint, nil
 			})
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return blueprint, nil
 			})
@@ -198,7 +194,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
 		// when
 		err := repo.Update(ctx, &domain.BlueprintSpec{
@@ -216,7 +212,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
 		// when
 		persistenceContext := make(map[string]interface{})
@@ -230,23 +226,23 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "ersistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but 'int'")
+		assert.ErrorContains(t, err, "persistence context in blueprintSpec is not a 'blueprintSpecRepoContext' but 'int'")
 	})
 
 	t.Run("conflict error on update", func(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		expected := v1.Blueprint{
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		expected := bpv2.BlueprintCR{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            blueprintId,
 				ResourceVersion: "abc",
 			},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     "{\"blueprintApi\":\"v2\",\"config\":{\"global\":{}}}",
-				BlueprintMask: "{\"blueprintMaskApi\":\"v1\",\"blueprintMaskId\":\"\",\"dogus\":[]}",
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -256,7 +252,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		)
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, &expected, blueprint)
 				return nil, expectedError
 			})
@@ -282,25 +278,25 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		expectedStatus := v1.BlueprintStatus{
-			Phase: v1.StatusPhaseValidated,
-			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []entities.TargetDogu{},
-				Components: []entities.TargetComponent{},
-				Config:     entities.TargetConfig{},
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		expectedStatus := bpv2.BlueprintStatus{
+			Phase: bpv2.StatusPhaseValidated,
+			EffectiveBlueprint: bpv2.Blueprint{
+				Dogus:      []bpv2.Dogu{},
+				Components: []bpv2.Component{},
+				Config:     bpv2.Config{},
 			},
-			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
+			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 		}
-		expected := v1.Blueprint{
+		expected := bpv2.BlueprintCR{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            blueprintId,
 				ResourceVersion: "abc",
 			},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     "{\"blueprintApi\":\"v2\",\"config\":{\"global\":{}}}",
-				BlueprintMask: "{\"blueprintMaskApi\":\"v1\",\"blueprintMaskId\":\"\",\"dogus\":[]}",
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -310,13 +306,13 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		)
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, &expected, blueprint)
 				return blueprint, nil
 			})
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -342,22 +338,22 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		expected := v1.Blueprint{
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		expected := bpv2.BlueprintCR{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            blueprintId,
 				ResourceVersion: "abc",
 			},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     "{\"blueprintApi\":\"v2\",\"config\":{\"global\":{}}}",
-				BlueprintMask: "{\"blueprintMaskApi\":\"v1\",\"blueprintMaskId\":\"\",\"dogus\":[]}",
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, &expected, blueprint)
 				return nil, expectedError
 			})
@@ -383,37 +379,37 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
-		expectedStatus := v1.BlueprintStatus{
-			Phase: v1.StatusPhaseValidated,
-			EffectiveBlueprint: v1.EffectiveBlueprint{
-				Dogus:      []entities.TargetDogu{},
-				Components: []entities.TargetComponent{},
-				Config:     entities.TargetConfig{},
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		expectedStatus := bpv2.BlueprintStatus{
+			Phase: bpv2.StatusPhaseValidated,
+			EffectiveBlueprint: bpv2.Blueprint{
+				Dogus:      []bpv2.Dogu{},
+				Components: []bpv2.Component{},
+				Config:     bpv2.Config{},
 			},
-			StateDiff: v1.StateDiff{DoguDiffs: map[string]v1.DoguDiff{}, ComponentDiffs: map[string]v1.ComponentDiff{}},
+			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 		}
-		expected := v1.Blueprint{
+		expected := bpv2.BlueprintCR{
 			TypeMeta: metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{
 				Name:            blueprintId,
 				ResourceVersion: "abc",
 			},
-			Spec: v1.BlueprintSpec{
-				Blueprint:     "{\"blueprintApi\":\"v2\",\"config\":{\"global\":{}}}",
-				BlueprintMask: "{\"blueprintMaskApi\":\"v1\",\"blueprintMaskId\":\"\",\"dogus\":[]}",
+			Spec: bpv2.BlueprintSpec{
+				Blueprint:     bpv2.Blueprint{},
+				BlueprintMask: bpv2.BlueprintMask{},
 			},
 		}
 		expectedError := fmt.Errorf("test-error")
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, &expected, blueprint)
 				return blueprint, nil
 			})
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -442,17 +438,17 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, blueprintV2.Serializer{}, blueprintMaskV1.Serializer{}, eventRecorderMock)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		restClientMock.EXPECT().
 			Update(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				// assert.Equal(t, &expected, blueprint)
 				blueprint.ResourceVersion = "newVersion"
 				return blueprint, nil
 			})
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *v1.Blueprint, options metav1.UpdateOptions) (*v1.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
 				// assert.Equal(t, &expected, blueprint)
 				blueprint.ResourceVersion = "newVersion"
 				return blueprint, nil

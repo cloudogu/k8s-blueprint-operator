@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/Masterminds/semver/v3"
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -64,12 +63,12 @@ func convertToComponentDiffDomain(componentName string, dto crd.ComponentDiff) (
 		}
 	}
 
-	actualState, actualStateErr := serializer.ToDomainTargetState(dto.Actual.InstallationState)
+	actualState, actualStateErr := ToOldDomainTargetState(dto.Actual.InstallationState)
 	if actualStateErr != nil {
 		actualStateErr = fmt.Errorf("failed to parse actual installation state %q: %w", dto.Actual.InstallationState, actualStateErr)
 	}
 
-	expectedState, expectedStateErr := serializer.ToDomainTargetState(dto.Expected.InstallationState)
+	expectedState, expectedStateErr := ToOldDomainTargetState(dto.Expected.InstallationState)
 	if expectedStateErr != nil {
 		expectedStateErr = fmt.Errorf("failed to parse expected installation state %q: %w", dto.Expected.InstallationState, expectedStateErr)
 	}

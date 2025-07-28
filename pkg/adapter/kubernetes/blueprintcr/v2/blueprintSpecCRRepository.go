@@ -11,7 +11,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	kubernetes "github.com/cloudogu/k8s-blueprint-lib/v2/client"
+	bpv2client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
@@ -29,7 +29,7 @@ type blueprintSpecRepo struct {
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
 func NewBlueprintSpecRepository(
-	blueprintClient kubernetes.BlueprintInterface,
+	blueprintClient bpv2client.BlueprintInterface,
 	eventRecorder eventRecorder,
 ) domainservice.BlueprintSpecRepository {
 	return &blueprintSpecRepo{
