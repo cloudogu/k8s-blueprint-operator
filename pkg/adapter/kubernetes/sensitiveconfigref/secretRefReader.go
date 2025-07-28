@@ -89,7 +89,7 @@ func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) 
 	if !exists {
 		return "", domainservice.NewNotFoundError(
 			nil,
-			"referenced secret key does not exist", "secretKey", key,
+			"referenced secret key %q does not exist", key,
 		)
 	}
 	//TODO: check if the data is base64 encoded
@@ -132,7 +132,7 @@ func (reader *SecretRefReader) loadSecret(ctx context.Context, name string) (*v1
 	secret, err := reader.secretClient.Get(ctx, name, metav1.GetOptions{})
 	if secret == nil || err != nil {
 		return nil, domainservice.NewNotFoundError(
-			err, "referenced secret does not exist", "secretName", name,
+			err, "referenced secret %q does not exist", name,
 		)
 	}
 	return secret, nil
