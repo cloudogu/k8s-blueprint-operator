@@ -35,7 +35,10 @@ func ConvertToBlueprintDomain(blueprint crd.Blueprint) (domain.Blueprint, error)
 
 	err := errors.Join(doguErr, compErr)
 	if err != nil {
-		return domain.Blueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
+		return domain.Blueprint{}, &domain.InvalidBlueprintError{
+			WrappedError: err,
+			Message:      "cannot deserialize blueprint",
+		}
 	}
 	return domain.Blueprint{
 		Dogus:      convertedDogus,
@@ -63,7 +66,7 @@ func ConvertToBlueprintMaskDomain(mask crd.BlueprintMask) (domain.BlueprintMask,
 	convertedDogus, err := ConvertMaskDogus(mask.Dogus)
 
 	if err != nil {
-		return domain.BlueprintMask{}, fmt.Errorf("mask mask is invalid: %w", err)
+		return domain.BlueprintMask{}, fmt.Errorf("cannot deserialize blueprint mask: %w", err)
 	}
 	return domain.BlueprintMask{
 		Dogus: convertedDogus,
