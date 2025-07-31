@@ -11,7 +11,7 @@ import (
 
 var configKeySeparator = "/"
 
-func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.Blueprint, error) {
+func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.BlueprintManifest, error) {
 	var errorList []error
 	convertedDogus, doguError := ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, componentError := ConvertToComponentDTOs(blueprint.Components)
@@ -19,17 +19,17 @@ func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.Blueprint, 
 
 	err := errors.Join(errorList...)
 	if err != nil {
-		return crd.Blueprint{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
+		return crd.BlueprintManifest{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
 	}
 
-	return crd.Blueprint{
+	return crd.BlueprintManifest{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config:     ConvertToConfigDTO(blueprint.Config),
 	}, nil
 }
 
-func ConvertToBlueprintDomain(blueprint crd.Blueprint) (domain.Blueprint, error) {
+func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint, error) {
 	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := ConvertComponents(blueprint.Components)
 
@@ -47,7 +47,7 @@ func ConvertToBlueprintDomain(blueprint crd.Blueprint) (domain.Blueprint, error)
 	}, nil
 }
 
-func ConvertToEffectiveBlueprintDomain(blueprint crd.Blueprint) (domain.EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDomain(blueprint crd.BlueprintManifest) (domain.EffectiveBlueprint, error) {
 	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := ConvertComponents(blueprint.Components)
 

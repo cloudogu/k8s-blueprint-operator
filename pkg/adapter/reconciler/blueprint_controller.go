@@ -92,6 +92,6 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(options).
-		For(&bpv2.BlueprintCR{}).
+		For(&bpv2.Blueprint{}).
 		Complete(r)
 }

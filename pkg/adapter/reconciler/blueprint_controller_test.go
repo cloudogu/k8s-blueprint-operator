@@ -72,7 +72,7 @@ func createScheme(t *testing.T) *runtime.Scheme {
 	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v1")
 	assert.NoError(t, err)
 
-	scheme.AddKnownTypes(gv, &bpv2.BlueprintCR{})
+	scheme.AddKnownTypes(gv, &bpv2.Blueprint{})
 	return scheme
 }
 

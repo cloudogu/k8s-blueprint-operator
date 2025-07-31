@@ -127,7 +127,7 @@ func TestConvertToEffectiveBlueprint(t *testing.T) {
 	}
 
 	require.NoError(t, err)
-	assert.Equal(t, crd.Blueprint{
+	assert.Equal(t, crd.BlueprintManifest{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config: crd.Config{
@@ -189,7 +189,7 @@ func TestConvertToEffectiveBlueprintV1(t *testing.T) {
 		{Name: "k8s-testing/component4", Version: version1_2_3_3.Raw, Absent: false},
 	}
 
-	dto := crd.Blueprint{
+	dto := crd.BlueprintManifest{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
 		Config: crd.Config{

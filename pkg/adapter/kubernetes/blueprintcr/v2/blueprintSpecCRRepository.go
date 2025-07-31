@@ -114,7 +114,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	updatedBlueprint := &v2.BlueprintCR{
+	updatedBlueprint := &v2.Blueprint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              spec.Id,
 			ResourceVersion:   persistenceContext.resourceVersion,
@@ -144,7 +144,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	return nil
 }
 
-func setPersistenceContext(blueprintCR *v2.BlueprintCR, spec *domain.BlueprintSpec) {
+func setPersistenceContext(blueprintCR *v2.Blueprint, spec *domain.BlueprintSpec) {
 	if spec.PersistenceContext == nil {
 		spec.PersistenceContext = make(map[string]interface{}, 1)
 	}
@@ -174,7 +174,7 @@ func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blu
 	}
 }
 
-func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v2.BlueprintCR, events []domain.Event) {
+func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v2.Blueprint, events []domain.Event) {
 	for _, event := range events {
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, event.Name(), event.Message())
 	}

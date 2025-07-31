@@ -31,11 +31,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
-		cr := &bpv2.BlueprintCR{
+		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				Blueprint:                bpv2.Blueprint{},
+				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            bpv2.BlueprintMask{},
 				AllowDoguNamespaceSwitch: true,
 				IgnoreDoguHealth:         true,
@@ -69,11 +69,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 
-		cr := &bpv2.BlueprintCR{
+		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				Blueprint: bpv2.Blueprint{
+				Blueprint: bpv2.BlueprintManifest{
 					Dogus: []bpv2.Dogu{
 						{Name: "invalid"},
 					},
@@ -153,7 +153,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
 			Phase: bpv2.StatusPhaseValidated,
-			EffectiveBlueprint: bpv2.Blueprint{
+			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
@@ -162,7 +162,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		}
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return blueprint, nil
 			})
@@ -227,7 +227,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
 			Phase: bpv2.StatusPhaseValidated,
-			EffectiveBlueprint: bpv2.Blueprint{
+			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
@@ -241,7 +241,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		)
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -270,7 +270,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
 			Phase: bpv2.StatusPhaseValidated,
-			EffectiveBlueprint: bpv2.Blueprint{
+			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
@@ -280,7 +280,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		expectedError := fmt.Errorf("test-error")
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -312,7 +312,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.BlueprintCR, options metav1.UpdateOptions) (*bpv2.BlueprintCR, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
 				// assert.Equal(t, &expected, blueprint)
 				blueprint.ResourceVersion = "newVersion"
 				return blueprint, nil
