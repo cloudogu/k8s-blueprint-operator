@@ -1,7 +1,6 @@
 package config
 
 import (
-	"fmt"
 	"github.com/cloudogu/cesapp-lib/core"
 	"os"
 	"testing"
@@ -269,7 +268,7 @@ func TestGetLogLevel(t *testing.T) {
 				}
 			}
 			got, err := GetLogLevel()
-			if !tt.wantErr(t, err, fmt.Sprintf("GetLogLevel()")) {
+			if !tt.wantErr(t, err, "GetLogLevel()") {
 				return
 			}
 			assert.Equalf(t, tt.want, got, "GetLogLevel()")

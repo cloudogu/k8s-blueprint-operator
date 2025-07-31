@@ -141,13 +141,8 @@ func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
 	var errorList []error
 
 	for _, sensitiveKey := range sensitiveKeys {
-		//TODO: check if this mapping is still necessary
-		keyToSearch := common.DoguConfigKey{
-			DoguName: sensitiveKey.DoguName,
-			Key:      sensitiveKey.Key,
-		}
-		if slices.Contains(normalKeys, keyToSearch) {
-			errorList = append(errorList, fmt.Errorf("dogu config key %q of dogu %q cannot be in normal and sensitive configuration at the same time", keyToSearch.Key, keyToSearch.DoguName))
+		if slices.Contains(normalKeys, sensitiveKey) {
+			errorList = append(errorList, fmt.Errorf("dogu config key %q of dogu %q cannot be in normal and sensitive configuration at the same time", sensitiveKey.Key, sensitiveKey.DoguName))
 		}
 	}
 	return errors.Join(errorList...)

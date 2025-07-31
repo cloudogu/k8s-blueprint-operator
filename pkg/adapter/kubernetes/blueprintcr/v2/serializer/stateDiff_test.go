@@ -426,8 +426,6 @@ func TestConvertToDomainModel(t *testing.T) {
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
-					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},

@@ -206,9 +206,10 @@ func applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff)
 
 	for _, diff := range diffs {
 		var err error
-		if diff.NeededAction == domain.ConfigActionSet {
+		switch diff.NeededAction {
+		case domain.ConfigActionSet:
 			updatedEntries, err = updatedEntries.Set(diff.Key.Key, config.Value(diff.Expected.Value))
-		} else if diff.NeededAction == domain.ConfigActionRemove {
+		case domain.ConfigActionRemove:
 			updatedEntries = updatedEntries.Delete(diff.Key.Key)
 		}
 
