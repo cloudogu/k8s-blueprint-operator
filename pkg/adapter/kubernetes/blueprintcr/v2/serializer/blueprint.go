@@ -3,13 +3,9 @@ package serializer
 import (
 	"errors"
 	"fmt"
-	"strings"
-
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
-
-var configKeySeparator = "/"
 
 func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.BlueprintManifest, error) {
 	var errorList []error
@@ -71,28 +67,4 @@ func ConvertToBlueprintMaskDomain(mask crd.BlueprintMask) (domain.BlueprintMask,
 	return domain.BlueprintMask{
 		Dogus: convertedDogus,
 	}, nil
-}
-
-func widenMap(currentMap map[string]string) map[string]interface{} {
-	newMap := map[string]interface{}{}
-	for key, val := range currentMap {
-		keys := strings.Split(key, configKeySeparator)
-		setKey(keys, val, newMap)
-	}
-	return newMap
-}
-
-func setKey(keys []string, value string, initialMap map[string]interface{}) {
-	currentMap := initialMap
-	length := len(keys)
-	for i, key := range keys {
-		if i == length-1 {
-			currentMap[key] = value
-			break
-		}
-		if currentMap[key] == nil {
-			currentMap[key] = map[string]interface{}{}
-		}
-		currentMap, _ = currentMap[key].(map[string]interface{})
-	}
 }
