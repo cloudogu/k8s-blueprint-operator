@@ -360,6 +360,14 @@ func TestBlueprintSpec_MarkInvalid(t *testing.T) {
 	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
 }
 
+func TestBlueprintSpec_MissingConfigReferences(t *testing.T) {
+	blueprint := BlueprintSpec{}
+	blueprint.MissingConfigReferences(assert.AnError)
+	require.Equal(t, 1, len(blueprint.Events))
+	assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
+	assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+}
+
 func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	// not every single case is tested here as this is a rather coarse-grained function
 	// have a look at the tests for the more specialized functions used in the command, to see all possible combinations of diffs.

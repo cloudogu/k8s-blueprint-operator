@@ -135,6 +135,14 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
+			name: "config references missing",
+			event: MissingConfigReferencesEvent{
+				err: assert.AnError,
+			},
+			expectedName:    "MissingConfigReferences",
+			expectedMessage: assert.AnError.Error(),
+		},
+		{
 			name: "sensitive dogu config diff determined",
 			event: SensitiveDoguConfigDiffDeterminedEvent{
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{

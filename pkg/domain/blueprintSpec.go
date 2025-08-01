@@ -169,16 +169,6 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 	}
 }
 
-func (spec *BlueprintSpec) MissingConfigReferences(error error) {
-	if error != nil {
-		err := &InvalidBlueprintError{
-			WrappedError: error,
-			Message:      "blueprint spec is invalid",
-		}
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{err})
-	}
-}
-
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	switch spec.Status {
 	case StatusPhaseEffectiveBlueprintGenerated:
@@ -274,6 +264,11 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 func (spec *BlueprintSpec) MarkInvalid(err error) {
 	spec.Status = StatusPhaseInvalid
 	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+}
+
+// MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
+func (spec *BlueprintSpec) MissingConfigReferences(error error) {
+	spec.Events = append(spec.Events, MissingConfigReferencesEvent{error})
 }
 
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.
