@@ -73,7 +73,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguConfigRepo := adapterconfigk8s.NewDoguConfigRepository(*k8sDoguConfigRepo)
 	k8sSensitiveDoguConfigRepo := repository.NewSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	sensitiveDoguConfigRepo := adapterconfigk8s.NewSensitiveDoguConfigRepository(*k8sSensitiveDoguConfigRepo)
-	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(nil) //FIXME: add secret client
+	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(ecosystemClientSet.CoreV1().Secrets(namespace))
 	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
