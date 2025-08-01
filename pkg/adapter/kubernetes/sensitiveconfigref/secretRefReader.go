@@ -10,41 +10,17 @@ import (
 	"iter"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	k8sv1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"maps"
-	"slices"
 )
 
 type SecretRefReader struct {
-	secretClient k8sv1.SecretInterface
+	secretClient secretClient
 }
 
 func NewSecretRefReader(secretClient secretClient) *SecretRefReader {
 	return &SecretRefReader{
 		secretClient: secretClient,
 	}
-}
-
-func (reader *SecretRefReader) ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error) {
-	secretsByName, secretsError := reader.loadNeededSecrets(ctx, slices.Values(refs))
-
-	var notFoundErr *domainservice.NotFoundError
-
-	if errors.As(secretsError, &notFoundErr) {
-		// if any secret was not found, we can just return false because at least one does not exist
-		return false, nil
-	} else if secretsError != nil {
-		// if it was another error, there could be connection problems, which we need to report to the caller
-		return false, secretsError
-	}
-
-	for _, ref := range refs {
-		if !reader.existKeyInSecret(secretsByName[ref.SecretName], ref.SecretKey) {
-			return false, nil
-		}
-	}
-
-	return true, nil
 }
 
 func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
@@ -86,19 +62,14 @@ func (reader *SecretRefReader) loadKeysFromSecrets(
 }
 
 func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) (common.SensitiveDoguConfigValue, error) {
-	valueBytes, exists := secret.Data[key]
+	value, exists := secret.StringData[key]
 	if !exists {
 		return "", domainservice.NewNotFoundError(
 			nil,
-			"referenced secret key %q does not exist", key,
+			"referenced key %q in secret %q does not exist", key, secret.Name,
 		)
 	}
-	return common.SensitiveDoguConfigValue(valueBytes), nil
-}
-
-func (reader *SecretRefReader) existKeyInSecret(secret *v1.Secret, key string) bool {
-	_, exists := secret.Data[key]
-	return exists
+	return common.SensitiveDoguConfigValue(value), nil
 }
 
 func (reader *SecretRefReader) loadNeededSecrets(

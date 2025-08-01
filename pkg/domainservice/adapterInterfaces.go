@@ -172,11 +172,6 @@ type SensitiveDoguConfigRepository interface {
 // As sensitive config should not be written directly into the blueprint, only references are used.
 // This way, the blueprint e.g. can securely get committed to git.
 type SensitiveConfigRefReader interface {
-	// ExistAll checks if the given domain.SensitiveValueRef's can be resolved and returns true or otherwise false.
-	// It can throw the following errors:
-	//  - InternalError if any error happens.
-	ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error)
-
 	// GetValues reads all common.SensitiveDoguConfigValue's from the given domain.SensitiveValueRef's by common.SensitiveDoguConfigKey.
 	// It can throw the following errors:
 	//  - NotFoundError if any reference cannot be resolved.

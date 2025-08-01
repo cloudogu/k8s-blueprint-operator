@@ -26,63 +26,6 @@ func (_m *mockSensitiveConfigRefReader) EXPECT() *mockSensitiveConfigRefReader_E
 	return &mockSensitiveConfigRefReader_Expecter{mock: &_m.Mock}
 }
 
-// ExistAll provides a mock function with given fields: ctx, refs
-func (_m *mockSensitiveConfigRefReader) ExistAll(ctx context.Context, refs []domain.SensitiveValueRef) (bool, error) {
-	ret := _m.Called(ctx, refs)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ExistAll")
-	}
-
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []domain.SensitiveValueRef) (bool, error)); ok {
-		return rf(ctx, refs)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []domain.SensitiveValueRef) bool); ok {
-		r0 = rf(ctx, refs)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []domain.SensitiveValueRef) error); ok {
-		r1 = rf(ctx, refs)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockSensitiveConfigRefReader_ExistAll_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExistAll'
-type mockSensitiveConfigRefReader_ExistAll_Call struct {
-	*mock.Call
-}
-
-// ExistAll is a helper method to define mock.On call
-//   - ctx context.Context
-//   - refs []domain.SensitiveValueRef
-func (_e *mockSensitiveConfigRefReader_Expecter) ExistAll(ctx interface{}, refs interface{}) *mockSensitiveConfigRefReader_ExistAll_Call {
-	return &mockSensitiveConfigRefReader_ExistAll_Call{Call: _e.mock.On("ExistAll", ctx, refs)}
-}
-
-func (_c *mockSensitiveConfigRefReader_ExistAll_Call) Run(run func(ctx context.Context, refs []domain.SensitiveValueRef)) *mockSensitiveConfigRefReader_ExistAll_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]domain.SensitiveValueRef))
-	})
-	return _c
-}
-
-func (_c *mockSensitiveConfigRefReader_ExistAll_Call) Return(_a0 bool, _a1 error) *mockSensitiveConfigRefReader_ExistAll_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockSensitiveConfigRefReader_ExistAll_Call) RunAndReturn(run func(context.Context, []domain.SensitiveValueRef) (bool, error)) *mockSensitiveConfigRefReader_ExistAll_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetValues provides a mock function with given fields: ctx, refs
 func (_m *mockSensitiveConfigRefReader) GetValues(ctx context.Context, refs map[common.DoguConfigKey]domain.SensitiveValueRef) (map[common.DoguConfigKey]config.Value, error) {
 	ret := _m.Called(ctx, refs)
