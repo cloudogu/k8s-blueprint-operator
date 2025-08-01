@@ -176,28 +176,24 @@ func TestConvertToDoguDTOs(t *testing.T) {
 	bodySize := resource.MustParse("100M")
 	volumeSize := resource.MustParse("1G")
 	tests := []struct {
-		name    string
-		args    args
-		want    []bpv2.Dogu
-		wantErr assert.ErrorAssertionFunc
+		name string
+		args args
+		want []bpv2.Dogu
 	}{
 		{
-			name:    "nil",
-			args:    args{},
-			want:    []bpv2.Dogu{},
-			wantErr: assert.NoError,
+			name: "nil",
+			args: args{},
+			want: []bpv2.Dogu{},
 		},
 		{
-			name:    "empty list",
-			args:    args{dogus: []domain.Dogu{}},
-			want:    []bpv2.Dogu{},
-			wantErr: assert.NoError,
+			name: "empty list",
+			args: args{dogus: []domain.Dogu{}},
+			want: []bpv2.Dogu{},
 		},
 		{
-			name:    "ok",
-			args:    args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"}}}},
-			want:    []bpv2.Dogu{{Name: "official/postgres", Version: version3211.Raw, Absent: false, PlatformConfig: bpv2.PlatformConfig{ResourceConfig: bpv2.ResourceConfig{MinVolumeSize: "1G"}, ReverseProxyConfig: bpv2.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"}}}},
-			wantErr: assert.NoError,
+			name: "ok",
+			args: args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent, MinVolumeSize: volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &bodySize, RewriteTarget: "/", AdditionalConfig: "additional"}}}},
+			want: []bpv2.Dogu{{Name: "official/postgres", Version: version3211.Raw, Absent: false, PlatformConfig: bpv2.PlatformConfig{ResourceConfig: bpv2.ResourceConfig{MinVolumeSize: "1G"}, ReverseProxyConfig: bpv2.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"}}}},
 		},
 		{
 			name: "additionalMountsConfig",
@@ -244,7 +240,6 @@ func TestConvertToDoguDTOs(t *testing.T) {
 						},
 					},
 				}}},
-			wantErr: assert.NoError,
 		},
 		{
 			name: "should return nil slice if dogu contains an nil slice",
@@ -265,15 +260,11 @@ func TestConvertToDoguDTOs(t *testing.T) {
 					ReverseProxyConfig:     bpv2.ReverseProxyConfig{MaxBodySize: "100M", RewriteTarget: "/", AdditionalConfig: "additional"},
 					AdditionalMountsConfig: nil,
 				}}},
-			wantErr: assert.NoError,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConvertToDoguDTOs(tt.args.dogus)
-			if !tt.wantErr(t, err, fmt.Sprintf("ConvertToDoguDTOs(%v)", tt.args.dogus)) {
-				return
-			}
+			got := ConvertToDoguDTOs(tt.args.dogus)
 			assert.Equalf(t, tt.want, got, "ConvertToDoguDTOs(%v)", tt.args.dogus)
 		})
 	}

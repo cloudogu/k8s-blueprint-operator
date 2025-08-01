@@ -117,8 +117,7 @@ func convertAdditionalMountsFromDTOToDomain(mounts []bpv2.AdditionalMount) []eco
 	return result
 }
 
-func ConvertToDoguDTOs(dogus []domain.Dogu) ([]bpv2.Dogu, error) {
-	var errorList []error
+func ConvertToDoguDTOs(dogus []domain.Dogu) []bpv2.Dogu {
 	converted := util.Map(dogus, func(dogu domain.Dogu) bpv2.Dogu {
 		return bpv2.Dogu{
 			Name:           dogu.Name.String(),
@@ -127,8 +126,7 @@ func ConvertToDoguDTOs(dogus []domain.Dogu) ([]bpv2.Dogu, error) {
 			PlatformConfig: convertPlatformConfigDTO(dogu),
 		}
 	})
-	//TODO: remove error return value if there is no error needed after refactoring
-	return converted, errors.Join(errorList...)
+	return converted
 }
 
 func convertPlatformConfigDTO(dogu domain.Dogu) bpv2.PlatformConfig {

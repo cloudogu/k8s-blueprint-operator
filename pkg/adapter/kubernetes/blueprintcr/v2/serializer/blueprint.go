@@ -9,9 +9,9 @@ import (
 
 func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.BlueprintManifest, error) {
 	var errorList []error
-	convertedDogus, doguError := ConvertToDoguDTOs(blueprint.Dogus)
+	convertedDogus := ConvertToDoguDTOs(blueprint.Dogus)
 	convertedComponents, componentError := ConvertToComponentDTOs(blueprint.Components)
-	errorList = append(errorList, doguError, componentError)
+	errorList = append(errorList, componentError)
 
 	err := errors.Join(errorList...)
 	if err != nil {
