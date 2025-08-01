@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -156,7 +157,7 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			componentInstallation.UpdateDeployConfig(componentDiff.Expected.DeployConfig)
 		case domain.ActionSwitchComponentNamespace:
 			logger.Info("switch distribution namespace")
-			return fmt.Errorf(noDistributionNamespaceSwitchExplanationText)
+			return errors.New(noDistributionNamespaceSwitchExplanationText)
 		case domain.ActionDowngrade:
 			logger.Info("downgrade component")
 			return fmt.Errorf(noDowngradesExplanationTextFmt, "components", "components")

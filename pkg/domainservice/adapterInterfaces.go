@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
-
-	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
@@ -167,6 +166,23 @@ type DoguConfigRepository interface {
 // SensitiveDoguConfigRepository to get and update sensitive dogu config. The config is always handled as a whole.
 type SensitiveDoguConfigRepository interface {
 	DoguConfigRepository //interfaces are the same yet. Don't hesitate to split them if they diverge
+}
+
+// SensitiveConfigRefReader resolves given domain.SensitiveValueRef's and loads the referenced values.
+// As sensitive config should not be written directly into the blueprint, only references are used.
+// This way, the blueprint e.g. can securely get committed to git.
+type SensitiveConfigRefReader interface {
+	// GetValues reads all common.SensitiveDoguConfigValue's from the given domain.SensitiveValueRef's by common.SensitiveDoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+	) (
+		map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+		error,
+	)
 }
 
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
