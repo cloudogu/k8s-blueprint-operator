@@ -778,6 +778,9 @@ func TestConvertToDomainModel(t *testing.T) {
 			slices.SortFunc(got.DoguDiffs, func(a, b domain.DoguDiff) int {
 				return cmp.Compare(a.DoguName, b.DoguName)
 			})
+			slices.SortFunc(got.ComponentDiffs, func(a, b domain.ComponentDiff) int {
+				return cmp.Compare(a.Name, b.Name)
+			})
 			assert.Equalf(t, tt.want, got, "ConvertToStateDiffDomain(%v)", tt.dto)
 		})
 	}

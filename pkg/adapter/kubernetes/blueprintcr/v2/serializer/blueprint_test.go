@@ -266,3 +266,78 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, expected, blueprint)
 }
+
+func TestConvertToBlueprintDomain(t *testing.T) {
+	t.Run("convert empty", func(t *testing.T) {
+		given := crd.BlueprintManifest{}
+		converted, err := ConvertToBlueprintDomain(given)
+
+		require.NoError(t, err)
+		assert.Equal(t, domain.Blueprint{}, converted)
+	})
+
+	t.Run("error converting", func(t *testing.T) {
+		given := crd.BlueprintManifest{
+			Dogus: []crd.Dogu{
+				{
+					Name:    "official/redmine",
+					Version: "unparsable",
+				},
+			},
+		}
+		_, err := ConvertToBlueprintDomain(given)
+
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot deserialize blueprint")
+	})
+
+	t.Run("convert dogu", func(t *testing.T) {
+		given := crd.BlueprintManifest{
+			Dogus: []crd.Dogu{
+				{
+					Name:    "official/redmine",
+					Version: version1_2_3_3.Raw,
+				},
+			},
+		}
+		converted, err := ConvertToBlueprintDomain(given)
+
+		require.NoError(t, err)
+		assert.Equal(t, domain.Blueprint{
+			Dogus: []domain.Dogu{
+				{
+					Name:        cescommons.QualifiedName{Namespace: "official", SimpleName: "redmine"},
+					Version:     version1_2_3_3,
+					TargetState: domain.TargetStatePresent,
+				},
+			},
+		}, converted)
+	})
+
+	t.Run("convert component", func(t *testing.T) {
+		given := crd.BlueprintManifest{
+			Components: []crd.Component{
+				{
+					Name:    "k8s/loki",
+					Version: compVersion1233.Original(),
+				},
+			},
+		}
+		converted, err := ConvertToBlueprintDomain(given)
+
+		require.NoError(t, err)
+		assert.Equal(t, domain.Blueprint{
+			Components: []domain.Component{
+				{
+					Name: common.QualifiedComponentName{
+						Namespace:  "k8s",
+						SimpleName: "loki",
+					},
+					Version:     compVersion1233,
+					TargetState: domain.TargetStatePresent,
+				},
+			},
+		}, converted)
+	})
+
+}
