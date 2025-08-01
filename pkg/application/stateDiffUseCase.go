@@ -10,6 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced sensitive config"
+
 type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
@@ -64,7 +66,13 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		ctx, blueprintSpec.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
 	)
 	if err != nil {
-		return fmt.Errorf("could not load referenced sensitive config: %w", err)
+		err = fmt.Errorf("%s: %w", REFERENCED_CONFIG_NOT_FOUND, err)
+		blueprintSpec.MissingConfigReferences(err)
+		updateError := useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+		if updateError != nil {
+			return errors.Join(updateError, err)
+		}
+		return err
 	}
 
 	logger.Info("collect ecosystem state for state diff")

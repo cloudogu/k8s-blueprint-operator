@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
-
-	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )

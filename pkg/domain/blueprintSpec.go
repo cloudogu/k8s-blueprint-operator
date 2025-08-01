@@ -169,6 +169,16 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 	}
 }
 
+func (spec *BlueprintSpec) MissingConfigReferences(error error) {
+	if error != nil {
+		err := &InvalidBlueprintError{
+			WrappedError: error,
+			Message:      "blueprint spec is invalid",
+		}
+		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{err})
+	}
+}
+
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	switch spec.Status {
 	case StatusPhaseEffectiveBlueprintGenerated:

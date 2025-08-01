@@ -3,9 +3,11 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -66,7 +68,13 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 	case errors.As(err, &notFoundError):
-		errLogger.Info("Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+		if strings.Contains(err.Error(), application.REFERENCED_CONFIG_NOT_FOUND) {
+			// retry in this case because maybe the user will create the secret in a few seconds.
+			// we want to be declarative, so our API should not care about the order
+			errLogger.Error(err, "Referenced config not found. Retry later")
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		errLogger.Error(err, "Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
 		return ctrl.Result{}, nil
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")

@@ -51,6 +51,7 @@ func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.Se
 	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, maps.Values(refs))
 	sensitiveConfig, keyErrors := reader.loadKeysFromSecrets(refs, secretsByName)
 
+	// combine errors so that the user gets info about not found secrets and missing keys in existing secrets
 	err := errors.Join(secretErrors, keyErrors)
 	if err != nil {
 		err = fmt.Errorf("could not load sensitive config via references: %w", err)
@@ -92,8 +93,6 @@ func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) 
 			"referenced secret key %q does not exist", key,
 		)
 	}
-	//TODO: check if the data is base64 encoded
-	//decodeString, err := base64.StdEncoding.DecodeString(secretData)
 	return common.SensitiveDoguConfigValue(valueBytes), nil
 }
 
