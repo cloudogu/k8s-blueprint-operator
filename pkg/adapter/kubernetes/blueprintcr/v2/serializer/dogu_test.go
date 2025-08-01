@@ -169,6 +169,64 @@ func TestConvertDogus(t *testing.T) {
 	}
 }
 
+func TestConvertMaskDogus(t *testing.T) {
+	type args struct {
+		dogus []bpv2.MaskDogu
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []domain.MaskDogu
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "nil",
+			args:    args{dogus: nil},
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "empty list",
+			args:    args{dogus: []bpv2.MaskDogu{}},
+			want:    nil,
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "normal dogu",
+			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Version: version3211.Raw, Absent: false}}},
+			want:    []domain.MaskDogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, TargetState: domain.TargetStatePresent}},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "absent dogu",
+			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Absent: true}}},
+			want:    []domain.MaskDogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, TargetState: domain.TargetStateAbsent}},
+			wantErr: assert.NoError,
+		},
+		{
+			name:    "no namespace",
+			args:    args{dogus: []bpv2.MaskDogu{{Name: "postgres", Version: version3211.Raw}}},
+			want:    nil,
+			wantErr: assert.Error,
+		},
+		{
+			name:    "unparsable version",
+			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Version: "1."}}},
+			want:    nil,
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ConvertMaskDogus(tt.args.dogus)
+			if !tt.wantErr(t, err, fmt.Sprintf("ConvertMaskDogus(%v)", tt.args.dogus)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "ConvertMaskDogus(%v)", tt.args.dogus)
+		})
+	}
+}
+
 func TestConvertToDoguDTOs(t *testing.T) {
 	type args struct {
 		dogus []domain.Dogu
