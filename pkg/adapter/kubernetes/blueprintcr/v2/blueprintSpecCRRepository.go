@@ -109,10 +109,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		return err
 	}
 
-	effectiveBlueprint, err := serializerv2.ConvertToBlueprintDTO(spec.EffectiveBlueprint)
-	if err != nil {
-		return err
-	}
+	effectiveBlueprint := serializerv2.ConvertToBlueprintDTO(spec.EffectiveBlueprint)
 
 	updatedBlueprint := &v2.Blueprint{
 		ObjectMeta: metav1.ObjectMeta{

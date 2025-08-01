@@ -7,22 +7,12 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
-func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) (crd.BlueprintManifest, error) {
-	var errorList []error
-	convertedDogus := ConvertToDoguDTOs(blueprint.Dogus)
-	convertedComponents, componentError := ConvertToComponentDTOs(blueprint.Components)
-	errorList = append(errorList, componentError)
-
-	err := errors.Join(errorList...)
-	if err != nil {
-		return crd.BlueprintManifest{}, fmt.Errorf("cannot convert blueprintMask to BlueprintMaskV1 DTO: %w", err)
-	}
-
+func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) crd.BlueprintManifest {
 	return crd.BlueprintManifest{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
+		Dogus:      ConvertToDoguDTOs(blueprint.Dogus),
+		Components: ConvertToComponentDTOs(blueprint.Components),
 		Config:     ConvertToConfigDTO(blueprint.Config),
-	}, nil
+	}
 }
 
 func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint, error) {
@@ -49,7 +39,7 @@ func ConvertToEffectiveBlueprintDomain(blueprint crd.BlueprintManifest) (domain.
 
 	err := errors.Join(doguErr, compErr)
 	if err != nil {
-		return domain.EffectiveBlueprint{}, fmt.Errorf("syntax of blueprintV2 is not correct: %w", err)
+		return domain.EffectiveBlueprint{}, fmt.Errorf("cannot deserialize effective blueprint: %w", err)
 	}
 	return domain.EffectiveBlueprint{
 		Dogus:      convertedDogus,

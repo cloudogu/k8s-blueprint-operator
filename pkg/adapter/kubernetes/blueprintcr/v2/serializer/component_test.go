@@ -84,36 +84,29 @@ func TestConvertToComponentDTOs(t *testing.T) {
 		components []domain.Component
 	}
 	tests := []struct {
-		name    string
-		args    args
-		want    []bpv2.Component
-		wantErr assert.ErrorAssertionFunc
+		name string
+		args args
+		want []bpv2.Component
 	}{
 		{
-			name:    "nil",
-			args:    args{},
-			want:    []bpv2.Component{},
-			wantErr: assert.NoError,
+			name: "nil",
+			args: args{},
+			want: []bpv2.Component{},
 		},
 		{
-			name:    "empty list",
-			args:    args{components: []domain.Component{}},
-			want:    []bpv2.Component{},
-			wantErr: assert.NoError,
+			name: "empty list",
+			args: args{components: []domain.Component{}},
+			want: []bpv2.Component{},
 		},
 		{
-			name:    "ok",
-			args:    args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
-			want:    []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false}},
-			wantErr: assert.NoError,
+			name: "ok",
+			args: args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
+			want: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConvertToComponentDTOs(tt.args.components)
-			if !tt.wantErr(t, err, fmt.Sprintf("ConvertToComponentDTOs(%v)", tt.args.components)) {
-				return
-			}
+			got := ConvertToComponentDTOs(tt.args.components)
 			assert.Equalf(t, tt.want, got, "ConvertToComponentDTOs(%v)", tt.args.components)
 		})
 	}
