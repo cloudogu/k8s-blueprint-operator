@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
@@ -161,6 +162,25 @@ func Test_decideRequeueForError(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
 		assert.Contains(t, logSinkMock.output, "0: Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+	})
+	t.Run("NotFoundError, should retry if referenced config is missing", func(t *testing.T) {
+		// given
+		logSinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logSinkMock)
+
+		intermediateErr := &domainservice.NotFoundError{
+			WrappedError: assert.AnError,
+			Message:      "secret xyz does not exist",
+		}
+		errorChain := fmt.Errorf("%s: %w", application.REFERENCED_CONFIG_NOT_FOUND, intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
+		assert.Contains(t, logSinkMock.output, "0: Referenced config not found. Retry later")
 	})
 	t.Run("should catch wrapped InvalidBlueprintError, issue a log line and do not requeue", func(t *testing.T) {
 		// given
