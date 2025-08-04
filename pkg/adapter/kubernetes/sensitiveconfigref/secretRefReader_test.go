@@ -19,7 +19,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "postgres_credentials",
 		},
-		StringData: map[string]string{"username": "user1", "password": "123456"},
+		Data: map[string][]byte{"username": []byte("user1"), "password": []byte("123456")},
 	}
 	redmineCredentialsUsernameKey = common.SensitiveDoguConfigKey{
 		DoguName: "redmine",
@@ -34,7 +34,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ldap_credentials",
 		},
-		StringData: map[string]string{"username": "user2", "password": "789123"},
+		Data: map[string][]byte{"username": []byte("user2"), "password": []byte("789123")},
 	}
 	ldapCredentialsUsernameKey = common.SensitiveDoguConfigKey{
 		DoguName: "ldap",

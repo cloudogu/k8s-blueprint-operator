@@ -62,7 +62,8 @@ func (reader *SecretRefReader) loadKeysFromSecrets(
 }
 
 func (reader *SecretRefReader) loadKeyFromSecret(secret *v1.Secret, key string) (common.SensitiveDoguConfigValue, error) {
-	value, exists := secret.StringData[key]
+	// do not use the StringData field, it is a write-only field in K8s
+	value, exists := secret.Data[key]
 	if !exists {
 		return "", domainservice.NewNotFoundError(
 			nil,
