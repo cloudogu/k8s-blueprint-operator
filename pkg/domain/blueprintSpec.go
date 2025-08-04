@@ -268,7 +268,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 
 // MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
 func (spec *BlueprintSpec) MissingConfigReferences(error error) {
-	spec.Events = append(spec.Events, MissingConfigReferencesEvent{error})
+	spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
 }
 
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.

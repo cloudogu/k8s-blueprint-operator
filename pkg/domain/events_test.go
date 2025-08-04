@@ -136,9 +136,9 @@ func TestEvents(t *testing.T) {
 		},
 		{
 			name: "config references missing",
-			event: MissingConfigReferencesEvent{
-				err: assert.AnError,
-			},
+			event: NewMissingConfigReferencesEvent(
+				assert.AnError,
+			),
 			expectedName:    "MissingConfigReferences",
 			expectedMessage: assert.AnError.Error(),
 		},
