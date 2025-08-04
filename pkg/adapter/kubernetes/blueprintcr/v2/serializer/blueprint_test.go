@@ -1,6 +1,7 @@
 package serializer
 
 import (
+	"fmt"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"testing"
 
@@ -340,4 +341,71 @@ func TestConvertToBlueprintDomain(t *testing.T) {
 		}, converted)
 	})
 
+}
+
+func TestConvertToBlueprintMaskDomain(t *testing.T) {
+	type args struct {
+		mask crd.BlueprintMask
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    domain.BlueprintMask
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "empty",
+			args:    args{mask: crd.BlueprintMask{}},
+			want:    domain.BlueprintMask{},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "will convert a MaskDogu",
+			args: args{mask: crd.BlueprintMask{
+				Dogus: []crd.MaskDogu{
+					{
+						Name:    "official/ldap",
+						Version: version1_2_3_3.Raw,
+					},
+				},
+			}},
+			want: domain.BlueprintMask{
+				Dogus: []domain.MaskDogu{
+					{
+						Name: cescommons.QualifiedName{
+							Namespace:  "official",
+							SimpleName: "ldap",
+						},
+						Version:     version1_2_3_3,
+						TargetState: domain.TargetStatePresent,
+					},
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "error if invalid mask",
+			args: args{mask: crd.BlueprintMask{
+				Dogus: []crd.MaskDogu{
+					{
+						Name:    "invalid name",
+						Version: version1_2_3_3.Raw,
+					},
+				},
+			}},
+			want: domain.BlueprintMask{},
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorContains(t, err, "cannot deserialize blueprint mask", i)
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ConvertToBlueprintMaskDomain(tt.args.mask)
+			if !tt.wantErr(t, err, fmt.Sprintf("ConvertToBlueprintMaskDomain(%v)", tt.args.mask)) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "ConvertToBlueprintMaskDomain(%v)", tt.args.mask)
+		})
+	}
 }

@@ -10,6 +10,11 @@ import (
 )
 
 func convertToSensitiveDoguConfigDTO(config domain.SensitiveDoguConfig) *v2.SensitiveDoguConfig {
+	// empty struct -> nil
+	if len(config.Absent) == 0 && len(config.Present) == 0 {
+		return nil
+	}
+
 	var present []v2.SensitiveConfigEntry
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -46,6 +51,7 @@ func convertToSensitiveDoguConfigDomain(doguName string, doguConfig *v2.Sensitiv
 	if doguConfig == nil {
 		return domain.SensitiveDoguConfig{}
 	}
+
 	var present map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef
 	// we check for empty values to make good use of default values
 	// this makes testing easier

@@ -59,6 +59,11 @@ func convertToCombinedDoguConfigDomain(doguName string, config v2.CombinedDoguCo
 }
 
 func convertToDoguConfigDTO(config domain.DoguConfig) *v2.DoguConfig {
+	// empty struct -> nil
+	if len(config.Present) == 0 && len(config.Absent) == 0 {
+		return nil
+	}
+
 	var present map[string]string
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -86,6 +91,10 @@ func convertToDoguConfigDTO(config domain.DoguConfig) *v2.DoguConfig {
 }
 
 func convertToDoguConfigDomain(doguName string, config *v2.DoguConfig) domain.DoguConfig {
+	if config == nil {
+		return domain.DoguConfig{}
+	}
+
 	var present map[common.DoguConfigKey]common.DoguConfigValue
 	// we check for empty values to make good use of default values
 	// this makes testing easier

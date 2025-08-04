@@ -21,6 +21,7 @@ func ToSerializerAbsentState(domainState domain.TargetState) bool {
 }
 
 //FIXME: remove old TargetState types, we need to change the domain.StateDiff for that
+// we do this in #54968 if these changes on the blueprint CRD got merged, so we do not have to revert everything
 
 // ToID provides common mappings from strings to domain.TargetState, e.g. for dogus.
 var ToID = map[string]domain.TargetState{
@@ -38,13 +39,4 @@ func ToOldDomainTargetState(stateString string) (domain.TargetState, error) {
 		err = fmt.Errorf("unknown target state %q", stateString)
 	}
 	return id, err
-}
-
-// ToSerializerTargetState maps a domain.TargetState to a string or returns an error if this is not possible.
-func ToSerializerTargetState(domainState domain.TargetState) (string, error) {
-	convertedString := domainState.String()
-	if convertedString != "present" && ToID[convertedString] == 0 {
-		return "", fmt.Errorf("unknown target state ID: '%d'", domainState)
-	}
-	return domainState.String(), nil
 }
