@@ -99,8 +99,14 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: string(dogu.Name.SimpleName),
 			Labels: map[string]string{
-				"app":       "ces",
-				"dogu.name": string(dogu.Name.SimpleName),
+				"app":                          "ces",
+				"k8s.cloudogu.com/app":         "ces",
+				"dogu.name":                    string(dogu.Name.SimpleName),
+				"k8s.cloudogu.com/dogu.name":   string(dogu.Name.SimpleName),
+				"app.kubernetes.io/name":       string(dogu.Name.SimpleName),
+				"app.kubernetes.io/version":    dogu.Version.String(),
+				"app.kubernetes.io/part-of":    "ces",
+				"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 			},
 		},
 		Spec: v2.DoguSpec{

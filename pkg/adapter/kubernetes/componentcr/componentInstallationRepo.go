@@ -16,8 +16,6 @@ import (
 )
 
 const (
-	ComponentNameLabelKey               = "k8s.cloudogu.com/component.name"
-	ComponentVersionLabelKey            = "k8s.cloudogu.com/component.version"
 	componentInstallationRepoContextKey = "componentInstallationRepoContext"
 )
 

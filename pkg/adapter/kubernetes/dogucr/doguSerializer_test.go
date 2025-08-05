@@ -257,8 +257,14 @@ func Test_toDoguCR(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
 					Labels: map[string]string{
-						"app":       "ces",
-						"dogu.name": "postgresql",
+						"app":                          "ces",
+						"k8s.cloudogu.com/app":         "ces",
+						"dogu.name":                    "postgresql",
+						"k8s.cloudogu.com/dogu.name":   "postgresql",
+						"app.kubernetes.io/name":       "postgresql",
+						"app.kubernetes.io/version":    version3214.Raw,
+						"app.kubernetes.io/part-of":    "ces",
+						"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 					},
 				},
 				Spec: v2.DoguSpec{
@@ -301,8 +307,14 @@ func Test_toDoguCR(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
 					Labels: map[string]string{
-						"app":       "ces",
-						"dogu.name": "postgresql",
+						"app":                          "ces",
+						"k8s.cloudogu.com/app":         "ces",
+						"dogu.name":                    "postgresql",
+						"k8s.cloudogu.com/dogu.name":   "postgresql",
+						"app.kubernetes.io/name":       "postgresql",
+						"app.kubernetes.io/version":    version3214.Raw,
+						"app.kubernetes.io/part-of":    "ces",
+						"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 					},
 				},
 				Spec: v2.DoguSpec{
@@ -343,8 +355,14 @@ func Test_toDoguCR(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "postgresql",
 					Labels: map[string]string{
-						"app":       "ces",
-						"dogu.name": "postgresql",
+						"app":                          "ces",
+						"k8s.cloudogu.com/app":         "ces",
+						"dogu.name":                    "postgresql",
+						"k8s.cloudogu.com/dogu.name":   "postgresql",
+						"app.kubernetes.io/name":       "postgresql",
+						"app.kubernetes.io/version":    version3214.Raw,
+						"app.kubernetes.io/part-of":    "ces",
+						"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 					},
 				},
 				Spec: v2.DoguSpec{

@@ -275,8 +275,14 @@ func Test_doguInstallationRepo_Create(t *testing.T) {
 			ObjectMeta: metav1.ObjectMeta{
 				Name: string(postgresDoguName.SimpleName),
 				Labels: map[string]string{
-					"app":       "ces",
-					"dogu.name": string(postgresDoguName.SimpleName),
+					"app":                          "ces",
+					"k8s.cloudogu.com/app":         "ces",
+					"dogu.name":                    string(postgresDoguName.SimpleName),
+					"k8s.cloudogu.com/dogu.name":   string(postgresDoguName.SimpleName),
+					"app.kubernetes.io/name":       string(postgresDoguName.SimpleName),
+					"app.kubernetes.io/version":    version3214.Raw,
+					"app.kubernetes.io/part-of":    "ces",
+					"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 				},
 			},
 			Spec: v2.DoguSpec{

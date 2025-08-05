@@ -16,6 +16,8 @@ import (
 const (
 	deployConfigKeyDeployNamespace = "deployNamespace"
 	deployConfigKeyOverwriteConfig = "overwriteConfig"
+	ComponentNameLabelKey          = "k8s.cloudogu.com/component.name"
+	ComponentVersionLabelKey       = "k8s.cloudogu.com/component.version"
 )
 
 func parseComponentCR(cr *compV1.Component) (*ecosystem.ComponentInstallation, error) {
@@ -76,21 +78,21 @@ func parseDeployConfig(cr *compV1.Component) (ecosystem.DeployConfig, error) {
 	return componentConfig, nil
 }
 
-func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*compV1.Component, error) {
-	deployNamespace, err := toDeployNamespace(componentInstallation.DeployConfig)
+func toComponentCR(component *ecosystem.ComponentInstallation) (*compV1.Component, error) {
+	deployNamespace, err := toDeployNamespace(component.DeployConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	valuesYamlOverwrite, err := toValuesYamlOverwrite(componentInstallation.DeployConfig)
+	valuesYamlOverwrite, err := toValuesYamlOverwrite(component.DeployConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	spec := compV1.ComponentSpec{
-		Namespace: string(componentInstallation.Name.Namespace),
-		Name:      string(componentInstallation.Name.SimpleName),
-		Version:   componentInstallation.ExpectedVersion.String(),
+		Namespace: string(component.Name.Namespace),
+		Name:      string(component.Name.SimpleName),
+		Version:   component.ExpectedVersion.String(),
 	}
 	if deployNamespace != "" {
 		spec.DeployNamespace = deployNamespace
@@ -101,10 +103,18 @@ func toComponentCR(componentInstallation *ecosystem.ComponentInstallation) (*com
 
 	return &compV1.Component{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: string(componentInstallation.Name.SimpleName),
+			Name: string(component.Name.SimpleName),
 			Labels: map[string]string{
-				ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-				ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
+				ComponentNameLabelKey:          string(component.Name.SimpleName),
+				ComponentVersionLabelKey:       component.ExpectedVersion.String(),
+				"app":                          "ces",
+				"k8s.cloudogu.com/app":         "ces",
+				"dogu.name":                    string(component.Name.SimpleName),
+				"k8s.cloudogu.com/dogu.name":   string(component.Name.SimpleName),
+				"app.kubernetes.io/name":       string(component.Name.SimpleName),
+				"app.kubernetes.io/version":    component.ExpectedVersion.String(),
+				"app.kubernetes.io/part-of":    "ces",
+				"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 			},
 		},
 		Spec: spec,

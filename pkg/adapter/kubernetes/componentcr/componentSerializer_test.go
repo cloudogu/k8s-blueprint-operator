@@ -207,8 +207,16 @@ func Test_toComponentCR(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: testComponentNameRaw,
 					Labels: map[string]string{
-						ComponentNameLabelKey:    testComponentNameRaw,
-						ComponentVersionLabelKey: testVersion1.String(),
+						ComponentNameLabelKey:          testComponentNameRaw,
+						ComponentVersionLabelKey:       testVersion1.String(),
+						"app":                          "ces",
+						"k8s.cloudogu.com/app":         "ces",
+						"dogu.name":                    string(testComponentName.SimpleName),
+						"k8s.cloudogu.com/dogu.name":   string(testComponentName.SimpleName),
+						"app.kubernetes.io/name":       string(testComponentName.SimpleName),
+						"app.kubernetes.io/version":    testVersion1.String(),
+						"app.kubernetes.io/part-of":    "ces",
+						"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 					},
 				},
 				Spec: compV1.ComponentSpec{
