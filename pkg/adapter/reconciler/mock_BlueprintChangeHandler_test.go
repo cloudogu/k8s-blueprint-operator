@@ -22,11 +22,11 @@ func (_m *MockBlueprintChangeHandler) EXPECT() *MockBlueprintChangeHandler_Expec
 }
 
 // HandleChange provides a mock function with given fields: ctx, blueprintId
-func (_m *MockBlueprintChangeHandler) HandleChange(ctx context.Context, blueprintId string) error {
+func (_m *MockBlueprintChangeHandler) HandleUntilApplied(ctx context.Context, blueprintId string) error {
 	ret := _m.Called(ctx, blueprintId)
 
 	if len(ret) == 0 {
-		panic("no return value specified for HandleChange")
+		panic("no return value specified for HandleUntilApplied")
 	}
 
 	var r0 error
@@ -39,7 +39,7 @@ func (_m *MockBlueprintChangeHandler) HandleChange(ctx context.Context, blueprin
 	return r0
 }
 
-// MockBlueprintChangeHandler_HandleChange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleChange'
+// MockBlueprintChangeHandler_HandleChange_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleUntilApplied'
 type MockBlueprintChangeHandler_HandleChange_Call struct {
 	*mock.Call
 }
@@ -48,7 +48,7 @@ type MockBlueprintChangeHandler_HandleChange_Call struct {
 //   - ctx context.Context
 //   - blueprintId string
 func (_e *MockBlueprintChangeHandler_Expecter) HandleChange(ctx interface{}, blueprintId interface{}) *MockBlueprintChangeHandler_HandleChange_Call {
-	return &MockBlueprintChangeHandler_HandleChange_Call{Call: _e.mock.On("HandleChange", ctx, blueprintId)}
+	return &MockBlueprintChangeHandler_HandleChange_Call{Call: _e.mock.On("HandleUntilApplied", ctx, blueprintId)}
 }
 
 func (_c *MockBlueprintChangeHandler_HandleChange_Call) Run(run func(ctx context.Context, blueprintId string)) *MockBlueprintChangeHandler_HandleChange_Call {

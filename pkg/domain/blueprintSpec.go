@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
 	"slices"
 )
@@ -20,12 +21,26 @@ type BlueprintSpec struct {
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
 	Status             StatusPhase
+	Conditions         []Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
 	PersistenceContext map[string]interface{}
 	Events             []Event
 }
+
+type Condition = metav1.Condition
+
+var (
+	conditionTypeValid            = "Valid"
+	conditionEcosystemHealthy     = "EcosystemHealthy"
+	conditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
+	conditionConfigApplied        = "ConfigApplied"
+	conditionDogusApplied         = "DogusApplied"
+	conditionComponentsApplied    = "ComponentsApplied"
+	// how do we watch restarts?
+	conditionBlueprintApplied = "BlueprintApplied"
+)
 
 type StatusPhase string
 

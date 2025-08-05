@@ -44,14 +44,14 @@ func NewBlueprintSpecChangeUseCase(
 	}
 }
 
-// HandleChange further executes a blueprint spec given by the blueprintId until it is fully applied or an error occurred.
+// HandleUntilApplied further executes a blueprint spec given by the blueprintId until it is fully applied or an error occurred.
 // Returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write or
 // a domain.InvalidBlueprintError if the blueprint is invalid.
-func (useCase *BlueprintSpecChangeUseCase) HandleChange(givenCtx context.Context, blueprintId string) error {
+func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.Context, blueprintId string) error {
 	logger := log.FromContext(givenCtx).
-		WithName("BlueprintSpecChangeUseCase.HandleChange").
+		WithName("BlueprintSpecChangeUseCase.HandleUntilApplied").
 		WithValues("blueprintId", blueprintId)
 	// set the logger in the context to make use of structured logging
 	// we will give this ctx in every use case, therefore all of them will include the values given here
@@ -65,7 +65,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(givenCtx context.Context
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	logger.Info("handle blueprint") // log with id
+	logger.Info("handle blueprint")
 
 	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
 	if err != nil {
@@ -87,38 +87,50 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(givenCtx context.Context
 	}
 
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
+	for blueprint.Status != domain.StatusPhaseCompleted {
+		err := useCase.handleChange(ctx, blueprint)
+		if err != nil {
+			return err
+		}
+	}
+
+	logger.Info("blueprint successfully applied")
+	return nil
+}
+
+func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
 	case domain.StatusPhaseStateDiffDetermined:
-		return useCase.checkEcosystemHealthUpfront(ctx, blueprintId)
+		return useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprint)
 	case domain.StatusPhaseEcosystemHealthyUpfront:
 		return useCase.preProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
-		return useCase.handleSelfUpgrade(ctx, blueprintId)
+		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseAwaitSelfUpgrade:
-		return useCase.handleSelfUpgrade(ctx, blueprintId)
+		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseSelfUpgradeCompleted:
-		return useCase.applyEcosystemConfig(ctx, blueprintId)
+		return useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
 	case domain.StatusPhaseEcosystemConfigApplied:
-		return useCase.applyBlueprintSpec(ctx, blueprintId)
+		return useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
 	case domain.StatusPhaseApplyEcosystemConfigFailed:
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseBlueprintApplied:
-		return useCase.triggerDoguRestarts(ctx, blueprintId)
+		return useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprint)
 	case domain.StatusPhaseRestartsTriggered:
-		return useCase.checkEcosystemHealthAfterwards(ctx, blueprintId)
+		return useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprint)
 	case domain.StatusPhaseBlueprintApplicationFailed:
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemHealthyAfterwards:
 		// deactivate maintenance mode and set status to completed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
 		// deactivate maintenance mode and set status to failed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
@@ -128,17 +140,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(givenCtx context.Context
 	}
 }
 
-func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
-	err := useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
 func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	err := useCase.applyUseCase.PreProcessBlueprintApplication(ctx, blueprintSpec.Id)
+	err := useCase.applyUseCase.PreProcessBlueprintApplication(ctx, blueprintSpec)
 	if err != nil {
 		return err
 	}
@@ -147,49 +150,5 @@ func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx co
 		// just stop the loop here on dry run or early exit
 		return nil
 	}
-	return useCase.HandleChange(ctx, blueprintSpec.Id)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) handleSelfUpgrade(ctx context.Context, blueprintId string) error {
-	err := useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) applyBlueprintSpec(ctx context.Context, blueprintId string) error {
-	err := useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
-	err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) applyEcosystemConfig(ctx context.Context, blueprintId string) error {
-	err := useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) triggerDoguRestarts(ctx context.Context, blueprintId string) error {
-	err := useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
+	return useCase.HandleUntilApplied(ctx, blueprintSpec.Id)
 }

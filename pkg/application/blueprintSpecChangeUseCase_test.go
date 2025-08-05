@@ -83,7 +83,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 
 		// when
-		err := useCase.HandleChange(testCtx, testBlueprintId)
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, domain.StatusPhaseCompleted, blueprintSpec.Status)
@@ -108,7 +108,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, expectedError)
 
 		// when
-		err := useCase.HandleChange(testCtx, blueprintId)
+		err := useCase.HandleUntilApplied(testCtx, blueprintId)
 
 		// then
 		require.Error(t, err)
@@ -137,7 +137,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 
 		// then
 		require.Error(t, err)
@@ -169,7 +169,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 
 		// then
 		require.Error(t, err)
@@ -205,7 +205,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 
 		// then
 		require.Error(t, err)
@@ -244,7 +244,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(assert.AnError)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 
 		// then
 		require.Error(t, err)
@@ -288,7 +288,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 
 		// then
 		require.Error(t, err)
@@ -312,7 +312,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseInvalid,
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -334,7 +334,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -356,7 +356,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -380,7 +380,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
 		ecosystemConfigUseCaseMock.EXPECT().ApplyConfig(testCtx, blueprintSpec.Id).Return(assert.AnError)
 		// when
-		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
+		actualErr := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.ErrorIs(t, actualErr, assert.AnError)
 	})
@@ -404,7 +404,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
 		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(nil)
 		// when
-		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
+		actualErr := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, actualErr)
 	})
@@ -428,7 +428,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
 		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(assert.AnError)
 		// when
-		actualErr := useCase.HandleChange(testCtx, "testBlueprint1")
+		actualErr := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.ErrorIs(t, actualErr, assert.AnError)
 	})
@@ -457,7 +457,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 
 		// when
-		err := useCase.HandleChange(testCtx, testBlueprintId)
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
 		// then
 		require.ErrorIs(t, err, assert.AnError)
 	})
@@ -483,7 +483,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			blueprintSpec.Status = domain.StatusPhaseCompleted
 		})
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -509,7 +509,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			blueprintSpec.Status = domain.StatusPhaseCompleted
 		})
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -531,7 +531,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseCompleted,
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -554,7 +554,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		}, nil)
 		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintId).Return(nil)
 		// when
-		err := useCase.HandleChange(testCtx, blueprintId)
+		err := useCase.HandleUntilApplied(testCtx, blueprintId)
 		// then
 		require.NoError(t, err)
 	})
@@ -576,7 +576,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: domain.StatusPhaseFailed,
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.NoError(t, err)
 	})
@@ -598,7 +598,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			Status: "unknown",
 		}, nil)
 		// when
-		err := useCase.HandleChange(testCtx, "testBlueprint1")
+		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
 		// then
 		require.Error(t, err)
 		require.ErrorContains(t, err, "could not handle unknown status of blueprint")
@@ -689,7 +689,7 @@ func TestBlueprintSpecChangeUseCase_triggerDoguRestarts(t *testing.T) {
 		doguRestartUseCaseMock.EXPECT().TriggerDoguRestarts(testCtx, testBlueprintId).Return(errors.New("testerror"))
 
 		// when
-		err := useCase.HandleChange(testCtx, testBlueprintId)
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
 		// then
 		require.Error(t, err)
 		assert.Equal(t, "testerror", err.Error())

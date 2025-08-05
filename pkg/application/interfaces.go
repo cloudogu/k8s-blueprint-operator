@@ -27,22 +27,22 @@ type doguInstallationUseCase interface {
 }
 
 type doguRestartUseCase interface {
-	TriggerDoguRestarts(ctx context.Context, blueprintid string) error
+	TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type componentInstallationUseCase interface {
-	ApplyComponentStates(ctx context.Context, blueprintId string) error
+	ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 
 type applyBlueprintSpecUseCase interface {
-	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
-	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
-	PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error
-	PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error
-	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
+	CheckEcosystemHealthUpfront(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	CheckEcosystemHealthAfterwards(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	PreProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ApplyBlueprintSpec(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemHealthUseCase interface {
@@ -51,11 +51,11 @@ type ecosystemHealthUseCase interface {
 }
 
 type selfUpgradeUseCase interface {
-	HandleSelfUpgrade(ctx context.Context, blueprintId string) error
+	HandleSelfUpgrade(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemConfigUseCase interface {
-	ApplyConfig(ctx context.Context, blueprintId string) error
+	ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type doguInstallationRepository interface {

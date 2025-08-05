@@ -44,7 +44,7 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
 
-	err := r.blueprintChangeHandler.HandleChange(ctx, req.Name)
+	err := r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
 
 	if err != nil {
 		return decideRequeueForError(logger, err)
