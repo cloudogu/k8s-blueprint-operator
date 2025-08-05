@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#119] *breaking* no support for v1 blueprint CRs anymore
   - make sure to persist your blueprints before upgrading
   - you need to transform your blueprints to the new v2 format yourself 
+- [#121] remove maintenance mode
 
 ## [v2.7.0] - 2025-07-17
 ### Fixed

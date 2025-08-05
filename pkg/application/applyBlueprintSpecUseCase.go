@@ -8,11 +8,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-var (
-	maintenanceTitle = "Blueprint getting applied"
-	maintenanceText  = "A new Blueprint with updates for the Cloudogu Ecosystem is getting applied."
-)
-
 // ApplyBlueprintSpecUseCase contains all use cases which are needed for or around applying
 // the new ecosystem state after the determining the state diff.
 type ApplyBlueprintSpecUseCase struct {
@@ -20,7 +15,6 @@ type ApplyBlueprintSpecUseCase struct {
 	doguInstallUseCase      doguInstallationUseCase
 	healthUseCase           ecosystemHealthUseCase
 	componentInstallUseCase componentInstallationUseCase
-	maintenanceModeAdapter  maintenanceMode
 }
 
 func NewApplyBlueprintSpecUseCase(
@@ -28,14 +22,12 @@ func NewApplyBlueprintSpecUseCase(
 	doguInstallUseCase doguInstallationUseCase,
 	healthUseCase ecosystemHealthUseCase,
 	componentInstallUseCase componentInstallationUseCase,
-	maintenanceModeAdapter maintenanceMode,
 ) *ApplyBlueprintSpecUseCase {
 	return &ApplyBlueprintSpecUseCase{
 		repo:                    repo,
 		doguInstallUseCase:      doguInstallUseCase,
 		healthUseCase:           healthUseCase,
 		componentInstallUseCase: componentInstallUseCase,
-		maintenanceModeAdapter:  maintenanceModeAdapter,
 	}
 }
 
@@ -97,41 +89,33 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return nil
 }
 
-// PreProcessBlueprintApplication prepares the environment for applying the blueprint, e.g. activating the maintenance mode.
-// returns a domainservice.ConflictError if another party activated the maintenance mode or
-// returns a domainservice.InternalError on any other error.
+// PreProcessBlueprintApplication prepares the environment for applying the blueprint.
+// returns a domainservice.InternalError on any error.
 func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PreProcessBlueprintApplication").
 		WithValues("blueprintId", blueprintId)
 
 	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to activate maintenance mode: %w", blueprintId, err)
+		return fmt.Errorf("cannot load blueprint spec %q for preprocessing: %w", blueprintId, err)
 	}
 
 	if !blueprintSpec.ShouldBeApplied() {
-		logger.Info("stop before activating maintenance mode as blueprint should not be applied")
-	} else {
-		logger.Info("activate maintenance mode")
-		err = useCase.maintenanceModeAdapter.Activate(ctx, maintenanceTitle, maintenanceText)
-		if err != nil {
-			return fmt.Errorf("could not activate maintenance mode before applying the blueprint: %w", err)
-		}
+		logger.Info("stop as blueprint should not be applied")
 	}
 
 	blueprintSpec.CompletePreProcessing()
 
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
-		return fmt.Errorf("cannot save blueprint spec %q after activating the maintenance mode: %w", blueprintId, err)
+		return fmt.Errorf("cannot save blueprint spec %q after preprocessing: %w", blueprintId, err)
 	}
 
 	return nil
 }
 
-// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. deactivating the maintenance mode.
-// returns a domainservice.ConflictError if another party holds the lock to the maintenance mode or
-// returns a domainservice.InternalError on any other error.
+// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. censoring the state diff.
+// returns a domainservice.InternalError on any error.
 func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PostProcessBlueprintApplication").
 		WithValues("blueprintId", blueprintId)
@@ -143,12 +127,6 @@ func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx co
 
 	logger.Info("censor sensitive data")
 	blueprintSpec.CensorSensitiveData()
-
-	logger.Info("deactivate maintenance mode")
-	err = useCase.maintenanceModeAdapter.Deactivate(ctx)
-	if err != nil {
-		return fmt.Errorf("could not deactivate maintenance mode after applying the blueprint: %w", err)
-	}
 
 	blueprintSpec.CompletePostProcessing()
 
