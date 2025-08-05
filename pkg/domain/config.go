@@ -167,15 +167,10 @@ func validateDoguConfigKeys(keys []common.DoguConfigKey, referencedDoguName cesc
 func validateNoDuplicates(presentKeys []common.DoguConfigKey, absentKeys []common.DoguConfigKey) error {
 	var errs []error
 	// no present keys in absent
+	// a duplicate needs to be in the present and the absent list, therefore we only need to check one of the lists.
 	for _, presentKey := range presentKeys {
 		if slices.Contains(absentKeys, presentKey) {
 			errs = append(errs, fmt.Errorf("key %q of dogu %q cannot be present and absent at the same time", presentKey.Key, presentKey.DoguName))
-		}
-	}
-	// no absent keys in present
-	for _, absentKey := range absentKeys {
-		if slices.Contains(presentKeys, absentKey) {
-			errs = append(errs, fmt.Errorf("key %q of dogu %q cannot be present and absent at the same time", absentKey.Key, absentKey.DoguName))
 		}
 	}
 
