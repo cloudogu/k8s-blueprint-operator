@@ -49,38 +49,49 @@ func NewBlueprintSpecChangeUseCase(
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write or
 // a domain.InvalidBlueprintError if the blueprint is invalid.
-func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).
+func (useCase *BlueprintSpecChangeUseCase) HandleChange(givenCtx context.Context, blueprintId string) error {
+	logger := log.FromContext(givenCtx).
 		WithName("BlueprintSpecChangeUseCase.HandleChange").
 		WithValues("blueprintId", blueprintId)
+	// set the logger in the context to make use of structured logging
+	// we will give this ctx in every use case, therefore all of them will include the values given here
+	ctx := log.IntoContext(givenCtx, logger)
 
 	logger.Info("getting changed blueprint") // log with id
-	blueprintSpec, err := useCase.repo.GetById(ctx, blueprintId)
+	blueprint, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		errMsg := "cannot load blueprint spec"
 		logger.Error(err, errMsg)
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	logger = logger.WithValues("blueprintStatus", blueprintSpec.Status)
-	logger.Info("handle blueprint") // log with id and status values.
+	logger.Info("handle blueprint") // log with id
+
+	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	err = useCase.effectiveBlueprint.CalculateEffectiveBlueprint(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	err = useCase.validation.ValidateBlueprintSpecDynamically(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	err = useCase.stateDiff.DetermineStateDiff(ctx, blueprint)
+	if err != nil {
+		// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
+		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
+		return err
+	}
 
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
-	switch blueprintSpec.Status {
-	case domain.StatusPhaseNew:
-		return useCase.validateStatically(ctx, blueprintId)
-	case domain.StatusPhaseInvalid:
-		return nil
-	case domain.StatusPhaseStaticallyValidated:
-		return useCase.calculateEffectiveBlueprint(ctx, blueprintId)
-	case domain.StatusPhaseEffectiveBlueprintGenerated:
-		return useCase.validateDynamically(ctx, blueprintId)
-	case domain.StatusPhaseValidated:
-		return useCase.determineStateDiff(ctx, blueprintId)
+	switch blueprint.Status {
 	case domain.StatusPhaseStateDiffDetermined:
 		return useCase.checkEcosystemHealthUpfront(ctx, blueprintId)
 	case domain.StatusPhaseEcosystemHealthyUpfront:
-		return useCase.preProcessBlueprintApplication(ctx, blueprintSpec)
+		return useCase.preProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
@@ -115,45 +126,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleChange(ctx context.Context, blu
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}
-}
-
-func (useCase *BlueprintSpecChangeUseCase) validateStatically(ctx context.Context, blueprintId string) error {
-	err := useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) calculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
-	err := useCase.effectiveBlueprint.CalculateEffectiveBlueprint(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) validateDynamically(ctx context.Context, blueprintId string) error {
-	err := useCase.validation.ValidateBlueprintSpecDynamically(ctx, blueprintId)
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
-}
-
-func (useCase *BlueprintSpecChangeUseCase) determineStateDiff(ctx context.Context, blueprintId string) error {
-	err := useCase.stateDiff.DetermineStateDiff(ctx, blueprintId)
-
-	// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
-	// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
-	if err != nil {
-		return err
-	}
-
-	return useCase.HandleChange(ctx, blueprintId)
 }
 
 func (useCase *BlueprintSpecChangeUseCase) checkEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {

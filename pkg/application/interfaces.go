@@ -8,16 +8,16 @@ import (
 )
 
 type blueprintSpecValidationUseCase interface {
-	ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error
-	ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error
+	ValidateBlueprintSpecStatically(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ValidateBlueprintSpecDynamically(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type effectiveBlueprintUseCase interface {
-	CalculateEffectiveBlueprint(ctx context.Context, blueprintId string) error
+	CalculateEffectiveBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type stateDiffUseCase interface {
-	DetermineStateDiff(ctx context.Context, blueprintId string) error
+	DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type doguInstallationUseCase interface {

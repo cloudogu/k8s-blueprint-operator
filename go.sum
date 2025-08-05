@@ -48,12 +48,8 @@ github.com/cloudogu/ces-commons-lib v0.2.0 h1:yOEZWFl4W9N3J/6fok4svE3UufK5GQQtyx
 github.com/cloudogu/ces-commons-lib v0.2.0/go.mod h1:4rvR2RTDDaz5a6OZ1fW27G0MOnl5I3ackeiHxt4gn3o=
 github.com/cloudogu/cesapp-lib v0.18.1 h1:LMdGktIefm/PuhdPqpLTPvjY1smO06EEGBbRSAaYi7U=
 github.com/cloudogu/cesapp-lib v0.18.1/go.mod h1:J05eXFxnz4enZblABlmiVTZaUtJ+LIhlJ2UF6l9jpDw=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250723132542-b0472a456ff0 h1:b3vbIIV1J8YtRCMkJC0EKB10DcTPDqVNda/FNX11E80=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250723132542-b0472a456ff0/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250731094124-310a388d0c7f h1:05BZKhsUJrv4oHkmK4CbNd2/0egXqXup/sfHOOCWC/0=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250731094124-310a388d0c7f/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250731163609-f388bd8c571c h1:o2hARW5ifab56Yjzxedc95wCBnjsJuF1k0bOfqUNXB0=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250731163609-f388bd8c571c/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
+github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250805100727-05e6e1b84073 h1:4E+BOxsDuidq2uwWyQI2VsPPvD34rUXaKDSm2O50ffU=
+github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250805100727-05e6e1b84073/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-component-operator v1.9.0 h1:b1/gMcAPQBP93EIVTE1ctmAKFdVOqnTST+x6LOqu08g=
 github.com/cloudogu/k8s-component-operator v1.9.0/go.mod h1:BdWqwpZWHoSFOduQ3FzcVV4uGJNb+t0DUYlLBHQ9wwQ=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.8.0 h1:ae+LtiY+J2/qIX1AUJLcVxx/FQvlstq9ViVMwlJD26Y=
