@@ -60,6 +60,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var conflictError *domainservice.ConflictError
 	var notFoundError *domainservice.NotFoundError
 	var invalidBlueprintError *domain.InvalidBlueprintError
+	var healthError *domain.UnhealthyEcosystemError
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
@@ -79,6 +80,9 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{}, nil
+	case errors.As(err, &healthError):
+		errLogger.Info("Ecosystem is unhealthy. Retry later")
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
 		return ctrl.Result{}, err // automatic requeue because of non-nil err
