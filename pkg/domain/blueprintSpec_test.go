@@ -360,6 +360,14 @@ func TestBlueprintSpec_MarkInvalid(t *testing.T) {
 	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
 }
 
+func TestBlueprintSpec_MissingConfigReferences(t *testing.T) {
+	blueprint := BlueprintSpec{}
+	blueprint.MissingConfigReferences(assert.AnError)
+	require.Equal(t, 1, len(blueprint.Events))
+	assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
+	assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+}
+
 func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	// not every single case is tested here as this is a rather coarse-grained function
 	// have a look at the tests for the more specialized functions used in the command, to see all possible combinations of diffs.
@@ -379,7 +387,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		stateDiff := StateDiff{
@@ -433,7 +441,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.NoError(t, err)
@@ -470,7 +478,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.Error(t, err)
@@ -490,7 +498,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 			}
 			// when
-			err := spec.DetermineStateDiff(clusterState)
+			err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 			// then
 			assert.Error(t, err)
@@ -510,7 +518,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		assert.NoError(t, err)
@@ -545,7 +553,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.Error(t, err)
@@ -579,7 +587,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState)
+		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.Error(t, err)
@@ -786,36 +794,7 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 
 func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	// given
-	ldapLoggingKey := common.SensitiveDoguConfigKey{DoguName: "ldap", Key: "logging/root"}
 	spec := &BlueprintSpec{
-		Blueprint: Blueprint{
-			Config: Config{
-				Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
-					"ldap": {
-						DoguName: "ldap",
-						SensitiveConfig: SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-								ldapLoggingKey: "ERROR",
-							},
-						},
-					},
-				},
-			},
-		},
-		EffectiveBlueprint: EffectiveBlueprint{
-			Config: Config{
-				Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
-					"ldap": {
-						DoguName: "ldap",
-						SensitiveConfig: SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-								ldapLoggingKey: "ERROR",
-							},
-						},
-					},
-				},
-			},
-		},
 		StateDiff: StateDiff{
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 				"ldapDiff": []SensitiveDoguConfigEntryDiff{{
@@ -829,14 +808,6 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 	spec.CensorSensitiveData()
 
 	// then
-	require.Len(t, spec.Blueprint.Config.Dogus, 1)
-	assert.Contains(t, maps.Keys(spec.Blueprint.Config.Dogus), cescommons.SimpleName("ldap"))
-	assert.Equal(t, censorValue, string(spec.Blueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
-
-	require.Len(t, spec.EffectiveBlueprint.Config.Dogus, 1)
-	assert.Contains(t, maps.Keys(spec.EffectiveBlueprint.Config.Dogus), cescommons.SimpleName("ldap"))
-	assert.Equal(t, censorValue, string(spec.EffectiveBlueprint.Config.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
-
 	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
 	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), cescommons.SimpleName("ldapDiff"))
 	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)

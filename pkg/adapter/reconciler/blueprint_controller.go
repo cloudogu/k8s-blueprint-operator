@@ -3,16 +3,18 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"strings"
 	"time"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
@@ -64,13 +66,19 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		return ctrl.Result{}, err // automatic requeue because of non-nil err
 	case errors.As(err, &conflictError):
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 	case errors.As(err, &notFoundError):
-		errLogger.Info("Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-		return ctrl.Result{Requeue: false}, nil
+		if strings.Contains(err.Error(), application.REFERENCED_CONFIG_NOT_FOUND) {
+			// retry in this case because maybe the user will create the secret in a few seconds.
+			// we want to be declarative, so our API should not care about the order
+			errLogger.Error(err, "Referenced config not found. Retry later")
+			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		}
+		errLogger.Error(err, "Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+		return ctrl.Result{}, nil
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
-		return ctrl.Result{Requeue: false}, nil
+		return ctrl.Result{}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
 		return ctrl.Result{}, err // automatic requeue because of non-nil err
@@ -92,6 +100,6 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(options).
-		For(&k8sv1.Blueprint{}).
+		For(&bpv2.Blueprint{}).
 		Complete(r)
 }

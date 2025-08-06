@@ -5,6 +5,7 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"maps"
@@ -265,6 +266,11 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 }
 
+// MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
+func (spec *BlueprintSpec) MissingConfigReferences(error error) {
+	spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
+}
+
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.
 // if sth. is not in the lists of installed things, it is considered not installed.
 // installedDogus are a map in the form of simpleDoguName->*DoguInstallation. There should be no nil values.
@@ -273,6 +279,7 @@ func (spec *BlueprintSpec) MarkInvalid(err error) {
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
+	referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
 	switch spec.Status {
 	case StatusPhaseNew:
@@ -298,6 +305,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
 		ecosystemState.SensitiveConfigByDogu,
+		referencedSensitiveConfig,
 	)
 
 	spec.StateDiff = StateDiff{
@@ -404,8 +412,6 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 // CensorSensitiveData censors all sensitive configuration data of the blueprint, effective blueprint and the statediff,
 // to make the values unrecognisable.
 func (spec *BlueprintSpec) CensorSensitiveData() {
-	spec.Blueprint.Config = spec.Blueprint.Config.censorValues()
-	spec.EffectiveBlueprint.Config = spec.EffectiveBlueprint.Config.censorValues()
 	spec.StateDiff.SensitiveDoguConfigDiffs = censorValues(spec.StateDiff.SensitiveDoguConfigDiffs)
 
 	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})

@@ -10,6 +10,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced sensitive config"
+
 type StateDiffUseCase struct {
 	blueprintSpecRepo         blueprintSpecRepository
 	doguInstallationRepo      doguInstallationRepository
@@ -17,6 +19,7 @@ type StateDiffUseCase struct {
 	globalConfigRepo          globalConfigRepository
 	doguConfigRepo            doguConfigRepository
 	sensitiveDoguConfigRepo   sensitiveDoguConfigRepository
+	sensitiveConfigRefReader  sensitiveConfigRefReader
 }
 
 func NewStateDiffUseCase(
@@ -26,6 +29,7 @@ func NewStateDiffUseCase(
 	globalConfigRepo domainservice.GlobalConfigRepository,
 	doguConfigRepo domainservice.DoguConfigRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
+	sensitiveConfigRefReader domainservice.SensitiveConfigRefReader,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:         blueprintSpecRepo,
@@ -34,6 +38,7 @@ func NewStateDiffUseCase(
 		globalConfigRepo:          globalConfigRepo,
 		doguConfigRepo:            doguConfigRepo,
 		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
+		sensitiveConfigRefReader:  sensitiveConfigRefReader,
 	}
 }
 
@@ -54,15 +59,30 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("cannot load blueprint spec %q to determine state diff: %w", blueprintId, err)
 	}
 
+	logger.Info("load referenced sensitive config")
+	// load referenced config before collecting ecosystem state
+	// if an error happens here, we save a lot of heavy work
+	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
+		ctx, blueprintSpec.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
+	)
+	if err != nil {
+		err = fmt.Errorf("%s: %w", REFERENCED_CONFIG_NOT_FOUND, err)
+		blueprintSpec.MissingConfigReferences(err)
+		updateError := useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+		if updateError != nil {
+			return errors.Join(updateError, err)
+		}
+		return err
+	}
+
 	logger.Info("collect ecosystem state for state diff")
 	ecosystemState, err := useCase.collectEcosystemState(ctx, blueprintSpec.EffectiveBlueprint)
 	if err != nil {
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	// determine state diff
 	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprintSpec.Status)
-	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState)
+	stateDiffError := blueprintSpec.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.

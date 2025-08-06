@@ -30,6 +30,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 
 		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
@@ -65,6 +66,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 
 		//then
@@ -159,6 +161,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1: doguConfig,
 			},
 			map[cescommons.SimpleName]config.DoguConfig{},
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
@@ -236,9 +239,15 @@ func Test_determineConfigDiff(t *testing.T) {
 				"dogu1": {
 					DoguName: "dogu1",
 					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-							sensitiveDogu1Key1: "value",
-							sensitiveDogu1Key2: "updated value",
+						Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+							sensitiveDogu1Key1: {
+								SecretName: "mySecret1",
+								SecretKey:  "myKey1",
+							},
+							sensitiveDogu1Key2: {
+								SecretName: "mySecret2",
+								SecretKey:  "myKey2",
+							},
 						},
 						Absent: []common.SensitiveDoguConfigKey{
 							sensitiveDogu1Key3,
@@ -255,6 +264,11 @@ func Test_determineConfigDiff(t *testing.T) {
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: sensitiveDoguConfig,
+			},
+			//loaded referenced sensitive config
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+				sensitiveDogu1Key1: "value",
+				sensitiveDogu1Key2: "updated value",
 			},
 		)
 		//then
@@ -320,8 +334,11 @@ func Test_determineConfigDiff(t *testing.T) {
 				"dogu1": {
 					DoguName: "dogu1",
 					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-							sensitiveDogu1Key1: "value",
+						Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+							sensitiveDogu1Key1: {
+								SecretName: "secret1",
+								SecretKey:  "key1",
+							},
 						},
 						Absent: []common.SensitiveDoguConfigKey{},
 					},
@@ -338,6 +355,10 @@ func Test_determineConfigDiff(t *testing.T) {
 			},
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: sensitiveDoguConfig,
+			},
+			//loaded referenced sensitive config
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+				sensitiveDogu1Key1: "value",
 			},
 		)
 		//then

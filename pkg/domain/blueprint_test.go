@@ -2,7 +2,6 @@ package domain
 
 import (
 	"github.com/Masterminds/semver/v3"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/require"
@@ -201,45 +200,4 @@ func Test_validateComponentUniqueness(t *testing.T) {
 	assert.Contains(t, err.Error(), "there are duplicate components")
 	assert.Contains(t, err.Error(), "component1")
 	assert.Contains(t, err.Error(), "component2")
-}
-
-func Test_censorConfigValues(t *testing.T) {
-	//given
-	ldapLoggingKey := common.DoguConfigKey{DoguName: "ldap", Key: "logging/root"}
-	ldapPasswordChangeKey := common.DoguConfigKey{DoguName: "ldap", Key: "password_change/mail_sender_address"}
-	config := Config{
-		Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
-			"ldap": {
-				DoguName: "ldap",
-				Config: DoguConfig{
-					Present: map[common.DoguConfigKey]common.DoguConfigValue{
-						ldapLoggingKey:        "ERROR",
-						ldapPasswordChangeKey: "no-reply@itzbund.de",
-					},
-				},
-				SensitiveConfig: SensitiveDoguConfig{
-					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-						ldapLoggingKey:        "ERROR",
-						ldapPasswordChangeKey: "no-reply@itzbund.de",
-					},
-				},
-			},
-		},
-		Global: GlobalConfig{
-			Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-				"block_warpmenu_support_category": "true",
-				"password-policy/min_length":      "14",
-			},
-		},
-	}
-
-	// when
-	result := config.censorValues()
-
-	assert.Equal(t, "ERROR", string(result.Dogus["ldap"].Config.Present[ldapLoggingKey]))
-	assert.Equal(t, "no-reply@itzbund.de", string(result.Dogus["ldap"].Config.Present[ldapPasswordChangeKey]))
-	assert.Equal(t, censorValue, string(result.Dogus["ldap"].SensitiveConfig.Present[ldapLoggingKey]))
-	assert.Equal(t, censorValue, string(result.Dogus["ldap"].SensitiveConfig.Present[ldapPasswordChangeKey]))
-	assert.Equal(t, "true", string(result.Global.Present["block_warpmenu_support_category"]))
-	assert.Equal(t, "14", string(result.Global.Present["password-policy/min_length"]))
 }

@@ -12,11 +12,6 @@ import (
 	"testing"
 )
 
-var myQualifiedTestDoguName = cescommons.QualifiedName{
-	Namespace:  "testing",
-	SimpleName: "my-dogu",
-}
-
 func TestNewRemote(t *testing.T) {
 	// given
 	repoMock := newMockRemoteDoguDescriptorRepository(t)
@@ -35,8 +30,8 @@ func TestRemote_GetDogu(t *testing.T) {
 		version, err := core.ParseVersion("1.2.3")
 		require.NoError(t, err)
 		qDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
-			version,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			Version: version,
 		}
 		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(nil, cloudoguerrors.NewNotFoundError(cloudoguerrors.Error{}))
 
@@ -59,8 +54,8 @@ func TestRemote_GetDogu(t *testing.T) {
 		version, err := core.ParseVersion("1.2.3")
 		require.NoError(t, err)
 		qDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
-			version,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			Version: version,
 		}
 		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(nil, assert.AnError)
 
@@ -85,8 +80,8 @@ func TestRemote_GetDogu(t *testing.T) {
 		version, err := core.ParseVersion("1.2.3")
 		require.NoError(t, err)
 		qDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
-			version,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "my-dogu"},
+			Version: version,
 		}
 		repoMock.EXPECT().Get(context.TODO(), qDoguVersion).Return(&expectedDogu, nil)
 
@@ -113,16 +108,16 @@ func TestRemote_GetDogus(t *testing.T) {
 		OtherVersion, err := core.ParseVersion("2.3.4")
 		require.NoError(t, err)
 		qGoodDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "good-dogu"},
-			goodVersion,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "good-dogu"},
+			Version: goodVersion,
 		}
 		qNotFoundDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "not-found"},
-			NotFoundVersion,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "not-found"},
+			Version: NotFoundVersion,
 		}
 		qOtherErrorDoguVersion := cescommons.QualifiedVersion{
-			cescommons.QualifiedName{Namespace: "testing", SimpleName: "other-error"},
-			OtherVersion,
+			Name:    cescommons.QualifiedName{Namespace: "testing", SimpleName: "other-error"},
+			Version: OtherVersion,
 		}
 		repoMock.EXPECT().Get(context.TODO(), qGoodDoguVersion).Return(&expectedDogu, nil)
 		notFoundError := fmt.Errorf("404 not found")

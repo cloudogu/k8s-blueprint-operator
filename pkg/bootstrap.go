@@ -3,7 +3,9 @@ package pkg
 import (
 	"fmt"
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
+	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restartcr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
 
@@ -13,16 +15,13 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/client"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v2/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
 	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/healthConfig"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintMaskV1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/serializer/blueprintV2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -44,8 +43,6 @@ var maintenanceModeOwner = "blueprint-operator"
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
-	blueprintSerializer := blueprintV2.Serializer{}
-	blueprintMaskSerializer := blueprintMaskV1.Serializer{}
 	ecosystemClientSet, err := createEcosystemClientSet(restConfig)
 	if err != nil {
 		return nil, err
@@ -59,10 +56,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
-	blueprintSpecRepository := blueprintcr.NewBlueprintSpecRepository(
+	blueprintSpecRepository := v2.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
-		blueprintSerializer,
-		blueprintMaskSerializer,
 		eventRecorder,
 	)
 
@@ -78,6 +73,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguConfigRepo := adapterconfigk8s.NewDoguConfigRepository(*k8sDoguConfigRepo)
 	k8sSensitiveDoguConfigRepo := repository.NewSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
 	sensitiveDoguConfigRepo := adapterconfigk8s.NewSensitiveDoguConfigRepository(*k8sSensitiveDoguConfigRepo)
+	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(ecosystemClientSet.CoreV1().Secrets(namespace))
 	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
@@ -91,7 +87,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, healthConfigRepo)

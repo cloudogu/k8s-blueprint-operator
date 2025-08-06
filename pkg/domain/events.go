@@ -99,6 +99,22 @@ func (e DoguConfigDiffDeterminedEvent) Message() string {
 	)
 }
 
+type MissingConfigReferencesEvent struct {
+	err error
+}
+
+func NewMissingConfigReferencesEvent(err error) MissingConfigReferencesEvent {
+	return MissingConfigReferencesEvent{err: err}
+}
+
+func (e MissingConfigReferencesEvent) Name() string {
+	return "MissingConfigReferences"
+}
+
+func (e MissingConfigReferencesEvent) Message() string {
+	return e.err.Error()
+}
+
 type SensitiveDoguConfigDiffDeterminedEvent struct {
 	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 }

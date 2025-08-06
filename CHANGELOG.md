@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*Breaking Change ahead!*
+
+### Changed
+- [#119] *breaking* sensitive dogu config can now only be referenced with secrets
+  - it was not safe to have these values in clear text in the blueprint
+- [#119] we now support blueprint v2 CRs
+
+### Removed
+- [#119] *breaking* no support for v1 blueprint CRs anymore
+  - make sure to persist your blueprints before upgrading
+  - you need to transform your blueprints to the new v2 format yourself 
+
 ## [v2.7.0] - 2025-07-17
 ### Fixed
 - [#117] configuring operator log-level

@@ -111,6 +111,10 @@ type sensitiveDoguConfigRepository interface {
 	domainservice.SensitiveDoguConfigRepository
 }
 
+type sensitiveConfigRefReader interface {
+	domainservice.SensitiveConfigRefReader
+}
+
 type doguRestartRepository interface {
 	domainservice.DoguRestartRepository
 }

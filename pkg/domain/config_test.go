@@ -138,8 +138,8 @@ func TestDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu2")
-		assert.ErrorContains(t, err, "present key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
-		assert.ErrorContains(t, err, "absent key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "dogu config is invalid: key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "absent dogu config is invalid: key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
 	})
 	t.Run("combine errors", func(t *testing.T) {
 		config := DoguConfig{
@@ -151,8 +151,8 @@ func TestDoguConfig_validate(t *testing.T) {
 			},
 		}
 		err := config.validate("dogu1")
-		assert.ErrorContains(t, err, "present dogu config key invalid")
-		assert.ErrorContains(t, err, "absent dogu config key invalid")
+		assert.ErrorContains(t, err, "present dogu config is invalid")
+		assert.ErrorContains(t, err, "absent dogu config is invalid")
 	})
 }
 
@@ -164,8 +164,11 @@ func TestSensitiveDoguConfig_validate(t *testing.T) {
 	})
 	t.Run("config is ok", func(t *testing.T) {
 		config := SensitiveDoguConfig{
-			Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: "value1",
+			Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: {
+					SecretName: "mySecret",
+					SecretKey:  "secretKey",
+				},
 			},
 			Absent: []common.SensitiveDoguConfigKey{
 				{DoguName: "dogu1", Key: "my/key2"},
@@ -176,8 +179,11 @@ func TestSensitiveDoguConfig_validate(t *testing.T) {
 	})
 	t.Run("not absent and present at the same time", func(t *testing.T) {
 		config := SensitiveDoguConfig{
-			Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key"}: "value1",
+			Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key"}: {
+					SecretName: "mySecret",
+					SecretKey:  "secretKey",
+				},
 			},
 			Absent: []common.SensitiveDoguConfigKey{
 				{DoguName: "dogu1", Key: "my/key"},
@@ -198,29 +204,29 @@ func TestSensitiveDoguConfig_validate(t *testing.T) {
 	})
 	t.Run("only one referenced dogu name", func(t *testing.T) {
 		config := SensitiveDoguConfig{
-			Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "test"}: "value1",
+			Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "test"}: {},
 			},
 			Absent: []common.SensitiveDoguConfigKey{
 				{DoguName: "dogu1", Key: "my/key"},
 			},
 		}
 		err := config.validate("dogu2")
-		assert.ErrorContains(t, err, "present key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
-		assert.ErrorContains(t, err, "absent key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "present sensitive dogu config is invalid: key \"test\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
+		assert.ErrorContains(t, err, "absent sensitive dogu config is invalid: key \"my/key\" of dogu \"dogu1\" does not match superordinate dogu name \"dogu2\"")
 	})
 	t.Run("combine errors", func(t *testing.T) {
 		config := SensitiveDoguConfig{
-			Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: ""}: "value1",
+			Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+				common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: ""}: {},
 			},
 			Absent: []common.SensitiveDoguConfigKey{
 				{DoguName: "dogu1", Key: ""},
 			},
 		}
 		err := config.validate("dogu1")
-		assert.ErrorContains(t, err, "present dogu config key invalid")
-		assert.ErrorContains(t, err, "absent dogu config key invalid")
+		assert.ErrorContains(t, err, "present sensitive dogu config is invalid")
+		assert.ErrorContains(t, err, "absent sensitive dogu config is invalid")
 	})
 }
 
@@ -352,8 +358,8 @@ func TestConfig_GetSensitiveDoguConfigKeys(t *testing.T) {
 			nginx: {
 				DoguName: nginx,
 				SensitiveConfig: SensitiveDoguConfig{
-					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-						nginxKey1: "value",
+					Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+						nginxKey1: {},
 					},
 					Absent: []common.SensitiveDoguConfigKey{
 						nginxKey2,
@@ -363,8 +369,8 @@ func TestConfig_GetSensitiveDoguConfigKeys(t *testing.T) {
 			postfix: {
 				DoguName: postfix,
 				SensitiveConfig: SensitiveDoguConfig{
-					Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-						postfixKey1: "value",
+					Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+						postfixKey1: {},
 					},
 					Absent: []common.SensitiveDoguConfigKey{
 						postfixKey2,
@@ -389,8 +395,11 @@ func TestCombinedDoguConfig_validate(t *testing.T) {
 		},
 	}
 	sensitiveConfig := SensitiveDoguConfig{
-		Present: map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-			common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: "value1",
+		Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
+			common.SensitiveDoguConfigKey{DoguName: "dogu1", Key: "my/key1"}: {
+				SecretName: "mySecret",
+				SecretKey:  "myKey",
+			},
 		},
 		Absent: []common.SensitiveDoguConfigKey{
 			{DoguName: "dogu1", Key: "my/key2"},
@@ -405,7 +414,7 @@ func TestCombinedDoguConfig_validate(t *testing.T) {
 
 	err := config.validate()
 
-	assert.ErrorContains(t, err, "dogu config key key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
+	assert.ErrorContains(t, err, "dogu config key \"my/key1\" of dogu \"dogu1\" cannot be in normal and sensitive configuration at the same time")
 }
 
 func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
@@ -458,7 +467,7 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			emptyDoguConfig := struct {
-				Present map[common.DoguConfigKey]common.DoguConfigValue
+				Present map[common.DoguConfigKey]SensitiveValueRef
 				Absent  []common.DoguConfigKey
 			}{}
 			config := Config{
@@ -490,17 +499,20 @@ func TestConfig_GetDogusWithChangedConfig(t *testing.T) {
 }
 
 func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
-	presentConfig := map[common.DoguConfigKey]common.DoguConfigValue{
-		dogu1Key1: "val",
+	presentConfig := map[common.DoguConfigKey]SensitiveValueRef{
+		dogu1Key1: {
+			SecretName: "mySecret",
+			SecretKey:  "myKey",
+		},
 	}
 	AbsentConfig := []common.DoguConfigKey{
 		dogu1Key1,
 	}
-	emptyPresentConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+	emptyPresentConfig := map[common.DoguConfigKey]SensitiveValueRef{}
 	var emptyAbsentConfig []common.DoguConfigKey
 
 	type args struct {
-		doguConfig      DoguConfig
+		doguConfig      SensitiveDoguConfig
 		withDogu2Change bool
 	}
 
@@ -512,27 +524,27 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 	}{
 		{
 			name: "should get multiple Dogus",
-			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}, withDogu2Change: true},
+			args: args{doguConfig: SensitiveDoguConfig{Present: presentConfig, Absent: AbsentConfig}, withDogu2Change: true},
 			want: []cescommons.SimpleName{dogu1, dogu2},
 		},
 		{
 			name: "should get Dogus with changed present and absent config",
-			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: AbsentConfig}},
+			args: args{doguConfig: SensitiveDoguConfig{Present: presentConfig, Absent: AbsentConfig}},
 			want: []cescommons.SimpleName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed present config",
-			args: args{doguConfig: DoguConfig{Present: presentConfig, Absent: emptyAbsentConfig}},
+			args: args{doguConfig: SensitiveDoguConfig{Present: presentConfig, Absent: emptyAbsentConfig}},
 			want: []cescommons.SimpleName{dogu1},
 		},
 		{
 			name: "should get Dogus with changed absent config",
-			args: args{doguConfig: DoguConfig{Present: emptyPresentConfig, Absent: AbsentConfig}},
+			args: args{doguConfig: SensitiveDoguConfig{Present: emptyPresentConfig, Absent: AbsentConfig}},
 			want: []cescommons.SimpleName{dogu1},
 		},
 		{
 			name: "should not get Dogus with no config changes",
-			args: args{doguConfig: DoguConfig{Present: emptyPresentConfig, Absent: emptyAbsentConfig}},
+			args: args{doguConfig: SensitiveDoguConfig{Present: emptyPresentConfig, Absent: emptyAbsentConfig}},
 			want: emptyResult,
 		},
 	}
