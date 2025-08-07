@@ -80,64 +80,6 @@ func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) RunAndReturn(run
 	return _c
 }
 
-// WaitForHealthyEcosystem provides a mock function with given fields: ctx, ignoreDoguHealth, ignoreComponentHealth
-func (_m *mockEcosystemHealthUseCase) WaitForHealthyEcosystem(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error) {
-	ret := _m.Called(ctx, ignoreDoguHealth, ignoreComponentHealth)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WaitForHealthyEcosystem")
-	}
-
-	var r0 ecosystem.HealthResult
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) (ecosystem.HealthResult, error)); ok {
-		return rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) ecosystem.HealthResult); ok {
-		r0 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
-	} else {
-		r0 = ret.Get(0).(ecosystem.HealthResult)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, bool, bool) error); ok {
-		r1 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WaitForHealthyEcosystem'
-type mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call struct {
-	*mock.Call
-}
-
-// WaitForHealthyEcosystem is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ignoreDoguHealth bool
-//   - ignoreComponentHealth bool
-func (_e *mockEcosystemHealthUseCase_Expecter) WaitForHealthyEcosystem(ctx interface{}, ignoreDoguHealth interface{}, ignoreComponentHealth interface{}) *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call {
-	return &mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call{Call: _e.mock.On("WaitForHealthyEcosystem", ctx, ignoreDoguHealth, ignoreComponentHealth)}
-}
-
-func (_c *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call) Run(run func(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool)) *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool), args[2].(bool))
-	})
-	return _c
-}
-
-func (_c *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call) Return(_a0 ecosystem.HealthResult, _a1 error) *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call) RunAndReturn(run func(context.Context, bool, bool) (ecosystem.HealthResult, error)) *mockEcosystemHealthUseCase_WaitForHealthyEcosystem_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // newMockEcosystemHealthUseCase creates a new instance of mockEcosystemHealthUseCase. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func newMockEcosystemHealthUseCase(t interface {
