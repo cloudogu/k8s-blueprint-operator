@@ -160,7 +160,7 @@ func TestEvents(t *testing.T) {
 			name:            "blueprint application pre-processed",
 			event:           BlueprintApplicationPreProcessedEvent{},
 			expectedName:    "BlueprintApplicationPreProcessed",
-			expectedMessage: "maintenance mode activated",
+			expectedMessage: "",
 		},
 		{
 			name:            "In progress",
@@ -178,7 +178,7 @@ func TestEvents(t *testing.T) {
 			name:            "completed",
 			event:           CompletedEvent{},
 			expectedName:    "completed",
-			expectedMessage: "maintenance mode deactivated",
+			expectedMessage: "",
 		},
 		{
 			name:            "execution failed",

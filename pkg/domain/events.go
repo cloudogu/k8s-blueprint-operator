@@ -269,7 +269,7 @@ func (e BlueprintApplicationPreProcessedEvent) Name() string {
 }
 
 func (e BlueprintApplicationPreProcessedEvent) Message() string {
-	return "maintenance mode activated"
+	return ""
 }
 
 type InProgressEvent struct{}
@@ -343,7 +343,7 @@ func (e CompletedEvent) Name() string {
 }
 
 func (e CompletedEvent) Message() string {
-	return "maintenance mode deactivated"
+	return ""
 }
 
 type ApplyEcosystemConfigEvent struct{}
