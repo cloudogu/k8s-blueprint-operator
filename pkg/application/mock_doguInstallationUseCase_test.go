@@ -5,7 +5,9 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	ecosystem "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,17 +24,17 @@ func (_m *mockDoguInstallationUseCase) EXPECT() *mockDoguInstallationUseCase_Exp
 	return &mockDoguInstallationUseCase_Expecter{mock: &_m.Mock}
 }
 
-// ApplyDoguStates provides a mock function with given fields: ctx, blueprintId
-func (_m *mockDoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// ApplyDoguStates provides a mock function with given fields: ctx, blueprint
+func (_m *mockDoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyDoguStates")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -47,14 +49,14 @@ type mockDoguInstallationUseCase_ApplyDoguStates_Call struct {
 
 // ApplyDoguStates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockDoguInstallationUseCase_Expecter) ApplyDoguStates(ctx interface{}, blueprintId interface{}) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
-	return &mockDoguInstallationUseCase_ApplyDoguStates_Call{Call: _e.mock.On("ApplyDoguStates", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockDoguInstallationUseCase_Expecter) ApplyDoguStates(ctx interface{}, blueprint interface{}) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
+	return &mockDoguInstallationUseCase_ApplyDoguStates_Call{Call: _e.mock.On("ApplyDoguStates", ctx, blueprint)}
 }
 
-func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) Run(run func(ctx context.Context, blueprintId string)) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
+func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -64,7 +66,7 @@ func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) Return(_a0 error) *m
 	return _c
 }
 
-func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) RunAndReturn(run func(context.Context, string) error) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
+func (_c *mockDoguInstallationUseCase_ApplyDoguStates_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockDoguInstallationUseCase_ApplyDoguStates_Call {
 	_c.Call.Return(run)
 	return _c
 }

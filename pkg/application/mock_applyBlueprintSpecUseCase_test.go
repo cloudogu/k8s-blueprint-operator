@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockApplyBlueprintSpecUseCase) EXPECT() *mockApplyBlueprintSpecUseCase
 	return &mockApplyBlueprintSpecUseCase_Expecter{mock: &_m.Mock}
 }
 
-// ApplyBlueprintSpec provides a mock function with given fields: ctx, blueprintId
-func (_m *mockApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// ApplyBlueprintSpec provides a mock function with given fields: ctx, blueprint
+func (_m *mockApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyBlueprintSpec")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call struct {
 
 // ApplyBlueprintSpec is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) ApplyBlueprintSpec(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
-	return &mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call{Call: _e.mock.On("ApplyBlueprintSpec", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) ApplyBlueprintSpec(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
+	return &mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call{Call: _e.mock.On("ApplyBlueprintSpec", ctx, blueprint)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
+func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,22 +64,22 @@ func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) Return(_a0 erro
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
+func (_c *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_ApplyBlueprintSpec_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CheckEcosystemHealthAfterwards provides a mock function with given fields: ctx, blueprintId
-func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// CheckEcosystemHealthAfterwards provides a mock function with given fields: ctx, blueprint
+func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckEcosystemHealthAfterwards")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -93,14 +94,14 @@ type mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call struct {
 
 // CheckEcosystemHealthAfterwards is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthAfterwards(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
-	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call{Call: _e.mock.On("CheckEcosystemHealthAfterwards", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthAfterwards(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call{Call: _e.mock.On("CheckEcosystemHealthAfterwards", ctx, blueprint)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -110,22 +111,22 @@ func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) Ret
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CheckEcosystemHealthUpfront provides a mock function with given fields: ctx, blueprintId
-func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// CheckEcosystemHealthUpfront provides a mock function with given fields: ctx, blueprint
+func (_m *mockApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckEcosystemHealthUpfront")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -140,14 +141,14 @@ type mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call struct {
 
 // CheckEcosystemHealthUpfront is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthUpfront(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
-	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call{Call: _e.mock.On("CheckEcosystemHealthUpfront", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) CheckEcosystemHealthUpfront(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+	return &mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call{Call: _e.mock.On("CheckEcosystemHealthUpfront", ctx, blueprint)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -157,22 +158,22 @@ func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) Return
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
+func (_c *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_CheckEcosystemHealthUpfront_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// PostProcessBlueprintApplication provides a mock function with given fields: ctx, blueprintId
-func (_m *mockApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// PostProcessBlueprintApplication provides a mock function with given fields: ctx, blueprint
+func (_m *mockApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PostProcessBlueprintApplication")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -187,14 +188,14 @@ type mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call struct {
 
 // PostProcessBlueprintApplication is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) PostProcessBlueprintApplication(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
-	return &mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call{Call: _e.mock.On("PostProcessBlueprintApplication", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) PostProcessBlueprintApplication(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
+	return &mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call{Call: _e.mock.On("PostProcessBlueprintApplication", ctx, blueprint)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -204,22 +205,22 @@ func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Re
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// PreProcessBlueprintApplication provides a mock function with given fields: ctx, blueprintId
-func (_m *mockApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// PreProcessBlueprintApplication provides a mock function with given fields: ctx, blueprint
+func (_m *mockApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PreProcessBlueprintApplication")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -234,14 +235,14 @@ type mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call struct {
 
 // PreProcessBlueprintApplication is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) PreProcessBlueprintApplication(ctx interface{}, blueprintId interface{}) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
-	return &mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call{Call: _e.mock.On("PreProcessBlueprintApplication", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockApplyBlueprintSpecUseCase_Expecter) PreProcessBlueprintApplication(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+	return &mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call{Call: _e.mock.On("PreProcessBlueprintApplication", ctx, blueprint)}
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprintId string)) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -251,7 +252,7 @@ func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Ret
 	return _c
 }
 
-func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, string) error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
+func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -600,34 +600,15 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 }
 
 func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
-	t.Run("cannot load blueprintSpec", func(t *testing.T) {
-		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-
-		doguRepoMock := newMockDoguInstallationRepository(t)
-
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
-
-		// when
-		err := sut.ApplyDoguStates(testCtx, blueprintId)
-
-		// then
-		require.ErrorIs(t, err, assert.AnError)
-	})
-
 	t.Run("cannot load doguInstallations", func(t *testing.T) {
 		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, nil)
-
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
-		err := sut.ApplyDoguStates(testCtx, blueprintId)
+		err := sut.ApplyDoguStates(testCtx, &domain.BlueprintSpec{})
 
 		// then
 		require.ErrorIs(t, err, assert.AnError)
@@ -636,8 +617,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{
+		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
 				DoguDiffs: []domain.DoguDiff{
 					{
@@ -647,7 +627,8 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 				},
 			},
 			Config: domain.BlueprintConfiguration{},
-		}, nil)
+		}
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
@@ -655,7 +636,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
 
 		// when
-		err := sut.ApplyDoguStates(testCtx, blueprintId)
+		err := sut.ApplyDoguStates(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
@@ -663,8 +644,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 
 	t.Run("action error", func(t *testing.T) {
 		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{
+		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
 				DoguDiffs: []domain.DoguDiff{
 					{
@@ -674,7 +654,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 				},
 			},
 			Config: domain.BlueprintConfiguration{},
-		}, nil)
+		}
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{
@@ -685,10 +665,10 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			},
 		}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
 
 		// when
-		err := sut.ApplyDoguStates(testCtx, blueprintId)
+		err := sut.ApplyDoguStates(testCtx, blueprint)
 
 		// then
 		require.ErrorContains(t, err, fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus"))

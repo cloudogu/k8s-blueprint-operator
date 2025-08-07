@@ -86,24 +86,17 @@ func (useCase *DoguInstallationUseCase) checkDoguHealthStatesRetryable(ctx conte
 
 // ApplyDoguStates applies the expected dogu state from the Blueprint to the ecosystem.
 // Fail-fast here, so that the possible damage is as small as possible.
-func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.ApplyDoguChanges").
-		WithValues("blueprintId", blueprintId)
-	log.IntoContext(ctx, logger)
-
-	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to install dogus: %w", blueprintId, err)
-	}
-
+func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.ApplyDoguChanges")
+	logger.Info("apply dogu states")
 	// DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
 	dogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("cannot load dogu installations to apply dogu state: %w", err)
 	}
 
-	for _, doguDiff := range blueprintSpec.StateDiff.DoguDiffs {
-		err = useCase.applyDoguState(ctx, doguDiff, dogus[doguDiff.DoguName], blueprintSpec.Config)
+	for _, doguDiff := range blueprint.StateDiff.DoguDiffs {
+		err = useCase.applyDoguState(ctx, doguDiff, dogus[doguDiff.DoguName], blueprint.Config)
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying dogu state to the ecosystem: %w", err)
 		}

@@ -40,22 +40,17 @@ func NewSelfUpgradeUseCase(
 // HandleSelfUpgrade checks if a self upgrade is necessary, executes all needed steps and
 // can check if the self upgrade was successful after a restart.
 // It always sets the fitting status in the blueprint spec.
-func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, blueprintId string) error {
+func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplySelfUpgrade")
 
-	blueprintSpec, err := useCase.blueprintRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to possibly self upgrade the operator: %w", blueprintId, err)
-	}
-
-	ownDiff := blueprintSpec.StateDiff.ComponentDiffs.GetComponentDiffByName(useCase.blueprintOperatorName)
+	ownDiff := blueprint.StateDiff.ComponentDiffs.GetComponentDiffByName(useCase.blueprintOperatorName)
 
 	if !ownDiff.HasChanges() {
 		logger.Info("self upgrade not needed")
-		blueprintSpec.MarkSelfUpgradeCompleted()
-		err = useCase.blueprintRepo.Update(ctx, blueprintSpec)
+		blueprint.MarkSelfUpgradeCompleted()
+		err := useCase.blueprintRepo.Update(ctx, blueprint)
 		if err != nil {
-			return fmt.Errorf("cannot save blueprint spec %q to skip self upgrade: %w", blueprintSpec.Id, err)
+			return fmt.Errorf("cannot save blueprint spec %q to skip self upgrade: %w", blueprint.Id, err)
 		}
 		return nil
 	}
@@ -75,21 +70,21 @@ func (useCase *SelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, bluepr
 	}
 
 	if !ownDiff.IsExpectedVersion(expectedVersion) {
-		return useCase.doSelfUpgrade(ctx, blueprintSpec, ownDiff, ownComponent)
+		return useCase.doSelfUpgrade(ctx, blueprint, ownDiff, ownComponent)
 		// the operator waits for termination, unless there was an error, so we can return here
 	}
 
 	if !ownDiff.IsExpectedVersion(actualVersion) {
-		err = useCase.awaitInstallationConfirmation(ctx, blueprintSpec)
+		err = useCase.awaitInstallationConfirmation(ctx, blueprint)
 		if err != nil {
 			return err
 		}
 	}
 
-	blueprintSpec.MarkSelfUpgradeCompleted()
-	err = useCase.blueprintRepo.Update(ctx, blueprintSpec)
+	blueprint.MarkSelfUpgradeCompleted()
+	err = useCase.blueprintRepo.Update(ctx, blueprint)
 	if err != nil {
-		return fmt.Errorf("cannot save blueprint spec %q after self upgrading the operator: %w", blueprintSpec.Id, err)
+		return fmt.Errorf("cannot save blueprint spec %q after self upgrading the operator: %w", blueprint.Id, err)
 	}
 	logger.Info("self upgrade successful")
 

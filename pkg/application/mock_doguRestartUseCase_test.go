@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockDoguRestartUseCase) EXPECT() *mockDoguRestartUseCase_Expecter {
 	return &mockDoguRestartUseCase_Expecter{mock: &_m.Mock}
 }
 
-// TriggerDoguRestarts provides a mock function with given fields: ctx, blueprintid
-func (_m *mockDoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blueprintid string) error {
-	ret := _m.Called(ctx, blueprintid)
+// TriggerDoguRestarts provides a mock function with given fields: ctx, blueprint
+func (_m *mockDoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TriggerDoguRestarts")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintid)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockDoguRestartUseCase_TriggerDoguRestarts_Call struct {
 
 // TriggerDoguRestarts is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintid string
-func (_e *mockDoguRestartUseCase_Expecter) TriggerDoguRestarts(ctx interface{}, blueprintid interface{}) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
-	return &mockDoguRestartUseCase_TriggerDoguRestarts_Call{Call: _e.mock.On("TriggerDoguRestarts", ctx, blueprintid)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockDoguRestartUseCase_Expecter) TriggerDoguRestarts(ctx interface{}, blueprint interface{}) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
+	return &mockDoguRestartUseCase_TriggerDoguRestarts_Call{Call: _e.mock.On("TriggerDoguRestarts", ctx, blueprint)}
 }
 
-func (_c *mockDoguRestartUseCase_TriggerDoguRestarts_Call) Run(run func(ctx context.Context, blueprintid string)) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
+func (_c *mockDoguRestartUseCase_TriggerDoguRestarts_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,7 +64,7 @@ func (_c *mockDoguRestartUseCase_TriggerDoguRestarts_Call) Return(_a0 error) *mo
 	return _c
 }
 
-func (_c *mockDoguRestartUseCase_TriggerDoguRestarts_Call) RunAndReturn(run func(context.Context, string) error) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
+func (_c *mockDoguRestartUseCase_TriggerDoguRestarts_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockDoguRestartUseCase_TriggerDoguRestarts_Call {
 	_c.Call.Return(run)
 	return _c
 }

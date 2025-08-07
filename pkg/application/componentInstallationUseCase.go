@@ -100,17 +100,10 @@ func (useCase *ComponentInstallationUseCase) checkComponentHealthStatesRetryable
 
 // ApplyComponentStates applies the expected component state from the Blueprint to the ecosystem.
 // Fail-fast here, so that the possible damage is as small as possible.
-func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates").
-		WithValues("blueprintId", blueprintId)
-	log.IntoContext(ctx, logger)
+func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates")
 
-	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to apply components: %w", blueprintId, err)
-	}
-
-	if len(blueprintSpec.StateDiff.ComponentDiffs) == 0 {
+	if len(blueprint.StateDiff.ComponentDiffs) == 0 {
 		logger.Info("apply no components because blueprint has no component state differences")
 		return nil
 	}
@@ -121,7 +114,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 		return fmt.Errorf("cannot load component installations to apply component state: %w", err)
 	}
 
-	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
+	for _, componentDiff := range blueprint.StateDiff.ComponentDiffs {
 		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)

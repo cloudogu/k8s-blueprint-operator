@@ -24,17 +24,17 @@ func (_m *mockComponentInstallationUseCase) EXPECT() *mockComponentInstallationU
 	return &mockComponentInstallationUseCase_Expecter{mock: &_m.Mock}
 }
 
-// ApplyComponentStates provides a mock function with given fields: ctx, blueprintId
-func (_m *mockComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// ApplyComponentStates provides a mock function with given fields: ctx, blueprint
+func (_m *mockComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyComponentStates")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -49,14 +49,14 @@ type mockComponentInstallationUseCase_ApplyComponentStates_Call struct {
 
 // ApplyComponentStates is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockComponentInstallationUseCase_Expecter) ApplyComponentStates(ctx interface{}, blueprintId interface{}) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
-	return &mockComponentInstallationUseCase_ApplyComponentStates_Call{Call: _e.mock.On("ApplyComponentStates", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockComponentInstallationUseCase_Expecter) ApplyComponentStates(ctx interface{}, blueprint interface{}) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
+	return &mockComponentInstallationUseCase_ApplyComponentStates_Call{Call: _e.mock.On("ApplyComponentStates", ctx, blueprint)}
 }
 
-func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) Run(run func(ctx context.Context, blueprintId string)) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
+func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -66,7 +66,7 @@ func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) Return(_a0
 	return _c
 }
 
-func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) RunAndReturn(run func(context.Context, string) error) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
+func (_c *mockComponentInstallationUseCase_ApplyComponentStates_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockComponentInstallationUseCase_ApplyComponentStates_Call {
 	_c.Call.Return(run)
 	return _c
 }

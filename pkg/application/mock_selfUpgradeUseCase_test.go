@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockSelfUpgradeUseCase) EXPECT() *mockSelfUpgradeUseCase_Expecter {
 	return &mockSelfUpgradeUseCase_Expecter{mock: &_m.Mock}
 }
 
-// HandleSelfUpgrade provides a mock function with given fields: ctx, blueprintId
-func (_m *mockSelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// HandleSelfUpgrade provides a mock function with given fields: ctx, blueprint
+func (_m *mockSelfUpgradeUseCase) HandleSelfUpgrade(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for HandleSelfUpgrade")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockSelfUpgradeUseCase_HandleSelfUpgrade_Call struct {
 
 // HandleSelfUpgrade is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockSelfUpgradeUseCase_Expecter) HandleSelfUpgrade(ctx interface{}, blueprintId interface{}) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
-	return &mockSelfUpgradeUseCase_HandleSelfUpgrade_Call{Call: _e.mock.On("HandleSelfUpgrade", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockSelfUpgradeUseCase_Expecter) HandleSelfUpgrade(ctx interface{}, blueprint interface{}) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
+	return &mockSelfUpgradeUseCase_HandleSelfUpgrade_Call{Call: _e.mock.On("HandleSelfUpgrade", ctx, blueprint)}
 }
 
-func (_c *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call) Run(run func(ctx context.Context, blueprintId string)) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
+func (_c *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,7 +64,7 @@ func (_c *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call) Return(_a0 error) *mock
 	return _c
 }
 
-func (_c *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call) RunAndReturn(run func(context.Context, string) error) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
+func (_c *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockSelfUpgradeUseCase_HandleSelfUpgrade_Call {
 	_c.Call.Return(run)
 	return _c
 }

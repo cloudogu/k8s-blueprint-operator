@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -19,24 +18,20 @@ func NewDoguRestartUseCase(doguInstallationRepository doguInstallationRepository
 	return &DoguRestartUseCase{doguInstallationRepository: doguInstallationRepository, blueprintSpecRepo: blueprintSpecRepo, restartRepository: restartRepository}
 }
 
-func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blueprintId string) error {
+func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("DoguRestartUseCase.TriggerDoguRestarts")
-	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("could not get blueprint spec by id: %q", err)
-	}
 
 	logger.Info("searching for Dogus that need a restart...")
 	var dogusThatNeedARestart []cescommons.SimpleName
-
-	if blueprintSpec.StateDiff.GlobalConfigDiffs.HasChanges() {
+	var err error
+	if blueprint.StateDiff.GlobalConfigDiffs.HasChanges() {
 		logger.Info("restarting all installed Dogus...")
 		err = useCase.restartAllInstalledDogus(ctx)
 		if err != nil {
 			return domainservice.NewInternalError(err, "could not restart all installed Dogus")
 		}
 	} else {
-		dogusThatNeedARestart = blueprintSpec.GetDogusThatNeedARestart()
+		dogusThatNeedARestart = blueprint.GetDogusThatNeedARestart()
 		if len(dogusThatNeedARestart) > 0 {
 			logger.Info("restarting Dogus...")
 			restartError := useCase.restartRepository.RestartAll(ctx, dogusThatNeedARestart)
@@ -48,8 +43,8 @@ func (useCase *DoguRestartUseCase) TriggerDoguRestarts(ctx context.Context, blue
 		}
 	}
 
-	blueprintSpec.Status = domain.StatusPhaseRestartsTriggered
-	err = useCase.blueprintSpecRepo.Update(ctx, blueprintSpec)
+	blueprint.Status = domain.StatusPhaseRestartsTriggered
+	err = useCase.blueprintSpecRepo.Update(ctx, blueprint)
 	if err != nil {
 		return domainservice.NewInternalError(err, "could not update blueprint spec")
 	}

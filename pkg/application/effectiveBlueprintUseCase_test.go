@@ -13,14 +13,15 @@ import (
 
 func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 	// given
+	blueprint := &domain.BlueprintSpec{
+		Id:     "testBlueprint1",
+		Status: domain.StatusPhaseValidated,
+	}
+
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
 	useCase := NewEffectiveBlueprintUseCase(repoMock)
 
-	repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
-		Id:     "testBlueprint1",
-		Status: domain.StatusPhaseValidated,
-	}, nil)
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 		Id:                 "testBlueprint1",
 		Blueprint:          domain.Blueprint{},
@@ -32,59 +33,23 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 	}).Return(nil)
 
 	// when
-	err := useCase.CalculateEffectiveBlueprint(ctx, "testBlueprint1")
+	err := useCase.CalculateEffectiveBlueprint(ctx, blueprint)
 
 	// then
 	require.NoError(t, err)
 }
 
 func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T) {
-	t.Run("blueprint spec not found", func(t *testing.T) {
-		//given
-		repoMock := newMockBlueprintSpecRepository(t)
-		ctx := context.Background()
-		useCase := NewEffectiveBlueprintUseCase(repoMock)
-
-		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.NotFoundError{Message: "test-error"})
-
-		//when
-		err := useCase.CalculateEffectiveBlueprint(ctx, "testBlueprint1")
-
-		//then
-		require.Error(t, err)
-		var errorToCheck *domainservice.NotFoundError
-		assert.ErrorAs(t, err, &errorToCheck)
-		assert.ErrorContains(t, err, "cannot load blueprint spec to calculate effective blueprint: test-error")
-	})
-
-	t.Run("internal error while loading", func(t *testing.T) {
-		//given
-		repoMock := newMockBlueprintSpecRepository(t)
-		ctx := context.Background()
-		useCase := NewEffectiveBlueprintUseCase(repoMock)
-
-		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(nil, &domainservice.InternalError{Message: "test-error"})
-
-		//when
-		err := useCase.CalculateEffectiveBlueprint(ctx, "testBlueprint1")
-
-		//then
-		require.Error(t, err)
-		var errorToCheck *domainservice.InternalError
-		assert.ErrorAs(t, err, &errorToCheck)
-		assert.ErrorContains(t, err, "cannot load blueprint spec to calculate effective blueprint: test-error")
-	})
-
 	t.Run("cannot save", func(t *testing.T) {
 		//given
+		blueprint := &domain.BlueprintSpec{
+			Id:     "testBlueprint1",
+			Status: domain.StatusPhaseValidated,
+		}
+
 		repoMock := newMockBlueprintSpecRepository(t)
 		ctx := context.Background()
 		useCase := NewEffectiveBlueprintUseCase(repoMock)
-
-		repoMock.EXPECT().GetById(ctx, "testBlueprint1").Return(&domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseValidated,
-		}, nil)
 
 		repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 			Id:                 "testBlueprint1",
@@ -97,7 +62,7 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 		}).Return(&domainservice.InternalError{Message: "test-error"})
 
 		//when
-		err := useCase.CalculateEffectiveBlueprint(ctx, "testBlueprint1")
+		err := useCase.CalculateEffectiveBlueprint(ctx, blueprint)
 
 		//then
 		require.Error(t, err)

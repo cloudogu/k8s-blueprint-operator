@@ -51,30 +51,9 @@ var (
 )
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
-	t.Run("should fail to load blueprint spec", func(t *testing.T) {
-		// given
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(nil, assert.AnError)
-
-		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		componentInstallRepoMock := newMockComponentInstallationRepository(t)
-
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, nil, nil, nil, nil)
-
-		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"testBlueprint1\" to determine state diff")
-	})
 	t.Run("should fail to get installed dogus", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, internalTestError)
@@ -94,10 +73,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -108,9 +87,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should fail to get installed components", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
@@ -131,10 +107,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -145,9 +121,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should fail to get global config", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
@@ -168,10 +141,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -185,9 +158,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
 
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -209,10 +179,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -226,9 +196,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
 
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -250,10 +217,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -266,9 +233,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
@@ -289,10 +253,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -303,7 +267,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -328,7 +291,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -367,7 +330,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -397,7 +359,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
@@ -476,7 +438,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -504,7 +465,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
@@ -551,7 +512,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -591,7 +551,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
@@ -642,7 +602,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -687,7 +646,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)

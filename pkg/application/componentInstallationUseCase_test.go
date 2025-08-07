@@ -46,7 +46,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
-		expectedBlueprintSpec := &domain.BlueprintSpec{
+		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
@@ -67,7 +67,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			componentName1: nil,
 		}
 
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(expectedBlueprintSpec, nil)
 		componentRepoMock.EXPECT().GetAll(testCtx).Return(allComponents, nil)
 
 		sut := &ComponentInstallationUseCase{
@@ -76,45 +75,19 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		}
 
 		// when
-		err := sut.ApplyComponentStates(testCtx, blueprintId)
+		err := sut.ApplyComponentStates(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
 	})
 
-	t.Run("should return error getting blueprint spec", func(t *testing.T) {
-		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(nil, assert.AnError)
-
-		sut := &ComponentInstallationUseCase{
-			blueprintSpecRepo: blueprintSpecRepoMock,
-		}
-
-		// when
-		err := sut.ApplyComponentStates(testCtx, blueprintId)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"blueprint1\" to apply components")
-	})
-
 	t.Run("should return nil and do nothing with no component diffs", func(t *testing.T) {
 		// given
-		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
-
-		expectedBlueprintSpec := &domain.BlueprintSpec{}
-
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(expectedBlueprintSpec, nil)
-
-		sut := &ComponentInstallationUseCase{
-			blueprintSpecRepo: blueprintSpecRepoMock,
-		}
+		blueprint := &domain.BlueprintSpec{}
+		sut := &ComponentInstallationUseCase{}
 
 		// when
-		err := sut.ApplyComponentStates(testCtx, blueprintId)
+		err := sut.ApplyComponentStates(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
@@ -125,7 +98,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
-		expectedBlueprintSpec := &domain.BlueprintSpec{
+		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{},
@@ -133,7 +106,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			},
 		}
 
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(expectedBlueprintSpec, nil)
 		componentRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
 		sut := &ComponentInstallationUseCase{
@@ -142,7 +114,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		}
 
 		// when
-		err := sut.ApplyComponentStates(testCtx, blueprintId)
+		err := sut.ApplyComponentStates(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -155,7 +127,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
 		componentRepoMock := newMockComponentInstallationRepository(t)
 
-		expectedBlueprintSpec := &domain.BlueprintSpec{
+		blueprint := &domain.BlueprintSpec{
 			StateDiff: domain.StateDiff{
 				ComponentDiffs: []domain.ComponentDiff{
 					{
@@ -170,7 +142,6 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 			componentName1: nil,
 		}
 
-		blueprintSpecRepoMock.EXPECT().GetById(testCtx, blueprintId).Return(expectedBlueprintSpec, nil)
 		componentRepoMock.EXPECT().GetAll(testCtx).Return(allComponents, nil)
 
 		sut := &ComponentInstallationUseCase{
@@ -179,7 +150,7 @@ func TestComponentInstallationUseCase_ApplyComponentStates(t *testing.T) {
 		}
 
 		// when
-		err := sut.ApplyComponentStates(testCtx, blueprintId)
+		err := sut.ApplyComponentStates(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)

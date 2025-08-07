@@ -127,10 +127,10 @@ func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blu
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemHealthyAfterwards:
 		// censor and set status to completed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
 		// censor and set status to failed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprintId)
+		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseCompleted:
 		return nil
 	case domain.StatusPhaseFailed:
