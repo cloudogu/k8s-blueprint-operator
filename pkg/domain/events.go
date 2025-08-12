@@ -25,16 +25,6 @@ func (b BlueprintSpecInvalidEvent) Message() string {
 	return b.ValidationError.Error()
 }
 
-type BlueprintSpecValidatedEvent struct{}
-
-func (b BlueprintSpecValidatedEvent) Name() string {
-	return "BlueprintSpecValidated"
-}
-
-func (b BlueprintSpecValidatedEvent) Message() string {
-	return ""
-}
-
 type EffectiveBlueprintCalculatedEvent struct {
 	Result EffectiveBlueprint
 }

@@ -28,12 +28,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: assert.AnError.Error(),
 		},
 		{
-			name:            "blueprint spec validated",
-			event:           BlueprintSpecValidatedEvent{},
-			expectedName:    "BlueprintSpecValidated",
-			expectedMessage: "",
-		},
-		{
 			name:            "ecosystem healthy",
 			event:           EcosystemHealthyUpfrontEvent{},
 			expectedName:    "EcosystemHealthyUpfront",

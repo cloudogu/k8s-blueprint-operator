@@ -766,7 +766,7 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 		blueprint.ValidateDynamically(nil)
 
 		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionTypeValid))
-		require.Equal(t, 1, len(blueprint.Events))
+		require.Equal(t, 0, len(blueprint.Events))
 
 	})
 

@@ -179,7 +179,6 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			Message: err.Error(),
 		})
 	} else {
-		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:   ConditionTypeValid,
 			Status: metav1.ConditionTrue,
@@ -293,7 +292,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
 		// FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
-		// we need to analyze first, what kind of error this is. Why do we need one?
+		// The error here occurs, if a targetState is not properly set in components. We can remove this case
+		// when we introduce the absent flag in the domain or we just ignore this error like for dogu targetState
 		return err
 	}
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
