@@ -5,6 +5,8 @@ import (
 	"errors"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/stretchr/testify/mock"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"testing"
 
@@ -45,7 +47,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		repoMock.EXPECT().GetById(mock.Anything, testBlueprintId).Return(blueprintSpec, nil)
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseStaticallyValidated
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeValid,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
@@ -170,10 +175,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		}
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(updatedSpec, nil)
-		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseStaticallyValidated
-			})
+		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil)
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(assert.AnError)
 
 		// when
@@ -202,10 +204,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		}
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(updatedSpec, nil)
-		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseStaticallyValidated
-			})
+		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil)
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				updatedSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
@@ -238,10 +237,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		}
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(updatedSpec, nil)
-		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseStaticallyValidated
-			})
+		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil)
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				updatedSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated
@@ -277,10 +273,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		}
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(updatedSpec, nil)
-		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseStaticallyValidated
-			})
+		validationMock.EXPECT().ValidateBlueprintSpecStatically(testCtx, "testBlueprint1").Return(nil)
 		effectiveBlueprintMock.EXPECT().CalculateEffectiveBlueprint(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				updatedSpec.Status = domain.StatusPhaseEffectiveBlueprintGenerated

@@ -42,40 +42,9 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
+	assert.Equal(t, StatusPhaseNew, spec.Status)
 	require.Equal(t, 1, len(spec.Events))
 	assert.Equal(t, BlueprintSpecStaticallyValidatedEvent{}, spec.Events[0])
-}
-
-func Test_BlueprintSpec_Validate_inStatusValidated(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseStaticallyValidated}
-
-	err := spec.ValidateStatically()
-
-	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
-	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
-}
-
-func Test_BlueprintSpec_Validate_inStatusInProgress(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInProgress}
-
-	err := spec.ValidateStatically()
-
-	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseInProgress, spec.Status, "should stay in the old status")
-	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
-}
-
-func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInvalid}
-
-	err := spec.ValidateStatically()
-
-	require.NotNil(t, err, "should not evaluate again and should stop with an error")
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, &invalidError)
-	assert.ErrorContains(t, err, "blueprint spec was marked invalid before: do not revalidate")
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
@@ -484,46 +453,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
-	})
-
-	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
-	for _, initialStatus := range notAllowedStatus {
-		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
-			// given
-			spec := BlueprintSpec{
-				Status: initialStatus,
-			}
-			clusterState := ecosystem.EcosystemState{
-				InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
-			}
-			// when
-			err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
-
-			// then
-			assert.Error(t, err)
-			assert.Equal(t, spec.Status, initialStatus)
-			require.Equal(t, 0, len(spec.Events))
-			assert.ErrorContains(t, err, fmt.Sprintf("cannot determine state diff in status phase %q", initialStatus))
-		})
-	}
-	t.Run("do not re-determine state diff", func(t *testing.T) {
-		initialStatus := StatusPhaseCompleted
-		// given
-		spec := BlueprintSpec{
-			Status: initialStatus,
-		}
-		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
-		}
-		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, spec.Status, initialStatus)
-		require.Equal(t, 0, len(spec.Events))
 	})
 
 	t.Run("should return error with not allowed component namespace switch action", func(t *testing.T) {

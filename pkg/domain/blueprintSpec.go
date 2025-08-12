@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"maps"
 	"slices"
@@ -21,7 +22,7 @@ type BlueprintSpec struct {
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
 	Status             StatusPhase
-	Conditions         []Condition
+	Conditions         *[]Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -32,14 +33,14 @@ type BlueprintSpec struct {
 type Condition = metav1.Condition
 
 var (
-	conditionTypeValid            = "Valid"
-	conditionEcosystemHealthy     = "EcosystemHealthy"
-	conditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
-	conditionConfigApplied        = "ConfigApplied"
-	conditionDogusApplied         = "DogusApplied"
-	conditionComponentsApplied    = "ComponentsApplied"
+	ConditionTypeValid            = "Valid"
+	ConditionEcosystemHealthy     = "EcosystemHealthy"
+	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
+	ConditionConfigApplied        = "ConfigApplied"
+	ConditionDogusApplied         = "DogusApplied"
+	ConditionComponentsApplied    = "ComponentsApplied"
 	// how do we watch restarts?
-	conditionBlueprintApplied = "BlueprintApplied"
+	ConditionBlueprintApplied = "BlueprintApplied"
 )
 
 type StatusPhase string
@@ -47,8 +48,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseStaticallyValidated marks the given blueprint spec as validated.
-	StatusPhaseStaticallyValidated StatusPhase = "staticallyValidated"
 	// StatusPhaseValidated marks the given blueprint spec as validated.
 	StatusPhaseValidated StatusPhase = "validated"
 	// StatusPhaseEffectiveBlueprintGenerated marks that the effective blueprint was generated out of the blueprint and the mask.
@@ -112,13 +111,6 @@ type BlueprintConfiguration struct {
 // returns a domain.InvalidBlueprintError if blueprint is invalid
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateStatically() error {
-	switch spec.Status {
-	case StatusPhaseNew: // continue
-	case StatusPhaseInvalid: // do not validate again
-		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before: do not revalidate"}
-	default: // do not validate again. for all other status it must be either status validated or a status beyond that
-		return nil
-	}
 	var errorList []error
 
 	if spec.Id == "" {
@@ -133,10 +125,19 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 			WrappedError: err,
 			Message:      "blueprint spec is invalid",
 		}
-		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionTypeValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "blueprint invalid",
+			Message: err.Error(),
+		})
 	} else {
-		spec.Status = StatusPhaseStaticallyValidated
+		// Do not set condition to true here.
+		// We reuse the condition for the dynamic validation and
+		// if the blueprint is completely consistent and valid can only be decided there
+		//TODO: Is it really clever to set this event here? If we validate the blueprint at every reconcile
+		// this could lead to hundreds of events.
 		spec.Events = append(spec.Events, BlueprintSpecStaticallyValidatedEvent{})
 	}
 	return err
@@ -178,9 +179,19 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 		}
 		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionTypeValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "inconsistent blueprint",
+			Message: err.Error(),
+		})
 	} else {
 		spec.Status = StatusPhaseValidated
 		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
+		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:   ConditionTypeValid,
+			Status: metav1.ConditionTrue,
+		})
 	}
 }
 
@@ -296,18 +307,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
 	referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
-	switch spec.Status {
-	case StatusPhaseNew:
-		fallthrough
-	case StatusPhaseStaticallyValidated:
-		fallthrough
-	case StatusPhaseEffectiveBlueprintGenerated:
-		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
-	case StatusPhaseValidated: // this is the state, the blueprint spec should be
-	default:
-		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
-	}
-
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
 	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	if err != nil {
