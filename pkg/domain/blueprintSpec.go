@@ -48,8 +48,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseValidated marks the given blueprint spec as validated.
-	StatusPhaseValidated StatusPhase = "validated"
 	// StatusPhaseEffectiveBlueprintGenerated marks that the effective blueprint was generated out of the blueprint and the mask.
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
@@ -165,8 +163,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 
 // ValidateDynamically sets the Status either to StatusPhaseInvalid or StatusPhaseValidated
 // depending on if the dependencies or versions of the elements in the blueprint are invalid.
-// returns a domain.InvalidBlueprintError if blueprint is invalid
-// or nil otherwise.
+// This function decides completely on the given error, therefore no error will be returned explicitly again.
 func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
 	if possibleInvalidDependenciesError != nil {
 		err := &InvalidBlueprintError{
@@ -182,7 +179,6 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			Message: err.Error(),
 		})
 	} else {
-		spec.Status = StatusPhaseValidated
 		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:   ConditionTypeValid,
@@ -192,16 +188,6 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 }
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
-	switch spec.Status {
-	case StatusPhaseEffectiveBlueprintGenerated:
-		return nil // do not regenerate effective blueprint
-	case StatusPhaseNew: // stop
-		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
-	case StatusPhaseInvalid: // stop
-		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
-	default: // continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
-	}
-
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
 		return err

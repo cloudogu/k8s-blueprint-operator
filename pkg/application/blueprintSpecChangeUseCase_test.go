@@ -60,7 +60,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseValidated
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeValid,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
@@ -246,7 +249,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseValidated
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeValid,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(assert.AnError)
 		// when
@@ -282,7 +288,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseValidated
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeValid,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {

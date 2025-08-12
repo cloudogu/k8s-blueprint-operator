@@ -6,6 +6,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"golang.org/x/exp/maps"
+	"k8s.io/apimachinery/pkg/api/meta"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -133,50 +134,13 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseValidated,
 		}
 
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 	})
-	t.Run("status new", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseNew,
-		}
 
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.NotNil(t, err)
-		assert.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
-	})
-	t.Run("status effective blueprint generated", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseEffectiveBlueprintGenerated,
-		}
-		expectedSpec := spec
-
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.Nil(t, err)
-		assert.Equal(t, expectedSpec, spec)
-	})
-	t.Run("status invalid", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseInvalid,
-		}
-
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.NotNil(t, err)
-		assert.ErrorContains(t, err, "cannot calculate effective blueprint on invalid blueprint spec")
-	})
 	t.Run("change version", func(t *testing.T) {
 		dogus := []Dogu{
 			{Name: officialDogu1, Version: version3211, TargetState: TargetStatePresent},
@@ -191,7 +155,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
@@ -200,6 +163,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		assert.Equal(t, Dogu{Name: officialDogu1, Version: version3212, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
 	})
+
 	t.Run("make dogu absent", func(t *testing.T) {
 		dogus := []Dogu{
 			{Name: officialDogu1, Version: version3211, TargetState: TargetStatePresent},
@@ -220,7 +184,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
@@ -230,6 +193,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3212, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
 		assert.NotContains(t, spec.EffectiveBlueprint.Config.Dogus, officialDogu1.SimpleName)
 	})
+
 	t.Run("change dogu namespace", func(t *testing.T) {
 		dogus := []Dogu{
 			{Name: officialNexus, Version: version3211, TargetState: TargetStatePresent},
@@ -243,13 +207,13 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Error(t, err, "without the feature flag, namespace changes are not allowed")
 		require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/nexus\" -> \"premium/nexus\"")
 	})
+
 	t.Run("change dogu namespace with flag", func(t *testing.T) {
 		dogus := []Dogu{
 			{Name: officialNexus, Version: version3211, TargetState: TargetStatePresent},
@@ -263,7 +227,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
@@ -271,6 +234,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
 		assert.Equal(t, Dogu{Name: premiumNexus, Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
 	})
+
 	t.Run("validate only config for dogus in blueprint", func(t *testing.T) {
 		config := Config{
 			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
@@ -280,7 +244,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Config: config},
-			Status:    StatusPhaseValidated,
 		}
 
 		err := spec.CalculateEffectiveBlueprint()
@@ -303,7 +266,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Dogus: dogus},
-			Status:    StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
@@ -315,7 +277,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 func TestBlueprintSpec_MarkInvalid(t *testing.T) {
 	spec := BlueprintSpec{
 		Config: BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
-		Status: StatusPhaseValidated,
 	}
 	expectedErr := &InvalidBlueprintError{
 		WrappedError: nil,
@@ -346,7 +307,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus:      []Dogu{},
 				Components: []Component{},
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -395,7 +355,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: true,
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -432,7 +391,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: false,
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -468,7 +426,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -502,7 +459,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -802,63 +758,29 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 }
 
 func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
-	type fields struct {
-		Id                 string
-		Blueprint          Blueprint
-		BlueprintMask      BlueprintMask
-		EffectiveBlueprint EffectiveBlueprint
-		StateDiff          StateDiff
-		Config             BlueprintConfiguration
-		Status             StatusPhase
-		PersistenceContext map[string]interface{}
-		Events             []Event
-	}
-	type args struct {
-		possibleInvalidDependenciesError error
-	}
-	tests := []struct {
-		name           string
-		fields         fields
-		args           args
-		expectedPhase  StatusPhase
-		expectedEvents []Event
-	}{
-		{
-			name:          "statusphase invalid on error",
-			fields:        fields{},
-			args:          args{possibleInvalidDependenciesError: assert.AnError},
-			expectedPhase: "invalid",
-			expectedEvents: []Event{BlueprintSpecInvalidEvent{
-				ValidationError: &InvalidBlueprintError{WrappedError: assert.AnError, Message: "blueprint spec is invalid"}},
-			},
-		},
-		{
-			name:           "statusphase valid on nil",
-			fields:         fields{},
-			args:           args{possibleInvalidDependenciesError: nil},
-			expectedPhase:  "validated",
-			expectedEvents: []Event{BlueprintSpecValidatedEvent{}},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			spec := &BlueprintSpec{
-				Id:                 tt.fields.Id,
-				Blueprint:          tt.fields.Blueprint,
-				BlueprintMask:      tt.fields.BlueprintMask,
-				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
-				StateDiff:          tt.fields.StateDiff,
-				Config:             tt.fields.Config,
-				Status:             tt.fields.Status,
-				PersistenceContext: tt.fields.PersistenceContext,
-				Events:             tt.fields.Events,
-			}
-			spec.ValidateDynamically(tt.args.possibleInvalidDependenciesError)
+	t.Run("all ok, no errors", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
 
-			assert.Equal(t, tt.expectedPhase, spec.Status)
-			assert.Equal(t, tt.expectedEvents, spec.Events)
-		})
-	}
+		blueprint.ValidateDynamically(nil)
+
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionTypeValid))
+		require.Equal(t, 1, len(blueprint.Events))
+
+	})
+
+	t.Run("given dependency error", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		givenErr := assert.AnError
+
+		blueprint.ValidateDynamically(givenErr)
+
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionTypeValid))
+		require.Equal(t, 1, len(blueprint.Events))
+	})
 }
 
 func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {

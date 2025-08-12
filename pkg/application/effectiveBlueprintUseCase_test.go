@@ -14,8 +14,7 @@ import (
 func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 	// given
 	blueprint := &domain.BlueprintSpec{
-		Id:     "testBlueprint1",
-		Status: domain.StatusPhaseValidated,
+		Id: "testBlueprint1",
 	}
 
 	repoMock := newMockBlueprintSpecRepository(t)
@@ -43,8 +42,7 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 	t.Run("cannot save", func(t *testing.T) {
 		//given
 		blueprint := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseValidated,
+			Id: "testBlueprint1",
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)

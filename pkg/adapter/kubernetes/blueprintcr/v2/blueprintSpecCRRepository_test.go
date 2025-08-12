@@ -151,8 +151,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		//FIXME: I removed the status field in this test. Do not forget to add a condition to this test instead
 		expectedStatus := bpv2.BlueprintStatus{
-			Phase: bpv2.StatusPhaseValidated,
 			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
@@ -172,7 +172,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
-			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
 		})
@@ -190,7 +189,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		// when
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:     blueprintId,
-			Status: domain.StatusPhaseValidated,
 			Events: nil,
 		})
 
@@ -210,7 +208,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		persistenceContext[blueprintSpecRepoContextKey] = 1
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
-			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
 		})
@@ -226,7 +223,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
-			Phase: bpv2.StatusPhaseValidated,
 			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
@@ -251,7 +247,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
-			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
 		})
@@ -269,7 +264,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
-			Phase: bpv2.StatusPhaseValidated,
 			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
@@ -290,7 +284,6 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		err := repo.Update(ctx, &domain.BlueprintSpec{
 			Id:                 blueprintId,
-			Status:             domain.StatusPhaseValidated,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
 		})
