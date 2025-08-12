@@ -32,8 +32,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-		Id:     "testBlueprint1",
-		Events: []domain.Event{domain.BlueprintSpecStaticallyValidatedEvent{}},
+		Id: "testBlueprint1",
 	}).Return(nil)
 
 	//when

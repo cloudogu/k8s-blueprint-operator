@@ -28,12 +28,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: assert.AnError.Error(),
 		},
 		{
-			name:            "blueprint spec statically validated",
-			event:           BlueprintSpecStaticallyValidatedEvent{},
-			expectedName:    "BlueprintSpecStaticallyValidated",
-			expectedMessage: "",
-		},
-		{
 			name:            "blueprint spec validated",
 			event:           BlueprintSpecValidatedEvent{},
 			expectedName:    "BlueprintSpecValidated",

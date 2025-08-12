@@ -43,8 +43,7 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 
 	require.Nil(t, err)
 	assert.Equal(t, StatusPhaseNew, spec.Status)
-	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, BlueprintSpecStaticallyValidatedEvent{}, spec.Events[0])
+	require.Equal(t, 0, len(spec.Events))
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {

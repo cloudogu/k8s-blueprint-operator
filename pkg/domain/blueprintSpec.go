@@ -132,14 +132,10 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 			Reason:  "blueprint invalid",
 			Message: err.Error(),
 		})
-	} else {
-		// Do not set condition to true here.
-		// We reuse the condition for the dynamic validation and
-		// if the blueprint is completely consistent and valid can only be decided there
-		//TODO: Is it really clever to set this event here? If we validate the blueprint at every reconcile
-		// this could lead to hundreds of events.
-		spec.Events = append(spec.Events, BlueprintSpecStaticallyValidatedEvent{})
 	}
+	// Do not set condition to true here.
+	// We reuse the condition for the dynamic validation.
+	// If the blueprint is completely consistent and valid can only be decided there
 	return err
 }
 

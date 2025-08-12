@@ -25,16 +25,6 @@ func (b BlueprintSpecInvalidEvent) Message() string {
 	return b.ValidationError.Error()
 }
 
-type BlueprintSpecStaticallyValidatedEvent struct{}
-
-func (b BlueprintSpecStaticallyValidatedEvent) Name() string {
-	return "BlueprintSpecStaticallyValidated"
-}
-
-func (b BlueprintSpecStaticallyValidatedEvent) Message() string {
-	return ""
-}
-
 type BlueprintSpecValidatedEvent struct{}
 
 func (b BlueprintSpecValidatedEvent) Name() string {
