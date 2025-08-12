@@ -232,7 +232,24 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
+		blueprint := &domain.BlueprintSpec{
+			Id: "testBlueprint1",
+			EffectiveBlueprint: domain.EffectiveBlueprint{
+				Components: []domain.Component{
+					{
+						Name: common.QualifiedComponentName{
+							Namespace:  "k8s",
+							SimpleName: "k8s-dogu-operator",
+						},
+						Version: semVer3212,
+						// invalid TargetState to provoke special error
+						// delete this test, if we replace the target states with the absent flag
+						// Instead we should have a test with a forbidden diff action
+						TargetState: domain.TargetState(-10),
+					},
+				},
+			},
+		}
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)

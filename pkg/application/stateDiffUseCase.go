@@ -81,6 +81,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	} else if stateDiffError != nil {
 		return fmt.Errorf("failed to determine state diff for blueprint %q: %w", blueprint.Id, stateDiffError)
 	}
+
 	err = useCase.blueprintSpecRepo.Update(ctx, blueprint)
 	if err != nil {
 		return fmt.Errorf("cannot save blueprint spec %q after determining the state diff to the ecosystem: %w", blueprint.Id, err)

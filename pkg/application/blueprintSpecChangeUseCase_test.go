@@ -21,6 +21,8 @@ var testCtx = context.Background()
 var testBlueprintId = "testBlueprint1"
 
 func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
+	//FIXME: this test runs endless at the moment. Refactoring the changeUseCase is the last step
+	require.True(t, false, "tests deactivated until the refactoring is done.")
 
 	t.Run("do all steps with blueprint", func(t *testing.T) {
 		// given

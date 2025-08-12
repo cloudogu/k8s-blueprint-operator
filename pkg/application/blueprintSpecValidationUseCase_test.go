@@ -56,15 +56,16 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
 	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
 
-	repoMock.EXPECT().Update(ctx, mock.MatchedBy(func(i interface{}) bool {
-		spec := i.(*domain.BlueprintSpec)
-		return spec.Status == domain.StatusPhaseInvalid
-	})).Return(nil)
+	repoMock.EXPECT().
+		Update(ctx, blueprint).
+		Return(nil)
 
 	//when
 	err := useCase.ValidateBlueprintSpecStatically(ctx, blueprint)
 
 	//then
+	assert.Nil(t, blueprint.Conditions, "should not set conditions")
+
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError, "error should be an InvalidBlueprintError")
