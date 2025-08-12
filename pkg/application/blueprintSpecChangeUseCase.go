@@ -44,7 +44,9 @@ func NewBlueprintSpecChangeUseCase(
 	}
 }
 
-// HandleUntilApplied further executes a blueprint spec given by the blueprintId until it is fully applied or an error occurred.
+// HandleUntilApplied further executes a blueprint given by the blueprintId until it is as far applied as possible or an error occurred.
+// If the process needs to wait for something, this function will return.
+// Another call of this function is necessary to proceed.
 // Returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write or

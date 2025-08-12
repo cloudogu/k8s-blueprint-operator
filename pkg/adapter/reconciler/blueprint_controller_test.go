@@ -84,7 +84,7 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		changeHandlerMock := NewMockBlueprintChangeHandler(t)
 		sut := &BlueprintReconciler{blueprintChangeHandler: changeHandlerMock}
 
-		changeHandlerMock.EXPECT().HandleChange(testCtx, testBlueprint).Return(nil)
+		changeHandlerMock.EXPECT().HandleUntilApplied(testCtx, testBlueprint).Return(nil)
 		// when
 		actual, err := sut.Reconcile(testCtx, request)
 
@@ -98,7 +98,7 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		changeHandlerMock := NewMockBlueprintChangeHandler(t)
 		sut := &BlueprintReconciler{blueprintChangeHandler: changeHandlerMock}
 
-		changeHandlerMock.EXPECT().HandleChange(testCtx, testBlueprint).Return(errors.New("test"))
+		changeHandlerMock.EXPECT().HandleUntilApplied(testCtx, testBlueprint).Return(errors.New("test"))
 		// when
 		_, err := sut.Reconcile(testCtx, request)
 
