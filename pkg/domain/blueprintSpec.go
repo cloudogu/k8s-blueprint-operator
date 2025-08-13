@@ -49,8 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseEffectiveBlueprintGenerated marks that the effective blueprint was generated out of the blueprint and the mask.
-	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
@@ -212,7 +210,6 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		}
 		return validationError
 	}
-	spec.Status = StatusPhaseEffectiveBlueprintGenerated
 	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{})
 	return nil
 }

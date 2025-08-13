@@ -27,7 +27,6 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 		BlueprintMask:      domain.BlueprintMask{},
 		EffectiveBlueprint: domain.EffectiveBlueprint{},
 		StateDiff:          domain.StateDiff{},
-		Status:             domain.StatusPhaseEffectiveBlueprintGenerated,
 		Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
 	}).Return(nil)
 
@@ -55,7 +54,6 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 			BlueprintMask:      domain.BlueprintMask{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{},
 			StateDiff:          domain.StateDiff{},
-			Status:             domain.StatusPhaseEffectiveBlueprintGenerated,
 			Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
 		}).Return(&domainservice.InternalError{Message: "test-error"})
 
