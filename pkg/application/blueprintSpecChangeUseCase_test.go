@@ -70,10 +70,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 				})
 			})
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil)
-		applyMock.EXPECT().PreProcessBlueprintApplication(mock.Anything, blueprintSpec).Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
-			})
 		ecosystemConfigUseCaseMock.EXPECT().ApplyConfig(mock.Anything, blueprintSpec).Return(nil).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 			blueprint.Status = domain.StatusPhaseEcosystemConfigApplied
 		})
@@ -560,43 +556,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		// then
 		require.Error(t, err)
 		require.ErrorContains(t, err, "could not handle unknown status of blueprint")
-	})
-}
-
-func TestBlueprintSpecChangeUseCase_preProcessBlueprintApplication(t *testing.T) {
-	t.Run("stop on dry run", func(t *testing.T) {
-		// given
-		blueprint := &domain.BlueprintSpec{
-			Id:     blueprintId,
-			Config: domain.BlueprintConfiguration{DryRun: true},
-		}
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprint).Return(nil)
-		useCase := NewBlueprintSpecChangeUseCase(nil, nil, nil, nil, applyMock, nil, nil, nil)
-		// when
-		err := useCase.preProcessBlueprintApplication(testCtx, blueprint)
-		// then
-		require.NoError(t, err)
-	})
-	t.Run("error", func(t *testing.T) {
-		// given
-		blueprint := &domain.BlueprintSpec{
-			Id: blueprintId,
-		}
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		applyMock.EXPECT().PreProcessBlueprintApplication(testCtx, blueprint).Return(assert.AnError)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-		// when
-		err := useCase.preProcessBlueprintApplication(testCtx, blueprint)
-		// then
-		require.ErrorIs(t, err, assert.AnError)
 	})
 }
 

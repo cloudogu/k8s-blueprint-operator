@@ -49,9 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
-	// were successful.
-	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
 	// StatusPhaseAwaitSelfUpgrade marks that the blueprint operator waits for termination for a self upgrade.
 	StatusPhaseAwaitSelfUpgrade StatusPhase = "awaitSelfUpgrade"
 	// StatusPhaseSelfUpgradeCompleted marks that the blueprint operator itself got successfully upgraded.
@@ -370,16 +367,6 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
 	// TODO: also check if an early-exit is possible if no changes need to be applied, see PR #29
 	return !spec.Config.DryRun
-}
-
-// CompletePreProcessing decides if the blueprint is ready to be applied or not by setting the fitting next status phase.
-func (spec *BlueprintSpec) CompletePreProcessing() {
-	if spec.Config.DryRun {
-		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
-	} else {
-		spec.Status = StatusPhaseBlueprintApplicationPreProcessed
-		spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
-	}
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {

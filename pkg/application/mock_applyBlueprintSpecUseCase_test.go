@@ -210,53 +210,6 @@ func (_c *mockApplyBlueprintSpecUseCase_PostProcessBlueprintApplication_Call) Ru
 	return _c
 }
 
-// PreProcessBlueprintApplication provides a mock function with given fields: ctx, blueprint
-func (_m *mockApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	ret := _m.Called(ctx, blueprint)
-
-	if len(ret) == 0 {
-		panic("no return value specified for PreProcessBlueprintApplication")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
-		r0 = rf(ctx, blueprint)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'PreProcessBlueprintApplication'
-type mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call struct {
-	*mock.Call
-}
-
-// PreProcessBlueprintApplication is a helper method to define mock.On call
-//   - ctx context.Context
-//   - blueprint *domain.BlueprintSpec
-func (_e *mockApplyBlueprintSpecUseCase_Expecter) PreProcessBlueprintApplication(ctx interface{}, blueprint interface{}) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
-	return &mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call{Call: _e.mock.On("PreProcessBlueprintApplication", ctx, blueprint)}
-}
-
-func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
-	})
-	return _c
-}
-
-func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) Return(_a0 error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
-	_c.Call.Return(_a0)
-	return _c
-}
-
-func (_c *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyBlueprintSpecUseCase_PreProcessBlueprintApplication_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // newMockApplyBlueprintSpecUseCase creates a new instance of mockApplyBlueprintSpecUseCase. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func newMockApplyBlueprintSpecUseCase(t interface {

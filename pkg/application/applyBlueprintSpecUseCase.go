@@ -84,25 +84,6 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return healthErr
 }
 
-// PreProcessBlueprintApplication prepares the environment for applying the blueprint.
-// returns a domainservice.InternalError on any error.
-func (useCase *ApplyBlueprintSpecUseCase) PreProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.PreProcessBlueprintApplication")
-
-	if !blueprint.ShouldBeApplied() {
-		logger.Info("stop as blueprint should not be applied")
-	}
-
-	blueprint.CompletePreProcessing()
-
-	err := useCase.repo.Update(ctx, blueprint)
-	if err != nil {
-		return fmt.Errorf("cannot save blueprint spec %q after preprocessing: %w", blueprint.Id, err)
-	}
-
-	return nil
-}
-
 // PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. censoring the state diff.
 // returns a domainservice.InternalError on any error.
 func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {

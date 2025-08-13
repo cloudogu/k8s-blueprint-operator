@@ -48,7 +48,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		component := &ecosystem.ComponentInstallation{
@@ -149,7 +148,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		timeoutCtx, cancelCtx := context.WithTimeout(testCtx, time.Second) // but usually cancel
@@ -178,7 +176,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		componentRepo.EXPECT().GetByName(mock.Anything, blueprintOperatorName).Return(nil, internalTestError)
@@ -199,7 +196,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id:        blueprintId,
 			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		component := &ecosystem.ComponentInstallation{
@@ -224,7 +220,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 
 		blueprint := &domain.BlueprintSpec{
 			StateDiff: upgradeToV2StateDiff,
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		component := &ecosystem.ComponentInstallation{
@@ -251,7 +246,6 @@ func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Id:        blueprintId,
 			StateDiff: domain.StateDiff{},
-			Status:    domain.StatusPhaseBlueprintApplicationPreProcessed,
 		}
 
 		blueprintRepo.EXPECT().Update(mock.Anything, blueprint).Return(assert.AnError)

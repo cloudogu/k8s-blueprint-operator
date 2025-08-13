@@ -618,33 +618,6 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	}
 }
 
-func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{}
-		// when
-		spec.CompletePreProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationPreProcessed,
-			Events: []Event{BlueprintApplicationPreProcessedEvent{}},
-		})
-	})
-	t.Run("dry run", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Config: BlueprintConfiguration{DryRun: true},
-		}
-		// when
-		spec.CompletePreProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Config: BlueprintConfiguration{DryRun: true},
-			Events: []Event{BlueprintDryRunEvent{}},
-		})
-	})
-}
-
 func TestBlueprintSpec_StartApplying(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		// given
@@ -813,9 +786,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationPreProcessed,
-		}
+		blueprint := BlueprintSpec{}
 		blueprint.MarkWaitingForSelfUpgrade()
 
 		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)

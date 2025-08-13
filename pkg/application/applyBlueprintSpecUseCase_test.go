@@ -24,47 +24,6 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 	assert.Equal(t, healthMock, sut.healthUseCase)
 }
 
-func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, spec)
-
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
-	})
-	t.Run("repo error while saving", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, spec)
-
-		require.ErrorIs(t, err, assert.AnError)
-	})
-	t.Run("do nothing on dry run", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Config: domain.BlueprintConfiguration{DryRun: true},
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		useCase := NewApplyBlueprintSpecUseCase(repoMock, nil, nil, nil)
-
-		err := useCase.PreProcessBlueprintApplication(testCtx, spec)
-
-		require.NoError(t, err)
-		require.Equal(t, 1, len(spec.Events))
-		assert.Equal(t, domain.BlueprintDryRunEvent{}, spec.Events[0])
-	})
-}
-
 func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{}

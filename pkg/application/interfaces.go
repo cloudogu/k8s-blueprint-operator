@@ -40,7 +40,6 @@ type componentInstallationUseCase interface {
 type applyBlueprintSpecUseCase interface {
 	CheckEcosystemHealthUpfront(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	CheckEcosystemHealthAfterwards(ctx context.Context, blueprint *domain.BlueprintSpec) error
-	PreProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	ApplyBlueprintSpec(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }

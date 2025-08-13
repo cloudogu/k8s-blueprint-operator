@@ -92,14 +92,14 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
-	err = useCase.applyUseCase.PreProcessBlueprintApplication(ctx, blueprint)
-	if err != nil {
-		return err
-	}
 	if !blueprint.ShouldBeApplied() {
-		// event recording and so on happen in PreProcessBlueprintApplication
 		// just stop the loop here on dry run or early exit
 		return nil
+	}
+
+	err = useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
+	if err != nil {
+		return err
 	}
 
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
@@ -116,8 +116,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseBlueprintApplicationPreProcessed:
-		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseAwaitSelfUpgrade:
 		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseSelfUpgradeCompleted:
@@ -148,17 +146,4 @@ func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blu
 	default:
 		return fmt.Errorf("could not handle unknown status of blueprint")
 	}
-}
-
-func (useCase *BlueprintSpecChangeUseCase) preProcessBlueprintApplication(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	err := useCase.applyUseCase.PreProcessBlueprintApplication(ctx, blueprintSpec)
-	if err != nil {
-		return err
-	}
-	if !blueprintSpec.ShouldBeApplied() {
-		// event recording and so on happen in PreProcessBlueprintApplication
-		// just stop the loop here on dry run or early exit
-		return nil
-	}
-	return useCase.HandleUntilApplied(ctx, blueprintSpec.Id)
 }
