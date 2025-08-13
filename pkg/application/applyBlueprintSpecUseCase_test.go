@@ -7,6 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"testing"
 )
 
@@ -371,7 +373,9 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 
 	t.Run("should succeed", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{}
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
@@ -385,15 +389,15 @@ func TestApplyBlueprintSpecUseCase_CheckEcosystemHealthAfterwards(t *testing.T) 
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseEcosystemHealthyAfterwards, blueprint.Status)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, domain.ConditionEcosystemHealthy)
+		require.NotNil(t, condition)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 	})
 }
 
 func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyAfterwards,
-		}
+		blueprint := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
@@ -409,9 +413,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		assert.Contains(t, blueprint.Events, domain.CompletedEvent{}, blueprint.Events)
 	})
 	t.Run("repo error while saving", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyAfterwards,
-		}
+		blueprint := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)

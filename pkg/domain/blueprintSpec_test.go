@@ -14,7 +14,6 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 var version3211, _ = core.ParseVersion("3.2.1-1")
@@ -571,51 +570,100 @@ func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
 }
 
 func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
-	tests := []struct {
-		name               string
-		inputSpec          *BlueprintSpec
-		healthResult       ecosystem.HealthResult
-		expectedEventNames []string
-		expectedEventMsgs  []string
-	}{
-		{
-			name:      "should write unhealthy dogus in event",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus:   {"postfix"},
-						ecosystem.UnavailableHealthStatus: {"ldap"},
-						ecosystem.PendingHealthStatus:     {"postgresql"},
-					},
+	t.Run("all healthy", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{}
+
+		err := blueprint.CheckEcosystemHealthAfterwards(health)
+
+		require.NoError(t, err)
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionEcosystemHealthy))
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		require.NotNil(t, condition)
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, EcosystemHealthyAfterwardsEvent{}, blueprint.Events[0])
+	})
+
+	t.Run("no healthy event if condition status stays the same", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{}
+
+		err := blueprint.CheckEcosystemHealthAfterwards(health)
+		require.NoError(t, err)
+
+		//reset events
+		blueprint.Events = []Event{}
+		require.Equal(t, 0, len(blueprint.Events))
+
+		// call again and check if another event was created
+		err = blueprint.CheckEcosystemHealthAfterwards(health)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(blueprint.Events))
+	})
+
+	t.Run("some unhealthy", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.AvailableHealthStatus:   {"postfix"},
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+					ecosystem.PendingHealthStatus:     {"postgresql"},
 				},
 			},
-			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
-			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
-		},
-		{
-			name:      "ecosystem healthy",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
-					},
+			ComponentHealth: ecosystem.ComponentHealthResult{
+				ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
+					ecosystem.AvailableHealthStatus:   {"dogu-operator"},
+					ecosystem.UnavailableHealthStatus: {"component-operator"},
+					ecosystem.PendingHealthStatus:     {"service-discovery"},
 				},
 			},
-			expectedEventNames: []string{"EcosystemHealthyAfterwards"},
-			expectedEventMsgs:  []string{""},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckEcosystemHealthAfterwards(tt.healthResult)
-			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
-			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
-			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
-			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
-		})
-	}
+		}
+
+		err := blueprint.CheckEcosystemHealthAfterwards(health)
+
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "ecosystem is unhealthy after applying the blueprint")
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionEcosystemHealthy))
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		require.NotNil(t, condition)
+		assert.Contains(t, condition.Message, "2 dogu(s) are unhealthy: ldap, postgresql")
+		assert.Contains(t, condition.Message, "2 component(s) are unhealthy: component-operator, service-discovery")
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, EcosystemUnhealthyAfterwardsEvent{HealthResult: health}, blueprint.Events[0])
+	})
+
+	t.Run("no unhealthy event if condition status stays the same", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+				},
+			},
+		}
+
+		err := blueprint.CheckEcosystemHealthAfterwards(health)
+		require.Error(t, err)
+
+		//reset events
+		blueprint.Events = []Event{}
+		require.Equal(t, 0, len(blueprint.Events))
+		// call again and check if another event was created
+		err = blueprint.CheckEcosystemHealthAfterwards(health)
+		require.Error(t, err)
+		require.Equal(t, 0, len(blueprint.Events))
+	})
 }
 
 func TestBlueprintSpec_StartApplying(t *testing.T) {
@@ -683,9 +731,7 @@ func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
 		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyAfterwards,
-		}
+		spec := &BlueprintSpec{}
 		// when
 		spec.CompletePostProcessing()
 		// then
@@ -703,10 +749,9 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		// when
 		spec.CompletePostProcessing()
 		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New(handleInProgressMsg)}},
-		})
+		assert.Equal(t, StatusPhaseFailed, spec.Status)
+		require.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, ExecutionFailedEvent{errors.New(handleInProgressMsg)}, spec.Events[0])
 	})
 
 	t.Run("status change on failure EcosystemUnhealthyAfterwards -> Failed", func(t *testing.T) {

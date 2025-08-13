@@ -130,11 +130,12 @@ func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blu
 	case domain.StatusPhaseBlueprintApplied:
 		return useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprint)
 	case domain.StatusPhaseRestartsTriggered:
-		return useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprint)
-	case domain.StatusPhaseBlueprintApplicationFailed:
+		err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprint)
+		if err != nil {
+			return err
+		}
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
-	case domain.StatusPhaseEcosystemHealthyAfterwards:
-		// censor and set status to completed
+	case domain.StatusPhaseBlueprintApplicationFailed:
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyAfterwards:
 		// censor and set status to failed

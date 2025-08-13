@@ -59,8 +59,6 @@ const (
 	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
 	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
 	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
-	// StatusPhaseEcosystemHealthyAfterwards shows that the ecosystem got healthy again after applying the blueprint.
-	StatusPhaseEcosystemHealthyAfterwards StatusPhase = "ecosystemHealthyAfterwards"
 	// StatusPhaseEcosystemUnhealthyAfterwards shows that the ecosystem got not healthy again after applying the blueprint.
 	StatusPhaseEcosystemUnhealthyAfterwards StatusPhase = "ecosystemUnhealthyAfterwards"
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
@@ -386,13 +384,28 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
 func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) error {
 	if healthResult.AllHealthy() {
-		spec.Status = StatusPhaseEcosystemHealthyAfterwards
-		spec.Events = append(spec.Events, EcosystemHealthyAfterwardsEvent{})
+		event := EcosystemHealthyAfterwardsEvent{}
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionTrue,
+			Message: event.Message(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, event)
+		}
+
 		return nil
 	} else {
-		//TODO write condition here in the future
+		event := EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult}
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionFalse,
+			Message: event.Message(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, event)
+		}
 		spec.Status = StatusPhaseEcosystemUnhealthyAfterwards
-		spec.Events = append(spec.Events, EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult})
 		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy after applying the blueprint", healthResult)
 	}
 }
@@ -428,9 +441,6 @@ func (spec *BlueprintSpec) CensorSensitiveData() {
 // CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	switch spec.Status {
-	case StatusPhaseEcosystemHealthyAfterwards:
-		spec.Status = StatusPhaseCompleted
-		spec.Events = append(spec.Events, CompletedEvent{})
 	case StatusPhaseApplyEcosystemConfigFailed:
 		fallthrough
 	case StatusPhaseEcosystemUnhealthyAfterwards:
@@ -444,7 +454,12 @@ func (spec *BlueprintSpec) CompletePostProcessing() {
 	case StatusPhaseBlueprintApplicationFailed:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
+	default:
+		//if healthy
+		spec.Status = StatusPhaseCompleted
+		spec.Events = append(spec.Events, CompletedEvent{})
 	}
+
 }
 
 var notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
