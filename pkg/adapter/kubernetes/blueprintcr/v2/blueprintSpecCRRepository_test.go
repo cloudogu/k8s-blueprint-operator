@@ -313,14 +313,12 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 
 		var events []domain.Event
 		events = append(events,
-			domain.EffectiveBlueprintCalculatedEvent{},
 			domain.StateDiffDoguDeterminedEvent{},
 			domain.StateDiffComponentDeterminedEvent{},
 			domain.EcosystemHealthyUpfrontEvent{},
 			domain.EcosystemUnhealthyUpfrontEvent{HealthResult: ecosystem.HealthResult{}},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EffectiveBlueprintCalculated", "")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDoguDetermined", "dogu state diff determined: 0 actions ()")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffComponentDetermined", "component state diff determined: 0 actions ()")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "EcosystemHealthyUpfront", "dogu health ignored: false; component health ignored: false")

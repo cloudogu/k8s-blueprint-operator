@@ -25,18 +25,6 @@ func (b BlueprintSpecInvalidEvent) Message() string {
 	return b.ValidationError.Error()
 }
 
-type EffectiveBlueprintCalculatedEvent struct {
-	Result EffectiveBlueprint
-}
-
-func (e EffectiveBlueprintCalculatedEvent) Name() string {
-	return "EffectiveBlueprintCalculated"
-}
-
-func (e EffectiveBlueprintCalculatedEvent) Message() string {
-	return ""
-}
-
 type GlobalConfigDiffDeterminedEvent struct {
 	GlobalConfigDiffs GlobalConfigDiffs
 }

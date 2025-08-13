@@ -21,20 +21,15 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_ok(t *testing.T) {
 	ctx := context.Background()
 	useCase := NewEffectiveBlueprintUseCase(repoMock)
 
-	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-		Id:                 "testBlueprint1",
-		Blueprint:          domain.Blueprint{},
-		BlueprintMask:      domain.BlueprintMask{},
-		EffectiveBlueprint: domain.EffectiveBlueprint{},
-		StateDiff:          domain.StateDiff{},
-		Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
-	}).Return(nil)
+	repoMock.EXPECT().Update(ctx, blueprint).Return(nil)
 
 	// when
 	err := useCase.CalculateEffectiveBlueprint(ctx, blueprint)
 
 	// then
 	require.NoError(t, err)
+	assert.Equal(t, 0, len(blueprint.Events))
+	assert.Equal(t, blueprint.EffectiveBlueprint, domain.EffectiveBlueprint{})
 }
 
 func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T) {
@@ -48,14 +43,7 @@ func TestBlueprintSpecUseCase_CalculateEffectiveBlueprint_repoError(t *testing.T
 		ctx := context.Background()
 		useCase := NewEffectiveBlueprintUseCase(repoMock)
 
-		repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
-			Id:                 "testBlueprint1",
-			Blueprint:          domain.Blueprint{},
-			BlueprintMask:      domain.BlueprintMask{},
-			EffectiveBlueprint: domain.EffectiveBlueprint{},
-			StateDiff:          domain.StateDiff{},
-			Events:             []domain.Event{domain.EffectiveBlueprintCalculatedEvent{}},
-		}).Return(&domainservice.InternalError{Message: "test-error"})
+		repoMock.EXPECT().Update(ctx, blueprint).Return(&domainservice.InternalError{Message: "test-error"})
 
 		//when
 		err := useCase.CalculateEffectiveBlueprint(ctx, blueprint)

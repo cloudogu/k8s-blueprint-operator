@@ -62,12 +62,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "ecosystem health:\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
 		},
 		{
-			name:            "effective blueprint calculated",
-			event:           EffectiveBlueprintCalculatedEvent{},
-			expectedName:    "EffectiveBlueprintCalculated",
-			expectedMessage: "",
-		},
-		{
 			name: "dogu state diff determined",
 			event: newStateDiffDoguEvent(
 				DoguDiffs{
