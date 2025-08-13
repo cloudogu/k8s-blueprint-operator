@@ -116,8 +116,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseEcosystemUnhealthyUpfront:
-		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:
 		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseAwaitSelfUpgrade:

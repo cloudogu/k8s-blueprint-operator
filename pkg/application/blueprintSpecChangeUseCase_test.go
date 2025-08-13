@@ -319,50 +319,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("handle unhealthy ecosystem upfront", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
-		}, nil)
-		// when
-		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("handle unhealthy ecosystem upfront", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseEcosystemUnhealthyUpfront,
-		}, nil)
-		// when
-		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
-		// then
-		require.NoError(t, err)
-	})
-
 	t.Run("handle error apply registry config", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
