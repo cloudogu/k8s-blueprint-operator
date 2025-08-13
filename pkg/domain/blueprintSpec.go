@@ -49,8 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
-	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
@@ -336,8 +334,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	//TODO: we cannot just deduplicate the events here by detecting a condition change,
 	// because the blueprint could be executable even after a change of the blueprint.
 	// Therefore, a check with "conditionChanged" is not enough to prevent, that we regenerate all events on every reconcile.
-
-	spec.Status = StatusPhaseStateDiffDetermined
 
 	return nil
 }

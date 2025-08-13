@@ -315,7 +315,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionTypeExecutable))
 		require.NoError(t, err)
-		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
 		require.Equal(t, 5, len(spec.Events))
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
 		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
@@ -345,6 +344,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: true,
 			},
+			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -362,7 +362,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
+		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionTypeExecutable))
 	})
 
 	t.Run("invalid blueprint state with not allowed dogu namespace switch", func(t *testing.T) {

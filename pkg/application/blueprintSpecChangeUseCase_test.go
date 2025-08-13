@@ -64,7 +64,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseStateDiffDetermined
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeExecutable,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
@@ -283,7 +286,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				updatedSpec.Status = domain.StatusPhaseStateDiffDetermined
+				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
+					Type:   domain.ConditionTypeExecutable,
+					Status: metav1.ConditionTrue,
+				})
 			})
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(assert.AnError)
 

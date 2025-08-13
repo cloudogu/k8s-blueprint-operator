@@ -87,6 +87,10 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
 		return err
 	}
+	err = useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprint)
+	if err != nil {
+		return err
+	}
 
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	for blueprint.Status != domain.StatusPhaseCompleted {
@@ -102,8 +106,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseStateDiffDetermined:
-		return useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprint)
 	case domain.StatusPhaseEcosystemHealthyUpfront:
 		return useCase.preProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
