@@ -48,10 +48,13 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
-	spec := BlueprintSpec{}
+	spec := BlueprintSpec{
+		Conditions: &[]Condition{},
+	}
 
 	err := spec.ValidateStatically()
 
+	assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeValid))
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
@@ -249,8 +252,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		err := spec.CalculateEffectiveBlueprint()
 
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
-		assert.Equal(t, spec.Status, StatusPhaseInvalid)
-		assert.Equal(t, spec.Events, []Event{BlueprintSpecInvalidEvent{err}})
+		assert.Equal(t, 0, len(spec.Events))
 	})
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
@@ -274,21 +276,6 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkInvalid(t *testing.T) {
-	spec := BlueprintSpec{
-		Config: BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
-	}
-	expectedErr := &InvalidBlueprintError{
-		WrappedError: nil,
-		Message:      "test-error",
-	}
-	spec.MarkInvalid(expectedErr)
-
-	assert.Equal(t, StatusPhaseInvalid, spec.Status)
-	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
-}
-
 func TestBlueprintSpec_MissingConfigReferences(t *testing.T) {
 	blueprint := BlueprintSpec{}
 	blueprint.MissingConfigReferences(assert.AnError)
@@ -307,6 +294,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus:      []Dogu{},
 				Components: []Component{},
 			},
+			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -324,6 +312,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			DoguConfigDiffs:          map[cescommons.SimpleName]DoguConfigDiffs{},
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}
+
+		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionTypeExecutable))
 		require.NoError(t, err)
 		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
 		require.Equal(t, 5, len(spec.Events))
@@ -391,6 +381,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: false,
 			},
+			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -407,8 +398,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
 	})
 
@@ -426,6 +417,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
+			Conditions: &[]Condition{},
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -441,10 +433,11 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
 	})
+
 	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
@@ -459,6 +452,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
+			Conditions: &[]Condition{},
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -474,8 +468,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
 		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
 	})
 }

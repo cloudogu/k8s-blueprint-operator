@@ -162,7 +162,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	assert.ErrorContains(t, err, "blueprint spec is invalid")
 
 	assert.Equal(t, "testBlueprint1", blueprint.Id)
-	assert.Equal(t, domain.StatusPhaseInvalid, blueprint.Status)
 	require.Equal(t, 1, len(blueprint.Events))
 	assert.IsType(t, domain.BlueprintSpecInvalidEvent{}, blueprint.Events[0])
 	assert.ErrorContains(t, blueprint.Events[0].(domain.BlueprintSpecInvalidEvent).ValidationError, "blueprint spec is invalid: ")

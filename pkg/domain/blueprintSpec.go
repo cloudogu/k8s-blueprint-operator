@@ -32,8 +32,9 @@ type BlueprintSpec struct {
 
 type Condition = metav1.Condition
 
-var (
+const (
 	ConditionTypeValid            = "Valid"
+	ConditionTypeExecutable       = "Executable"
 	ConditionEcosystemHealthy     = "EcosystemHealthy"
 	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
 	ConditionConfigApplied        = "ConfigApplied"
@@ -52,8 +53,6 @@ const (
 	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
 	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
 	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
-	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
-	StatusPhaseInvalid StatusPhase = "invalid"
 	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
 	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
@@ -161,7 +160,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	return err
 }
 
-// ValidateDynamically sets the Status either to StatusPhaseInvalid or StatusPhaseValidated
+// ValidateDynamically sets the ConditionTypeValid
 // depending on if the dependencies or versions of the elements in the blueprint are invalid.
 // This function decides completely on the given error, therefore no error will be returned explicitly again.
 func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
@@ -170,14 +169,15 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			WrappedError: possibleInvalidDependenciesError,
 			Message:      "blueprint spec is invalid",
 		}
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
-		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionTypeValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "inconsistent blueprint",
 			Message: err.Error(),
 		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+		}
 	} else {
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:   ConditionTypeValid,
@@ -201,8 +201,15 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	}
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: validationError})
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionTypeValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "inconsistent blueprint",
+			Message: validationError.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: validationError})
+		}
 		return validationError
 	}
 	spec.Status = StatusPhaseEffectiveBlueprintGenerated
@@ -267,12 +274,6 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 	}
 }
 
-// MarkInvalid is used to mark the blueprint as invalid after dynamically validating it.
-func (spec *BlueprintSpec) MarkInvalid(err error) {
-	spec.Status = StatusPhaseInvalid
-	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
-}
-
 // MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
 func (spec *BlueprintSpec) MissingConfigReferences(error error) {
 	spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
@@ -320,10 +321,25 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionTypeExecutable,
+			Status:  metav1.ConditionFalse,
+			Reason:  "forbidden operations needed",
+			Message: invalidBlueprintError.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		}
 		return invalidBlueprintError
 	}
+
+	meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:   ConditionTypeExecutable,
+		Status: metav1.ConditionTrue,
+	})
+	//TODO: we cannot just deduplicate the events here by detecting a condition change,
+	// because the blueprint could be executable even after a change of the blueprint.
+	// Therefore, a check with "conditionChanged" is not enough to prevent, that we regenerate all events on every reconcile.
 
 	spec.Status = StatusPhaseStateDiffDetermined
 

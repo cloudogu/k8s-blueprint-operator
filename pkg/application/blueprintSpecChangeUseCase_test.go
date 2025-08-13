@@ -320,8 +320,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseInvalid,
+			Id: "testBlueprint1",
 		}, nil)
 		// when
 		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
