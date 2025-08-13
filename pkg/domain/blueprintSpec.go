@@ -33,8 +33,8 @@ type BlueprintSpec struct {
 type Condition = metav1.Condition
 
 const (
-	ConditionTypeValid            = "Valid"
-	ConditionTypeExecutable       = "Executable"
+	ConditionValid                = "Valid"
+	ConditionExecutable           = "Executable"
 	ConditionEcosystemHealthy     = "EcosystemHealthy"
 	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
 	ConditionConfigApplied        = "ConfigApplied"
@@ -49,8 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
-	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
 	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
 	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "ecosystemUnhealthyUpfront"
 	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
@@ -120,7 +118,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 		}
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionTypeValid,
+			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "blueprint invalid",
 			Message: err.Error(),
@@ -156,7 +154,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	return err
 }
 
-// ValidateDynamically sets the ConditionTypeValid
+// ValidateDynamically sets the ConditionValid
 // depending on if the dependencies or versions of the elements in the blueprint are invalid.
 // This function decides completely on the given error, therefore no error will be returned explicitly again.
 func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
@@ -166,7 +164,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			Message:      "blueprint spec is invalid",
 		}
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionTypeValid,
+			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "inconsistent blueprint",
 			Message: err.Error(),
@@ -176,7 +174,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 		}
 	} else {
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:   ConditionTypeValid,
+			Type:   ConditionValid,
 			Status: metav1.ConditionTrue,
 		})
 	}
@@ -198,7 +196,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionTypeValid,
+			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "inconsistent blueprint",
 			Message: validationError.Error(),
@@ -316,7 +314,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionTypeExecutable,
+			Type:    ConditionExecutable,
 			Status:  metav1.ConditionFalse,
 			Reason:  "forbidden operations needed",
 			Message: invalidBlueprintError.Error(),
@@ -328,7 +326,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	}
 
 	meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-		Type:   ConditionTypeExecutable,
+		Type:   ConditionExecutable,
 		Status: metav1.ConditionTrue,
 	})
 	//TODO: we cannot just deduplicate the events here by detecting a condition change,
@@ -343,16 +341,31 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
 	if healthResult.AllHealthy() {
-		spec.Status = StatusPhaseEcosystemHealthyUpfront
-		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth,
-			componentHealthIgnored: spec.Config.IgnoreComponentHealth})
+		event := EcosystemHealthyUpfrontEvent{
+			doguHealthIgnored:      spec.Config.IgnoreDoguHealth,
+			componentHealthIgnored: spec.Config.IgnoreComponentHealth,
+		}
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionTrue,
+			Message: event.Message(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, event)
+		}
 		return nil
 	} else {
-		//TODO: set health condition here in the future
-		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
+		event := EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult}
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionFalse,
+			Message: event.Message(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, event)
+		}
 		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy before applying the blueprint", healthResult)
 	}
-
 }
 
 // ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.

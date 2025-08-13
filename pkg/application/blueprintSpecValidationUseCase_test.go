@@ -121,7 +121,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 
 	// then
 	require.NoError(t, err)
-	assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionTypeValid))
+	assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionValid))
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testing.T) {
@@ -152,7 +152,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, blueprint)
 
 	// then
-	assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionTypeValid))
+	assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionValid))
 
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError

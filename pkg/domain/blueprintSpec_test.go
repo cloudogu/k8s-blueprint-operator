@@ -54,7 +54,7 @@ func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 
 	err := spec.ValidateStatically()
 
-	assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeValid))
+	assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionValid))
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
@@ -313,7 +313,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}
 
-		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionTypeExecutable))
+		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionExecutable))
 		require.NoError(t, err)
 		require.Equal(t, 5, len(spec.Events))
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
@@ -362,7 +362,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionTypeExecutable))
+		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionExecutable))
 	})
 
 	t.Run("invalid blueprint state with not allowed dogu namespace switch", func(t *testing.T) {
@@ -398,7 +398,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
 	})
@@ -433,7 +433,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
 	})
@@ -468,85 +468,106 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionTypeExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
 	})
 }
 
 func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
-	tests := []struct {
-		name               string
-		inputSpec          *BlueprintSpec
-		healthResult       ecosystem.HealthResult
-		expectedStatus     StatusPhase
-		expectedEventNames []string
-		expectedEventMsgs  []string
-	}{
-		{
-			name:               "should return early if health result is empty",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
-		},
-		{
-			name:               "should post ignored dogu health in event",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreDoguHealth: true}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: true; component health ignored: false"},
-		},
-		{
-			name:               "should post ignored component health in event",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreComponentHealth: true}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: true"},
-		},
-		{
-			name:      "should write unhealthy dogus in event",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus:   {"postfix"},
-						ecosystem.UnavailableHealthStatus: {"ldap"},
-						ecosystem.PendingHealthStatus:     {"postgresql"},
-					},
+	t.Run("all healthy", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{}
+		err := blueprint.CheckEcosystemHealthUpfront(health)
+		require.NoError(t, err)
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionEcosystemHealthy))
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		require.NotNil(t, condition)
+		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, EcosystemHealthyUpfrontEvent{
+			doguHealthIgnored:      false,
+			componentHealthIgnored: false,
+		}, blueprint.Events[0])
+	})
+
+	t.Run("no healthy event if condition status stays the same", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{}
+
+		err := blueprint.CheckEcosystemHealthUpfront(health)
+		require.NoError(t, err)
+
+		//reset events
+		blueprint.Events = []Event{}
+		require.Equal(t, 0, len(blueprint.Events))
+		// call again and check if another event was created
+		err = blueprint.CheckEcosystemHealthUpfront(health)
+		require.NoError(t, err)
+		require.Equal(t, 0, len(blueprint.Events))
+	})
+
+	t.Run("some unhealthy", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.AvailableHealthStatus:   {"postfix"},
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+					ecosystem.PendingHealthStatus:     {"postgresql"},
 				},
 			},
-			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
-			expectedEventNames: []string{"EcosystemUnhealthyUpfront"},
-			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
-		},
-		{
-			name:      "all dogus healthy",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
-					},
+			ComponentHealth: ecosystem.ComponentHealthResult{
+				ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
+					ecosystem.AvailableHealthStatus:   {"dogu-operator"},
+					ecosystem.UnavailableHealthStatus: {"component-operator"},
+					ecosystem.PendingHealthStatus:     {"service-discovery"},
 				},
 			},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckEcosystemHealthUpfront(tt.healthResult)
-			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
-			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
-			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
-			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
-		})
-	}
+		}
+		err := blueprint.CheckEcosystemHealthUpfront(health)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "ecosystem is unhealthy before applying the blueprint")
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionEcosystemHealthy))
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		require.NotNil(t, condition)
+		assert.Contains(t, condition.Message, "2 dogu(s) are unhealthy: ldap, postgresql")
+		assert.Contains(t, condition.Message, "2 component(s) are unhealthy: component-operator, service-discovery")
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, EcosystemUnhealthyUpfrontEvent{HealthResult: health}, blueprint.Events[0])
+	})
+
+	t.Run("no unhealthy event if condition status stays the same", func(t *testing.T) {
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+				},
+			},
+		}
+
+		err := blueprint.CheckEcosystemHealthUpfront(health)
+		require.Error(t, err)
+
+		//reset events
+		blueprint.Events = []Event{}
+		require.Equal(t, 0, len(blueprint.Events))
+		// call again and check if another event was created
+		err = blueprint.CheckEcosystemHealthUpfront(health)
+		require.Error(t, err)
+		require.Equal(t, 0, len(blueprint.Events))
+	})
 }
 
 func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
@@ -603,9 +624,7 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-		}
+		spec := &BlueprintSpec{}
 		// when
 		spec.CompletePreProcessing()
 		// then
@@ -617,14 +636,12 @@ func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
 	t.Run("dry run", func(t *testing.T) {
 		// given
 		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
 			Config: BlueprintConfiguration{DryRun: true},
 		}
 		// when
 		spec.CompletePreProcessing()
 		// then
 		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
 			Config: BlueprintConfiguration{DryRun: true},
 			Events: []Event{BlueprintDryRunEvent{}},
 		})
@@ -759,7 +776,7 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 
 		blueprint.ValidateDynamically(nil)
 
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionTypeValid))
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionValid))
 		require.Equal(t, 0, len(blueprint.Events))
 
 	})
@@ -772,7 +789,7 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 
 		blueprint.ValidateDynamically(givenErr)
 
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionTypeValid))
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionValid))
 		require.Equal(t, 1, len(blueprint.Events))
 	})
 }

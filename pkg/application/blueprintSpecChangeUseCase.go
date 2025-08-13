@@ -92,6 +92,16 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
+	err = useCase.applyUseCase.PreProcessBlueprintApplication(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	if !blueprint.ShouldBeApplied() {
+		// event recording and so on happen in PreProcessBlueprintApplication
+		// just stop the loop here on dry run or early exit
+		return nil
+	}
+
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	for blueprint.Status != domain.StatusPhaseCompleted {
 		err := useCase.handleChange(ctx, blueprint)
@@ -106,8 +116,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseEcosystemHealthyUpfront:
-		return useCase.preProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseEcosystemUnhealthyUpfront:
 		return nil
 	case domain.StatusPhaseBlueprintApplicationPreProcessed:

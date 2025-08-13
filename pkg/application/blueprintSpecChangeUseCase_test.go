@@ -50,7 +50,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeValid,
+					Type:   domain.ConditionValid,
 					Status: metav1.ConditionTrue,
 				})
 			})
@@ -58,21 +58,18 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeValid,
+					Type:   domain.ConditionValid,
 					Status: metav1.ConditionTrue,
 				})
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeExecutable,
+					Type:   domain.ConditionExecutable,
 					Status: metav1.ConditionTrue,
 				})
 			})
-		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseEcosystemHealthyUpfront
-			})
+		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil)
 		applyMock.EXPECT().PreProcessBlueprintApplication(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				blueprint.Status = domain.StatusPhaseBlueprintApplicationPreProcessed
@@ -244,7 +241,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeValid,
+					Type:   domain.ConditionValid,
 					Status: metav1.ConditionTrue,
 				})
 			})
@@ -280,14 +277,14 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		validationMock.EXPECT().ValidateBlueprintSpecDynamically(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeValid,
+					Type:   domain.ConditionValid,
 					Status: metav1.ConditionTrue,
 				})
 			})
 		stateDiffMock.EXPECT().DetermineStateDiff(testCtx, "testBlueprint1").Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				meta.SetStatusCondition(blueprint.Conditions, metav1.Condition{
-					Type:   domain.ConditionTypeExecutable,
+					Type:   domain.ConditionExecutable,
 					Status: metav1.ConditionTrue,
 				})
 			})

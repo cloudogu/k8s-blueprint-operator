@@ -26,9 +26,7 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 
 func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
@@ -40,9 +38,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 		assert.Equal(t, domain.StatusPhaseBlueprintApplicationPreProcessed, spec.Status)
 	})
 	t.Run("repo error while saving", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
@@ -54,7 +50,6 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 	})
 	t.Run("do nothing on dry run", func(t *testing.T) {
 		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
 			Config: domain.BlueprintConfiguration{DryRun: true},
 		}
 
@@ -72,9 +67,7 @@ func TestApplyBlueprintSpecUseCase_PreProcessBlueprintApplication(t *testing.T) 
 
 func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
@@ -162,9 +155,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		2: domain.StatusPhaseBlueprintApplied,
 	}
 	t.Run("ok", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		var counter = 0
 		repoMock.EXPECT().Update(testCtx, blueprint).RunAndReturn(func(ctx context.Context, spec *domain.BlueprintSpec) error {
@@ -188,9 +179,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseBlueprintApplied, blueprint.Status)
 	})
 	t.Run("error waiting for dogu health", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
 
@@ -210,9 +199,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	})
 
 	t.Run("fail to mark in progress", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
@@ -225,9 +212,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	})
 
 	t.Run("fail to apply component state", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
 
@@ -242,9 +227,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	})
 
 	t.Run("fail to wait for component health", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
 
@@ -260,9 +243,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	})
 
 	t.Run("fail to apply dogu state", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
 
@@ -280,9 +261,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	})
 
 	t.Run("fail to apply state and fail to mark execution failed", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseEcosystemHealthyUpfront,
-		}
+		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
 		counter := 0
 		repoMock.EXPECT().Update(testCtx, blueprint).RunAndReturn(func(ctx context.Context, spec *domain.BlueprintSpec) error {
