@@ -4,7 +4,6 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	"maps"
 )
 
 type ConfigAction string
@@ -17,15 +16,6 @@ const (
 	// ConfigActionRemove means that the config key needs to be deleted
 	ConfigActionRemove ConfigAction = "remove"
 )
-
-// censorValues censors all sensitive configuration data to make them unrecognisable.
-func censorValues(sensitiveConfigByDogu map[cescommons.SimpleName]SensitiveDoguConfigDiffs) map[cescommons.SimpleName]SensitiveDoguConfigDiffs {
-	censoredByDogu := maps.Clone(sensitiveConfigByDogu)
-	for dogu, entryDiffs := range sensitiveConfigByDogu {
-		censoredByDogu[dogu] = entryDiffs.CensorValues()
-	}
-	return censoredByDogu
-}
 
 func countByAction(diffsByDogu map[cescommons.SimpleName]DoguConfigDiffs) map[ConfigAction]int {
 	countByAction := map[ConfigAction]int{}

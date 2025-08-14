@@ -5,7 +5,6 @@ import (
 	"fmt"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"golang.org/x/exp/maps"
 	"k8s.io/apimachinery/pkg/api/meta"
 	"testing"
 
@@ -703,29 +702,6 @@ func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
 		Status: StatusPhaseBlueprintApplied,
 		Events: []Event{BlueprintAppliedEvent{}},
 	})
-}
-
-func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{
-		StateDiff: StateDiff{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
-				"ldapDiff": []SensitiveDoguConfigEntryDiff{{
-					Actual:   DoguConfigValueState{Value: "Test1"},
-					Expected: DoguConfigValueState{Value: "Test2"},
-				}},
-			},
-		},
-	}
-	// when
-	spec.CensorSensitiveData()
-
-	// then
-	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), cescommons.SimpleName("ldapDiff"))
-	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)
-	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Actual.Value)
-	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Expected.Value)
 }
 
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {

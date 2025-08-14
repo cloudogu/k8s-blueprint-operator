@@ -408,8 +408,7 @@ func TestApplyBlueprintSpecUseCase_PostProcessBlueprintApplication(t *testing.T)
 		require.NoError(t, err)
 
 		assert.Equal(t, domain.StatusPhaseCompleted, blueprint.Status)
-		assert.Len(t, blueprint.Events, 2)
-		assert.Contains(t, blueprint.Events, domain.SensitiveConfigDataCensoredEvent{}, blueprint.Events)
+		assert.Len(t, blueprint.Events, 1)
 		assert.Contains(t, blueprint.Events, domain.CompletedEvent{}, blueprint.Events)
 	})
 	t.Run("repo error while saving", func(t *testing.T) {
