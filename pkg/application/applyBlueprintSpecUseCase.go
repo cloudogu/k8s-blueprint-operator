@@ -84,7 +84,7 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 	return healthErr
 }
 
-// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint, e.g. censoring the state diff.
+// PostProcessBlueprintApplication makes changes to the environment after applying the blueprint.
 // returns a domainservice.InternalError on any error.
 func (useCase *ApplyBlueprintSpecUseCase) PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	blueprint.CompletePostProcessing()

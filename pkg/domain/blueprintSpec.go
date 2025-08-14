@@ -76,9 +76,6 @@ const (
 	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
-// censorValue is the value for censoring sensitive blueprint configuration data.
-const censorValue = "*****"
-
 type BlueprintConfiguration struct {
 	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
 	IgnoreDoguHealth bool
