@@ -52,3 +52,11 @@ func NewUnhealthyEcosystemError(
 ) *UnhealthyEcosystemError {
 	return &UnhealthyEcosystemError{WrappedError: wrappedError, Message: message, healthResult: healthResult}
 }
+
+type AwaitSelfUpgradeError struct {
+	Message string
+}
+
+func (e *AwaitSelfUpgradeError) Error() string {
+	return e.Message
+}

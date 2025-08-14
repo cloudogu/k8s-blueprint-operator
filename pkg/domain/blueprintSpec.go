@@ -321,6 +321,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	// because the blueprint could be executable even after a change of the blueprint.
 	// Therefore, a check with "conditionChanged" is not enough to prevent, that we regenerate all events on every reconcile.
 
+	//TODO: We could set all diff-related conditions here, so that don't need to call every step even if the state diff says "no change"
 	return nil
 }
 
@@ -366,17 +367,26 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
-	if spec.Status != StatusPhaseAwaitSelfUpgrade {
-		spec.Status = StatusPhaseAwaitSelfUpgrade
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionSelfUpgradeCompleted,
+		Status:  metav1.ConditionFalse,
+		Message: "",
+	})
+	if conditionChanged {
 		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	}
 }
 
 func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
-	if spec.Status != StatusPhaseSelfUpgradeCompleted {
-		spec.Status = StatusPhaseSelfUpgradeCompleted
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionSelfUpgradeCompleted,
+		Status:  metav1.ConditionTrue,
+		Message: "",
+	})
+	if conditionChanged {
 		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 	}
+	spec.Status = StatusPhaseSelfUpgradeCompleted
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.

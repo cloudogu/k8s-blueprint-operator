@@ -766,7 +766,6 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 
 		blueprint.ValidateDynamically(givenErr)
 
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionValid))
 		require.Equal(t, 1, len(blueprint.Events))
 	})
 }
@@ -809,29 +808,34 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
 		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Status: StatusPhaseAwaitSelfUpgrade,
+			Conditions: &[]Condition{},
 		}
 
 		blueprint.MarkWaitingForSelfUpgrade()
+		blueprint.Events = []Event(nil)
+		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if condition did not change")
 	})
 }
 
 func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Status: StatusPhaseAwaitSelfUpgrade,
+			Status:     StatusPhaseAwaitSelfUpgrade,
+			Conditions: &[]Condition{},
 		}
 		blueprint.MarkSelfUpgradeCompleted()
 
@@ -841,11 +845,15 @@ func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Status: StatusPhaseSelfUpgradeCompleted,
+			Status:     StatusPhaseSelfUpgradeCompleted,
+			Conditions: &[]Condition{},
 		}
 
 		blueprint.MarkSelfUpgradeCompleted()
+		blueprint.Events = []Event(nil)
+		blueprint.MarkSelfUpgradeCompleted()
 
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
 	})

@@ -50,6 +50,7 @@ func NewBlueprintSpecChangeUseCase(
 // Returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write or
+// a domain.AwaitSelfUpgradeError if we need to wait for a self-upgrade or
 // a domain.InvalidBlueprintError if the blueprint is invalid.
 func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.Context, blueprintId string) error {
 	logger := log.FromContext(givenCtx).
@@ -101,6 +102,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 	err = useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	if err != nil {
+		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
 		return err
 	}
 
@@ -118,8 +120,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseAwaitSelfUpgrade:
-		return useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	case domain.StatusPhaseSelfUpgradeCompleted:
 		return useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
 	case domain.StatusPhaseEcosystemConfigApplied:
