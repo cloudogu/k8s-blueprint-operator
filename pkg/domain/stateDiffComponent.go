@@ -22,6 +22,15 @@ func (diffs ComponentDiffs) GetComponentDiffByName(name common.SimpleComponentNa
 	return ComponentDiff{}
 }
 
+func (diffs ComponentDiffs) HasChanges() bool {
+	for _, diff := range diffs {
+		if diff.HasChanges() {
+			return true
+		}
+	}
+	return false
+}
+
 // ComponentDiff represents the Diff for a single expected Component to the current ecosystem.ComponentInstallation.
 type ComponentDiff struct {
 	// Name contains the component's name.

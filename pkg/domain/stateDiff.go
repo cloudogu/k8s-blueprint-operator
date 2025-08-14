@@ -35,3 +35,24 @@ const (
 func (a Action) IsDoguProxyAction() bool {
 	return a == ActionUpdateDoguProxyBodySize || a == ActionUpdateDoguProxyAdditionalConfig || a == ActionUpdateDoguProxyRewriteTarget
 }
+
+func (diff StateDiff) HasChanges() bool {
+	return diff.DoguDiffs.HasChanges() ||
+		diff.ComponentDiffs.HasChanges() ||
+		diff.GlobalConfigDiffs.HasChanges() ||
+		diff.HasDoguConfigChanges()
+}
+
+func (diff StateDiff) HasDoguConfigChanges() bool {
+	for _, configDiff := range diff.DoguConfigDiffs {
+		if configDiff.HasChanges() {
+			return true
+		}
+	}
+	for _, configDiff := range diff.SensitiveDoguConfigDiffs {
+		if configDiff.HasChanges() {
+			return true
+		}
+	}
+	return false
+}

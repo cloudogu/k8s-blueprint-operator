@@ -777,8 +777,24 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 			Config: BlueprintConfiguration{
 				DryRun: false,
 			},
+			StateDiff: StateDiff{
+				GlobalConfigDiffs: []GlobalConfigEntryDiff{
+					{
+						Key:          "test",
+						NeededAction: ConfigActionSet,
+					},
+				},
+			},
 		}
 		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should not be applied without any changes", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: false,
+			},
+		}
+		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
 	t.Run("should not be applied due to dry run", func(t *testing.T) {
 		spec := &BlueprintSpec{

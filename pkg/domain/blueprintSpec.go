@@ -358,8 +358,11 @@ func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.He
 
 // ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	// TODO: also check if an early-exit is possible if no changes need to be applied, see PR #29
-	return !spec.Config.DryRun
+	// wrote it in the long form to reduce complexity
+	if spec.Config.DryRun {
+		return false
+	}
+	return spec.StateDiff.HasChanges()
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {

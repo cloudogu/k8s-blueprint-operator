@@ -87,6 +87,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
 		return err
 	}
+	// always check health here, even if we already know here, that we don't need to apply anything
+	// because we need to update the health condition
 	err = useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprint)
 	if err != nil {
 		return err

@@ -12,6 +12,15 @@ import (
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
 type DoguDiffs []DoguDiff
 
+func (diffs DoguDiffs) HasChanges() bool {
+	for _, diff := range diffs {
+		if diff.HasChanges() {
+			return true
+		}
+	}
+	return false
+}
+
 // DoguDiff represents the Diff for a single expected Dogu to the current ecosystem.DoguInstallation.
 type DoguDiff struct {
 	DoguName      cescommons.SimpleName
@@ -28,6 +37,10 @@ type DoguDiffState struct {
 	MinVolumeSize      ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	AdditionalMounts   []ecosystem.AdditionalMount
+}
+
+func (diff DoguDiff) HasChanges() bool {
+	return len(diff.NeededActions) != 0
 }
 
 // String returns a string representation of the DoguDiff.
