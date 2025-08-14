@@ -106,6 +106,11 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
+	err = useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+
 	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
 	for blueprint.Status != domain.StatusPhaseCompleted {
 		err := useCase.handleChange(ctx, blueprint)
@@ -120,8 +125,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseSelfUpgradeCompleted:
-		return useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
 	case domain.StatusPhaseEcosystemConfigApplied:
 		return useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
 	case domain.StatusPhaseApplyEcosystemConfigFailed:

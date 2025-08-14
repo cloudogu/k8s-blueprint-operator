@@ -3,6 +3,9 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -10,8 +13,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"maps"
-	"slices"
 )
 
 type BlueprintSpec struct {
@@ -40,8 +41,7 @@ const (
 	ConditionConfigApplied        = "ConfigApplied"
 	ConditionDogusApplied         = "DogusApplied"
 	ConditionComponentsApplied    = "ComponentsApplied"
-	// how do we watch restarts?
-	ConditionBlueprintApplied = "BlueprintApplied"
+	ConditionBlueprintApplied     = "BlueprintApplied"
 )
 
 type StatusPhase string
@@ -49,10 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseAwaitSelfUpgrade marks that the blueprint operator waits for termination for a self upgrade.
-	StatusPhaseAwaitSelfUpgrade StatusPhase = "awaitSelfUpgrade"
-	// StatusPhaseSelfUpgradeCompleted marks that the blueprint operator itself got successfully upgraded.
-	StatusPhaseSelfUpgradeCompleted StatusPhase = "selfUpgradeCompleted"
 	// StatusPhaseInProgress marks that the blueprint is currently being processed.
 	StatusPhaseInProgress StatusPhase = "inProgress"
 	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
@@ -368,9 +364,9 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-		Type:    ConditionSelfUpgradeCompleted,
-		Status:  metav1.ConditionFalse,
-		Message: "",
+		Type:   ConditionSelfUpgradeCompleted,
+		Status: metav1.ConditionFalse,
+		Reason: "await self upgrade",
 	})
 	if conditionChanged {
 		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
@@ -379,14 +375,12 @@ func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
 
 func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-		Type:    ConditionSelfUpgradeCompleted,
-		Status:  metav1.ConditionTrue,
-		Message: "",
+		Type:   ConditionSelfUpgradeCompleted,
+		Status: metav1.ConditionTrue,
 	})
 	if conditionChanged {
 		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 	}
-	spec.Status = StatusPhaseSelfUpgradeCompleted
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.

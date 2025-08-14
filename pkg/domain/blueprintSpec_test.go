@@ -3,10 +3,11 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -834,18 +835,16 @@ func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
 func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Status:     StatusPhaseAwaitSelfUpgrade,
 			Conditions: &[]Condition{},
 		}
 		blueprint.MarkSelfUpgradeCompleted()
 
-		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Status:     StatusPhaseSelfUpgradeCompleted,
 			Conditions: &[]Condition{},
 		}
 
@@ -854,7 +853,6 @@ func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 		blueprint.MarkSelfUpgradeCompleted()
 
 		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
 	})
 }
