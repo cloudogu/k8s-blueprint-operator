@@ -13,6 +13,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 		name        string
 		domainModel domain.DoguConfigDiffs
 		want        []crd.DoguConfigEntryDiff
+		isSensitive bool
 	}{
 		{
 			name:        "should exit early if slices are empty",
@@ -81,7 +82,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, convertToDoguConfigEntryDiffsDTO(tt.domainModel), "convertToDoguConfigEntryDiffsDTO(%v)", tt.domainModel)
+			assert.Equalf(t, tt.want, convertToDoguConfigEntryDiffsDTO(tt.domainModel, tt.isSensitive), "convertToDoguConfigEntryDiffsDTO(%v)", tt.domainModel)
 		})
 	}
 }

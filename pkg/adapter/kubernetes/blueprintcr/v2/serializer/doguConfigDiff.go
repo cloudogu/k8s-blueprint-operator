@@ -34,25 +34,29 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.DoguConfigEntry
 	}
 }
 
-func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs) []crd.DoguConfigEntryDiff {
+func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) []crd.DoguConfigEntryDiff {
 	var dtoDiffs []crd.DoguConfigEntryDiff
 	for _, domainDiff := range domainDiffs {
-		dtoDiffs = append(dtoDiffs, convertToDoguConfigEntryDiffDTO(domainDiff))
+		dtoDiffs = append(dtoDiffs, convertToDoguConfigEntryDiffDTO(domainDiff, isSensitive))
 	}
 	return dtoDiffs
 }
 
-func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff) crd.DoguConfigEntryDiff {
+func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff, isSensitive bool) crd.DoguConfigEntryDiff {
+	actual := crd.DoguConfigValueState{
+		Exists: domainModel.Actual.Exists,
+	}
+	expected := crd.DoguConfigValueState{
+		Exists: domainModel.Expected.Exists,
+	}
+	if !isSensitive {
+		actual.Value = domainModel.Actual.Value
+		expected.Value = domainModel.Expected.Value
+	}
 	return crd.DoguConfigEntryDiff{
-		Key: string(domainModel.Key.Key),
-		Actual: crd.DoguConfigValueState{
-			Value:  domainModel.Actual.Value,
-			Exists: domainModel.Actual.Exists,
-		},
-		Expected: crd.DoguConfigValueState{
-			Value:  domainModel.Expected.Value,
-			Exists: domainModel.Expected.Exists,
-		},
+		Key:          string(domainModel.Key.Key),
+		Actual:       actual,
+		Expected:     expected,
 		NeededAction: crd.ConfigAction(domainModel.NeededAction),
 	}
 }

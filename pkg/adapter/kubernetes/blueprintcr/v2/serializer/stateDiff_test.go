@@ -794,7 +794,86 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 		want  crd.StateDiff
 	}{
 		{
-			name: "ok",
+			name: "normal dogu config",
+			model: domain.StateDiff{
+				DoguDiffs:      nil,
+				ComponentDiffs: nil,
+				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
+					testDogu: {
+						{
+							Key: testDoguKey1,
+							Actual: domain.DoguConfigValueState{
+								Value:  "1",
+								Exists: true,
+							},
+							Expected: domain.DoguConfigValueState{
+								Value:  "123",
+								Exists: true,
+							},
+							NeededAction: domain.ConfigActionSet,
+						},
+					},
+					testDogu2: {
+						{
+							Key: testDoguKey2,
+							Actual: domain.DoguConfigValueState{
+								Value:  "",
+								Exists: false,
+							},
+							Expected: domain.DoguConfigValueState{
+								Value:  "123",
+								Exists: true,
+							},
+							NeededAction: domain.ConfigActionSet,
+						},
+					},
+				},
+				GlobalConfigDiffs: nil,
+			},
+			want: crd.StateDiff{
+				DoguDiffs:      map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
+					testDogu.String(): {
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff(nil),
+						DoguConfigDiff: crd.DoguConfigDiff{
+							crd.DoguConfigEntryDiff{
+								Key: testDoguKey1.Key.String(),
+								Actual: crd.DoguConfigValueState{
+									Value:  "1",
+									Exists: true,
+								},
+								Expected: crd.DoguConfigValueState{
+									Value:  "123",
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
+							},
+						},
+					},
+					testDogu2.String(): {
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff(nil),
+						DoguConfigDiff: crd.DoguConfigDiff{
+							crd.DoguConfigEntryDiff{
+								Key: testDoguKey2.Key.String(),
+								Actual: crd.DoguConfigValueState{
+									Value:  "",
+									Exists: false,
+								},
+								Expected: crd.DoguConfigValueState{
+									Value:  "123",
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
+							},
+						},
+					},
+				},
+				GlobalConfigDiff: nil,
+			},
+		},
+		{
+			name: "censor sensitive config",
 			model: domain.StateDiff{
 				DoguDiffs:       nil,
 				ComponentDiffs:  nil,
@@ -841,11 +920,9 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 							crd.DoguConfigEntryDiff{
 								Key: testDoguKey1.Key.String(),
 								Actual: crd.DoguConfigValueState{
-									Value:  "1",
 									Exists: true,
 								},
 								Expected: crd.DoguConfigValueState{
-									Value:  "123",
 									Exists: true,
 								},
 								NeededAction: crd.ConfigAction("set"),
@@ -857,11 +934,9 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 							crd.DoguConfigEntryDiff{
 								Key: testDoguKey2.Key.String(),
 								Actual: crd.DoguConfigValueState{
-									Value:  "",
 									Exists: false,
 								},
 								Expected: crd.DoguConfigValueState{
-									Value:  "123",
 									Exists: true,
 								},
 								NeededAction: crd.ConfigAction("set"),

@@ -29,12 +29,12 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) crd.StateDiff {
 		combinedConfigDiffs = make(map[string]crd.CombinedDoguConfigDiff)
 		doguConfigDiffByDogu = make(map[cescommons.SimpleName]crd.DoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
-			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
+			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff, false)
 			dogus = append(dogus, doguName)
 		}
 		sensitiveDoguConfigDiff = make(map[cescommons.SimpleName]crd.SensitiveDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.SensitiveDoguConfigDiffs {
-			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff)
+			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff, true)
 			dogus = append(dogus, doguName)
 		}
 
