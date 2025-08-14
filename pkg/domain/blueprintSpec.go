@@ -59,8 +59,6 @@ const (
 	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
 	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
 	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
-	// StatusPhaseEcosystemUnhealthyAfterwards shows that the ecosystem got not healthy again after applying the blueprint.
-	StatusPhaseEcosystemUnhealthyAfterwards StatusPhase = "ecosystemUnhealthyAfterwards"
 	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
@@ -402,7 +400,6 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 		if conditionChanged {
 			spec.Events = append(spec.Events, event)
 		}
-		spec.Status = StatusPhaseEcosystemUnhealthyAfterwards
 		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy after applying the blueprint", healthResult)
 	}
 }
@@ -429,12 +426,10 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 
 // CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
 func (spec *BlueprintSpec) CompletePostProcessing() {
+	// this function will not be called, if the ecosystem is not healthy
 	switch spec.Status {
 	case StatusPhaseApplyEcosystemConfigFailed:
 		fallthrough
-	case StatusPhaseEcosystemUnhealthyAfterwards:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
 	case StatusPhaseInProgress:
 		spec.Status = StatusPhaseFailed
 		err := errors.New(handleInProgressMsg)

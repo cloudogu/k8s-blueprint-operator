@@ -730,20 +730,6 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		assert.Equal(t, ExecutionFailedEvent{errors.New(handleInProgressMsg)}, spec.Events[0])
 	})
 
-	t.Run("status change on failure EcosystemUnhealthyAfterwards -> Failed", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemUnhealthyAfterwards,
-		}
-		// when
-		spec.CompletePostProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New("ecosystem is unhealthy")}},
-		})
-	})
-
 	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {
 		// given
 		spec := &BlueprintSpec{

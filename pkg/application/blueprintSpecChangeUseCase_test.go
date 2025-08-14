@@ -438,32 +438,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.NoError(t, err)
 	})
 
-	t.Run("handle ecosystem unhealthy afterwards", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseEcosystemUnhealthyAfterwards,
-		}
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, "testBlueprint1").Return(nil).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-			blueprint.Status = domain.StatusPhaseCompleted
-		})
-		// when
-		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
-		// then
-		require.NoError(t, err)
-	})
-
 	t.Run("handle completed blueprint", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)
