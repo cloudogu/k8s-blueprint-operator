@@ -111,7 +111,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
-	// without any error, the blueprint spec is always ready to be further evaluated, therefore call this function again to do that.
+	//TODO: remove this loop, when all use cases are reworked without the use of status
 	for blueprint.Status != domain.StatusPhaseCompleted {
 		err := useCase.handleChange(ctx, blueprint)
 		if err != nil {

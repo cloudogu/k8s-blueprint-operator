@@ -1,6 +1,9 @@
 package application
 
 import (
+	"maps"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	liberrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -9,8 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"maps"
-	"testing"
+	"k8s.io/apimachinery/pkg/api/meta"
 )
 
 const (
@@ -162,6 +164,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigRepository(t)
 
 		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 					redmine: {
@@ -207,6 +210,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigRepository(t)
 
 		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 					redmine: {
@@ -255,6 +259,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigRepository(t)
 
 		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
 				DoguConfigDiffs:          map[cescommons.SimpleName]domain.DoguConfigDiffs{},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
@@ -581,39 +586,41 @@ func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
 }
 
 func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
-	t.Run("should set status and event apply config", func(t *testing.T) {
+	t.Run("should set condition and event apply config", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
-		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
-		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
+		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.markApplyConfigStart(testCtx, spec)
+		err := sut.markApplyConfigStart(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
+
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
+		require.Len(t, blueprint.Events, 1)
+		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, blueprint.Events[0])
 	})
 
 	t.Run("should return an error on update error", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
-		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseApplyEcosystemConfig
-		expectedSpec.Events = append(spec.Events, domain.ApplyEcosystemConfigEvent{})
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
-		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
+		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.markApplyConfigStart(testCtx, spec)
+		err := sut.markApplyConfigStart(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)

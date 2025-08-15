@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
-	"maps"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"slices"
 )
 
 type EcosystemConfigUseCase struct {

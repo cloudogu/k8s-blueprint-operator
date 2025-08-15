@@ -59,8 +59,6 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseApplyEcosystemConfig indicates that the apply ecosystem config phase is active.
-	StatusPhaseApplyEcosystemConfig StatusPhase = "applyEcosystemConfig"
 	// StatusPhaseApplyEcosystemConfigFailed indicates that the phase to apply ecosystem config failed.
 	StatusPhaseApplyEcosystemConfigFailed StatusPhase = "applyEcosystemConfigFailed"
 	// StatusPhaseEcosystemConfigApplied indicates that the phase to apply ecosystem config succeeded.
@@ -516,8 +514,15 @@ func (spec *BlueprintSpec) GetDogusThatNeedARestart() []cescommons.SimpleName {
 }
 
 func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
-	spec.Status = StatusPhaseApplyEcosystemConfig
-	spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
+	event := ApplyEcosystemConfigEvent{}
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionConfigApplied,
+		Status:  metav1.ConditionFalse,
+		Message: event.Message(),
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
+	}
 }
 
 func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
