@@ -49,8 +49,6 @@ type StatusPhase string
 const (
 	// StatusPhaseNew marks a newly created blueprint-CR.
 	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseInProgress marks that the blueprint is currently being processed.
-	StatusPhaseInProgress StatusPhase = "inProgress"
 	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
 	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
 	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
@@ -426,13 +424,6 @@ func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem
 	}
 }
 
-// StartApplying marks the blueprint as in progress, which indicates, that the system started applying the blueprint.
-// This state is used to detect complete failures as this state will only stay persisted if the process failed before setting the state to blueprint applied.
-func (spec *BlueprintSpec) StartApplying() {
-	spec.Status = StatusPhaseInProgress
-	spec.Events = append(spec.Events, InProgressEvent{})
-}
-
 // MarkBlueprintApplicationFailed sets the blueprint state to application failed, which indicates that the blueprint could not be applied completely.
 // In reaction to this, further post-processing will happen.
 func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
@@ -450,11 +441,6 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	// this function will not be called, if the ecosystem is not healthy
 	switch spec.Status {
-	case StatusPhaseInProgress:
-		spec.Status = StatusPhaseFailed
-		err := errors.New(handleInProgressMsg)
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-
 	case StatusPhaseBlueprintApplicationFailed:
 		spec.Status = StatusPhaseFailed
 		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
@@ -560,7 +546,3 @@ func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 		spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 	}
 }
-
-const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
-	" as this state shows that the appliance of the blueprint was interrupted before it could update the state " +
-	"to either " + string(StatusPhaseFailed) + " or " + string(StatusPhaseCompleted)

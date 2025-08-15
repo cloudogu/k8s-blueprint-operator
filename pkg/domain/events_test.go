@@ -2,10 +2,11 @@ package domain
 
 import (
 	"fmt"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestEvents(t *testing.T) {
@@ -142,12 +143,6 @@ func TestEvents(t *testing.T) {
 			name:            "blueprint application pre-processed",
 			event:           BlueprintApplicationPreProcessedEvent{},
 			expectedName:    "BlueprintApplicationPreProcessed",
-			expectedMessage: "",
-		},
-		{
-			name:            "In progress",
-			event:           InProgressEvent{},
-			expectedName:    "InProgress",
 			expectedMessage: "",
 		},
 		{

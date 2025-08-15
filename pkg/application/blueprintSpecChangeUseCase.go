@@ -130,9 +130,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseInProgress:
-		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseBlueprintApplied:
 		return useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprint)
 	case domain.StatusPhaseRestartsTriggered:

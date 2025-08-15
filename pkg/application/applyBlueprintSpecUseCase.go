@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -105,17 +106,13 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 	logger := log.FromContext(ctx).WithName("ApplyBlueprintSpecUseCase.ApplyBlueprintSpec")
 
 	logger.Info("start applying blueprint to the cluster")
-	err := useCase.startApplying(ctx, blueprint)
-	if err != nil {
-		return err
-	}
 
 	applyError := useCase.componentInstallUseCase.ApplyComponentStates(ctx, blueprint)
 	if applyError != nil {
 		return useCase.handleApplyFailedError(ctx, blueprint, applyError)
 	}
 
-	_, err = useCase.componentInstallUseCase.WaitForHealthyComponents(ctx)
+	_, err := useCase.componentInstallUseCase.WaitForHealthyComponents(ctx)
 	if err != nil {
 		return useCase.handleApplyFailedError(ctx, blueprint, err)
 	}
@@ -143,15 +140,6 @@ func (useCase *ApplyBlueprintSpecUseCase) handleApplyFailedError(ctx context.Con
 		return err
 	}
 	return applyError
-}
-
-func (useCase *ApplyBlueprintSpecUseCase) startApplying(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.StartApplying()
-	err := useCase.repo.Update(ctx, blueprintSpec)
-	if err != nil {
-		return fmt.Errorf("cannot mark blueprint as in progress: %w", err)
-	}
-	return nil
 }
 
 // markBlueprintApplicationFailed marks the blueprint application as failed.

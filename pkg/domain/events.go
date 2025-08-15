@@ -2,10 +2,11 @@ package domain
 
 import (
 	"fmt"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"slices"
 	"strings"
+
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
 type Event interface {
@@ -237,16 +238,6 @@ func (e BlueprintApplicationPreProcessedEvent) Name() string {
 }
 
 func (e BlueprintApplicationPreProcessedEvent) Message() string {
-	return ""
-}
-
-type InProgressEvent struct{}
-
-func (e InProgressEvent) Name() string {
-	return "InProgress"
-}
-
-func (e InProgressEvent) Message() string {
 	return ""
 }
 

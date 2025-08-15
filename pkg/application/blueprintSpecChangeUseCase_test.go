@@ -333,54 +333,6 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		require.ErrorIs(t, actualErr, assert.AnError)
 	})
 
-	t.Run("handle in progress blueprint", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseInProgress,
-		}
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(nil)
-		// when
-		actualErr := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
-		// then
-		require.NoError(t, actualErr)
-	})
-
-	t.Run("handle error when blueprint is in progress", func(t *testing.T) {
-		// given
-		repoMock := newMockBlueprintSpecRepository(t)
-		validationMock := newMockBlueprintSpecValidationUseCase(t)
-		effectiveBlueprintMock := newMockEffectiveBlueprintUseCase(t)
-		stateDiffMock := newMockStateDiffUseCase(t)
-		applyMock := newMockApplyBlueprintSpecUseCase(t)
-		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
-		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock, applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase)
-
-		blueprintSpec := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseInProgress,
-		}
-		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().PostProcessBlueprintApplication(testCtx, blueprintSpec.Id).Return(assert.AnError)
-		// when
-		actualErr := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
-		// then
-		require.ErrorIs(t, actualErr, assert.AnError)
-	})
-
 	t.Run("handle error after blueprint was applied", func(t *testing.T) {
 		// given
 		repoMock := newMockBlueprintSpecRepository(t)

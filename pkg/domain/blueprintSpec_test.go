@@ -666,20 +666,6 @@ func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_StartApplying(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{}
-		// when
-		spec.StartApplying()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseInProgress,
-			Events: []Event{InProgressEvent{}},
-		})
-	})
-}
-
 func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
 	// given
 	spec := &BlueprintSpec{}
@@ -716,19 +702,6 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 			Status: StatusPhaseCompleted,
 			Events: []Event{CompletedEvent{}},
 		})
-	})
-
-	t.Run("status change on failure InProgress -> Failed", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseInProgress,
-		}
-		// when
-		spec.CompletePostProcessing()
-		// then
-		assert.Equal(t, StatusPhaseFailed, spec.Status)
-		require.Equal(t, 1, len(spec.Events))
-		assert.Equal(t, ExecutionFailedEvent{errors.New(handleInProgressMsg)}, spec.Events[0])
 	})
 
 	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {

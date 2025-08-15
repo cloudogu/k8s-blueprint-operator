@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
@@ -9,7 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
@@ -26,27 +27,9 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 	assert.Equal(t, healthMock, sut.healthUseCase)
 }
 
-func TestApplyBlueprintSpecUseCase_markInProgress(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
-		installUseCaseMock := newMockDoguInstallationUseCase(t)
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: installUseCaseMock}
-
-		err := useCase.startApplying(testCtx, spec)
-
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseInProgress, spec.Status)
-	})
-}
-
 func TestApplyBlueprintSpecUseCase_markBlueprintApplicationFailed(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
@@ -60,9 +43,7 @@ func TestApplyBlueprintSpecUseCase_markBlueprintApplicationFailed(t *testing.T) 
 	})
 
 	t.Run("repo error", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
@@ -78,9 +59,7 @@ func TestApplyBlueprintSpecUseCase_markBlueprintApplicationFailed(t *testing.T) 
 
 func TestApplyBlueprintSpecUseCase_markBlueprintApplied(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(nil)
@@ -94,9 +73,7 @@ func TestApplyBlueprintSpecUseCase_markBlueprintApplied(t *testing.T) {
 	})
 
 	t.Run("repo error", func(t *testing.T) {
-		spec := &domain.BlueprintSpec{
-			Status: domain.StatusPhaseInProgress,
-		}
+		spec := &domain.BlueprintSpec{}
 
 		repoMock := newMockBlueprintSpecRepository(t)
 		repoMock.EXPECT().Update(testCtx, spec).Return(assert.AnError)
@@ -111,19 +88,10 @@ func TestApplyBlueprintSpecUseCase_markBlueprintApplied(t *testing.T) {
 }
 
 func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
-	statusTransitions := map[int]domain.StatusPhase{
-		1: domain.StatusPhaseInProgress,
-		2: domain.StatusPhaseBlueprintApplied,
-	}
 	t.Run("ok", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
-		var counter = 0
-		repoMock.EXPECT().Update(testCtx, blueprint).RunAndReturn(func(ctx context.Context, spec *domain.BlueprintSpec) error {
-			counter++
-			assert.Equal(t, statusTransitions[counter], spec.Status)
-			return nil
-		}).Times(2)
+		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, blueprint).Return(nil)
@@ -142,7 +110,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	t.Run("error waiting for dogu health", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
+		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 
 		installUseCaseMock := newMockDoguInstallationUseCase(t)
 		installUseCaseMock.EXPECT().ApplyDoguStates(testCtx, blueprint).Return(nil)
@@ -159,23 +127,10 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 		assert.Equal(t, domain.StatusPhaseBlueprintApplicationFailed, blueprint.Status)
 	})
 
-	t.Run("fail to mark in progress", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{}
-		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
-
-		useCase := ApplyBlueprintSpecUseCase{repo: repoMock, doguInstallUseCase: nil}
-
-		err := useCase.ApplyBlueprintSpec(testCtx, blueprint)
-
-		require.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, domain.StatusPhaseInProgress, blueprint.Status)
-	})
-
 	t.Run("fail to apply component state", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
+		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 
 		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(assert.AnError)
@@ -190,7 +145,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	t.Run("fail to wait for component health", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
+		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 
 		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil)
@@ -206,7 +161,7 @@ func TestApplyBlueprintSpecUseCase_ApplyBlueprintSpec(t *testing.T) {
 	t.Run("fail to apply dogu state", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{}
 		repoMock := newMockBlueprintSpecRepository(t)
-		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Times(2)
+		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 
 		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil)
