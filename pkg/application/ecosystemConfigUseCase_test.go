@@ -16,9 +16,8 @@ import (
 )
 
 const (
-	redmine         = cescommons.SimpleName("redmine")
-	cas             = cescommons.SimpleName("cas")
-	testBlueprintID = "blueprint1"
+	redmine = cescommons.SimpleName("redmine")
+	cas     = cescommons.SimpleName("cas")
 )
 
 var emptyDoguList []cescommons.SimpleName
@@ -110,6 +109,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
 				DoguConfigDiffs:          map[cescommons.SimpleName]domain.DoguConfigDiffs{},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
@@ -125,15 +125,14 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		err := sut.ApplyConfig(testCtx, blueprint)
 
 		// then
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionConfigApplied))
 		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseEcosystemConfigApplied, blueprint.Status)
 	})
 
 	t.Run("should return on mark apply config start error", func(t *testing.T) {
 		// given
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-
 		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
 				DoguConfigDiffs:          map[cescommons.SimpleName]domain.DoguConfigDiffs{},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{},
@@ -143,6 +142,7 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 			},
 		}
 
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(assert.AnError).Times(1)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil).Times(1)
 
@@ -152,17 +152,14 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		err := sut.ApplyConfig(testCtx, blueprint)
 
 		// then
-		require.NoError(t, err)
-		assert.Equal(t, blueprint.Status, domain.StatusPhaseApplyEcosystemConfigFailed)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "cannot mark blueprint as applying config")
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
 	})
 
 	t.Run("error applying dogu config", func(t *testing.T) {
 		// given
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		doguConfigMock := newMockDoguConfigRepository(t)
-		sensitiveDoguConfigMock := newMockSensitiveDoguConfigRepository(t)
-		globalConfigMock := newMockGlobalConfigRepository(t)
-
 		blueprint := &domain.BlueprintSpec{
 			Conditions: &[]domain.Condition{},
 			StateDiff: domain.StateDiff{
@@ -177,6 +174,10 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 			},
 		}
 
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigRepository(t)
+		globalConfigMock := newMockGlobalConfigRepository(t)
+		doguConfigMock := newMockDoguConfigRepository(t)
 		// Just check if the routine hits the repos. Check values in concrete test of methods.
 		doguConfigMock.EXPECT().
 			GetAllExisting(testCtx, []cescommons.SimpleName{cas, redmine}).
@@ -193,14 +194,14 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		err := sut.ApplyConfig(testCtx, blueprint)
 
 		// then
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, blueprint.Status)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not apply normal dogu config")
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
+
 		require.Len(t, blueprint.Events, 2)
 		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, blueprint.Events[0])
-		assert.Contains(t, blueprint.Events[1].Message(), "could not apply normal dogu config")
-		// cannot check for dogu name here as the order of the events is not fixed. It could be either redmine or cas
-		assert.Contains(t, blueprint.Events[1].Message(), "could not persist config for dogu")
-		assert.Contains(t, blueprint.Events[1].Message(), "assert.AnError general error for testing")
+		assert.Contains(t, blueprint.Events[1].Message(), err.Error())
 	})
 	t.Run("error applying sensitive config", func(t *testing.T) {
 		// given
@@ -242,8 +243,12 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		err := sut.ApplyConfig(testCtx, blueprint)
 
 		// then
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, blueprint.Status)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not apply sensitive dogu config")
+
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
+
 		require.Len(t, blueprint.Events, 2)
 		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, blueprint.Events[0])
 		assert.Contains(t, blueprint.Events[1].Message(), "could not apply sensitive dogu config")
@@ -291,8 +296,12 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		err := sut.ApplyConfig(testCtx, blueprint)
 
 		// then
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, blueprint.Status)
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not apply global config")
+
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
+
 		require.Len(t, blueprint.Events, 2)
 		assert.Equal(t, domain.ApplyEcosystemConfigEvent{}, blueprint.Events[0])
 		assert.Contains(t, blueprint.Events[1].Message(), "could not apply global config")
@@ -544,44 +553,47 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 }
 
 func TestEcosystemConfigUseCase_markConfigApplied(t *testing.T) {
-	t.Run("should set applied status and event", func(t *testing.T) {
+	t.Run("should set applied condition and event", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
-		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
-		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(nil)
+		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.markConfigApplied(testCtx, spec)
+		err := sut.markConfigApplied(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionConfigApplied))
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.EcosystemConfigAppliedEvent{}, blueprint.Events[0])
 	})
 
 	t.Run("should return an error on update error", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
-		expectedSpec := &domain.BlueprintSpec{}
-		expectedSpec.Status = domain.StatusPhaseEcosystemConfigApplied
-		expectedSpec.Events = append(spec.Events, domain.EcosystemConfigAppliedEvent{})
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 
-		blueprintRepoMock.EXPECT().Update(testCtx, expectedSpec).Return(assert.AnError)
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.markConfigApplied(testCtx, spec)
+		err := sut.markConfigApplied(testCtx, blueprint)
 
 		// then
-		require.Error(t, err)
 		assert.ErrorContains(t, err, "failed to mark ecosystem config applied")
 		assert.ErrorIs(t, err, assert.AnError)
+		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionConfigApplied))
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.EcosystemConfigAppliedEvent{}, blueprint.Events[0])
 	})
 }
 
@@ -630,9 +642,11 @@ func TestEcosystemConfigUseCase_markApplyConfigStart(t *testing.T) {
 }
 
 func TestEcosystemConfigUseCase_handleFailedApplyEcosystemConfig(t *testing.T) {
-	t.Run("should set applied status and event", func(t *testing.T) {
+	t.Run("should set applied condition and event", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
+		blueprint := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.IsType(&domain.BlueprintSpec{})).Return(nil)
@@ -640,17 +654,22 @@ func TestEcosystemConfigUseCase_handleFailedApplyEcosystemConfig(t *testing.T) {
 		sut := EcosystemConfigUseCase{blueprintRepository: blueprintRepoMock}
 
 		// when
-		err := sut.handleFailedApplyEcosystemConfig(testCtx, spec, assert.AnError)
+		err := sut.handleFailedApplyEcosystemConfig(testCtx, blueprint, assert.AnError)
 
 		// then
-		require.NoError(t, err)
-		assert.Equal(t, domain.StatusPhaseApplyEcosystemConfigFailed, spec.Status)
-		assert.IsType(t, domain.ApplyEcosystemConfigFailedEvent{}, spec.Events[0])
+		require.Error(t, err)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, domain.ConditionConfigApplied)
+		require.NotNil(t, condition)
+		assert.Equal(t, err.Error(), condition.Message)
+		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionConfigApplied))
+		assert.IsType(t, domain.ApplyEcosystemConfigFailedEvent{}, blueprint.Events[0])
 	})
 
 	t.Run("should return error on update error", func(t *testing.T) {
 		// given
-		spec := &domain.BlueprintSpec{}
+		spec := &domain.BlueprintSpec{
+			Conditions: &[]domain.Condition{},
+		}
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.IsType(&domain.BlueprintSpec{})).Return(assert.AnError)
@@ -662,7 +681,8 @@ func TestEcosystemConfigUseCase_handleFailedApplyEcosystemConfig(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed while handling \"applyEcosystemConfigFailed\" status")
+		assert.ErrorContains(t, err, "cannot mark blueprint config apply as failed")
+		assert.ErrorContains(t, err, assert.AnError.Error())
 		assert.ErrorIs(t, err, assert.AnError)
 	})
 }

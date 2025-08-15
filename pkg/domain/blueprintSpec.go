@@ -59,10 +59,6 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseApplyEcosystemConfigFailed indicates that the phase to apply ecosystem config failed.
-	StatusPhaseApplyEcosystemConfigFailed StatusPhase = "applyEcosystemConfigFailed"
-	// StatusPhaseEcosystemConfigApplied indicates that the phase to apply ecosystem config succeeded.
-	StatusPhaseEcosystemConfigApplied StatusPhase = "ecosystemConfigApplied"
 	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
 	// Restarts are needed when the Dogu config changes.
 	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
@@ -433,8 +429,6 @@ func (spec *BlueprintSpec) MarkBlueprintApplied() {
 func (spec *BlueprintSpec) CompletePostProcessing() {
 	// this function will not be called, if the ecosystem is not healthy
 	switch spec.Status {
-	case StatusPhaseApplyEcosystemConfigFailed:
-		fallthrough
 	case StatusPhaseInProgress:
 		spec.Status = StatusPhaseFailed
 		err := errors.New(handleInProgressMsg)
@@ -526,13 +520,24 @@ func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
 }
 
 func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyEcosystemConfigFailed
-	spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionConfigApplied,
+		Status:  metav1.ConditionFalse,
+		Message: err.Error(),
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
+	}
 }
 
 func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
-	spec.Status = StatusPhaseEcosystemConfigApplied
-	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:   ConditionConfigApplied,
+		Status: metav1.ConditionTrue,
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
+	}
 }
 
 const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +

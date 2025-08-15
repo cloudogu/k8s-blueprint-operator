@@ -71,9 +71,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 				})
 			})
 		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil)
-		ecosystemConfigUseCaseMock.EXPECT().ApplyConfig(mock.Anything, blueprintSpec).Return(nil).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-			blueprint.Status = domain.StatusPhaseEcosystemConfigApplied
-		})
+		ecosystemConfigUseCaseMock.EXPECT().ApplyConfig(mock.Anything, blueprintSpec).Return(nil)
 		selfUpgradeUseCase.EXPECT().HandleSelfUpgrade(mock.Anything, blueprintSpec).Return(nil)
 		applyMock.EXPECT().ApplyBlueprintSpec(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {

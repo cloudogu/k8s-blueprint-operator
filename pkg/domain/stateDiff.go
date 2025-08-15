@@ -39,8 +39,13 @@ func (a Action) IsDoguProxyAction() bool {
 func (diff StateDiff) HasChanges() bool {
 	return diff.DoguDiffs.HasChanges() ||
 		diff.ComponentDiffs.HasChanges() ||
-		diff.GlobalConfigDiffs.HasChanges() ||
-		diff.HasDoguConfigChanges()
+		diff.HasConfigChanges()
+}
+
+func (diff StateDiff) HasConfigChanges() bool {
+	return diff.GlobalConfigDiffs.HasChanges() ||
+		diff.HasDoguConfigChanges() ||
+		diff.HasSensitiveDoguConfigChanges()
 }
 
 func (diff StateDiff) HasDoguConfigChanges() bool {
@@ -49,6 +54,10 @@ func (diff StateDiff) HasDoguConfigChanges() bool {
 			return true
 		}
 	}
+	return false
+}
+
+func (diff StateDiff) HasSensitiveDoguConfigChanges() bool {
 	for _, configDiff := range diff.SensitiveDoguConfigDiffs {
 		if configDiff.HasChanges() {
 			return true

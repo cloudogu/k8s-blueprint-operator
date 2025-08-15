@@ -111,6 +111,11 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
+	err = useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+
 	//TODO: remove this loop, when all use cases are reworked without the use of status
 	for blueprint.Status != domain.StatusPhaseCompleted {
 		err := useCase.handleChange(ctx, blueprint)
@@ -125,10 +130,6 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	switch blueprint.Status {
-	case domain.StatusPhaseEcosystemConfigApplied:
-		return useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
-	case domain.StatusPhaseApplyEcosystemConfigFailed:
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
 	case domain.StatusPhaseInProgress:
 		// should only happen if the system was interrupted, normally this state will be updated to blueprintApplied or BlueprintApplicationFailed
 		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
