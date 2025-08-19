@@ -3,6 +3,9 @@ package application
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -10,8 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
-	"time"
 )
 
 const blueprintId = "blueprint1"

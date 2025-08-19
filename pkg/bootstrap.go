@@ -88,9 +88,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, blueprintSpecRepository)
 	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
 	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintSpecRepository, componentInstallationUseCase)
+	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintSpecRepository, doguInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
 	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
-
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
@@ -100,6 +100,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		doguRestartUseCase,
 		selfUpgradeUseCase,
 		applyComponentUseCase,
+		applyDogusUseCase,
 		ecosystemHealthUseCase,
 	)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)

@@ -232,17 +232,6 @@ func (b BlueprintDryRunEvent) Message() string {
 	return "Executed blueprint in dry run mode. Remove flag to continue"
 }
 
-type BlueprintApplicationPreProcessedEvent struct {
-}
-
-func (e BlueprintApplicationPreProcessedEvent) Name() string {
-	return "BlueprintApplicationPreProcessed"
-}
-
-func (e BlueprintApplicationPreProcessedEvent) Message() string {
-	return ""
-}
-
 type ComponentsAppliedEvent struct {
 	Diffs ComponentDiffs
 }
@@ -261,6 +250,29 @@ func (e ComponentsAppliedEvent) Message() string {
 		})
 		actions := strings.Join(actionsAsStrings, ", ")
 		details = append(details, fmt.Sprintf("%q: [%v]", diff.Name, actions))
+	}
+	buffer.WriteString(strings.Join(details, ", "))
+	return buffer.String()
+}
+
+type DogusAppliedEvent struct {
+	Diffs DoguDiffs
+}
+
+func (e DogusAppliedEvent) Name() string {
+	return "DogusApplied"
+}
+
+func (e DogusAppliedEvent) Message() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("dogus applied: ")
+	var details []string
+	for _, diff := range e.Diffs {
+		actionsAsStrings := util.Map(diff.NeededActions, func(action Action) string {
+			return string(action)
+		})
+		actions := strings.Join(actionsAsStrings, ", ")
+		details = append(details, fmt.Sprintf("%q: [%v]", diff.DoguName, actions))
 	}
 	buffer.WriteString(strings.Join(details, ", "))
 	return buffer.String()

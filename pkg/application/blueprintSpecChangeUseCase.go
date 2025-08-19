@@ -19,7 +19,8 @@ type BlueprintSpecChangeUseCase struct {
 	ecosystemConfigUseCase ecosystemConfigUseCase
 	doguRestartUseCase     doguRestartUseCase
 	selfUpgradeUseCase     selfUpgradeUseCase
-	applyComponentUseCase  applyComponentUseCase
+	applyComponentUseCase  applyComponentsUseCase
+	applyDogusUseCase      applyDogusUseCase
 	healthUseCase          ecosystemHealthUseCase
 }
 
@@ -32,7 +33,8 @@ func NewBlueprintSpecChangeUseCase(
 	ecosystemConfigUseCase ecosystemConfigUseCase,
 	doguRestartUseCase doguRestartUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
-	applyComponentUseCase applyComponentUseCase,
+	applyComponentUseCase applyComponentsUseCase,
+	applyDogusUseCase applyDogusUseCase,
 	ecosystemHealthUseCase ecosystemHealthUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
@@ -45,6 +47,7 @@ func NewBlueprintSpecChangeUseCase(
 		doguRestartUseCase:     doguRestartUseCase,
 		selfUpgradeUseCase:     selfUpgradeUseCase,
 		applyComponentUseCase:  applyComponentUseCase,
+		applyDogusUseCase:      applyDogusUseCase,
 		healthUseCase:          ecosystemHealthUseCase,
 	}
 }
@@ -124,7 +127,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	if err != nil {
 		return err
 	}
-	err = useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
+	err = useCase.applyDogusUseCase.ApplyDogus(ctx, blueprint)
 	if err != nil {
 		return err
 	}

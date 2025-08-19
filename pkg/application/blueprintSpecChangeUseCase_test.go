@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -42,9 +43,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     testBlueprintId,
@@ -73,14 +75,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 					Status: metav1.ConditionTrue,
 				})
 			})
-		applyMock.EXPECT().CheckEcosystemHealthUpfront(mock.Anything, blueprintSpec).Return(nil)
+		healthUseCase.EXPECT().CheckEcosystemHealth(mock.Anything, blueprintSpec).Return(ecosystem.HealthResult{}, nil)
 		ecosystemConfigUseCaseMock.EXPECT().ApplyConfig(mock.Anything, blueprintSpec).Return(nil)
 		selfUpgradeUseCase.EXPECT().HandleSelfUpgrade(mock.Anything, blueprintSpec).Return(nil)
-		applyMock.EXPECT().ApplyBlueprintSpec(mock.Anything, blueprintSpec).Return(nil).
-			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-				blueprint.Status = domain.StatusPhaseBlueprintApplied
-			})
-		applyMock.EXPECT().CheckEcosystemHealthAfterwards(mock.Anything, blueprintSpec).Return(nil)
+		healthUseCase.EXPECT().CheckEcosystemHealth(mock.Anything, blueprintSpec).Return(ecosystem.HealthResult{}, nil)
 		applyMock.EXPECT().PostProcessBlueprintApplication(mock.Anything, blueprintSpec).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				blueprint.Status = domain.StatusPhaseCompleted
@@ -108,9 +106,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		expectedError := &domainservice.InternalError{
 			WrappedError: nil,
@@ -137,9 +136,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -169,9 +169,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -201,9 +202,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -234,9 +236,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -273,9 +276,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		updatedSpec := &domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -299,7 +303,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 					Status: metav1.ConditionTrue,
 				})
 			})
-		applyMock.EXPECT().CheckEcosystemHealthUpfront(testCtx, "testBlueprint1").Return(assert.AnError)
+		healthUseCase.EXPECT().CheckEcosystemHealth(mock.Anything, updatedSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 
 		// when
 		err := useCase.HandleUntilApplied(testCtx, "testBlueprint1")
@@ -320,9 +324,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id: "testBlueprint1",
@@ -344,9 +349,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
@@ -371,16 +377,17 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     testBlueprintId,
 			Status: domain.StatusPhaseBlueprintApplied,
 		}
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprintSpec, nil)
-		applyMock.EXPECT().CheckEcosystemHealthAfterwards(testCtx, testBlueprintId).Return(assert.AnError)
+		healthUseCase.EXPECT().CheckEcosystemHealth(mock.Anything, blueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 		doguRestartUseCaseMock.EXPECT().TriggerDoguRestarts(testCtx, testBlueprintId).Return(nil).
 			Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
 				blueprint.Status = domain.StatusPhaseRestartsTriggered
@@ -403,9 +410,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id: "testBlueprint1",
@@ -431,9 +439,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -456,9 +465,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, blueprintId).Return(&domain.BlueprintSpec{
 			Id:     blueprintId,
@@ -482,9 +492,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -507,9 +518,10 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		repoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(&domain.BlueprintSpec{
 			Id:     "testBlueprint1",
@@ -535,9 +547,10 @@ func TestBlueprintSpecChangeUseCase_triggerDoguRestarts(t *testing.T) {
 		doguRestartUseCaseMock := newMockDoguRestartUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
 		componentUseCase := newMockApplyComponentUseCase(t)
+		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
-			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, healthUseCase)
+			applyMock, ecosystemConfigUseCaseMock, doguRestartUseCaseMock, selfUpgradeUseCase, componentUseCase, doguUseCase, healthUseCase)
 
 		blueprintSpec := &domain.BlueprintSpec{
 			Id:     testBlueprintId,

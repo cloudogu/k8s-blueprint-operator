@@ -410,10 +410,10 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 	}
 }
 
-// SetComponentAppliedCondition informs the user about the state of the component apply.
+// SetComponentsAppliedCondition informs the user about the state of the component apply.
 // If an error is given, it will set the condition to failed accordingly, otherwise it marks it as a success.
 // Returns true if the condition changed, otherwise false.
-func (spec *BlueprintSpec) SetComponentAppliedCondition(err error) bool {
+func (spec *BlueprintSpec) SetComponentsAppliedCondition(err error) bool {
 	if err != nil {
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionComponentsApplied,
@@ -434,6 +434,35 @@ func (spec *BlueprintSpec) SetComponentAppliedCondition(err error) bool {
 		Message: event.Message(),
 	})
 	if conditionChanged && spec.StateDiff.ComponentDiffs.HasChanges() {
+		spec.Events = append(spec.Events, event)
+	}
+	return conditionChanged
+}
+
+// SetDogusAppliedCondition informs the user about the state of the dogu apply.
+// If an error is given, it will set the condition to failed accordingly, otherwise it marks it as a success.
+// Returns true if the condition changed, otherwise false.
+func (spec *BlueprintSpec) SetDogusAppliedCondition(err error) bool {
+	if err != nil {
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionDogusApplied,
+			Status:  metav1.ConditionFalse,
+			Reason:  "CannotApply",
+			Message: err.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+		}
+		return conditionChanged
+	}
+	event := DogusAppliedEvent{Diffs: spec.StateDiff.DoguDiffs}
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionDogusApplied,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Applied",
+		Message: event.Message(),
+	})
+	if conditionChanged && spec.StateDiff.DoguDiffs.HasChanges() {
 		spec.Events = append(spec.Events, event)
 	}
 	return conditionChanged

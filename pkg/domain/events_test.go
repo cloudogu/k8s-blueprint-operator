@@ -140,12 +140,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "sensitive dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
-			name:            "blueprint application pre-processed",
-			event:           BlueprintApplicationPreProcessedEvent{},
-			expectedName:    "BlueprintApplicationPreProcessed",
-			expectedMessage: "",
-		},
-		{
 			name: "components applied",
 			event: ComponentsAppliedEvent{
 				Diffs: ComponentDiffs{
@@ -159,6 +153,21 @@ func TestEvents(t *testing.T) {
 			},
 			expectedName:    "ComponentsApplied",
 			expectedMessage: "components applied: \"dogu-operator\": [upgrade, component namespace switch]",
+		},
+		{
+			name: "dogus applied",
+			event: DogusAppliedEvent{
+				Diffs: DoguDiffs{
+					{
+						DoguName: "jenkins",
+						NeededActions: []Action{
+							ActionUpgrade, ActionSwitchDoguNamespace,
+						},
+					},
+				},
+			},
+			expectedName:    "DogusApplied",
+			expectedMessage: "dogus applied: \"jenkins\": [upgrade, dogu namespace switch]",
 		},
 		{
 			name:            "blueprint applied",

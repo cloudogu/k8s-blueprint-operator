@@ -31,7 +31,11 @@ type doguRestartUseCase interface {
 	TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
-type applyComponentUseCase interface {
+type applyDogusUseCase interface {
+	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
+}
+
+type applyComponentsUseCase interface {
 	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
@@ -44,7 +48,6 @@ type componentInstallationUseCase interface {
 
 type applyBlueprintSpecUseCase interface {
 	PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
-	ApplyBlueprintSpec(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemHealthUseCase interface {

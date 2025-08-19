@@ -790,13 +790,15 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 			StateDiff:  diff,
 		}
 
-		changed := blueprint.SetComponentAppliedCondition(nil)
+		changed := blueprint.SetComponentsAppliedCondition(nil)
 
 		assert.True(t, changed)
 		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Applied", condition.Reason)
 		assert.Equal(t, "components applied: \"k8s-dogu-operator\": [upgrade, component namespace switch]", condition.Message)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, ComponentsAppliedEvent{Diffs: diff.ComponentDiffs}, blueprint.Events[0])
 	})
 
 	t.Run("error", func(t *testing.T) {
@@ -805,7 +807,7 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 			StateDiff:  diff,
 		}
 
-		changed := blueprint.SetComponentAppliedCondition(assert.AnError)
+		changed := blueprint.SetComponentsAppliedCondition(assert.AnError)
 
 		assert.True(t, changed)
 		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
@@ -820,9 +822,78 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 			StateDiff:  diff,
 		}
 
-		changed := blueprint.SetComponentAppliedCondition(assert.AnError)
+		changed := blueprint.SetComponentsAppliedCondition(assert.AnError)
 		assert.True(t, changed)
-		changed = blueprint.SetComponentAppliedCondition(assert.AnError)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, blueprint.Events[0])
+		blueprint.Events = nil
+
+		changed = blueprint.SetComponentsAppliedCondition(assert.AnError)
 		assert.False(t, changed)
+		require.Equal(t, 0, len(blueprint.Events))
+	})
+}
+
+func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
+	diff := StateDiff{
+		DoguDiffs: DoguDiffs{
+			DoguDiff{
+				DoguName: "cas",
+				NeededActions: []Action{
+					ActionUpgrade, ActionSwitchDoguNamespace,
+				},
+			},
+		},
+	}
+
+	t.Run("applied", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetDogusAppliedCondition(nil)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Applied", condition.Reason)
+		assert.Equal(t, "dogus applied: \"cas\": [upgrade, dogu namespace switch]", condition.Message)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, DogusAppliedEvent{Diffs: diff.DoguDiffs}, blueprint.Events[0])
+	})
+
+	t.Run("error", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetDogusAppliedCondition(assert.AnError)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, "CannotApply", condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, blueprint.Events[0])
+	})
+
+	t.Run("no condition change", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetDogusAppliedCondition(assert.AnError)
+		assert.True(t, changed)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, blueprint.Events[0])
+		blueprint.Events = nil
+
+		changed = blueprint.SetDogusAppliedCondition(assert.AnError)
+		assert.False(t, changed)
+		require.Equal(t, 0, len(blueprint.Events))
 	})
 }
