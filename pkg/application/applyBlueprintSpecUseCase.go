@@ -32,7 +32,8 @@ func NewApplyBlueprintSpecUseCase(
 }
 
 // CheckEcosystemHealthUpfront checks the ecosystem health before applying the blueprint and sets the related status in the blueprint.
-// Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
+// Returns domain.UnhealthyEcosystemError if the ecosystem is currently unhealthy or
+// returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state or
 // There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error {
@@ -45,22 +46,25 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthUpfront(ctx contex
 		return fmt.Errorf("cannot load blueprint spec %q to check ecosystem health: %w", blueprintId, err)
 	}
 
-	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx, blueprintSpec.Config.IgnoreDoguHealth, blueprintSpec.Config.IgnoreComponentHealth)
+	healthResult, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprintSpec.Config.IgnoreDoguHealth, blueprintSpec.Config.IgnoreComponentHealth)
 	if err != nil {
 		return fmt.Errorf("cannot check ecosystem health upfront of applying the blueprint %q: %w", blueprintId, err)
 	}
-	blueprintSpec.CheckEcosystemHealthUpfront(healthResult)
-
+	healthErr := blueprintSpec.CheckEcosystemHealthUpfront(healthResult)
+	// persist blueprint even with error, because it will set conditions
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
+		// healthErr can be ignored here. We have a more serious problem if we cannot persist the blueprint
+		// the health check will be repeated anyway
 		return fmt.Errorf("cannot save blueprint spec %q after checking the ecosystem health: %w", blueprintId, err)
 	}
 
-	return nil
+	return healthErr
 }
 
 // CheckEcosystemHealthAfterwards waits for a healthy ecosystem health after applying the blueprint and sets the related status in the blueprint.
-// Returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
+// Returns domain.UnhealthyEcosystemError if the ecosystem is currently unhealthy or
+// returns domainservice.ConflictError if there was a concurrent update to the blueprint spec or
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 // There is no error, if the ecosystem is unhealthy as this gets reflected in the blueprint spec status.
 func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error {
@@ -75,18 +79,20 @@ func (useCase *ApplyBlueprintSpecUseCase) CheckEcosystemHealthAfterwards(ctx con
 
 	// do not ignore the health states of dogus and components here, as we want to set the blueprint status according to the result.
 	// The blueprint is already executed here.
-	healthResult, err := useCase.healthUseCase.WaitForHealthyEcosystem(ctx, false, false)
+	healthResult, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, false, false)
 	if err != nil {
 		return fmt.Errorf("cannot check ecosystem health after applying the blueprint %q: %w", blueprintId, err)
 	}
-	blueprintSpec.CheckEcosystemHealthAfterwards(healthResult)
+	healthErr := blueprintSpec.CheckEcosystemHealthAfterwards(healthResult)
 
 	err = useCase.repo.Update(ctx, blueprintSpec)
 	if err != nil {
+		// healthErr can be ignored here. We have a more serious problem if we cannot persist the blueprint
+		// the health check will be repeated anyway
 		return fmt.Errorf("cannot save blueprint spec %q after checking the ecosystem health: %w", blueprintId, err)
 	}
 
-	return nil
+	return healthErr
 }
 
 // PreProcessBlueprintApplication prepares the environment for applying the blueprint.
@@ -172,6 +178,7 @@ func (useCase *ApplyBlueprintSpecUseCase) ApplyBlueprintSpec(ctx context.Context
 		return useCase.handleApplyFailedError(ctx, blueprintSpec, applyError)
 	}
 
+	// FIXME: this health check is blocking. I think we need to split the apply logic into multiple steps to
 	// we have to wait for all dogus to be healthy
 	// otherwise service account creation might fail because dogus are restarted right after this step
 	_, err = useCase.doguInstallUseCase.WaitForHealthyDogus(ctx)
