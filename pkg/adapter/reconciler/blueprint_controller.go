@@ -3,12 +3,13 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"strings"
+	"time"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"strings"
-	"time"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"

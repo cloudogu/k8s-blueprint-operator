@@ -30,25 +30,25 @@ func TestEvents(t *testing.T) {
 		},
 		{
 			name:            "ecosystem healthy",
-			event:           EcosystemHealthyUpfrontEvent{},
-			expectedName:    "EcosystemHealthyUpfront",
+			event:           EcosystemHealthyEvent{},
+			expectedName:    "EcosystemHealthy",
 			expectedMessage: "dogu health ignored: false; component health ignored: false",
 		},
 		{
 			name:            "ignore dogu health",
-			event:           EcosystemHealthyUpfrontEvent{doguHealthIgnored: true},
-			expectedName:    "EcosystemHealthyUpfront",
+			event:           EcosystemHealthyEvent{doguHealthIgnored: true},
+			expectedName:    "EcosystemHealthy",
 			expectedMessage: "dogu health ignored: true; component health ignored: false",
 		},
 		{
 			name:            "ignore component health",
-			event:           EcosystemHealthyUpfrontEvent{componentHealthIgnored: true},
-			expectedName:    "EcosystemHealthyUpfront",
+			event:           EcosystemHealthyEvent{componentHealthIgnored: true},
+			expectedName:    "EcosystemHealthy",
 			expectedMessage: "dogu health ignored: false; component health ignored: true",
 		},
 		{
 			name: "ecosystem unhealthy upfront",
-			event: EcosystemUnhealthyUpfrontEvent{
+			event: EcosystemUnhealthyEvent{
 				HealthResult: ecosystem.HealthResult{
 					DoguHealth: ecosystem.DoguHealthResult{
 						DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
@@ -59,7 +59,7 @@ func TestEvents(t *testing.T) {
 					},
 				},
 			},
-			expectedName:    "EcosystemUnhealthyUpfront",
+			expectedName:    "EcosystemUnhealthy",
 			expectedMessage: "ecosystem health:\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
 		},
 		{
@@ -144,6 +144,21 @@ func TestEvents(t *testing.T) {
 			event:           BlueprintApplicationPreProcessedEvent{},
 			expectedName:    "BlueprintApplicationPreProcessed",
 			expectedMessage: "",
+		},
+		{
+			name: "components applied",
+			event: ComponentsAppliedEvent{
+				Diffs: ComponentDiffs{
+					{
+						Name: "dogu-operator",
+						NeededActions: []Action{
+							ActionUpgrade, ActionSwitchComponentNamespace,
+						},
+					},
+				},
+			},
+			expectedName:    "ComponentsApplied",
+			expectedMessage: "components applied: \"dogu-operator\": [upgrade, component namespace switch]",
 		},
 		{
 			name:            "blueprint applied",

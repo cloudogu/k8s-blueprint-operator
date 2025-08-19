@@ -5,7 +5,9 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	ecosystem "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -22,9 +24,9 @@ func (_m *mockEcosystemHealthUseCase) EXPECT() *mockEcosystemHealthUseCase_Expec
 	return &mockEcosystemHealthUseCase_Expecter{mock: &_m.Mock}
 }
 
-// CheckEcosystemHealth provides a mock function with given fields: ctx, ignoreDoguHealth, ignoreComponentHealth
-func (_m *mockEcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error) {
-	ret := _m.Called(ctx, ignoreDoguHealth, ignoreComponentHealth)
+// CheckEcosystemHealth provides a mock function with given fields: _a0, _a1
+func (_m *mockEcosystemHealthUseCase) CheckEcosystemHealth(_a0 context.Context, _a1 *domain.BlueprintSpec) (ecosystem.HealthResult, error) {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CheckEcosystemHealth")
@@ -32,17 +34,17 @@ func (_m *mockEcosystemHealthUseCase) CheckEcosystemHealth(ctx context.Context, 
 
 	var r0 ecosystem.HealthResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) (ecosystem.HealthResult, error)); ok {
-		return rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)); ok {
+		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, bool, bool) ecosystem.HealthResult); ok {
-		r0 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) ecosystem.HealthResult); ok {
+		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Get(0).(ecosystem.HealthResult)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, bool, bool) error); ok {
-		r1 = rf(ctx, ignoreDoguHealth, ignoreComponentHealth)
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,16 +58,15 @@ type mockEcosystemHealthUseCase_CheckEcosystemHealth_Call struct {
 }
 
 // CheckEcosystemHealth is a helper method to define mock.On call
-//   - ctx context.Context
-//   - ignoreDoguHealth bool
-//   - ignoreComponentHealth bool
-func (_e *mockEcosystemHealthUseCase_Expecter) CheckEcosystemHealth(ctx interface{}, ignoreDoguHealth interface{}, ignoreComponentHealth interface{}) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
-	return &mockEcosystemHealthUseCase_CheckEcosystemHealth_Call{Call: _e.mock.On("CheckEcosystemHealth", ctx, ignoreDoguHealth, ignoreComponentHealth)}
+//   - _a0 context.Context
+//   - _a1 *domain.BlueprintSpec
+func (_e *mockEcosystemHealthUseCase_Expecter) CheckEcosystemHealth(_a0 interface{}, _a1 interface{}) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+	return &mockEcosystemHealthUseCase_CheckEcosystemHealth_Call{Call: _e.mock.On("CheckEcosystemHealth", _a0, _a1)}
 }
 
-func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Run(run func(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Run(run func(_a0 context.Context, _a1 *domain.BlueprintSpec)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bool), args[2].(bool))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -75,7 +76,7 @@ func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) Return(_a0 ecosy
 	return _c
 }
 
-func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) RunAndReturn(run func(context.Context, bool, bool) (ecosystem.HealthResult, error)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
+func (_c *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)) *mockEcosystemHealthUseCase_CheckEcosystemHealth_Call {
 	_c.Call.Return(run)
 	return _c
 }

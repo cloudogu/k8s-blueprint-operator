@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -30,6 +31,10 @@ type doguRestartUseCase interface {
 	TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
+type applyComponentUseCase interface {
+	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error
+}
+
 type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
@@ -38,14 +43,12 @@ type componentInstallationUseCase interface {
 }
 
 type applyBlueprintSpecUseCase interface {
-	CheckEcosystemHealthUpfront(ctx context.Context, blueprint *domain.BlueprintSpec) error
-	CheckEcosystemHealthAfterwards(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	ApplyBlueprintSpec(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemHealthUseCase interface {
-	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error)
+	CheckEcosystemHealth(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)
 }
 
 type selfUpgradeUseCase interface {

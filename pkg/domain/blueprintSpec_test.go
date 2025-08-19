@@ -8,6 +8,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -473,199 +474,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
-	t.Run("all healthy", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{}
-		err := blueprint.CheckEcosystemHealthUpfront(health)
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionEcosystemHealthy))
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
-		require.NotNil(t, condition)
-		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
-
-		require.Equal(t, 1, len(blueprint.Events))
-		assert.Equal(t, EcosystemHealthyUpfrontEvent{
-			doguHealthIgnored:      false,
-			componentHealthIgnored: false,
-		}, blueprint.Events[0])
-	})
-
-	t.Run("no healthy event if condition status stays the same", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{}
-
-		err := blueprint.CheckEcosystemHealthUpfront(health)
-		require.NoError(t, err)
-
-		//reset events
-		blueprint.Events = []Event{}
-		require.Equal(t, 0, len(blueprint.Events))
-		// call again and check if another event was created
-		err = blueprint.CheckEcosystemHealthUpfront(health)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(blueprint.Events))
-	})
-
-	t.Run("some unhealthy", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{
-			DoguHealth: ecosystem.DoguHealthResult{
-				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.AvailableHealthStatus:   {"postfix"},
-					ecosystem.UnavailableHealthStatus: {"ldap"},
-					ecosystem.PendingHealthStatus:     {"postgresql"},
-				},
-			},
-			ComponentHealth: ecosystem.ComponentHealthResult{
-				ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-					ecosystem.AvailableHealthStatus:   {"dogu-operator"},
-					ecosystem.UnavailableHealthStatus: {"component-operator"},
-					ecosystem.PendingHealthStatus:     {"service-discovery"},
-				},
-			},
-		}
-		err := blueprint.CheckEcosystemHealthUpfront(health)
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "ecosystem is unhealthy before applying the blueprint")
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionEcosystemHealthy))
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
-		require.NotNil(t, condition)
-		assert.Contains(t, condition.Message, "2 dogu(s) are unhealthy: ldap, postgresql")
-		assert.Contains(t, condition.Message, "2 component(s) are unhealthy: component-operator, service-discovery")
-
-		require.Equal(t, 1, len(blueprint.Events))
-		assert.Equal(t, EcosystemUnhealthyUpfrontEvent{HealthResult: health}, blueprint.Events[0])
-	})
-
-	t.Run("no unhealthy event if condition status stays the same", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{
-			DoguHealth: ecosystem.DoguHealthResult{
-				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.UnavailableHealthStatus: {"ldap"},
-				},
-			},
-		}
-
-		err := blueprint.CheckEcosystemHealthUpfront(health)
-		require.Error(t, err)
-
-		//reset events
-		blueprint.Events = []Event{}
-		require.Equal(t, 0, len(blueprint.Events))
-		// call again and check if another event was created
-		err = blueprint.CheckEcosystemHealthUpfront(health)
-		require.Error(t, err)
-		require.Equal(t, 0, len(blueprint.Events))
-	})
-}
-
-func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
-	t.Run("all healthy", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{}
-
-		err := blueprint.CheckEcosystemHealthAfterwards(health)
-
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionEcosystemHealthy))
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
-		require.NotNil(t, condition)
-
-		require.Equal(t, 1, len(blueprint.Events))
-		assert.Equal(t, EcosystemHealthyAfterwardsEvent{}, blueprint.Events[0])
-	})
-
-	t.Run("no healthy event if condition status stays the same", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{}
-
-		err := blueprint.CheckEcosystemHealthAfterwards(health)
-		require.NoError(t, err)
-
-		//reset events
-		blueprint.Events = []Event{}
-		require.Equal(t, 0, len(blueprint.Events))
-
-		// call again and check if another event was created
-		err = blueprint.CheckEcosystemHealthAfterwards(health)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(blueprint.Events))
-	})
-
-	t.Run("some unhealthy", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{
-			DoguHealth: ecosystem.DoguHealthResult{
-				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.AvailableHealthStatus:   {"postfix"},
-					ecosystem.UnavailableHealthStatus: {"ldap"},
-					ecosystem.PendingHealthStatus:     {"postgresql"},
-				},
-			},
-			ComponentHealth: ecosystem.ComponentHealthResult{
-				ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-					ecosystem.AvailableHealthStatus:   {"dogu-operator"},
-					ecosystem.UnavailableHealthStatus: {"component-operator"},
-					ecosystem.PendingHealthStatus:     {"service-discovery"},
-				},
-			},
-		}
-
-		err := blueprint.CheckEcosystemHealthAfterwards(health)
-
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "ecosystem is unhealthy after applying the blueprint")
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionEcosystemHealthy))
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
-		require.NotNil(t, condition)
-		assert.Contains(t, condition.Message, "2 dogu(s) are unhealthy: ldap, postgresql")
-		assert.Contains(t, condition.Message, "2 component(s) are unhealthy: component-operator, service-discovery")
-
-		require.Equal(t, 1, len(blueprint.Events))
-		assert.Equal(t, EcosystemUnhealthyAfterwardsEvent{HealthResult: health}, blueprint.Events[0])
-	})
-
-	t.Run("no unhealthy event if condition status stays the same", func(t *testing.T) {
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
-		health := ecosystem.HealthResult{
-			DoguHealth: ecosystem.DoguHealthResult{
-				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.UnavailableHealthStatus: {"ldap"},
-				},
-			},
-		}
-
-		err := blueprint.CheckEcosystemHealthAfterwards(health)
-		require.Error(t, err)
-
-		//reset events
-		blueprint.Events = []Event{}
-		require.Equal(t, 0, len(blueprint.Events))
-		// call again and check if another event was created
-		err = blueprint.CheckEcosystemHealthAfterwards(health)
-		require.Error(t, err)
-		require.Equal(t, 0, len(blueprint.Events))
-	})
-}
-
 func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
 	// given
 	spec := &BlueprintSpec{}
@@ -898,4 +706,123 @@ func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
 			assert.Equalf(t, tt.want, spec.GetDogusThatNeedARestart(), "GetDogusThatNeedARestart()")
 		})
 	}
+}
+
+func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
+	t.Run("healthy", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, nil)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Healthy", condition.Reason)
+		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
+	})
+
+	t.Run("unhealthy", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+				},
+			},
+		}
+
+		changed := blueprint.HandleHealthResult(health, nil)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, "Unhealthy", condition.Reason)
+		assert.Contains(t, condition.Message, "ecosystem health:")
+		assert.Contains(t, condition.Message, "1 dogu(s) are unhealthy: ldap")
+		assert.Contains(t, condition.Message, "0 component(s) are unhealthy:")
+	})
+
+	t.Run("error given, condition Unknown", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionUnknown, condition.Status)
+		assert.Equal(t, "CannotCheckHealth", condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("no condition change", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+		assert.True(t, changed, "condition should change after the first call")
+		changed = blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+		assert.False(t, changed, "condition should not change here")
+	})
+}
+
+func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
+	diff := StateDiff{
+		ComponentDiffs: ComponentDiffs{
+			ComponentDiff{
+				Name: "k8s-dogu-operator",
+				NeededActions: []Action{
+					ActionUpgrade, ActionSwitchComponentNamespace,
+				},
+			},
+		},
+	}
+
+	t.Run("applied", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetComponentAppliedCondition(nil)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Applied", condition.Reason)
+		assert.Equal(t, "components applied: \"k8s-dogu-operator\": [upgrade, component namespace switch]", condition.Message)
+	})
+
+	t.Run("error", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetComponentAppliedCondition(assert.AnError)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, "CannotApply", condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("no condition change", func(t *testing.T) {
+		blueprint := BlueprintSpec{
+			Conditions: &[]Condition{},
+			StateDiff:  diff,
+		}
+
+		changed := blueprint.SetComponentAppliedCondition(assert.AnError)
+		assert.True(t, changed)
+		changed = blueprint.SetComponentAppliedCondition(assert.AnError)
+		assert.False(t, changed)
+	})
 }

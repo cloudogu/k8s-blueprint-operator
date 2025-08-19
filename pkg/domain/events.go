@@ -1,12 +1,14 @@
 package domain
 
 import (
+	"bytes"
 	"fmt"
 	"slices"
 	"strings"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 type Event interface {
@@ -195,28 +197,28 @@ func (s StateDiffDoguDeterminedEvent) Message() string {
 	return fmt.Sprintf("dogu state diff determined: %d actions (%s)", amount, message)
 }
 
-type EcosystemHealthyUpfrontEvent struct {
+type EcosystemHealthyEvent struct {
 	doguHealthIgnored      bool
 	componentHealthIgnored bool
 }
 
-func (d EcosystemHealthyUpfrontEvent) Name() string {
-	return "EcosystemHealthyUpfront"
+func (d EcosystemHealthyEvent) Name() string {
+	return "EcosystemHealthy"
 }
 
-func (d EcosystemHealthyUpfrontEvent) Message() string {
+func (d EcosystemHealthyEvent) Message() string {
 	return fmt.Sprintf("dogu health ignored: %t; component health ignored: %t", d.doguHealthIgnored, d.componentHealthIgnored)
 }
 
-type EcosystemUnhealthyUpfrontEvent struct {
+type EcosystemUnhealthyEvent struct {
 	HealthResult ecosystem.HealthResult
 }
 
-func (d EcosystemUnhealthyUpfrontEvent) Name() string {
-	return "EcosystemUnhealthyUpfront"
+func (d EcosystemUnhealthyEvent) Name() string {
+	return "EcosystemUnhealthy"
 }
 
-func (d EcosystemUnhealthyUpfrontEvent) Message() string {
+func (d EcosystemUnhealthyEvent) Message() string {
 	return d.HealthResult.String()
 }
 
@@ -241,6 +243,29 @@ func (e BlueprintApplicationPreProcessedEvent) Message() string {
 	return ""
 }
 
+type ComponentsAppliedEvent struct {
+	Diffs ComponentDiffs
+}
+
+func (e ComponentsAppliedEvent) Name() string {
+	return "ComponentsApplied"
+}
+
+func (e ComponentsAppliedEvent) Message() string {
+	var buffer bytes.Buffer
+	buffer.WriteString("components applied: ")
+	var details []string
+	for _, diff := range e.Diffs {
+		actionsAsStrings := util.Map(diff.NeededActions, func(action Action) string {
+			return string(action)
+		})
+		actions := strings.Join(actionsAsStrings, ", ")
+		details = append(details, fmt.Sprintf("%q: [%v]", diff.Name, actions))
+	}
+	buffer.WriteString(strings.Join(details, ", "))
+	return buffer.String()
+}
+
 type BlueprintAppliedEvent struct{}
 
 func (e BlueprintAppliedEvent) Name() string {
@@ -249,28 +274,6 @@ func (e BlueprintAppliedEvent) Name() string {
 
 func (e BlueprintAppliedEvent) Message() string {
 	return "waiting for ecosystem health"
-}
-
-type EcosystemHealthyAfterwardsEvent struct{}
-
-func (e EcosystemHealthyAfterwardsEvent) Name() string {
-	return "EcosystemHealthyAfterwards"
-}
-
-func (e EcosystemHealthyAfterwardsEvent) Message() string {
-	return ""
-}
-
-type EcosystemUnhealthyAfterwardsEvent struct {
-	HealthResult ecosystem.HealthResult
-}
-
-func (e EcosystemUnhealthyAfterwardsEvent) Name() string {
-	return "EcosystemUnhealthyAfterwards"
-}
-
-func (e EcosystemUnhealthyAfterwardsEvent) Message() string {
-	return e.HealthResult.String()
 }
 
 type ExecutionFailedEvent struct {

@@ -39,8 +39,8 @@ const (
 	ConditionEcosystemHealthy     = "EcosystemHealthy"
 	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
 	ConditionConfigApplied        = "ConfigApplied"
-	ConditionDogusApplied         = "DogusApplied"
 	ConditionComponentsApplied    = "ComponentsApplied"
+	ConditionDogusApplied         = "DogusApplied"
 	ConditionBlueprintApplied     = "BlueprintApplied"
 )
 
@@ -334,36 +334,50 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	return nil
 }
 
-// CheckEcosystemHealthUpfront checks if the ecosystem is healthy with the given health result and sets the next status phase depending on that.
-func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) error {
-	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
-	// Therefore we don't need to exclude dogus while checking with AllHealthy()
+// HandleHealthResult sets the healthCondition accordingly to the healthResult and a possible error.
+// if an error is given, the condition will be set to unknown.
+// The function returns true if the condition changed, otherwise false.
+func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResult, err error) bool {
+	if err != nil {
+		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "CannotCheckHealth",
+			Message: err.Error(),
+		})
+		return conditionChanged
+	}
+
 	if healthResult.AllHealthy() {
-		event := EcosystemHealthyUpfrontEvent{
+		event := EcosystemHealthyEvent{
 			doguHealthIgnored:      spec.Config.IgnoreDoguHealth,
 			componentHealthIgnored: spec.Config.IgnoreComponentHealth,
 		}
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionEcosystemHealthy,
 			Status:  metav1.ConditionTrue,
+			Reason:  "Healthy",
 			Message: event.Message(),
 		})
 		if conditionChanged {
 			spec.Events = append(spec.Events, event)
 		}
-		return nil
-	} else {
-		event := EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult}
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionEcosystemHealthy,
-			Status:  metav1.ConditionFalse,
-			Message: event.Message(),
-		})
-		if conditionChanged {
-			spec.Events = append(spec.Events, event)
-		}
-		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy before applying the blueprint", healthResult)
+		return conditionChanged
 	}
+
+	event := EcosystemUnhealthyEvent{
+		HealthResult: healthResult,
+	}
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionEcosystemHealthy,
+		Status:  metav1.ConditionFalse,
+		Reason:  "Unhealthy",
+		Message: event.Message(),
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, event)
+	}
+	return conditionChanged
 }
 
 // ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
@@ -396,32 +410,33 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 	}
 }
 
-// CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
-func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) error {
-	if healthResult.AllHealthy() {
-		event := EcosystemHealthyAfterwardsEvent{}
+// SetComponentAppliedCondition informs the user about the state of the component apply.
+// If an error is given, it will set the condition to failed accordingly, otherwise it marks it as a success.
+// Returns true if the condition changed, otherwise false.
+func (spec *BlueprintSpec) SetComponentAppliedCondition(err error) bool {
+	if err != nil {
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionEcosystemHealthy,
-			Status:  metav1.ConditionTrue,
-			Message: event.Message(),
-		})
-		if conditionChanged {
-			spec.Events = append(spec.Events, event)
-		}
-
-		return nil
-	} else {
-		event := EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult}
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
-			Type:    ConditionEcosystemHealthy,
+			Type:    ConditionComponentsApplied,
 			Status:  metav1.ConditionFalse,
-			Message: event.Message(),
+			Reason:  "CannotApply",
+			Message: err.Error(),
 		})
 		if conditionChanged {
-			spec.Events = append(spec.Events, event)
+			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
 		}
-		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy after applying the blueprint", healthResult)
+		return conditionChanged
 	}
+	event := ComponentsAppliedEvent{Diffs: spec.StateDiff.ComponentDiffs}
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:    ConditionComponentsApplied,
+		Status:  metav1.ConditionTrue,
+		Reason:  "Applied",
+		Message: event.Message(),
+	})
+	if conditionChanged && spec.StateDiff.ComponentDiffs.HasChanges() {
+		spec.Events = append(spec.Events, event)
+	}
+	return conditionChanged
 }
 
 // MarkBlueprintApplicationFailed sets the blueprint state to application failed, which indicates that the blueprint could not be applied completely.

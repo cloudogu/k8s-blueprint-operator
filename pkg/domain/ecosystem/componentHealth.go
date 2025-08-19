@@ -2,10 +2,11 @@ package ecosystem
 
 import (
 	"fmt"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
@@ -49,7 +50,7 @@ func CalculateComponentHealthResult(installedComponents map[common.SimpleCompone
 	for _, required := range requiredComponents {
 		_, installed := installedComponents[required.Name]
 		if !installed {
-			result.ComponentsByStatus[NotInstalledHealthStatus] = append(result.ComponentsByStatus[NotInstalledHealthStatus], common.SimpleComponentName(required.Name))
+			result.ComponentsByStatus[NotInstalledHealthStatus] = append(result.ComponentsByStatus[NotInstalledHealthStatus], required.Name)
 		}
 	}
 	for _, component := range installedComponents {

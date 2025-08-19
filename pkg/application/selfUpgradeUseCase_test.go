@@ -2,6 +2,8 @@ package application
 
 import (
 	"context"
+	"testing"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -10,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"k8s.io/apimachinery/pkg/api/meta"
-	"testing"
 )
 
 func TestSelfUpgradeUseCase_HandleSelfUpgrade(t *testing.T) {

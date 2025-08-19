@@ -19,6 +19,8 @@ type BlueprintSpecChangeUseCase struct {
 	ecosystemConfigUseCase ecosystemConfigUseCase
 	doguRestartUseCase     doguRestartUseCase
 	selfUpgradeUseCase     selfUpgradeUseCase
+	applyComponentUseCase  applyComponentUseCase
+	healthUseCase          ecosystemHealthUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
@@ -30,7 +32,8 @@ func NewBlueprintSpecChangeUseCase(
 	ecosystemConfigUseCase ecosystemConfigUseCase,
 	doguRestartUseCase doguRestartUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
-
+	applyComponentUseCase applyComponentUseCase,
+	ecosystemHealthUseCase ecosystemHealthUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:                   repo,
@@ -41,6 +44,8 @@ func NewBlueprintSpecChangeUseCase(
 		ecosystemConfigUseCase: ecosystemConfigUseCase,
 		doguRestartUseCase:     doguRestartUseCase,
 		selfUpgradeUseCase:     selfUpgradeUseCase,
+		applyComponentUseCase:  applyComponentUseCase,
+		healthUseCase:          ecosystemHealthUseCase,
 	}
 }
 
@@ -90,7 +95,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	}
 	// always check health here, even if we already know here, that we don't need to apply anything
 	// because we need to update the health condition
-	err = useCase.applyUseCase.CheckEcosystemHealthUpfront(ctx, blueprint)
+	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
 	if err != nil {
 		return err
 	}
@@ -100,18 +105,31 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return nil
 	}
 
+	// === Apply from here on ===
 	err = useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	if err != nil {
 		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
 		return err
 	}
-
 	err = useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
 	if err != nil {
 		return err
 	}
-
+	err = useCase.applyComponentUseCase.ApplyComponents(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	// check after applying components
+	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
+	if err != nil {
+		return err
+	}
 	err = useCase.applyUseCase.ApplyBlueprintSpec(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	// check after installing or updating dogus
+	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
 	if err != nil {
 		return err
 	}
@@ -133,7 +151,7 @@ func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blu
 	case domain.StatusPhaseBlueprintApplied:
 		return useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprint)
 	case domain.StatusPhaseRestartsTriggered:
-		err := useCase.applyUseCase.CheckEcosystemHealthAfterwards(ctx, blueprint)
+		_, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
 		if err != nil {
 			return err
 		}
