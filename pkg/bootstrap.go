@@ -20,7 +20,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/componentcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
 	adapterhealthconfig "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/healthConfig"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/maintenance"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
@@ -38,8 +37,6 @@ var blueprintOperatorName = common.QualifiedComponentName{
 	Namespace:  "k8s",
 	SimpleName: "k8s-blueprint-operator",
 }
-
-var maintenanceModeOwner = "blueprint-operator"
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
@@ -60,9 +57,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
 		eventRecorder,
 	)
-
-	libMaintenanceAdapter := repository.NewMaintenanceModeAdapter(maintenanceModeOwner, ecosystemClientSet.CoreV1().ConfigMaps(namespace))
-	maintenanceMode := maintenance.NewMaintenanceModeAdapter(libMaintenanceAdapter)
 
 	remoteDoguRegistry, err := createRemoteDoguRegistry()
 	if err != nil {
@@ -91,7 +85,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase, maintenanceMode)
+	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase, componentInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
 	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 
