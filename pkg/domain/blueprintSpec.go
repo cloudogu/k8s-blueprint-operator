@@ -335,17 +335,20 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 }
 
 // CheckEcosystemHealthUpfront checks if the ecosystem is healthy with the given health result and sets the next status phase depending on that.
-func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) {
+func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) error {
 	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
 	// Therefore we don't need to exclude dogus while checking with AllHealthy()
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyUpfront
 		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth,
 			componentHealthIgnored: spec.Config.IgnoreComponentHealth})
+		return nil
 	} else {
-		spec.Status = StatusPhaseEcosystemUnhealthyUpfront
+		//TODO: set health condition here in the future
 		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
+		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy before applying the blueprint", healthResult)
 	}
+
 }
 
 // ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
@@ -379,13 +382,16 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 }
 
 // CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
-func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) {
+func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) error {
 	if healthResult.AllHealthy() {
 		spec.Status = StatusPhaseEcosystemHealthyAfterwards
 		spec.Events = append(spec.Events, EcosystemHealthyAfterwardsEvent{})
+		return nil
 	} else {
+		//TODO write condition here in the future
 		spec.Status = StatusPhaseEcosystemUnhealthyAfterwards
 		spec.Events = append(spec.Events, EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult})
+		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy after applying the blueprint", healthResult)
 	}
 }
 
