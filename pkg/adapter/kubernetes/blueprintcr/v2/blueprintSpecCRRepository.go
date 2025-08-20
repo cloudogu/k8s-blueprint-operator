@@ -69,6 +69,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		Id:                 blueprintId,
 		EffectiveBlueprint: effectiveBlueprint,
 		StateDiff:          stateDiff,
+		Conditions:         &blueprintCR.Status.Conditions,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,
@@ -120,6 +121,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		Status: v2.BlueprintStatus{
 			EffectiveBlueprint: effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
+			Conditions:         *spec.Conditions,
 		},
 	}
 

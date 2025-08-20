@@ -19,7 +19,17 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
-var ctx = context.Background()
+var (
+	ctx           = context.Background()
+	testCondition = metav1.Condition{
+		Type:               domain.ConditionCompleted,
+		Status:             metav1.ConditionUnknown,
+		ObservedGeneration: 1,
+		LastTransitionTime: metav1.Time{},
+		Reason:             "Completed",
+		Message:            "test",
+	}
+)
 
 func Test_blueprintSpecRepo_GetById(t *testing.T) {
 	blueprintId := "MyBlueprint"
@@ -40,7 +50,9 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				IgnoreDoguHealth:         true,
 				DryRun:                   true,
 			},
-			Status: bpv2.BlueprintStatus{},
+			Status: bpv2.BlueprintStatus{
+				Conditions: []metav1.Condition{testCondition},
+			},
 		}
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
@@ -60,6 +72,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			},
 			StateDiff:          domain.StateDiff{},
 			PersistenceContext: persistenceContext,
+			Conditions:         &[]domain.Condition{testCondition},
 		}, spec)
 	})
 
@@ -150,14 +163,14 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		//FIXME: I removed the status field in this test. Do not forget to add a condition to this test instead
 		expectedStatus := bpv2.BlueprintStatus{
 			EffectiveBlueprint: bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
 			},
-			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			Conditions: []metav1.Condition{testCondition},
 		}
 		restClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
@@ -173,6 +186,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
+			Conditions:         &[]domain.Condition{testCondition},
 		})
 
 		// then
@@ -227,7 +241,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
 			},
-			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			Conditions: []metav1.Condition{},
 		}
 		expectedError := k8sErrors.NewConflict(
 			schema.GroupResource{Group: "blueprints", Resource: blueprintId},
@@ -248,6 +263,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
+			Conditions:         &[]domain.Condition{},
 		})
 
 		// then
@@ -268,7 +284,8 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 				Components: []bpv2.Component{},
 				Config:     bpv2.Config{},
 			},
-			StateDiff: bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			Conditions: []metav1.Condition{},
 		}
 		expectedError := fmt.Errorf("test-error")
 		restClientMock.EXPECT().
@@ -285,6 +302,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
+			Conditions:         &[]domain.Condition{},
 		})
 
 		// then
