@@ -40,7 +40,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -98,7 +98,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -127,7 +127,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -159,7 +159,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -191,7 +191,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -224,7 +224,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -263,7 +263,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -310,7 +310,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -334,7 +334,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -361,7 +361,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -389,7 +389,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -417,7 +417,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -442,7 +442,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -468,7 +468,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
@@ -493,7 +493,7 @@ func TestBlueprintSpecChangeUseCase_HandleChange(t *testing.T) {
 		applyMock := newMockApplyBlueprintSpecUseCase(t)
 		ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
 		selfUpgradeUseCase := newMockSelfUpgradeUseCase(t)
-		componentUseCase := newMockApplyComponentUseCase(t)
+		componentUseCase := newMockApplyComponentsUseCase(t)
 		doguUseCase := newMockApplyDogusUseCase(t)
 		healthUseCase := newMockEcosystemHealthUseCase(t)
 		useCase := NewBlueprintSpecChangeUseCase(repoMock, validationMock, effectiveBlueprintMock, stateDiffMock,
