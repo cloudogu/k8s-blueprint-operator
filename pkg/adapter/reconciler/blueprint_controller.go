@@ -83,10 +83,11 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{}, nil
 	case errors.As(err, &healthError):
+		// really normal case
 		errLogger.Info("Ecosystem is unhealthy. Retry later")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	case errors.As(err, &awaitSelfUpgradeError):
-		errLogger.Info(err.Error())
+		errLogger.Info("wait for self upgrade")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")

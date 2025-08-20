@@ -64,7 +64,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	ctx := log.IntoContext(givenCtx, logger)
 	logger = logger.WithName("BlueprintSpecChangeUseCase.HandleUntilApplied")
 
-	logger.Info("getting changed blueprint") // log with id
+	logger.V(2).Info("getting changed blueprint") // log with id
 	blueprint, err := useCase.repo.GetById(ctx, blueprintId)
 	if err != nil {
 		errMsg := "cannot load blueprint spec"
@@ -72,7 +72,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return fmt.Errorf("%s: %w", errMsg, err)
 	}
 
-	logger.Info("handle blueprint")
+	logger.V(1).Info("handle blueprint")
 
 	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
 	if err != nil {

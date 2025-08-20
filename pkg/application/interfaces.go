@@ -23,7 +23,6 @@ type stateDiffUseCase interface {
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
-	WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error)
 	ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
@@ -38,7 +37,6 @@ type applyComponentsUseCase interface {
 type componentInstallationUseCase interface {
 	ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
-	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 

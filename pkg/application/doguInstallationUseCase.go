@@ -8,7 +8,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"golang.org/x/exp/maps"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -40,49 +39,6 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 	}
 	// accept experimental maps.Values as we can implement it ourselves in a minute
 	return ecosystem.CalculateDoguHealthResult(maps.Values(installedDogus)), nil
-}
-
-func (useCase *DoguInstallationUseCase) WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.WaitForHealthyDogus")
-
-	waitConfig, err := useCase.waitConfigProvider.GetWaitConfig(ctx)
-	if err != nil {
-		return ecosystem.DoguHealthResult{}, fmt.Errorf("failed to get health check interval: %w", err)
-	}
-
-	logger.Info("start waiting for dogu health")
-	healthResult, err := util.RetryUntilSuccessOrCancellation(
-		ctx,
-		waitConfig.Interval,
-		useCase.checkDoguHealthStatesRetryable,
-	)
-	var result ecosystem.DoguHealthResult
-	if healthResult == nil {
-		result = ecosystem.DoguHealthResult{}
-	} else {
-		result = *healthResult
-	}
-
-	if err != nil {
-		err = fmt.Errorf("stop waiting for dogu health: %w", err)
-		logger.Error(err, "stop waiting for dogu health because of an error or time out")
-	} else {
-		logger.Info("finished waiting for dogu health")
-	}
-
-	return result, err
-}
-
-func (useCase *DoguInstallationUseCase) checkDoguHealthStatesRetryable(ctx context.Context) (result *ecosystem.DoguHealthResult, err error, shouldRetry bool) {
-	// use named return values to make their meaning clear
-	health, err := useCase.CheckDoguHealth(ctx)
-	if err != nil {
-		// no retry if error while loading dogus
-		return &ecosystem.DoguHealthResult{}, err, false
-	}
-	result = &health
-	shouldRetry = !health.AllHealthy()
-	return
 }
 
 // ApplyDoguStates applies the expected dogu state from the Blueprint to the ecosystem.

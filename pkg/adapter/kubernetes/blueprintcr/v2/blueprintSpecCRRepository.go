@@ -130,7 +130,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		},
 	}
 
-	logger.Info("update blueprint CR status")
+	logger.V(2).Info("update blueprint CR status")
 
 	CRAfterUpdate, err := repo.blueprintClient.UpdateStatus(ctx, updatedBlueprint, metav1.UpdateOptions{})
 	if err != nil {

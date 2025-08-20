@@ -52,7 +52,7 @@ func NewStateDiffUseCase(
 func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.DetermineStateDiff")
 
-	logger.Info("load referenced sensitive config")
+	logger.V(2).Info("load referenced sensitive config")
 	// load referenced config before collecting ecosystem state
 	// if an error happens here, we save a lot of heavy work
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
@@ -68,13 +68,13 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return err
 	}
 
-	logger.Info("collect ecosystem state for state diff")
+	logger.V(2).Info("collect ecosystem state for state diff")
 	ecosystemState, err := useCase.collectEcosystemState(ctx, blueprint.EffectiveBlueprint)
 	if err != nil {
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	logger.Info("determine state diff to the cloudogu ecosystem")
+	logger.V(2).Info("determine state diff to the cloudogu ecosystem")
 	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
@@ -98,18 +98,18 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 
 	// TODO: collect ecosystem state in parallel (like for ecosystem health) if we have time
 	// load current dogus and components
-	logger.Info("collect installed dogus")
+	logger.V(2).Info("collect installed dogus")
 	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
-	logger.Info("collect installed components")
+	logger.V(2).Info("collect installed components")
 	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
-	logger.Info("collect needed global config")
+	logger.V(2).Info("collect needed global config")
 	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
 
-	logger.Info("collect needed dogu config")
+	logger.V(2).Info("collect needed dogu config")
 	configByDogu, doguConfigErr := useCase.doguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
 
-	logger.Info("collect needed sensitive dogu config")
+	logger.V(2).Info("collect needed sensitive dogu config")
 	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)

@@ -1,10 +1,8 @@
 package application
 
 import (
-	"context"
 	"fmt"
 	"testing"
-	"time"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
@@ -675,108 +673,4 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		require.ErrorContains(t, err, fmt.Sprintf(noDowngradesExplanationTextFmt, "dogu", "dogus"))
 		require.ErrorContains(t, err, "an error occurred while applying dogu state to the ecosystem")
 	})
-}
-
-func TestDoguInstallationUseCase_WaitForHealthyDogus(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		t.Parallel()
-		// given
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		timedCtx, cancel := context.WithTimeout(testCtx, 10*time.Millisecond)
-		defer cancel()
-		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
-
-		waitConfigMock := newMockHealthWaitConfigProvider(t)
-		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: time.Millisecond}, nil)
-
-		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:  nil,
-			doguRepo:           doguRepoMock,
-			waitConfigProvider: waitConfigMock,
-		}
-
-		// when
-		result, err := sut.WaitForHealthyDogus(timedCtx)
-
-		// then
-		require.NoError(t, err)
-		assert.True(t, result.AllHealthy())
-	})
-
-	t.Run("fail to get health check interval", func(t *testing.T) {
-		t.Parallel()
-		// given
-		waitConfigMock := newMockHealthWaitConfigProvider(t)
-		waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{}, assert.AnError)
-
-		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:  nil,
-			doguRepo:           nil,
-			waitConfigProvider: waitConfigMock,
-		}
-
-		// when
-		_, err := sut.WaitForHealthyDogus(testCtx)
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "failed to get health check interval")
-	})
-
-	t.Run("timeout", func(t *testing.T) {
-		t.Parallel()
-		// given
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		timedCtx, cancel := context.WithTimeout(testCtx, 0*time.Millisecond)
-		defer cancel()
-		// return unhealthy result
-		doguRepoMock.EXPECT().GetAll(timedCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"postgresql": {Health: ecosystem.DoguStatusInstalling},
-		}, nil).Maybe()
-
-		waitConfigMock := newMockHealthWaitConfigProvider(t)
-		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: 5 * time.Millisecond}, nil)
-
-		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:  nil,
-			doguRepo:           doguRepoMock,
-			waitConfigProvider: waitConfigMock,
-		}
-
-		// when
-		result, err := sut.WaitForHealthyDogus(timedCtx)
-
-		// then
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, context.DeadlineExceeded)
-		assert.Equal(t, ecosystem.DoguHealthResult{}, result)
-	})
-
-	t.Run("cannot load dogus", func(t *testing.T) {
-		t.Parallel()
-		// given
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		timedCtx, cancel := context.WithTimeout(testCtx, 10*time.Millisecond)
-		defer cancel()
-		doguRepoMock.EXPECT().GetAll(timedCtx).Return(nil, assert.AnError).Maybe()
-
-		waitConfigMock := newMockHealthWaitConfigProvider(t)
-		waitConfigMock.EXPECT().GetWaitConfig(timedCtx).Return(ecosystem.WaitConfig{Interval: time.Millisecond}, nil)
-
-		sut := DoguInstallationUseCase{
-			blueprintSpecRepo:  nil,
-			doguRepo:           doguRepoMock,
-			waitConfigProvider: waitConfigMock,
-		}
-
-		// when
-		result, err := sut.WaitForHealthyDogus(timedCtx)
-
-		// then
-		assert.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.Equal(t, ecosystem.DoguHealthResult{}, result)
-	})
-
 }

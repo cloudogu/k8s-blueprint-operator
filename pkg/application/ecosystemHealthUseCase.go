@@ -7,6 +7,7 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type EcosystemHealthUseCase struct {
@@ -66,6 +67,8 @@ func (useCase *EcosystemHealthUseCase) getEcosystemHealth(
 	ignoreDoguHealth bool,
 	ignoreComponentHealth bool,
 ) (ecosystem.HealthResult, error) {
+	logger := log.FromContext(ctx).WithName("EcosystemHealthUseCase.getEcosystemHealth")
+	logger.V(1).Info("check ecosystem health...")
 	var doguHealth ecosystem.DoguHealthResult
 	var doguHealthErr error
 	if !ignoreDoguHealth {

@@ -36,7 +36,7 @@ func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecStatically(c
 	logger := log.FromContext(ctx).
 		WithName("BlueprintSpecValidationUseCase.ValidateBlueprintSpecStatically")
 
-	logger.Info("statically validate blueprint spec")
+	logger.V(1).Info("statically validate blueprint spec")
 
 	invalidBlueprintError := blueprint.ValidateStatically()
 	err := useCase.repo.Update(ctx, blueprint)
@@ -56,7 +56,7 @@ func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecStatically(c
 func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).
 		WithName("BlueprintSpecValidationUseCase.ValidateBlueprintSpecDynamically")
-	logger.Info("dynamically validate blueprint spec")
+	logger.V(1).Info("dynamically validate blueprint spec")
 
 	validationError := errors.Join(
 		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprint.EffectiveBlueprint),

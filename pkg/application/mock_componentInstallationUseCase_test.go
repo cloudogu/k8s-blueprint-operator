@@ -127,62 +127,6 @@ func (_c *mockComponentInstallationUseCase_CheckComponentHealth_Call) RunAndRetu
 	return _c
 }
 
-// WaitForHealthyComponents provides a mock function with given fields: ctx
-func (_m *mockComponentInstallationUseCase) WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-	ret := _m.Called(ctx)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WaitForHealthyComponents")
-	}
-
-	var r0 ecosystem.ComponentHealthResult
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context) (ecosystem.ComponentHealthResult, error)); ok {
-		return rf(ctx)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context) ecosystem.ComponentHealthResult); ok {
-		r0 = rf(ctx)
-	} else {
-		r0 = ret.Get(0).(ecosystem.ComponentHealthResult)
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
-		r1 = rf(ctx)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockComponentInstallationUseCase_WaitForHealthyComponents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WaitForHealthyComponents'
-type mockComponentInstallationUseCase_WaitForHealthyComponents_Call struct {
-	*mock.Call
-}
-
-// WaitForHealthyComponents is a helper method to define mock.On call
-//   - ctx context.Context
-func (_e *mockComponentInstallationUseCase_Expecter) WaitForHealthyComponents(ctx interface{}) *mockComponentInstallationUseCase_WaitForHealthyComponents_Call {
-	return &mockComponentInstallationUseCase_WaitForHealthyComponents_Call{Call: _e.mock.On("WaitForHealthyComponents", ctx)}
-}
-
-func (_c *mockComponentInstallationUseCase_WaitForHealthyComponents_Call) Run(run func(ctx context.Context)) *mockComponentInstallationUseCase_WaitForHealthyComponents_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
-	})
-	return _c
-}
-
-func (_c *mockComponentInstallationUseCase_WaitForHealthyComponents_Call) Return(_a0 ecosystem.ComponentHealthResult, _a1 error) *mockComponentInstallationUseCase_WaitForHealthyComponents_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockComponentInstallationUseCase_WaitForHealthyComponents_Call) RunAndReturn(run func(context.Context) (ecosystem.ComponentHealthResult, error)) *mockComponentInstallationUseCase_WaitForHealthyComponents_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // applyComponentState provides a mock function with given fields: _a0, _a1, _a2
 func (_m *mockComponentInstallationUseCase) applyComponentState(_a0 context.Context, _a1 domain.ComponentDiff, _a2 *ecosystem.ComponentInstallation) error {
 	ret := _m.Called(_a0, _a1, _a2)
