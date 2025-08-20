@@ -341,7 +341,12 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		// when
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
-		spec := &domain.BlueprintSpec{Id: blueprintId, Events: events, PersistenceContext: persistenceContext}
+		spec := &domain.BlueprintSpec{
+			Id:                 blueprintId,
+			Events:             events,
+			PersistenceContext: persistenceContext,
+			Conditions:         &[]domain.Condition{},
+		}
 		err := repo.Update(ctx, spec)
 
 		// then
