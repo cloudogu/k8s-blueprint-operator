@@ -27,10 +27,6 @@ type doguInstallationUseCase interface {
 	ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
-type doguRestartUseCase interface {
-	TriggerDoguRestarts(ctx context.Context, blueprint *domain.BlueprintSpec) error
-}
-
 type applyDogusUseCase interface {
 	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
@@ -113,10 +109,6 @@ type sensitiveDoguConfigRepository interface {
 
 type sensitiveConfigRefReader interface {
 	domainservice.SensitiveConfigRefReader
-}
-
-type doguRestartRepository interface {
-	domainservice.DoguRestartRepository
 }
 
 // validateDependenciesDomainUseCase is an interface for the domain service for better testability

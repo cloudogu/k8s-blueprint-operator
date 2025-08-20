@@ -5,7 +5,6 @@ import (
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restartcr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
@@ -75,8 +74,6 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := adapterhealthconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
-	doguRestartAdapter := dogusInterface.DoguRestarts(namespace)
-	restartRepository := restartcr.NewDoguRestartRepository(doguRestartAdapter)
 
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
@@ -90,14 +87,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintSpecRepository, componentInstallationUseCase)
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintSpecRepository, doguInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
-	doguRestartUseCase := application.NewDoguRestartUseCase(doguInstallationRepo, blueprintSpecRepository, restartRepository)
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepository, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, ConfigUseCase,
-		doguRestartUseCase,
 		selfUpgradeUseCase,
 		applyComponentUseCase,
 		applyDogusUseCase,

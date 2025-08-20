@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -93,11 +94,6 @@ type RemoteDoguRegistry interface {
 type DoguToLoad struct {
 	DoguName cescommons.QualifiedName
 	Version  string
-}
-
-type DoguRestartRepository interface {
-	// RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []cescommons.SimpleName) error
 }
 
 // GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.

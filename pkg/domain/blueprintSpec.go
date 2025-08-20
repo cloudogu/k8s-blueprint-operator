@@ -57,9 +57,6 @@ const (
 	StatusPhaseFailed StatusPhase = "failed"
 	// StatusPhaseCompleted marks the blueprint as successfully applied.
 	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
-	// Restarts are needed when the Dogu config changes.
-	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
 )
 
 type BlueprintConfiguration struct {
@@ -543,19 +540,6 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	return &InvalidBlueprintError{
 		Message: fmt.Sprintf("action %q is not allowed", action),
 	}
-}
-
-func (spec *BlueprintSpec) GetDogusThatNeedARestart() []cescommons.SimpleName {
-	var dogusThatNeedRestart []cescommons.SimpleName
-	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
-	for _, dogu := range dogusInEffectiveBlueprint {
-		//TODO: test this
-		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
-			spec.StateDiff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
-			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
-		}
-	}
-	return dogusThatNeedRestart
 }
 
 func (spec *BlueprintSpec) StartApplyEcosystemConfig() {

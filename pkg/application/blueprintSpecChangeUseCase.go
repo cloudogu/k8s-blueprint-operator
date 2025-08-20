@@ -6,7 +6,6 @@ import (
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
@@ -17,7 +16,6 @@ type BlueprintSpecChangeUseCase struct {
 	stateDiff              stateDiffUseCase
 	applyUseCase           applyBlueprintSpecUseCase
 	ecosystemConfigUseCase ecosystemConfigUseCase
-	doguRestartUseCase     doguRestartUseCase
 	selfUpgradeUseCase     selfUpgradeUseCase
 	applyComponentUseCase  applyComponentsUseCase
 	applyDogusUseCase      applyDogusUseCase
@@ -31,7 +29,6 @@ func NewBlueprintSpecChangeUseCase(
 	stateDiff stateDiffUseCase,
 	applyUseCase applyBlueprintSpecUseCase,
 	ecosystemConfigUseCase ecosystemConfigUseCase,
-	doguRestartUseCase doguRestartUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
 	applyComponentUseCase applyComponentsUseCase,
 	applyDogusUseCase applyDogusUseCase,
@@ -44,7 +41,6 @@ func NewBlueprintSpecChangeUseCase(
 		stateDiff:              stateDiff,
 		applyUseCase:           applyUseCase,
 		ecosystemConfigUseCase: ecosystemConfigUseCase,
-		doguRestartUseCase:     doguRestartUseCase,
 		selfUpgradeUseCase:     selfUpgradeUseCase,
 		applyComponentUseCase:  applyComponentUseCase,
 		applyDogusUseCase:      applyDogusUseCase,
@@ -137,35 +133,11 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
-	//TODO: remove this loop, when all use cases are reworked without the use of status
-	for blueprint.Status != domain.StatusPhaseCompleted {
-		err := useCase.handleChange(ctx, blueprint)
-		if err != nil {
-			return err
-		}
+	err = useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
+	if err != nil {
+		return err
 	}
 
 	logger.Info("blueprint successfully applied")
 	return nil
-}
-
-func (useCase *BlueprintSpecChangeUseCase) handleChange(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	switch blueprint.Status {
-	case domain.StatusPhaseBlueprintApplied:
-		return useCase.doguRestartUseCase.TriggerDoguRestarts(ctx, blueprint)
-	case domain.StatusPhaseRestartsTriggered:
-		_, err := useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-		if err != nil {
-			return err
-		}
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
-	case domain.StatusPhaseBlueprintApplicationFailed:
-		return useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
-	case domain.StatusPhaseCompleted:
-		return nil
-	case domain.StatusPhaseFailed:
-		return nil
-	default:
-		return fmt.Errorf("could not handle unknown status of blueprint")
-	}
 }
