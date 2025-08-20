@@ -12,13 +12,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#119] *breaking* sensitive dogu config can now only be referenced with secrets
   - it was not safe to have these values in clear text in the blueprint
 - [#119] we now support blueprint v2 CRs
-- [#121] health checks before and after applying the blueprint are now non-blocking
+- [#121] all health checks are now non-blocking
+- [#121] there are in general no steps anymore, which will block the reconciliation loop beyond some HTTP-Requests
+- [#121] *breaking* blueprints will now be executed as a continuous process
+  - the operator will now detect changes and will enforce the content of the blueprint
+- [#121] *breaking* the current state will now be reflected via conditions instead of the `statusPhase` field
+- [#121] *breaking* events were reworked, some events are now more general, some events got removed completely
+  - Note, that events are for humans. You should not compute them for automation as they have no consistency guarantees.
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore
   - make sure to persist your blueprints before upgrading
   - you need to transform your blueprints to the new v2 format yourself 
 - [#121] remove maintenance mode
+- [#121] *breaking* dogus will not be restarted by the blueprint operator anymore
+  - this is now the responsibility of the dogu operator
 
 ## [v2.7.0] - 2025-07-17
 ### Fixed
