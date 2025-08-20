@@ -65,11 +65,16 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		return nil, err
 	}
 
+	conditions := &blueprintCR.Status.Conditions
+	if conditions == nil {
+		conditions = &[]domain.Condition{}
+	}
+
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                 blueprintId,
 		EffectiveBlueprint: effectiveBlueprint,
 		StateDiff:          stateDiff,
-		Conditions:         &blueprintCR.Status.Conditions,
+		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
 			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,

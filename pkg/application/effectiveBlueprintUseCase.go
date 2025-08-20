@@ -6,8 +6,6 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type EffectiveBlueprintUseCase struct {
@@ -23,8 +21,6 @@ func NewEffectiveBlueprintUseCase(blueprintSpecRepo domainservice.BlueprintSpecR
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write.
 func (useCase *EffectiveBlueprintUseCase) CalculateEffectiveBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	logger := log.FromContext(ctx).WithName("EffectiveBlueprintUseCase.CalculateEffectiveBlueprint")
-	logger.Info("calculate effective blueprint", "blueprintStatus")
 	calcError := blueprint.CalculateEffectiveBlueprint()
 	err := useCase.blueprintSpecRepo.Update(ctx, blueprint)
 	if err != nil {

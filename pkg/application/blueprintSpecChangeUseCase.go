@@ -58,11 +58,11 @@ func NewBlueprintSpecChangeUseCase(
 // a domain.InvalidBlueprintError if the blueprint is invalid.
 func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.Context, blueprintId string) error {
 	logger := log.FromContext(givenCtx).
-		WithName("BlueprintSpecChangeUseCase.HandleUntilApplied").
 		WithValues("blueprintId", blueprintId)
 	// set the logger in the context to make use of structured logging
 	// we will give this ctx in every use case, therefore all of them will include the values given here
 	ctx := log.IntoContext(givenCtx, logger)
+	logger = logger.WithName("BlueprintSpecChangeUseCase.HandleUntilApplied")
 
 	logger.Info("getting changed blueprint") // log with id
 	blueprint, err := useCase.repo.GetById(ctx, blueprintId)

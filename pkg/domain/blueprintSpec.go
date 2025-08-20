@@ -83,7 +83,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
-			Reason:  "blueprint invalid",
+			Reason:  "Invalid",
 			Message: err.Error(),
 		})
 	}
@@ -129,7 +129,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
-			Reason:  "inconsistent blueprint",
+			Reason:  "Inconsistent",
 			Message: err.Error(),
 		})
 		if conditionChanged {
@@ -139,6 +139,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:   ConditionValid,
 			Status: metav1.ConditionTrue,
+			Reason: "Valid",
 		})
 	}
 }
@@ -161,7 +162,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
-			Reason:  "inconsistent blueprint",
+			Reason:  "Inconsistent",
 			Message: validationError.Error(),
 		})
 		if conditionChanged {
@@ -279,7 +280,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 			Type:    ConditionExecutable,
 			Status:  metav1.ConditionFalse,
-			Reason:  "forbidden operations needed",
+			Reason:  "ForbiddenOperations",
 			Message: invalidBlueprintError.Error(),
 		})
 		if conditionChanged {
@@ -291,6 +292,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:   ConditionExecutable,
 		Status: metav1.ConditionTrue,
+		Reason: "Executable",
 	})
 	//TODO: we cannot just deduplicate the events here by detecting a condition change,
 	// because the blueprint could be executable even after a change of the blueprint.
@@ -380,7 +382,7 @@ func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:   ConditionSelfUpgradeCompleted,
 		Status: metav1.ConditionFalse,
-		Reason: "await self upgrade",
+		Reason: "AwaitSelfUpgrade",
 	})
 	if conditionChanged {
 		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
@@ -391,6 +393,7 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:   ConditionSelfUpgradeCompleted,
 		Status: metav1.ConditionTrue,
+		Reason: "Completed",
 	})
 	if conditionChanged {
 		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
@@ -504,6 +507,7 @@ func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:    ConditionConfigApplied,
 		Status:  metav1.ConditionFalse,
+		Reason:  "Applying",
 		Message: event.Message(),
 	})
 	if conditionChanged {
@@ -515,6 +519,7 @@ func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:    ConditionConfigApplied,
 		Status:  metav1.ConditionFalse,
+		Reason:  "ApplyingFailed",
 		Message: err.Error(),
 	})
 	if conditionChanged {
@@ -526,6 +531,7 @@ func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
 		Type:   ConditionConfigApplied,
 		Status: metav1.ConditionTrue,
+		Reason: "Applied",
 	})
 	if conditionChanged {
 		spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
