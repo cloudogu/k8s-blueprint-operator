@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"errors"
-	"fmt"
 	"testing"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -38,12 +36,10 @@ var premiumNexus = cescommons.QualifiedName{
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
-	require.Equal(t, StatusPhaseNew, spec.Status, "Status new should be the default")
 
 	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseNew, spec.Status)
 	require.Equal(t, 0, len(spec.Events))
 }
 
@@ -474,56 +470,39 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	err := fmt.Errorf("test-error")
-	// when
-	spec.MarkBlueprintApplicationFailed(err)
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseBlueprintApplicationFailed,
-		Events: []Event{ExecutionFailedEvent{err: err}},
-	})
-}
-
-func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	// when
-	spec.MarkBlueprintApplied()
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseBlueprintApplied,
-		Events: []Event{BlueprintAppliedEvent{}},
-	})
-}
-
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
-	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+	t.Run("ok with event", func(t *testing.T) {
 		// given
-		spec := &BlueprintSpec{}
-		// when
-		spec.CompletePostProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseCompleted,
-			Events: []Event{CompletedEvent{}},
-		})
-	})
-
-	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationFailed,
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
 		}
 		// when
-		spec.CompletePostProcessing()
+		changed := blueprint.Complete()
 		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New("could not apply blueprint")}},
-		})
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionCompleted)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Completed", condition.Reason)
+		assert.Equal(t, "", condition.Message)
+		assert.Equal(t, []Event{CompletedEvent{}}, blueprint.Events)
+	})
+	t.Run("no change if executed twice", func(t *testing.T) {
+		// given
+		blueprint := &BlueprintSpec{
+			Conditions: &[]Condition{},
+		}
+		// when
+		changed := blueprint.Complete()
+		assert.True(t, changed)
+		blueprint.Events = nil
+		changed = blueprint.Complete()
+		// then
+		assert.False(t, changed)
+		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionCompleted)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Completed", condition.Reason)
+		assert.Equal(t, "", condition.Message)
+		assert.Equal(t, 0, len(blueprint.Events))
 	})
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	serializerv2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2/serializer"
 	corev1 "k8s.io/api/core/v1"
@@ -74,7 +75,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
 			DryRun:                   blueprintCR.Spec.DryRun,
 		},
-		Status: domain.StatusPhase(blueprintCR.Status.Phase),
 	}
 
 	blueprint, blueprintErr := serializerv2.ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
@@ -118,7 +118,6 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 			CreationTimestamp: metav1.Time{},
 		},
 		Status: v2.BlueprintStatus{
-			Phase:              v2.StatusPhase(spec.Status),
 			EffectiveBlueprint: effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
 		},

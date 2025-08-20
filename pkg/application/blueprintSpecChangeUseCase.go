@@ -14,7 +14,7 @@ type BlueprintSpecChangeUseCase struct {
 	validation             blueprintSpecValidationUseCase
 	effectiveBlueprint     effectiveBlueprintUseCase
 	stateDiff              stateDiffUseCase
-	applyUseCase           applyBlueprintSpecUseCase
+	applyUseCase           completeBlueprintUseCase
 	ecosystemConfigUseCase ecosystemConfigUseCase
 	selfUpgradeUseCase     selfUpgradeUseCase
 	applyComponentUseCase  applyComponentsUseCase
@@ -27,7 +27,7 @@ func NewBlueprintSpecChangeUseCase(
 	validation blueprintSpecValidationUseCase,
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
-	applyUseCase applyBlueprintSpecUseCase,
+	applyUseCase completeBlueprintUseCase,
 	ecosystemConfigUseCase ecosystemConfigUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
 	applyComponentUseCase applyComponentsUseCase,
@@ -133,7 +133,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 		return err
 	}
 
-	err = useCase.applyUseCase.PostProcessBlueprintApplication(ctx, blueprint)
+	err = useCase.applyUseCase.CompleteBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}

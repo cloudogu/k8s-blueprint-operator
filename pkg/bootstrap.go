@@ -53,7 +53,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create components interface: %w", err)
 	}
-	blueprintSpecRepository := v2.NewBlueprintSpecRepository(
+	blueprintRepo := v2.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
 		eventRecorder,
 	)
@@ -71,26 +71,26 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
-	doguInstallationRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
-	componentInstallationRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
+	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
+	componentRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := adapterhealthconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
-	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintSpecRepository, validateDependenciesUseCase, validateMountsUseCase)
-	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintSpecRepository)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintSpecRepository, doguInstallationRepo, componentInstallationRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintSpecRepository, doguInstallationRepo, healthConfigRepo)
-	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintSpecRepository, componentInstallationRepo, healthConfigRepo)
-	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, blueprintSpecRepository)
-	applyBlueprintSpecUseCase := application.NewApplyBlueprintSpecUseCase(blueprintSpecRepository, doguInstallationUseCase, ecosystemHealthUseCase)
-	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintSpecRepository, componentInstallationUseCase)
-	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintSpecRepository, doguInstallationUseCase)
-	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintSpecRepository, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
-	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintSpecRepository, componentInstallationRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
+	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
+	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintRepo)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, componentRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, healthConfigRepo)
+	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintRepo, componentRepo, healthConfigRepo)
+	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, blueprintRepo)
+	applyBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
+	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintRepo, componentInstallationUseCase)
+	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
+	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
+	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
-		blueprintSpecRepository, blueprintValidationUseCase,
+		blueprintRepo, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, ConfigUseCase,
 		selfUpgradeUseCase,

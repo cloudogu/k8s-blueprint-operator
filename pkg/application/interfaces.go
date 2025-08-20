@@ -42,8 +42,8 @@ type componentInstallationUseCase interface {
 	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 
-type applyBlueprintSpecUseCase interface {
-	PostProcessBlueprintApplication(ctx context.Context, blueprint *domain.BlueprintSpec) error
+type completeBlueprintUseCase interface {
+	CompleteBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemHealthUseCase interface {

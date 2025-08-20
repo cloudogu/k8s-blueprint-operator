@@ -23,8 +23,7 @@ var redmineQualifiedDoguName = cescommons.QualifiedName{
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 	//given
 	blueprint := &domain.BlueprintSpec{
-		Id:     "testBlueprint1",
-		Status: domain.StatusPhaseNew,
+		Id: "testBlueprint1",
 	}
 
 	repoMock := newMockBlueprintSpecRepository(t)
@@ -48,7 +47,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	//given
 	blueprint := &domain.BlueprintSpec{
 		//missing ID
-		Status: domain.StatusPhaseNew,
 	}
 
 	repoMock := newMockBlueprintSpecRepository(t)
@@ -77,8 +75,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 	t.Run("error while saving blueprint spec", func(t *testing.T) {
 		//given
 		blueprint := &domain.BlueprintSpec{
-			Id:     "testBlueprint1",
-			Status: domain.StatusPhaseNew,
+			Id: "testBlueprint1",
 		}
 		repoMock := newMockBlueprintSpecRepository(t)
 		ctx := context.Background()

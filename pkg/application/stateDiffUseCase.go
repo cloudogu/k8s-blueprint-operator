@@ -74,13 +74,13 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 		return fmt.Errorf("could not determine state diff: %w", err)
 	}
 
-	logger.Info("determine state diff to the cloudogu ecosystem", "blueprintStatus", blueprint.Status)
+	logger.Info("determine state diff to the cloudogu ecosystem")
 	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
 	} else if stateDiffError != nil {
-		return fmt.Errorf("failed to determine state diff for blueprint %q: %w", blueprint.Id, stateDiffError)
+		return fmt.Errorf("failed to determine state diff: %w", stateDiffError)
 	}
 
 	err = useCase.blueprintSpecRepo.Update(ctx, blueprint)

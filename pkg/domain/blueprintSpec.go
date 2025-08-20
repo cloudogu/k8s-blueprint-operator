@@ -22,7 +22,6 @@ type BlueprintSpec struct {
 	EffectiveBlueprint EffectiveBlueprint
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
-	Status             StatusPhase
 	Conditions         *[]Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
@@ -41,22 +40,13 @@ const (
 	ConditionConfigApplied        = "ConfigApplied"
 	ConditionComponentsApplied    = "ComponentsApplied"
 	ConditionDogusApplied         = "DogusApplied"
-	ConditionBlueprintApplied     = "BlueprintApplied"
+	ConditionCompleted            = "Completed"
 )
 
-type StatusPhase string
-
-const (
-	// StatusPhaseNew marks a newly created blueprint-CR.
-	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
-	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
-	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
-	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
-	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
-	StatusPhaseFailed StatusPhase = "failed"
-	// StatusPhaseCompleted marks the blueprint as successfully applied.
-	StatusPhaseCompleted StatusPhase = "completed"
+var (
+	notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
+	// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
+	notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 )
 
 type BlueprintConfiguration struct {
@@ -465,39 +455,6 @@ func (spec *BlueprintSpec) SetDogusAppliedCondition(err error) bool {
 	return conditionChanged
 }
 
-// MarkBlueprintApplicationFailed sets the blueprint state to application failed, which indicates that the blueprint could not be applied completely.
-// In reaction to this, further post-processing will happen.
-func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
-	spec.Status = StatusPhaseBlueprintApplicationFailed
-	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-}
-
-// MarkBlueprintApplied sets the blueprint state to blueprint applied, which indicates that the blueprint was applied successful and further steps can happen then.
-func (spec *BlueprintSpec) MarkBlueprintApplied() {
-	spec.Status = StatusPhaseBlueprintApplied
-	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
-}
-
-// CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
-func (spec *BlueprintSpec) CompletePostProcessing() {
-	// this function will not be called, if the ecosystem is not healthy
-	switch spec.Status {
-	case StatusPhaseBlueprintApplicationFailed:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
-	default:
-		//if healthy
-		spec.Status = StatusPhaseCompleted
-		spec.Events = append(spec.Events, CompletedEvent{})
-	}
-
-}
-
-var notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
-
-// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
-var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
-
 func (spec *BlueprintSpec) validateStateDiff() error {
 	var invalidBlueprintErrors []error
 
@@ -573,4 +530,18 @@ func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 	if conditionChanged {
 		spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 	}
+}
+
+// Complete is used to mark the blueprint as completed and to inform the user.
+// Returns true if anything changed, false otherwise.
+func (spec *BlueprintSpec) Complete() bool {
+	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		Type:   ConditionCompleted,
+		Status: metav1.ConditionTrue,
+		Reason: "Completed",
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, CompletedEvent{})
+	}
+	return conditionChanged
 }

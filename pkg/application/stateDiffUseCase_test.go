@@ -278,7 +278,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to determine state diff for blueprint \"testBlueprint1\"")
+		assert.ErrorContains(t, err, "failed to determine state diff")
 	})
 	t.Run("should fail to update blueprint", func(t *testing.T) {
 		// given
