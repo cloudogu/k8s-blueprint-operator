@@ -806,3 +806,356 @@ func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
 		require.Equal(t, 0, len(blueprint.Events))
 	})
 }
+
+//func TestBlueprintSpec_setComponentsAppliedConditionAfterStateDiff(t *testing.T) {
+//	//	decision table:
+//	//	current condition   withDiff     withoutDiff  DiffError
+//	//	=======================================================
+//	//	none                NeedToApply	 Applied      Unknown
+//	//	Unknown             NeedToApply	 Applied      Unknown
+//	//	NeedToApply         NeedToApply	 Applied      Unknown
+//	//	Applied             NeedToApply	 no change    Unknown
+//	//	CannotApply         no change    no change    Unknown
+//	t.Run("no condition before but changes", func(t *testing.T) {
+//		diff := StateDiff{
+//			DoguDiffs: DoguDiffs{
+//				DoguDiff{
+//					DoguName: "cas",
+//					NeededActions: []Action{
+//						ActionUpgrade, ActionSwitchDoguNamespace,
+//					},
+//				},
+//			},
+//		}
+//		blueprint := BlueprintSpec{
+//			Conditions: &[]Condition{},
+//			StateDiff:  diff,
+//		}
+//
+//		blueprint.setDogusAppliedConditionAfterStateDiff()
+//
+//		event := newStateDiffDoguEvent(diff.DoguDiffs)
+//		require.Equal(t, 1, len(blueprint.Events))
+//		assert.Equal(t, event, blueprint.Events[0])
+//		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+//		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+//		assert.Equal(t, "NeedToApply", condition.Reason)
+//		assert.Equal(t, event.Message(), condition.Message)
+//	})
+//	t.Run("no condition before and no changes", func(t *testing.T) {
+//		diff := StateDiff{
+//			DoguDiffs: DoguDiffs{
+//				DoguDiff{
+//					DoguName:      "cas",
+//					NeededActions: nil,
+//				},
+//			},
+//		}
+//		blueprint := BlueprintSpec{
+//			Conditions: &[]Condition{},
+//			StateDiff:  diff,
+//		}
+//
+//		blueprint.setDogusAppliedConditionAfterStateDiff()
+//
+//		event := newStateDiffDoguEvent(diff.DoguDiffs)
+//		require.Equal(t, 1, len(blueprint.Events))
+//		assert.Equal(t, event, blueprint.Events[0])
+//		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+//		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+//		assert.Equal(t, "Applied", condition.Reason)
+//		assert.Equal(t, event.Message(), condition.Message)
+//	})
+//}
+
+func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
+	//	current condition   withDiff     withoutDiff  DiffError
+	//	=======================================================
+	//	none                NeedToApply	 Applied      Unknown
+	//	Unknown             NeedToApply	 Applied      Unknown
+	//	NeedToApply         NeedToApply	 Applied      Unknown
+	//	Applied             NeedToApply	 no change    Unknown
+	//	CannotApply         no change    no change    Unknown
+
+	diffEventMsg := "dogu state diff determined: 2 actions (\"dogu namespace switch\": 1, \"upgrade\": 1)"
+	noDiffEventMsg := "dogu state diff determined: 0 actions ()"
+	type given struct {
+		hasDiff   bool
+		condition Condition
+		diffErr   error
+	}
+	type expected struct {
+		changed   bool
+		condition *Condition
+		hasEvent  bool
+	}
+	tests := []struct {
+		name     string
+		given    given
+		expected expected
+	}{
+		{
+			name: "none, diff -> NeedToApply, event",
+			given: given{
+				hasDiff: true,
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "none, no diff -> Applied, event",
+			given: given{
+				hasDiff: false,
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "Applied",
+					Message: noDiffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "Unknown, diff -> NeedToApply, event",
+			given: given{
+				hasDiff: true,
+				condition: Condition{
+					Type:   ConditionDogusApplied,
+					Status: metav1.ConditionUnknown,
+					Reason: "CannotDetermineStateDiff",
+				},
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "Unknown, no diff -> Applied, event",
+			given: given{
+				hasDiff: false,
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "Applied",
+					Message: noDiffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "NeedToApply, diff -> NeedToApply, event",
+			given: given{
+				hasDiff: true,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionTrue,
+					Reason:  "NeedToApply",
+					Message: "other msg",
+				},
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "NeedToApply, diff -> NeedToApply, no event",
+			given: given{
+				hasDiff: true,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+			},
+			expected: expected{
+				changed: false,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+				hasEvent: false,
+			},
+		},
+		{
+			name: "NeedToApply, no diff -> Applied, event",
+			given: given{
+				hasDiff: false,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: "error msg",
+				},
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "Applied",
+					Message: noDiffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "Applied, diff -> NeedToApply, event",
+			given: given{
+				hasDiff: true,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionTrue,
+					Reason:  "Applied",
+					Message: "other msg",
+				},
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "NeedToApply",
+					Message: diffEventMsg,
+				},
+				hasEvent: true,
+			},
+		},
+		{
+			name: "Applied, no diff -> no change",
+			given: given{
+				hasDiff: false,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  "Applied",
+					Message: "any msg",
+				},
+			},
+			expected: expected{
+				changed:  false,
+				hasEvent: false,
+			},
+		},
+		{
+			name: "CannotApply, no diff -> no change",
+			given: given{
+				hasDiff: false,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  ReasonCannotApply,
+					Message: "error msg",
+				},
+			},
+			expected: expected{
+				changed:  false,
+				hasEvent: false,
+			},
+		},
+		{
+			name: "CannotApply, diff -> no change",
+			given: given{
+				hasDiff: true,
+				condition: Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionFalse,
+					Reason:  ReasonCannotApply,
+					Message: "error msg",
+				},
+			},
+			expected: expected{
+				changed:  false,
+				hasEvent: false,
+			},
+		},
+		{
+			name: "error given",
+			given: given{
+				hasDiff: false,
+				diffErr: assert.AnError,
+			},
+			expected: expected{
+				changed: true,
+				condition: &Condition{
+					Type:    ConditionDogusApplied,
+					Status:  metav1.ConditionUnknown,
+					Reason:  "CannotDetermineStateDiff",
+					Message: assert.AnError.Error(),
+				},
+				hasEvent: false,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			//given
+			spec := &BlueprintSpec{
+				Conditions: &[]Condition{tt.given.condition},
+			}
+			if tt.given.hasDiff {
+				spec.StateDiff = StateDiff{
+					DoguDiffs: DoguDiffs{
+						DoguDiff{
+							DoguName: "redmine",
+							NeededActions: []Action{
+								ActionUpgrade, ActionSwitchDoguNamespace,
+							},
+						},
+					},
+				}
+			}
+			//when
+			hasChanged := spec.setDogusAppliedConditionAfterStateDiff(tt.given.diffErr)
+			//then
+			assert.Equal(t, tt.expected.changed, hasChanged, "function should return %v", hasChanged)
+			//condition
+			condition := meta.FindStatusCondition(*spec.Conditions, ConditionDogusApplied)
+			if tt.expected.changed && tt.expected.condition != nil {
+				require.NotNil(t, condition)
+				assert.Equal(t, tt.expected.condition.Status, condition.Status)
+				assert.Equal(t, tt.expected.condition.Message, condition.Message)
+				assert.Equal(t, tt.expected.condition.Reason, condition.Reason)
+			} else {
+				conditions := *spec.Conditions
+				condition := conditions[0]
+				assert.Equal(t, tt.given.condition, condition)
+			}
+			//events
+			if tt.expected.hasEvent {
+				require.Equal(t, 1, len(spec.Events), "should have an event")
+				assert.Equal(t, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs), spec.Events[0])
+			}
+		})
+	}
+}
