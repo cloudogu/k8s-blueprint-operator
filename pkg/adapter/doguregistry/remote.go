@@ -3,16 +3,12 @@ package doguregistry
 import (
 	"context"
 	"errors"
-	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	cloudoguerrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/cesapp-lib/core"
-	"github.com/cloudogu/retry-lib/retry"
-
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
-
-var maxTries = 20
 
 type Remote struct {
 	repository remoteDoguDescriptorRepository
@@ -23,27 +19,24 @@ func NewRemote(repository remoteDoguDescriptorRepository) *Remote {
 }
 
 func (r *Remote) GetDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error) {
-	dogu := &core.Dogu{}
-	err := retry.OnError(maxTries, cloudoguerrors.IsConnectionError, func() error {
-		var err error
-		dogu, err = r.repository.Get(ctx, qualifiedDoguVersion)
-		return err
-	})
+	// do not retry here. If any error happens, just reconcile later. We only do retries in application level.
+	// This makes the code way easier and non-blocking.
+	dogu, err := r.repository.Get(ctx, qualifiedDoguVersion)
 	if err != nil {
-		// this is ugly, maybe do it better in cesapp-lib?
 		if cloudoguerrors.IsNotFoundError(err) {
-			return nil, &domainservice.NotFoundError{
-				WrappedError: err,
-				Message:      fmt.Sprintf("dogu %q with version %q could not be found", qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw),
-			}
-		}
-
-		return nil, &domainservice.InternalError{
-			WrappedError: err,
-			Message:      fmt.Sprintf("failed to get dogu %q with version %q", qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw),
+			return nil, domainservice.NewNotFoundError(
+				err,
+				"dogu %q with version %q could not be found",
+				qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw,
+			)
+		} else {
+			return nil, domainservice.NewInternalError(
+				err,
+				"failed to get dogu %q with version %q",
+				qualifiedDoguVersion.Name, qualifiedDoguVersion.Version.Raw,
+			)
 		}
 	}
-
 	return dogu, nil
 }
 

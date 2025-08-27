@@ -282,7 +282,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should fail to update blueprint", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
+		blueprint := &domain.BlueprintSpec{
+			Id:         "testBlueprint1",
+			Conditions: &[]domain.Condition{},
+		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
@@ -319,7 +322,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: &[]domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
 					{

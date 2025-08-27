@@ -22,7 +22,9 @@ type BlueprintSpec struct {
 	EffectiveBlueprint EffectiveBlueprint
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
-	Conditions         *[]Condition
+	//FIXME: check if we can use a non-pointer type. The only reason for a pointer was the meta.SetStatusCondition function
+	// The pointer is really ugly, because we need to explicitly set conditions in every test
+	Conditions *[]Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
