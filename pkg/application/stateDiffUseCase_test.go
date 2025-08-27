@@ -442,7 +442,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for global config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: &[]domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Global: domain.GlobalConfig{
@@ -509,7 +510,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for dogu config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: &[]domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
@@ -596,7 +598,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for sensitive dogu config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: &[]domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
