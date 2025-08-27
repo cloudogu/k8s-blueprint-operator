@@ -2,12 +2,14 @@ package pkg
 
 import (
 	"fmt"
+	"time"
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
@@ -37,6 +39,13 @@ var blueprintOperatorName = common.QualifiedComponentName{
 	Namespace:  "k8s",
 	SimpleName: "k8s-blueprint-operator",
 }
+
+var (
+	// we will often load the same dogu descriptors as long as the blueprint will be applied.
+	// Therefore, the cache should live long enough, so that a complete installation can profit from it.
+	doguDescriptorCacheExpiration      = 15 * time.Minute
+	doguDescriptorCacheCleanUpInterval = 15 * time.Minute
+)
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
@@ -120,8 +129,9 @@ func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new remote dogu repository: %w", err)
 	}
-
-	return doguregistry.NewRemote(doguRemoteRepository), nil
+	goCache := cache.New(doguDescriptorCacheExpiration, doguDescriptorCacheCleanUpInterval)
+	registryCache := doguregistry.NewCache(doguRemoteRepository, goCache)
+	return doguregistry.NewRemote(registryCache), nil
 }
 
 func createEcosystemClientSet(restConfig *rest.Config) (*adapterk8s.ClientSet, error) {
