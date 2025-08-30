@@ -771,6 +771,7 @@ func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
 	})
 }
 
+// TODO: write tests
 //func TestBlueprintSpec_setComponentsAppliedConditionAfterStateDiff(t *testing.T) {
 //	//	decision table:
 //	//	current condition   withDiff     withoutDiff  DiffError
