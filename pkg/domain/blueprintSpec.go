@@ -22,9 +22,7 @@ type BlueprintSpec struct {
 	EffectiveBlueprint EffectiveBlueprint
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
-	//FIXME: check if we can use a non-pointer type. The only reason for a pointer was the meta.SetStatusCondition function
-	// The pointer is really ugly, because we need to explicitly set conditions in every test
-	Conditions *[]Condition
+	Conditions         []Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -84,7 +82,7 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 			Message:      "blueprint spec is invalid",
 		}
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
-		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "Invalid",
@@ -130,7 +128,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			WrappedError: possibleInvalidDependenciesError,
 			Message:      "blueprint spec is invalid",
 		}
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "Inconsistent",
@@ -140,7 +138,7 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
 		}
 	} else {
-		meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:   ConditionValid,
 			Status: metav1.ConditionTrue,
 			Reason: "Valid",
@@ -163,7 +161,7 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	}
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionValid,
 			Status:  metav1.ConditionFalse,
 			Reason:  "Inconsistent",
@@ -282,7 +280,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionExecutable,
 			Status:  metav1.ConditionFalse,
 			Reason:  "ForbiddenOperations",
@@ -294,7 +292,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		return invalidBlueprintError
 	}
 
-	meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionExecutable,
 		Status: metav1.ConditionTrue,
 		Reason: "Executable",
@@ -333,7 +331,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 // The function changed true if the condition changed, otherwise false.
 func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResult, err error) bool {
 	if err != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionEcosystemHealthy,
 			Status:  metav1.ConditionUnknown,
 			Reason:  "CannotCheckHealth",
@@ -347,7 +345,7 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 			doguHealthIgnored:      spec.Config.IgnoreDoguHealth,
 			componentHealthIgnored: spec.Config.IgnoreComponentHealth,
 		}
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionEcosystemHealthy,
 			Status:  metav1.ConditionTrue,
 			Reason:  "Healthy",
@@ -362,7 +360,7 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 	event := EcosystemUnhealthyEvent{
 		HealthResult: healthResult,
 	}
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionEcosystemHealthy,
 		Status:  metav1.ConditionFalse,
 		Reason:  "Unhealthy",
@@ -384,7 +382,7 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionSelfUpgradeCompleted,
 		Status: metav1.ConditionFalse,
 		Reason: "AwaitSelfUpgrade",
@@ -395,7 +393,7 @@ func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
 }
 
 func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionSelfUpgradeCompleted,
 		Status: metav1.ConditionTrue,
 		Reason: "Completed",
@@ -419,7 +417,7 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 //	Applied             NeedToApply	 no change    Unknown
 //	CannotApply         no change    no change    Unknown
 func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error) bool {
-	condition := meta.FindStatusCondition(*spec.Conditions, ConditionDogusApplied)
+	condition := meta.FindStatusCondition(spec.Conditions, ConditionDogusApplied)
 
 	//	current condition DiffError
 	//	===========================
@@ -429,7 +427,7 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 	//	Applied           Unknown
 	//	CannotApply       Unknown
 	if diffErr != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionDogusApplied,
 			Status:  metav1.ConditionUnknown,
 			Reason:  "CannotDetermineStateDiff",
@@ -448,7 +446,7 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 			return spec.setDogusNeedToApply()
 		} else {
 			event := newStateDiffDoguEvent(spec.StateDiff.DoguDiffs)
-			conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+			conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 				Type:    ConditionDogusApplied,
 				Status:  metav1.ConditionFalse,
 				Reason:  "Applied",
@@ -483,7 +481,7 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 
 func (spec *BlueprintSpec) setDogusNeedToApply() bool {
 	event := newStateDiffDoguEvent(spec.StateDiff.DoguDiffs)
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionDogusApplied,
 		Status:  metav1.ConditionFalse,
 		Reason:  "NeedToApply",
@@ -500,7 +498,7 @@ func (spec *BlueprintSpec) setDogusNeedToApply() bool {
 // Returns true if the condition changed, otherwise false.
 func (spec *BlueprintSpec) SetComponentsAppliedCondition(err error) bool {
 	if err != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionComponentsApplied,
 			Status:  metav1.ConditionFalse,
 			Reason:  ReasonCannotApply,
@@ -512,7 +510,7 @@ func (spec *BlueprintSpec) SetComponentsAppliedCondition(err error) bool {
 		return conditionChanged
 	}
 	event := ComponentsAppliedEvent{Diffs: spec.StateDiff.ComponentDiffs}
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionComponentsApplied,
 		Status:  metav1.ConditionTrue,
 		Reason:  "Applied",
@@ -529,7 +527,7 @@ func (spec *BlueprintSpec) SetComponentsAppliedCondition(err error) bool {
 // Returns true if the condition changed, otherwise false.
 func (spec *BlueprintSpec) SetDogusAppliedCondition(err error) bool {
 	if err != nil {
-		conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionDogusApplied,
 			Status:  metav1.ConditionFalse,
 			Reason:  ReasonCannotApply,
@@ -541,7 +539,7 @@ func (spec *BlueprintSpec) SetDogusAppliedCondition(err error) bool {
 		return conditionChanged
 	}
 	event := DogusAppliedEvent{Diffs: spec.StateDiff.DoguDiffs}
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionDogusApplied,
 		Status:  metav1.ConditionTrue,
 		Reason:  "Applied",
@@ -599,7 +597,7 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 
 func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
 	event := ApplyEcosystemConfigEvent{}
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionConfigApplied,
 		Status:  metav1.ConditionFalse,
 		Reason:  "Applying",
@@ -611,7 +609,7 @@ func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
 }
 
 func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionConfigApplied,
 		Status:  metav1.ConditionFalse,
 		Reason:  "ApplyingFailed",
@@ -623,7 +621,7 @@ func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
 }
 
 func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionConfigApplied,
 		Status: metav1.ConditionTrue,
 		Reason: "Applied",
@@ -636,7 +634,7 @@ func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 // Complete is used to mark the blueprint as completed and to inform the user.
 // Returns true if anything changed, false otherwise.
 func (spec *BlueprintSpec) Complete() bool {
-	conditionChanged := meta.SetStatusCondition(spec.Conditions, metav1.Condition{
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionCompleted,
 		Status: metav1.ConditionTrue,
 		Reason: "Completed",

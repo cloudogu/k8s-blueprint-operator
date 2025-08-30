@@ -44,13 +44,11 @@ func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
-	spec := BlueprintSpec{
-		Conditions: &[]Condition{},
-	}
+	spec := BlueprintSpec{}
 
 	err := spec.ValidateStatically()
 
-	assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionValid))
+	assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionValid))
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
@@ -248,7 +246,8 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		err := spec.CalculateEffectiveBlueprint()
 
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
-		assert.Equal(t, 0, len(spec.Events))
+		assert.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, "BlueprintSpecInvalid", spec.Events[0].Name())
 	})
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
@@ -290,7 +289,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus:      []Dogu{},
 				Components: []Component{},
 			},
-			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -309,7 +307,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}
 
-		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionExecutable))
+		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 		require.NoError(t, err)
 		require.Equal(t, 5, len(spec.Events))
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
@@ -340,7 +338,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: true,
 			},
-			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -358,7 +355,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*spec.Conditions, ConditionExecutable))
+		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 	})
 
 	t.Run("invalid blueprint state with not allowed dogu namespace switch", func(t *testing.T) {
@@ -377,7 +374,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: false,
 			},
-			Conditions: &[]Condition{},
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -394,7 +390,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
 	})
@@ -413,7 +409,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Conditions: &[]Condition{},
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -429,7 +424,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
 	})
@@ -448,7 +443,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Conditions: &[]Condition{},
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -464,7 +458,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
-		assert.True(t, meta.IsStatusConditionFalse(*spec.Conditions, ConditionExecutable))
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
 	})
@@ -473,14 +467,12 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 	t.Run("ok with event", func(t *testing.T) {
 		// given
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := &BlueprintSpec{}
 		// when
 		changed := blueprint.Complete()
 		// then
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionCompleted)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Completed", condition.Reason)
 		assert.Equal(t, "", condition.Message)
@@ -488,9 +480,7 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 	})
 	t.Run("no change if executed twice", func(t *testing.T) {
 		// given
-		blueprint := &BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := &BlueprintSpec{}
 		// when
 		changed := blueprint.Complete()
 		assert.True(t, changed)
@@ -498,7 +488,7 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		changed = blueprint.Complete()
 		// then
 		assert.False(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionCompleted)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Completed", condition.Reason)
 		assert.Equal(t, "", condition.Message)
@@ -508,21 +498,17 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 
 func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 	t.Run("all ok, no errors", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		blueprint.ValidateDynamically(nil)
 
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionValid))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionValid))
 		require.Equal(t, 0, len(blueprint.Events))
 
 	})
 
 	t.Run("given dependency error", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 		givenErr := assert.AnError
 
 		blueprint.ValidateDynamically(givenErr)
@@ -569,73 +555,61 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		blueprint.MarkWaitingForSelfUpgrade()
 		blueprint.Events = []Event(nil)
 		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if condition did not change")
 	})
 }
 
 func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 		blueprint.MarkSelfUpgradeCompleted()
 
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		blueprint.MarkSelfUpgradeCompleted()
 		blueprint.Events = []Event(nil)
 		blueprint.MarkSelfUpgradeCompleted()
 
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
 	})
 }
 
 func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 	t.Run("healthy", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, nil)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Healthy", condition.Reason)
 		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
 	})
 
 	t.Run("unhealthy", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 		health := ecosystem.HealthResult{
 			DoguHealth: ecosystem.DoguHealthResult{
 				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
@@ -647,7 +621,7 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		changed := blueprint.HandleHealthResult(health, nil)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
 		assert.Equal(t, metav1.ConditionFalse, condition.Status)
 		assert.Equal(t, "Unhealthy", condition.Reason)
 		assert.Contains(t, condition.Message, "ecosystem health:")
@@ -656,23 +630,19 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 	})
 
 	t.Run("error given, condition Unknown", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionEcosystemHealthy)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
 		assert.Equal(t, metav1.ConditionUnknown, condition.Status)
 		assert.Equal(t, "CannotCheckHealth", condition.Reason)
 		assert.Equal(t, assert.AnError.Error(), condition.Message)
 	})
 
 	t.Run("no condition change", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-		}
+		blueprint := BlueprintSpec{}
 
 		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
 		assert.True(t, changed, "condition should change after the first call")
@@ -695,14 +665,13 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 
 	t.Run("applied", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetComponentsAppliedCondition(nil)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionComponentsApplied)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Applied", condition.Reason)
 		assert.Equal(t, "components applied: \"k8s-dogu-operator\": [upgrade, component namespace switch]", condition.Message)
@@ -712,14 +681,13 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetComponentsAppliedCondition(assert.AnError)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionComponentsApplied)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionComponentsApplied)
 		assert.Equal(t, metav1.ConditionFalse, condition.Status)
 		assert.Equal(t, "CannotApply", condition.Reason)
 		assert.Equal(t, assert.AnError.Error(), condition.Message)
@@ -727,8 +695,7 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 
 	t.Run("no condition change", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetComponentsAppliedCondition(assert.AnError)
@@ -757,14 +724,13 @@ func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
 
 	t.Run("applied", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetDogusAppliedCondition(nil)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionDogusApplied)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Applied", condition.Reason)
 		assert.Equal(t, "dogus applied: \"cas\": [upgrade, dogu namespace switch]", condition.Message)
@@ -774,14 +740,13 @@ func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
 
 	t.Run("error", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetDogusAppliedCondition(assert.AnError)
 
 		assert.True(t, changed)
-		condition := meta.FindStatusCondition(*blueprint.Conditions, ConditionDogusApplied)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionDogusApplied)
 		assert.Equal(t, metav1.ConditionFalse, condition.Status)
 		assert.Equal(t, "CannotApply", condition.Reason)
 		assert.Equal(t, assert.AnError.Error(), condition.Message)
@@ -791,8 +756,7 @@ func TestBlueprintSpec_SetDogusAppliedCondition(t *testing.T) {
 
 	t.Run("no condition change", func(t *testing.T) {
 		blueprint := BlueprintSpec{
-			Conditions: &[]Condition{},
-			StateDiff:  diff,
+			StateDiff: diff,
 		}
 
 		changed := blueprint.SetDogusAppliedCondition(assert.AnError)
@@ -1121,7 +1085,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			//given
 			spec := &BlueprintSpec{
-				Conditions: &[]Condition{tt.given.condition},
+				Conditions: []Condition{tt.given.condition},
 			}
 			if tt.given.hasDiff {
 				spec.StateDiff = StateDiff{
@@ -1140,14 +1104,14 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			//then
 			assert.Equal(t, tt.expected.changed, hasChanged, "function should return %v", hasChanged)
 			//condition
-			condition := meta.FindStatusCondition(*spec.Conditions, ConditionDogusApplied)
+			condition := meta.FindStatusCondition(spec.Conditions, ConditionDogusApplied)
 			if tt.expected.changed && tt.expected.condition != nil {
 				require.NotNil(t, condition)
 				assert.Equal(t, tt.expected.condition.Status, condition.Status)
 				assert.Equal(t, tt.expected.condition.Message, condition.Message)
 				assert.Equal(t, tt.expected.condition.Reason, condition.Reason)
 			} else {
-				conditions := *spec.Conditions
+				conditions := spec.Conditions
 				condition := conditions[0]
 				assert.Equal(t, tt.given.condition, condition)
 			}
