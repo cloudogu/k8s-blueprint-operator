@@ -2,14 +2,13 @@ package pkg
 
 import (
 	"fmt"
-	"time"
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
+	"github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
-	"github.com/patrickmn/go-cache"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 
@@ -40,13 +39,6 @@ var blueprintOperatorName = common.QualifiedComponentName{
 	SimpleName: "k8s-blueprint-operator",
 }
 
-var (
-	// we will often load the same dogu descriptors as long as the blueprint will be applied.
-	// Therefore, the cache should live long enough, so that a complete installation can profit from it.
-	doguDescriptorCacheExpiration      = 15 * time.Minute
-	doguDescriptorCacheCleanUpInterval = 15 * time.Minute
-)
-
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
 func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
 	ecosystemClientSet, err := createEcosystemClientSet(restConfig)
@@ -67,7 +59,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		eventRecorder,
 	)
 
-	remoteDoguRegistry, err := createRemoteDoguRegistry()
+	remoteDoguRegistry, err := createRemoteDoguRegistry(ecosystemClientSet, namespace)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +106,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}, nil
 }
 
-func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
+func createRemoteDoguRegistry(clientSet *adapterk8s.ClientSet, namespace string) (*doguregistry.DoguDescriptorRepository, error) {
 	remoteConfig, err := config.GetRemoteConfiguration()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get remote dogu registry config: %w", err)
@@ -126,12 +118,11 @@ func createRemoteDoguRegistry() (*doguregistry.Remote, error) {
 	}
 
 	doguRemoteRepository, err := remotedogudescriptor.NewRemoteDoguDescriptorRepository(remoteConfig, remoteCreds)
+	doguLocalRepository := dogu.NewLocalDoguDescriptorRepository(clientSet.CoreV1().ConfigMaps(namespace))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create new remote dogu repository: %w", err)
 	}
-	goCache := cache.New(doguDescriptorCacheExpiration, doguDescriptorCacheCleanUpInterval)
-	registryCache := doguregistry.NewCache(doguRemoteRepository, goCache)
-	return doguregistry.NewRemote(registryCache), nil
+	return doguregistry.NewDoguDescriptorRepository(doguRemoteRepository, doguLocalRepository), nil
 }
 
 func createEcosystemClientSet(restConfig *rest.Config) (*adapterk8s.ClientSet, error) {

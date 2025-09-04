@@ -65,9 +65,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		return nil, err
 	}
 
-	conditions := &blueprintCR.Status.Conditions
+	conditions := blueprintCR.Status.Conditions
 	if conditions == nil {
-		conditions = &[]domain.Condition{}
+		conditions = []domain.Condition{}
 	}
 
 	blueprintSpec := &domain.BlueprintSpec{
@@ -126,7 +126,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 		Status: v2.BlueprintStatus{
 			EffectiveBlueprint: effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
-			Conditions:         *spec.Conditions,
+			Conditions:         spec.Conditions,
 		},
 	}
 
