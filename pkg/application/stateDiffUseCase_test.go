@@ -284,7 +284,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
@@ -323,7 +323,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
 					{
@@ -443,7 +443,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Global: domain.GlobalConfig{
@@ -511,7 +511,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
@@ -599,7 +599,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
 					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{

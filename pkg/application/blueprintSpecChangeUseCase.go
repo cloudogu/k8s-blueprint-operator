@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -74,7 +75,28 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 	logger.V(1).Info("handle blueprint")
 
-	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
+	err = useCase.prepareBlueprint(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+
+	if !blueprint.ShouldBeApplied() {
+		// just stop the loop here on dry run or early exit
+		return nil
+	}
+
+	// === Apply from here on ===
+	err = useCase.applyBlueprint(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+
+	logger.Info("blueprint successfully applied")
+	return nil
+}
+
+func (useCase *BlueprintSpecChangeUseCase) prepareBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	err := useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
 	if err != nil {
 		return err
 	}
@@ -98,14 +120,11 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	if err != nil {
 		return err
 	}
+	return nil
+}
 
-	if !blueprint.ShouldBeApplied() {
-		// just stop the loop here on dry run or early exit
-		return nil
-	}
-
-	// === Apply from here on ===
-	err = useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
+func (useCase *BlueprintSpecChangeUseCase) applyBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	err := useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	if err != nil {
 		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
 		return err
@@ -114,30 +133,32 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	if err != nil {
 		return err
 	}
-	err = useCase.applyComponentUseCase.ApplyComponents(ctx, blueprint)
+	changedComponents, err := useCase.applyComponentUseCase.ApplyComponents(ctx, blueprint)
 	if err != nil {
 		return err
 	}
 	// check after applying components
-	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-	if err != nil {
-		return err
+	if changedComponents {
+		_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
+		if err != nil {
+			return err
+		}
 	}
-	err = useCase.applyDogusUseCase.ApplyDogus(ctx, blueprint)
+	changedDogus, err := useCase.applyDogusUseCase.ApplyDogus(ctx, blueprint)
 	if err != nil {
 		return err
 	}
 	// check after installing or updating dogus
-	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-	if err != nil {
-		return err
+	if changedDogus {
+		_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = useCase.applyUseCase.CompleteBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}
-
-	logger.Info("blueprint successfully applied")
 	return nil
 }

@@ -22,7 +22,7 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 					},
 				},
 			},
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -31,10 +31,11 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil)
 		useCase := NewApplyComponentsUseCase(repoMock, componentInstallUseCaseMock)
 
-		err := useCase.ApplyComponents(testCtx, blueprint)
+		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, changed)
 		require.Equal(t, 1, len(blueprint.Events))
 		assert.Equal(t, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs}, blueprint.Events[0])
 	})
@@ -42,7 +43,7 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 	t.Run("no update without condition change", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			StateDiff:  domain.StateDiff{},
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -51,17 +52,19 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil).Twice()
 		useCase := NewApplyComponentsUseCase(repoMock, componentInstallUseCaseMock)
 
-		err := useCase.ApplyComponents(testCtx, blueprint)
+		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionComponentsApplied))
-		err = useCase.ApplyComponents(testCtx, blueprint)
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, changed)
+		changed, err = useCase.ApplyComponents(testCtx, blueprint)
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.False(t, changed)
 	})
 
 	t.Run("fail to apply components", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -70,15 +73,16 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(assert.AnError)
 		useCase := NewApplyComponentsUseCase(repoMock, componentInstallUseCaseMock)
 
-		err := useCase.ApplyComponents(testCtx, blueprint)
+		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, changed)
 	})
 
 	t.Run("fail to update blueprint", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -87,9 +91,10 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil)
 		useCase := NewApplyComponentsUseCase(repoMock, componentInstallUseCaseMock)
 
-		err := useCase.ApplyComponents(testCtx, blueprint)
+		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.True(t, changed)
 	})
 }

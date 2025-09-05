@@ -27,11 +27,11 @@ type doguInstallationUseCase interface {
 }
 
 type applyDogusUseCase interface {
-	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
 type applyComponentsUseCase interface {
-	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
 type componentInstallationUseCase interface {

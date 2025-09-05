@@ -48,7 +48,7 @@ func TestNewEcosystemHealthUseCase(t *testing.T) {
 func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 	t.Run("all healthy", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:      false,
 				IgnoreComponentHealth: false,
@@ -73,12 +73,12 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth, ComponentHealth: componentHealth}, health)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionEcosystemHealthy))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionEcosystemHealthy))
 	})
 
 	t.Run("unhealthy", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:      false,
 				IgnoreComponentHealth: false,
@@ -106,12 +106,12 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 		assert.ErrorContains(t, err, "2 dogu(s) are unhealthy: postfix, scm")
 		assert.ErrorContains(t, err, "3 component(s) are unhealthy: k8s-dogu-operator, k8s-etcd, k8s-service-discovery")
 		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth, ComponentHealth: componentHealth}, health)
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionEcosystemHealthy))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
 	})
 
 	t.Run("error updating blueprint", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:      false,
 				IgnoreComponentHealth: false,
@@ -141,7 +141,7 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 	t.Run("error getting health", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:      false,
 				IgnoreComponentHealth: false,
@@ -163,13 +163,13 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.True(t, meta.IsStatusConditionPresentAndEqual(
-			*blueprint.Conditions, domain.ConditionEcosystemHealthy, metav1.ConditionUnknown,
+			blueprint.Conditions, domain.ConditionEcosystemHealthy, metav1.ConditionUnknown,
 		))
 	})
 
 	t.Run("no update without health change", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:      false,
 				IgnoreComponentHealth: false,
@@ -192,10 +192,10 @@ func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
 
 		_, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
 		assert.ErrorContains(t, err, "ecosystem is unhealthy")
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionEcosystemHealthy))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
 		_, err = useCase.CheckEcosystemHealth(testCtx, blueprint) //no repo.Update called again
 		assert.ErrorContains(t, err, "ecosystem is unhealthy")
-		assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionEcosystemHealthy))
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
 	})
 }
 
