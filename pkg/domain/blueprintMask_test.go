@@ -12,7 +12,6 @@ var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
 var (
 	officialNamespace = cescommons.Namespace("official")
 	k8sNamespace      = cescommons.Namespace("k8s")
-	nginxStatic       = cescommons.QualifiedName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleName("nginx-static")}
 	officialDogu1     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu1")}
 	officialDogu2     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu2")}
 	officialDogu3     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu3")}
