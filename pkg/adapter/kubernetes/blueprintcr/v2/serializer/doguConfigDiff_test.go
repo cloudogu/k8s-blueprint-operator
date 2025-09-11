@@ -1,18 +1,25 @@
 package serializer
 
 import (
+	"testing"
+
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
+)
+
+var (
+	limit512  = "512m"
+	limit1024 = "1024m"
 )
 
 func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
+
 	tests := []struct {
 		name        string
 		domainModel domain.DoguConfigDiffs
-		want        []crd.DoguConfigEntryDiff
+		want        crd.ConfigDiff
 		isSensitive bool
 	}{
 		{
@@ -29,11 +36,11 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 						Key:      "container_config/memory_limit",
 					},
 					Actual: domain.DoguConfigValueState{
-						Value:  "512m",
+						Value:  &limit512,
 						Exists: true,
 					},
 					Expected: domain.DoguConfigValueState{
-						Value:  "1024m",
+						Value:  &limit1024,
 						Exists: true,
 					},
 					NeededAction: domain.ConfigActionSet,
@@ -47,32 +54,32 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 						Exists: false,
 					},
 					Expected: domain.DoguConfigValueState{
-						Value:  "512m",
+						Value:  &limit512,
 						Exists: true,
 					},
 					NeededAction: domain.ConfigActionSet,
 				},
 			},
-			want: []crd.DoguConfigEntryDiff{
+			want: crd.ConfigDiff{
 				{
 					Key: "container_config/memory_limit",
-					Actual: crd.DoguConfigValueState{
-						Value:  "512m",
+					Actual: crd.ConfigValueState{
+						Value:  &limit512,
 						Exists: true,
 					},
-					Expected: crd.DoguConfigValueState{
-						Value:  "1024m",
+					Expected: crd.ConfigValueState{
+						Value:  &limit1024,
 						Exists: true,
 					},
 					NeededAction: "set",
 				},
 				{
 					Key: "container_config/swap_limit",
-					Actual: crd.DoguConfigValueState{
+					Actual: crd.ConfigValueState{
 						Exists: false,
 					},
-					Expected: crd.DoguConfigValueState{
-						Value:  "512m",
+					Expected: crd.ConfigValueState{
+						Value:  &limit512,
 						Exists: true,
 					},
 					NeededAction: "set",
@@ -90,36 +97,36 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 	tests := []struct {
 		name string
-		dto  crd.DoguConfigDiff
+		dto  crd.ConfigDiff
 		want domain.DoguConfigDiffs
 	}{
 		{
 			name: "should exit early if slices are empty",
-			dto:  crd.DoguConfigDiff{},
+			dto:  crd.ConfigDiff{},
 			want: nil,
 		},
 		{
 			name: "should convert multiple dogu config diffs",
-			dto: crd.DoguConfigDiff{
+			dto: crd.ConfigDiff{
 				{
 					Key: "container_config/memory_limit",
-					Actual: crd.DoguConfigValueState{
-						Value:  "512m",
+					Actual: crd.ConfigValueState{
+						Value:  &limit512,
 						Exists: true,
 					},
-					Expected: crd.DoguConfigValueState{
-						Value:  "1024m",
+					Expected: crd.ConfigValueState{
+						Value:  &limit1024,
 						Exists: true,
 					},
 					NeededAction: "set",
 				},
 				{
 					Key: "container_config/swap_limit",
-					Actual: crd.DoguConfigValueState{
+					Actual: crd.ConfigValueState{
 						Exists: false,
 					},
-					Expected: crd.DoguConfigValueState{
-						Value:  "512m",
+					Expected: crd.ConfigValueState{
+						Value:  &limit512,
 						Exists: true,
 					},
 					NeededAction: "set",
@@ -132,11 +139,11 @@ func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 						Key:      "container_config/memory_limit",
 					},
 					Actual: domain.DoguConfigValueState{
-						Value:  "512m",
+						Value:  &limit512,
 						Exists: true,
 					},
 					Expected: domain.DoguConfigValueState{
-						Value:  "1024m",
+						Value:  &limit1024,
 						Exists: true,
 					},
 					NeededAction: domain.ConfigActionSet,
@@ -150,7 +157,7 @@ func Test_convertToDoguConfigDiffsDomain(t *testing.T) {
 						Exists: false,
 					},
 					Expected: domain.DoguConfigValueState{
-						Value:  "512m",
+						Value:  &limit512,
 						Exists: true,
 					},
 					NeededAction: domain.ConfigActionSet,

@@ -1,11 +1,12 @@
 package serializer
 
 import (
+	"testing"
+
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func Test_convertToSensitiveDoguConfigDTO(t *testing.T) {
@@ -13,7 +14,7 @@ func Test_convertToSensitiveDoguConfigDTO(t *testing.T) {
 	tests := []struct {
 		name   string
 		config domain.SensitiveDoguConfig
-		want   *v2.SensitiveDoguConfig
+		want   []v2.ConfigEntry
 	}{
 		{
 			name:   "empty struct to nil",
@@ -38,13 +39,14 @@ func Test_convertToSensitiveDoguConfigDTO(t *testing.T) {
 					},
 				},
 			},
-			want: &v2.SensitiveDoguConfig{
-				Present: []v2.SensitiveConfigEntry{
-					{
-						SecretName: "mySecret",
-						SecretKey:  "myKey",
-						Key:        string(testDoguKey1.Key),
+			want: []v2.ConfigEntry{
+				{
+					Key: string(testDoguKey1.Key),
+					SecretRef: &v2.SecretReference{
+						Name: "mySecret",
+						Key:  "myKey",
 					},
+					Sensitive: &trueVar,
 				},
 			},
 		},
@@ -55,9 +57,10 @@ func Test_convertToSensitiveDoguConfigDTO(t *testing.T) {
 					testDoguKey1,
 				},
 			},
-			want: &v2.SensitiveDoguConfig{
-				Absent: []string{
-					string(testDoguKey1.Key),
+			want: []v2.ConfigEntry{
+				{
+					Key:    string(testDoguKey1.Key),
+					Absent: &trueVar,
 				},
 			},
 		},
@@ -72,7 +75,7 @@ func Test_convertToSensitiveDoguConfigDTO(t *testing.T) {
 func Test_convertToSensitiveDoguConfigDomain(t *testing.T) {
 	type args struct {
 		doguName   string
-		doguConfig *v2.SensitiveDoguConfig
+		doguConfig []v2.ConfigEntry
 	}
 	tests := []struct {
 		name string
@@ -91,7 +94,7 @@ func Test_convertToSensitiveDoguConfigDomain(t *testing.T) {
 			name: "empty",
 			args: args{
 				doguName:   string(testDoguKey1.DoguName),
-				doguConfig: &v2.SensitiveDoguConfig{},
+				doguConfig: []v2.ConfigEntry{},
 			},
 			want: domain.SensitiveDoguConfig{},
 		},
@@ -99,13 +102,14 @@ func Test_convertToSensitiveDoguConfigDomain(t *testing.T) {
 			name: "convert present config",
 			args: args{
 				doguName: string(testDoguKey1.DoguName),
-				doguConfig: &v2.SensitiveDoguConfig{
-					Present: []v2.SensitiveConfigEntry{
-						{
-							SecretName: "mySecret",
-							SecretKey:  "myKey",
-							Key:        string(testDoguKey1.Key),
+				doguConfig: []v2.ConfigEntry{
+					{
+						Key: string(testDoguKey1.Key),
+						SecretRef: &v2.SecretReference{
+							Name: "mySecret",
+							Key:  "myKey",
 						},
+						Sensitive: &trueVar,
 					},
 				},
 			},
@@ -122,9 +126,10 @@ func Test_convertToSensitiveDoguConfigDomain(t *testing.T) {
 			name: "convert present config",
 			args: args{
 				doguName: string(testDoguKey1.DoguName),
-				doguConfig: &v2.SensitiveDoguConfig{
-					Absent: []string{
-						string(testDoguKey1.Key),
+				doguConfig: []v2.ConfigEntry{
+					{
+						Key:    string(testDoguKey1.Key),
+						Absent: &trueVar,
 					},
 				},
 			},

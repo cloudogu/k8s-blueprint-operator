@@ -41,17 +41,17 @@ func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 
 func newGlobalConfigEntryDiff(
 	key common.GlobalConfigKey,
-	actualValue common.GlobalConfigValue,
+	actualValue *common.GlobalConfigValue,
 	actualExists bool,
-	expectedValue common.GlobalConfigValue,
+	expectedValue *common.GlobalConfigValue,
 	expectedExists bool,
 ) GlobalConfigEntryDiff {
 	actual := GlobalConfigValueState{
-		Value:  string(actualValue),
+		Value:  (*string)(actualValue),
 		Exists: actualExists,
 	}
 	expected := GlobalConfigValueState{
-		Value:  string(expectedValue),
+		Value:  (*string)(expectedValue),
 		Exists: expectedExists,
 	}
 	return GlobalConfigEntryDiff{
@@ -71,12 +71,12 @@ func determineGlobalConfigDiffs(
 	// present entries
 	for key, expectedValue := range config.Present {
 		actualEntry, actualExists := actualConfig.Get(key)
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, expectedValue, true))
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, &actualEntry, actualExists, &expectedValue, true))
 	}
 	// absent entries
 	for _, key := range config.Absent {
 		actualEntry, actualExists := actualConfig.Get(key)
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, "", false))
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, &actualEntry, actualExists, nil, false))
 	}
 	return configDiffs
 }

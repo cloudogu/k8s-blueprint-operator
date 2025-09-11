@@ -1,12 +1,13 @@
 package domain
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (
@@ -19,14 +20,30 @@ var (
 	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key1"}
 	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key2"}
 	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key3"}
+	val1               = "value1"
+	val2               = "value2"
+	val3               = "value3"
 )
 
 func Test_determineConfigDiff(t *testing.T) {
+	t.Run("nil", func(t *testing.T) {
+		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
+			nil,
+			config.CreateGlobalConfig(map[config.Key]config.Value{}),
+			map[cescommons.SimpleName]config.DoguConfig{},
+			map[cescommons.SimpleName]config.DoguConfig{},
+			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
+		)
+
+		assert.Nil(t, dogusConfigDiffs)
+		assert.Nil(t, sensitiveConfigDiffs)
+		assert.Nil(t, globalConfigDiff)
+	})
 	t.Run("empty", func(t *testing.T) {
 		emptyConfig := Config{}
 
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			emptyConfig,
+			&emptyConfig,
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
@@ -62,7 +79,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			givenConfig,
+			&givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
@@ -76,11 +93,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key1",
 			Actual: GlobalConfigValueState{
-				Value:  "value1",
+				Value:  &val1,
 				Exists: true,
 			},
 			Expected: GlobalConfigValueState{
-				Value:  "value1",
+				Value:  &val1,
 				Exists: true,
 			},
 			NeededAction: ConfigActionNone,
@@ -88,11 +105,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key2",
 			Actual: GlobalConfigValueState{
-				Value:  "value2",
+				Value:  &val2,
 				Exists: true,
 			},
 			Expected: GlobalConfigValueState{
-				Value:  "value2.2",
+				Value:  &val3,
 				Exists: true,
 			},
 			NeededAction: ConfigActionSet,
@@ -100,11 +117,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key3",
 			Actual: GlobalConfigValueState{
-				Value:  "value3",
+				Value:  &val1,
 				Exists: true,
 			},
 			Expected: GlobalConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			NeededAction: ConfigActionRemove,
@@ -112,11 +129,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, globalConfigDiff, GlobalConfigEntryDiff{
 			Key: "key4",
 			Actual: GlobalConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			Expected: GlobalConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			NeededAction: ConfigActionNone,
@@ -155,7 +172,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			givenConfig,
+			&givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,
@@ -171,11 +188,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key1,
 			Actual: DoguConfigValueState{
-				Value:  "value",
+				Value:  &val1,
 				Exists: true,
 			},
 			Expected: DoguConfigValueState{
-				Value:  "value",
+				Value:  &val1,
 				Exists: true,
 			},
 			NeededAction: ConfigActionNone,
@@ -183,11 +200,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key2,
 			Actual: DoguConfigValueState{
-				Value:  "value",
+				Value:  &val1,
 				Exists: true,
 			},
 			Expected: DoguConfigValueState{
-				Value:  "updatedValue",
+				Value:  &val2,
 				Exists: true,
 			},
 			NeededAction: ConfigActionSet,
@@ -195,11 +212,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key3,
 			Actual: DoguConfigValueState{
-				Value:  "value",
+				Value:  &val1,
 				Exists: true,
 			},
 			Expected: DoguConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			NeededAction: ConfigActionRemove,
@@ -211,11 +228,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Contains(t, dogusConfigDiffs["dogu1"], DoguConfigEntryDiff{
 			Key: dogu1Key4,
 			Actual: DoguConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			Expected: DoguConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			NeededAction: ConfigActionNone,
@@ -259,7 +276,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			givenConfig,
+			&givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{
@@ -281,11 +298,11 @@ func Test_determineConfigDiff(t *testing.T) {
 			{
 				Key: sensitiveDogu1Key1,
 				Actual: DoguConfigValueState{
-					Value:  "value",
+					Value:  &val1,
 					Exists: true,
 				},
 				Expected: DoguConfigValueState{
-					Value:  "value",
+					Value:  &val1,
 					Exists: true,
 				},
 				NeededAction: ConfigActionNone,
@@ -293,11 +310,11 @@ func Test_determineConfigDiff(t *testing.T) {
 			{
 				Key: sensitiveDogu1Key2,
 				Actual: DoguConfigValueState{
-					Value:  "value",
+					Value:  &val1,
 					Exists: true,
 				},
 				Expected: DoguConfigValueState{
-					Value:  "updated value",
+					Value:  &val2,
 					Exists: true,
 				},
 				NeededAction: ConfigActionSet,
@@ -305,11 +322,11 @@ func Test_determineConfigDiff(t *testing.T) {
 			{
 				Key: sensitiveDogu1Key3,
 				Actual: DoguConfigValueState{
-					Value:  "",
+					Value:  nil,
 					Exists: false,
 				},
 				Expected: DoguConfigValueState{
-					Value:  "",
+					Value:  nil,
 					Exists: false,
 				},
 				NeededAction: ConfigActionNone,
@@ -348,7 +365,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, _ := determineConfigDiffs(
-			givenConfig,
+			&givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,
@@ -369,11 +386,11 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, sensitiveConfigDiffs["dogu1"][0], SensitiveDoguConfigEntryDiff{
 			Key: sensitiveDogu1Key1,
 			Actual: DoguConfigValueState{
-				Value:  "",
+				Value:  nil,
 				Exists: false,
 			},
 			Expected: DoguConfigValueState{
-				Value:  "value",
+				Value:  &val1,
 				Exists: true,
 			},
 			NeededAction: ConfigActionSet,
@@ -391,44 +408,44 @@ func Test_getNeededConfigAction(t *testing.T) {
 	}{
 		{
 			name:     "action none, both do not exist",
-			expected: ConfigValueState{Value: "", Exists: false},
-			actual:   ConfigValueState{Value: "", Exists: false},
+			expected: ConfigValueState{Value: nil, Exists: false},
+			actual:   ConfigValueState{Value: nil, Exists: false},
 			want:     ConfigActionNone,
 		},
 		{
 			name:     "action none, for some reason the values are different",
-			expected: ConfigValueState{Value: "1", Exists: false},
-			actual:   ConfigValueState{Value: "2", Exists: false},
+			expected: ConfigValueState{Value: &val1, Exists: false},
+			actual:   ConfigValueState{Value: &val2, Exists: false},
 			want:     ConfigActionNone,
 		},
 		{
 			name:     "action none, equal values",
-			expected: ConfigValueState{Value: "1", Exists: true},
-			actual:   ConfigValueState{Value: "1", Exists: true},
+			expected: ConfigValueState{Value: &val1, Exists: true},
+			actual:   ConfigValueState{Value: &val1, Exists: true},
 			want:     ConfigActionNone,
 		},
 		{
 			name:     "set new value",
-			expected: ConfigValueState{Value: "", Exists: true},
-			actual:   ConfigValueState{Value: "", Exists: false},
+			expected: ConfigValueState{Value: nil, Exists: true},
+			actual:   ConfigValueState{Value: nil, Exists: false},
 			want:     ConfigActionSet,
 		},
 		{
 			name:     "update value",
-			expected: ConfigValueState{Value: "1", Exists: true},
-			actual:   ConfigValueState{Value: "2", Exists: true},
+			expected: ConfigValueState{Value: &val1, Exists: true},
+			actual:   ConfigValueState{Value: &val2, Exists: true},
 			want:     ConfigActionSet,
 		},
 		{
 			name:     "remove value",
-			expected: ConfigValueState{Value: "", Exists: false},
-			actual:   ConfigValueState{Value: "", Exists: true},
+			expected: ConfigValueState{Value: nil, Exists: false},
+			actual:   ConfigValueState{Value: nil, Exists: true},
 			want:     ConfigActionRemove,
 		},
 		{
 			name:     "remove value",
-			expected: ConfigValueState{Value: "", Exists: false},
-			actual:   ConfigValueState{Value: "value3", Exists: true},
+			expected: ConfigValueState{Value: nil, Exists: false},
+			actual:   ConfigValueState{Value: &val3, Exists: true},
 			want:     ConfigActionRemove,
 		},
 	}

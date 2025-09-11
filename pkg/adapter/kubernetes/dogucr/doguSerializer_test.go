@@ -2,26 +2,33 @@ package dogucr
 
 import (
 	"fmt"
+	"reflect"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
 
-var postgresDoguName = cescommons.QualifiedName{
-	Namespace:  cescommons.Namespace("official"),
-	SimpleName: cescommons.SimpleName("postgresql"),
-}
-var ldapDoguName = cescommons.QualifiedName{
-	Namespace:  "official",
-	SimpleName: "ldap",
-}
-var volSize25G = resource.MustParse("25G")
-var defaultVolSize = resource.MustParse(v2.DefaultVolumeSize)
+var (
+	ldapDoguName = cescommons.QualifiedName{
+		Namespace:  "official",
+		SimpleName: "ldap",
+	}
+	volSize25G       = resource.MustParse("25G")
+	defaultVolSize   = resource.MustParse(v2.DefaultVolumeSize)
+	postgresDoguName = cescommons.QualifiedName{
+		Namespace:  cescommons.Namespace("official"),
+		SimpleName: cescommons.SimpleName("postgresql"),
+	}
+	subfolder        = "subfolder"
+	subfolder2       = "subfolder2"
+	rewriteTarget    = "/"
+	additionalConfig = "additional"
+)
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
@@ -135,13 +142,13 @@ func Test_parseDoguCR(t *testing.T) {
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configmap",
 						Volume:     "volume",
-						Subfolder:  "subfolder",
+						Subfolder:  &subfolder,
 					},
 					{
 						SourceType: ecosystem.DataSourceSecret,
 						Name:       "secret",
 						Volume:     "secvolume",
-						Subfolder:  "secsubfolder",
+						Subfolder:  &subfolder2,
 					},
 				},
 			},
@@ -292,13 +299,13 @@ func Test_toDoguCR(t *testing.T) {
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configmap",
 						Volume:     "volume",
-						Subfolder:  "subfolder",
+						Subfolder:  &subfolder,
 					},
 					{
 						SourceType: ecosystem.DataSourceSecret,
 						Name:       "secret",
 						Volume:     "secvolume",
-						Subfolder:  "secsubfolder",
+						Subfolder:  &subfolder2,
 					},
 				},
 			},
@@ -448,7 +455,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				},
 				MinVolumeSize: quantity2,
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
 			},
 			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
@@ -465,7 +472,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
 			},
 			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
@@ -528,13 +535,13 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 				annotations: v2.IngressAnnotations{
 					"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
 					"nginx.ingress.kubernetes.io/rewrite-target":        "/",
-					"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
+					"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
 				},
 			},
 			want: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    "/",
-				AdditionalConfig: "snippet",
+				RewriteTarget:    &rewriteTarget,
+				AdditionalConfig: &additionalConfig,
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return err == nil
@@ -580,8 +587,8 @@ func Test_getNginxIngressAnnotations1(t *testing.T) {
 			name: "should parse config",
 			args: args{config: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity,
-				RewriteTarget:    "/",
-				AdditionalConfig: "additional",
+				RewriteTarget:    &rewriteTarget,
+				AdditionalConfig: &additionalConfig,
 			}},
 			want: map[string]string{
 				"nginx.ingress.kubernetes.io/proxy-body-size":       "1M",

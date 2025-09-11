@@ -1,11 +1,14 @@
 package domain
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestGlobalConfigDiffs_HasChanges(t *testing.T) {
+	valChanged := "changed"
+	valInitial := "initial"
 	tests := []struct {
 		name  string
 		diffs GlobalConfigDiffs
@@ -21,8 +24,8 @@ func TestGlobalConfigDiffs_HasChanges(t *testing.T) {
 			diffs: []GlobalConfigEntryDiff{
 				{
 					Key:          "testkey",
-					Actual:       GlobalConfigValueState{Value: "changed", Exists: true},
-					Expected:     GlobalConfigValueState{Value: "initial", Exists: true},
+					Actual:       GlobalConfigValueState{Value: &valChanged, Exists: true},
+					Expected:     GlobalConfigValueState{Value: &valInitial, Exists: true},
 					NeededAction: ConfigActionSet,
 				},
 			},
@@ -33,8 +36,8 @@ func TestGlobalConfigDiffs_HasChanges(t *testing.T) {
 			diffs: []GlobalConfigEntryDiff{
 				{
 					Key:          "testkey",
-					Actual:       GlobalConfigValueState{Value: "changed", Exists: true},
-					Expected:     GlobalConfigValueState{Value: "initial", Exists: true},
+					Actual:       GlobalConfigValueState{Value: &valChanged, Exists: true},
+					Expected:     GlobalConfigValueState{Value: &valInitial, Exists: true},
 					NeededAction: ConfigActionNone,
 				},
 			},

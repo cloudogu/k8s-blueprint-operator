@@ -8,7 +8,7 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs crd.DoguConfigDiff) domain.DoguConfigDiffs {
+func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs crd.ConfigDiff) domain.DoguConfigDiffs {
 	var doguConfigDiff domain.DoguConfigDiffs
 	for _, entryDiff := range dtoDiffs {
 		doguConfigDiff = append(doguConfigDiff, convertToDoguConfigEntryDiffDomain(doguName, entryDiff))
@@ -16,7 +16,7 @@ func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs crd.DoguConfigDiff
 	return doguConfigDiff
 }
 
-func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.DoguConfigEntryDiff) domain.DoguConfigEntryDiff {
+func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.ConfigEntryDiff) domain.DoguConfigEntryDiff {
 	return domain.DoguConfigEntryDiff{
 		Key: common.DoguConfigKey{
 			DoguName: cescommons.SimpleName(doguName),
@@ -34,26 +34,26 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.DoguConfigEntry
 	}
 }
 
-func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) []crd.DoguConfigEntryDiff {
-	var dtoDiffs []crd.DoguConfigEntryDiff
+func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) crd.ConfigDiff {
+	var dtoDiffs []crd.ConfigEntryDiff
 	for _, domainDiff := range domainDiffs {
 		dtoDiffs = append(dtoDiffs, convertToDoguConfigEntryDiffDTO(domainDiff, isSensitive))
 	}
 	return dtoDiffs
 }
 
-func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff, isSensitive bool) crd.DoguConfigEntryDiff {
-	actual := crd.DoguConfigValueState{
+func convertToDoguConfigEntryDiffDTO(domainModel domain.DoguConfigEntryDiff, isSensitive bool) crd.ConfigEntryDiff {
+	actual := crd.ConfigValueState{
 		Exists: domainModel.Actual.Exists,
 	}
-	expected := crd.DoguConfigValueState{
+	expected := crd.ConfigValueState{
 		Exists: domainModel.Expected.Exists,
 	}
 	if !isSensitive {
 		actual.Value = domainModel.Actual.Value
 		expected.Value = domainModel.Expected.Value
 	}
-	return crd.DoguConfigEntryDiff{
+	return crd.ConfigEntryDiff{
 		Key:          string(domainModel.Key.Key),
 		Actual:       actual,
 		Expected:     expected,

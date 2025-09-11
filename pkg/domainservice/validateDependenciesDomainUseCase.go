@@ -38,9 +38,13 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.ValidateDependenciesForAllDogus")
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) cescommons.QualifiedVersion {
+		doguVersion := core.Version{}
+		if dogu.Version != nil {
+			doguVersion = *dogu.Version
+		}
 		return cescommons.QualifiedVersion{
 			Name:    dogu.Name,
-			Version: dogu.Version,
+			Version: doguVersion,
 		}
 	})
 	logger.V(2).Info("load dogu specifications...", "wantedDogus", wantedDogus)
@@ -165,7 +169,11 @@ func checkDependencyVersion(doguInBlueprint domain.Dogu, expectedVersion string)
 	if err != nil {
 		return fmt.Errorf("failed to parse version comparator of version %s for dogu dependency %s: %w", expectedVersion, doguInBlueprint.Name, err)
 	}
-	allows, err := comparator.Allows(doguInBlueprint.Version)
+	doguInBlueprintVersion := core.Version{}
+	if doguInBlueprint.Version != nil {
+		doguInBlueprintVersion = *doguInBlueprint.Version
+	}
+	allows, err := comparator.Allows(doguInBlueprintVersion)
 	if err != nil {
 		return fmt.Errorf("an error occurred when comparing the versions: %w", err)
 	}

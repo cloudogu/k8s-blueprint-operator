@@ -28,7 +28,7 @@ func countByAction(diffsByDogu map[cescommons.SimpleName]DoguConfigDiffs) map[Co
 }
 
 func determineConfigDiffs(
-	blueprintConfig Config,
+	blueprintConfig *Config,
 	globalConfig config.GlobalConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig,
@@ -38,6 +38,10 @@ func determineConfigDiffs(
 	map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 	GlobalConfigDiffs,
 ) {
+	if blueprintConfig == nil {
+		return nil, nil, nil
+	}
+
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu),
 		determineSensitiveDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu, referencedSensitiveConfig),
 		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)

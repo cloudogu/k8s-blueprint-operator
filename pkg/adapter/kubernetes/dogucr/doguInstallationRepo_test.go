@@ -3,6 +3,8 @@ package dogucr
 import (
 	"context"
 	"errors"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -16,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 )
 
 var version3214, _ = core.ParseVersion("3.2.1-4")
@@ -68,6 +69,8 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		quantity1 := resource.MustParse("1G")
+		rewriteTarget := "/"
+		additionalConfig := "snippet"
 		assert.Equal(t, &ecosystem.DoguInstallation{
 			Name:               postgresDoguName,
 			Version:            version3214,
@@ -78,8 +81,8 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 			MinVolumeSize:      quantity2,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    "/",
-				AdditionalConfig: "snippet",
+				RewriteTarget:    &rewriteTarget,
+				AdditionalConfig: &additionalConfig,
 			},
 		}, dogu)
 	})

@@ -23,6 +23,13 @@ var postgresqlQualifiedName = cescommons.QualifiedName{
 	SimpleName: "postgresql",
 }
 
+var (
+	rewriteTarget    = "/"
+	additionalConfig = "additional"
+	subfolder        = "subfolder"
+	subfolder2       = "secsubfolder"
+)
+
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
@@ -32,14 +39,14 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		err := sut.applyDoguState(testCtx, domain.DoguDiff{
 			DoguName: "postgresql",
 			Actual: domain.DoguDiffState{
-				Namespace:         "official",
-				Version:           version3211,
-				InstallationState: domain.TargetStatePresent,
+				Namespace: "official",
+				Version:   &version3211,
+				Absent:    false,
 			},
 			Expected: domain.DoguDiffState{
-				Namespace:         "official",
-				Version:           version3211,
-				InstallationState: domain.TargetStatePresent,
+				Namespace: "official",
+				Version:   &version3211,
+				Absent:    false,
 			},
 			NeededActions: []domain.Action{},
 		}, &ecosystem.DoguInstallation{
@@ -56,22 +63,22 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		bodySize := resource.MustParse("2G")
 		config := ecosystem.ReverseProxyConfig{
 			MaxBodySize:      &bodySize,
-			RewriteTarget:    "/",
-			AdditionalConfig: "additional",
+			RewriteTarget:    &rewriteTarget,
+			AdditionalConfig: &additionalConfig,
 		}
 		additionalMounts := []ecosystem.AdditionalMount{
 			{
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "configmap",
 				Volume:     "volume",
-				Subfolder:  "different_subfolder",
+				Subfolder:  &subfolder,
 			},
 		}
 
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
 			Create(testCtx,
-				ecosystem.InstallDogu(postgresqlQualifiedName, version3211, volumeSize, config, additionalMounts)).
+				ecosystem.InstallDogu(postgresqlQualifiedName, &version3211, &volumeSize, &config, additionalMounts)).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
@@ -82,22 +89,22 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Actual: domain.DoguDiffState{
-					Namespace:         "official",
-					Version:           version3211,
-					InstallationState: domain.TargetStateAbsent,
+					Namespace: "official",
+					Version:   &version3211,
+					Absent:    true,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace:          "official",
-					Version:            version3211,
-					InstallationState:  domain.TargetStatePresent,
-					MinVolumeSize:      volumeSize,
-					ReverseProxyConfig: config,
+					Version:            &version3211,
+					Absent:             false,
+					MinVolumeSize:      &volumeSize,
+					ReverseProxyConfig: &config,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,
 							Name:       "configmap",
 							Volume:     "volume",
-							Subfolder:  "different_subfolder",
+							Subfolder:  &subfolder,
 						},
 					},
 				},
@@ -155,7 +162,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					Version: version3212,
+					Version: &version3212,
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			},
@@ -183,7 +190,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					Version: version3211,
+					Version: &version3211,
 				},
 				NeededActions: []domain.Action{domain.ActionDowngrade},
 			},
@@ -220,7 +227,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					MinVolumeSize: expectedVolumeSize,
+					MinVolumeSize: &expectedVolumeSize,
 				},
 				NeededActions: []domain.Action{domain.ActionUpdateDoguResourceMinVolumeSize},
 			},
@@ -260,7 +267,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
 						MaxBodySize: &expectedProxyBodySize,
 					},
 				},
@@ -275,8 +282,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	})
 
 	t.Run("action update proxy rewrite target", func(t *testing.T) {
-		target := ecosystem.RewriteTarget("")
-		expectedTarget := ecosystem.RewriteTarget("/")
+		expectedTarget := &rewriteTarget
 		expectedDogu := &ecosystem.DoguInstallation{
 			Name: postgresqlQualifiedName,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
@@ -287,7 +293,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Name: postgresqlQualifiedName,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				RewriteTarget: target,
+				RewriteTarget: nil,
 			},
 		}
 
@@ -302,7 +308,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
 						RewriteTarget: expectedTarget,
 					},
 				},
@@ -317,8 +323,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	})
 
 	t.Run("action update proxy additional config", func(t *testing.T) {
-		additionalConfig := ecosystem.AdditionalConfig("")
-		expectedAdditionalConfig := ecosystem.AdditionalConfig("snippet")
+		expectedAdditionalConfig := &additionalConfig
 		expectedDogu := &ecosystem.DoguInstallation{
 			Name: postgresqlQualifiedName,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
@@ -329,7 +334,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		dogu := &ecosystem.DoguInstallation{
 			Name: postgresqlQualifiedName,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				AdditionalConfig: additionalConfig,
+				AdditionalConfig: nil,
 			},
 		}
 
@@ -344,7 +349,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
 						AdditionalConfig: expectedAdditionalConfig,
 					},
 				},
@@ -366,13 +371,13 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 					SourceType: ecosystem.DataSourceConfigMap,
 					Name:       "configmap",
 					Volume:     "volume",
-					Subfolder:  "different_subfolder",
+					Subfolder:  &subfolder,
 				},
 				{
 					SourceType: ecosystem.DataSourceSecret,
 					Name:       "secret",
 					Volume:     "secvolume",
-					Subfolder:  "secsubfolder",
+					Subfolder:  &subfolder2,
 				},
 			},
 		}
@@ -384,13 +389,13 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 					SourceType: ecosystem.DataSourceConfigMap,
 					Name:       "configmap",
 					Volume:     "volume",
-					Subfolder:  "subfolder",
+					Subfolder:  &subfolder,
 				},
 				{
 					SourceType: ecosystem.DataSourceSecret,
 					Name:       "secret",
 					Volume:     "secvolume",
-					Subfolder:  "secsubfolder",
+					Subfolder:  &subfolder2,
 				},
 			},
 		}
@@ -403,13 +408,13 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configmap",
 						Volume:     "volume",
-						Subfolder:  "different_subfolder",
+						Subfolder:  &subfolder,
 					},
 					{
 						SourceType: ecosystem.DataSourceSecret,
 						Name:       "secret",
 						Volume:     "secvolume",
-						Subfolder:  "secsubfolder",
+						Subfolder:  &subfolder2,
 					},
 				},
 			},
@@ -433,10 +438,8 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		expectedVolumeSize := resource.MustParse("3Gi")
 		proxyBodySize := resource.MustParse("2G")
 		expectedProxyBodySize := resource.MustParse("3G")
-		target := ecosystem.RewriteTarget("")
-		expectedTarget := ecosystem.RewriteTarget("/")
-		additionalConfig := ecosystem.AdditionalConfig("")
-		expectedAdditionalConfig := ecosystem.AdditionalConfig("snippet")
+		expectedTarget := &rewriteTarget
+		expectedAdditionalConfig := &additionalConfig
 		expectedDogu := &ecosystem.DoguInstallation{
 			Name:          postgresqlQualifiedName,
 			Version:       version3212,
@@ -454,8 +457,8 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			MinVolumeSize: volumeSize,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &proxyBodySize,
-				RewriteTarget:    target,
-				AdditionalConfig: additionalConfig,
+				RewriteTarget:    nil,
+				AdditionalConfig: nil,
 			},
 		}
 
@@ -470,9 +473,9 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			domain.DoguDiff{
 				DoguName: "postgresql",
 				Expected: domain.DoguDiffState{
-					Version:       version3212,
-					MinVolumeSize: expectedVolumeSize,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+					Version:       &version3212,
+					MinVolumeSize: &expectedVolumeSize,
+					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &expectedProxyBodySize,
 						RewriteTarget:    expectedTarget,
 						AdditionalConfig: expectedAdditionalConfig,

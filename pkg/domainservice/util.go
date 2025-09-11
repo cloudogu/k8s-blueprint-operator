@@ -3,6 +3,7 @@ package domainservice
 import (
 	"context"
 	"errors"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -11,9 +12,13 @@ import (
 
 func loadDoguSpecifications(ctx context.Context, remoteDoguRegistry RemoteDoguRegistry, wantedDogus []domain.Dogu) (map[cescommons.QualifiedName]*core.Dogu, error) {
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) cescommons.QualifiedVersion {
+		doguVersion := core.Version{}
+		if dogu.Version != nil {
+			doguVersion = *dogu.Version
+		}
 		return cescommons.QualifiedVersion{
 			Name:    dogu.Name,
-			Version: dogu.Version,
+			Version: doguVersion,
 		}
 	})
 	doguSpecsOfWantedDogus, err := remoteDoguRegistry.GetDogus(ctx, dogusToLoad)

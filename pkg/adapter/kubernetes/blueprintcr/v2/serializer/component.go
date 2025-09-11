@@ -3,6 +3,7 @@ package serializer
 import (
 	"errors"
 	"fmt"
+
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 
 	"github.com/Masterminds/semver/v3"
@@ -20,13 +21,18 @@ func ConvertComponents(components []v2.Component) ([]domain.Component, error) {
 
 	for _, component := range components {
 		var version *semver.Version
-		if component.Version != "" {
+		if component.Version != nil && *component.Version != "" {
 			var err error
-			version, err = semver.NewVersion(component.Version)
+			version, err = semver.NewVersion(*component.Version)
 			if err != nil {
 				errorList = append(errorList, fmt.Errorf("could not parse version of target component %q: %w", component.Name, err))
 				continue
 			}
+		}
+
+		absent := false
+		if component.Absent != nil {
+			absent = *component.Absent
 		}
 
 		name, err := common.QualifiedComponentNameFromString(component.Name)
@@ -38,7 +44,7 @@ func ConvertComponents(components []v2.Component) ([]domain.Component, error) {
 		convertedComponents = append(convertedComponents, domain.Component{
 			Name:         name,
 			Version:      version,
-			TargetState:  ToDomainTargetState(component.Absent),
+			Absent:       absent,
 			DeployConfig: ecosystem.DeployConfig(component.DeployConfig),
 		})
 	}
@@ -54,20 +60,19 @@ func ConvertComponents(components []v2.Component) ([]domain.Component, error) {
 // ConvertToComponentDTOs takes a slice of Component DTOs and returns a new slice with their domain equivalent.
 func ConvertToComponentDTOs(components []domain.Component) []v2.Component {
 	converted := util.Map(components, func(component domain.Component) v2.Component {
-		isAbsent := ToSerializerAbsentState(component.TargetState)
-
 		// convert the distribution namespace back into the name field so the EffectiveBlueprint has the same syntax
 		// as the original blueprint json from the Blueprint resource.
 		joinedComponentName := component.Name.String()
-		version := ""
-		if !isAbsent && component.Version != nil {
-			version = component.Version.String()
+		var version *string
+		if !component.Absent && component.Version != nil {
+			versionString := component.Version.String()
+			version = &versionString
 		}
 
 		return v2.Component{
 			Name:         joinedComponentName,
 			Version:      version,
-			Absent:       isAbsent,
+			Absent:       &component.Absent,
 			DeployConfig: map[string]interface{}(component.DeployConfig),
 		}
 	})

@@ -3,12 +3,12 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"strings"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"slices"
-	"strings"
 )
 
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -18,14 +18,14 @@ type Dogu struct {
 	Name cescommons.QualifiedName
 	// Version defines the version of the dogu that is to be installed. Must not be empty if the targetState is "present";
 	// otherwise it is optional and is not going to be interpreted.
-	Version core.Version
-	// TargetState defines a state of installation of this dogu. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState
+	Version *core.Version
+	// Absent defines if the dogu should be absent in the ecosystem. Defaults to false.
+	Absent bool
 	// MinVolumeSize is the minimum storage of the dogu. 0 indicates that the default size should be set.
 	// Reducing this value below the actual volume size has no impact as we do not support downsizing.
-	MinVolumeSize ecosystem.VolumeSize
+	MinVolumeSize *ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
-	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	ReverseProxyConfig *ecosystem.ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
 	AdditionalMounts []ecosystem.AdditionalMount
 }
@@ -33,11 +33,9 @@ type Dogu struct {
 // validate checks if the Dogu is semantically correct.
 func (dogu Dogu) validate() error {
 	var errorList []error
-	if !slices.Contains(PossibleTargetStates, dogu.TargetState) {
-		errorList = append(errorList, fmt.Errorf("dogu target state is invalid: %s", dogu.Name))
-	}
+
 	emptyVersion := core.Version{}
-	if dogu.TargetState != TargetStateAbsent && dogu.Version == emptyVersion {
+	if !dogu.Absent && (dogu.Version == nil || *dogu.Version == emptyVersion) {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
 	// minVolumeSize is already checked while unmarshalling json/yaml
@@ -57,7 +55,7 @@ func (dogu Dogu) validate() error {
 				dogu.Name,
 			))
 		}
-		if strings.HasPrefix(mount.Subfolder, "/") {
+		if mount.Subfolder != nil && strings.HasPrefix(*mount.Subfolder, "/") {
 			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
 		}
 	}

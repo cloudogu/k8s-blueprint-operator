@@ -74,7 +74,11 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 	entryDiffsToSet := globalConfigDiffsByAction[domain.ConfigActionSet]
 	for _, diff := range entryDiffsToSet {
 		var err error
-		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(diff.Expected.Value))
+		val := ""
+		if diff.Expected.Value != nil {
+			val = *diff.Expected.Value
+		}
+		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(val))
 		errs = append(errs, err)
 	}
 
@@ -183,7 +187,11 @@ func applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff)
 		var err error
 		switch diff.NeededAction {
 		case domain.ConfigActionSet:
-			updatedEntries, err = updatedEntries.Set(diff.Key.Key, config.Value(diff.Expected.Value))
+			val := ""
+			if diff.Expected.Value != nil {
+				val = *diff.Expected.Value
+			}
+			updatedEntries, err = updatedEntries.Set(diff.Key.Key, config.Value(val))
 		case domain.ConfigActionRemove:
 			updatedEntries = updatedEntries.Delete(diff.Key.Key)
 		}

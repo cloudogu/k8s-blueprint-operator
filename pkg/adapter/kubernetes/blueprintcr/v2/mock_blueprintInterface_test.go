@@ -245,65 +245,6 @@ func (_c *mockBlueprintInterface_Get_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
-// List provides a mock function with given fields: ctx, opts
-func (_m *mockBlueprintInterface) List(ctx context.Context, opts v1.ListOptions) (*apiv2.BlueprintList, error) {
-	ret := _m.Called(ctx, opts)
-
-	if len(ret) == 0 {
-		panic("no return value specified for List")
-	}
-
-	var r0 *apiv2.BlueprintList
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*apiv2.BlueprintList, error)); ok {
-		return rf(ctx, opts)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *apiv2.BlueprintList); ok {
-		r0 = rf(ctx, opts)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*apiv2.BlueprintList)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, v1.ListOptions) error); ok {
-		r1 = rf(ctx, opts)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// mockBlueprintInterface_List_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'List'
-type mockBlueprintInterface_List_Call struct {
-	*mock.Call
-}
-
-// List is a helper method to define mock.On call
-//   - ctx context.Context
-//   - opts v1.ListOptions
-func (_e *mockBlueprintInterface_Expecter) List(ctx interface{}, opts interface{}) *mockBlueprintInterface_List_Call {
-	return &mockBlueprintInterface_List_Call{Call: _e.mock.On("List", ctx, opts)}
-}
-
-func (_c *mockBlueprintInterface_List_Call) Run(run func(ctx context.Context, opts v1.ListOptions)) *mockBlueprintInterface_List_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(v1.ListOptions))
-	})
-	return _c
-}
-
-func (_c *mockBlueprintInterface_List_Call) Return(_a0 *apiv2.BlueprintList, _a1 error) *mockBlueprintInterface_List_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *mockBlueprintInterface_List_Call) RunAndReturn(run func(context.Context, v1.ListOptions) (*apiv2.BlueprintList, error)) *mockBlueprintInterface_List_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Patch provides a mock function with given fields: ctx, name, pt, data, opts, subresources
 func (_m *mockBlueprintInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*apiv2.Blueprint, error) {
 	_va := make([]interface{}, len(subresources))

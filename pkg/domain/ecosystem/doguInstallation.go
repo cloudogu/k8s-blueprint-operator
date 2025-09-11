@@ -2,6 +2,7 @@ package ecosystem
 
 import (
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 )
@@ -85,22 +86,37 @@ type AdditionalMount struct {
 	Volume string
 	// Subfolder defines a subfolder in which the data should be put within the volume.
 	// +optional
-	Subfolder string
+	Subfolder *string
 }
 
 // InstallDogu is a factory for new DoguInstallation's.
 func InstallDogu(
 	name cescommons.QualifiedName,
-	version core.Version,
-	minVolumeSize VolumeSize,
-	reverseProxyConfig ReverseProxyConfig,
+	version *core.Version,
+	minVolumeSize *VolumeSize,
+	reverseProxyConfig *ReverseProxyConfig,
 	additionalMounts []AdditionalMount) *DoguInstallation {
+
+	doguVersion := core.Version{}
+	if version != nil {
+		doguVersion = *version
+	}
+
+	doguVolumeSize := VolumeSize{}
+	if minVolumeSize != nil {
+		doguVolumeSize = *minVolumeSize
+	}
+
+	doguReverseProxyConfig := ReverseProxyConfig{}
+	if reverseProxyConfig != nil {
+		doguReverseProxyConfig = *reverseProxyConfig
+	}
 	return &DoguInstallation{
 		Name:               name,
-		Version:            version,
+		Version:            doguVersion,
 		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
-		MinVolumeSize:      minVolumeSize,
-		ReverseProxyConfig: reverseProxyConfig,
+		MinVolumeSize:      doguVolumeSize,
+		ReverseProxyConfig: doguReverseProxyConfig,
 		AdditionalMounts:   additionalMounts,
 	}
 }
@@ -109,8 +125,12 @@ func (dogu *DoguInstallation) IsHealthy() bool {
 	return dogu.Health == AvailableHealthStatus
 }
 
-func (dogu *DoguInstallation) Upgrade(newVersion core.Version) {
-	dogu.Version = newVersion
+func (dogu *DoguInstallation) Upgrade(newVersion *core.Version) {
+	dogu.Version = core.Version{}
+	if newVersion != nil {
+		dogu.Version = *newVersion
+	}
+
 	dogu.UpgradeConfig.AllowNamespaceSwitch = false
 }
 
@@ -127,8 +147,11 @@ func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
 	dogu.ReverseProxyConfig.MaxBodySize = value
 }
 
-func (dogu *DoguInstallation) UpdateMinVolumeSize(size VolumeSize) {
-	dogu.MinVolumeSize = size
+func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
+	dogu.MinVolumeSize = VolumeSize{}
+	if size != nil {
+		dogu.MinVolumeSize = *size
+	}
 }
 
 func (dogu *DoguInstallation) UpdateProxyRewriteTarget(value RewriteTarget) {

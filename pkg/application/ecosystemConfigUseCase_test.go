@@ -334,9 +334,9 @@ func TestEcosystemConfigUseCase_applyDoguConfigDiffs(t *testing.T) {
 			"key1": "val1",
 			"key2": "val2",
 		}).Config
-		updatedConfig, err := updatedConfig.Set(diff1.Key.Key, config.Value(diff1.Expected.Value))
+		updatedConfig, err := updatedConfig.Set(diff1.Key.Key, config.Value(*diff1.Expected.Value))
 		require.NoError(t, err)
-		updatedConfig, err = updatedConfig.Set(diff2.Key.Key, config.Value(diff2.Expected.Value))
+		updatedConfig, err = updatedConfig.Set(diff2.Key.Key, config.Value(*diff2.Expected.Value))
 		require.NoError(t, err)
 
 		doguConfigMock.EXPECT().
@@ -468,9 +468,9 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 
-		updatedEntries, err := globalConfig.Set(diff1.Key, common.GlobalConfigValue(diff1.Expected.Value))
+		updatedEntries, err := globalConfig.Set(diff1.Key, common.GlobalConfigValue(*diff1.Expected.Value))
 		require.NoError(t, err)
-		updatedEntries, err = updatedEntries.Set(diff2.Key, common.GlobalConfigValue(diff2.Expected.Value))
+		updatedEntries, err = updatedEntries.Set(diff2.Key, common.GlobalConfigValue(*diff2.Expected.Value))
 		require.NoError(t, err)
 
 		globalConfigMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
@@ -713,7 +713,7 @@ func getSetDoguConfigEntryDiff(key, value string, doguName cescommons.SimpleName
 			DoguName: doguName,
 		},
 		Expected: domain.DoguConfigValueState{
-			Value: value,
+			Value: &value,
 		},
 		NeededAction: domain.ConfigActionSet,
 	}
@@ -736,7 +736,7 @@ func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescom
 			DoguName: doguName,
 		},
 		Expected: domain.DoguConfigValueState{
-			Value: value,
+			Value: &value,
 		},
 		NeededAction: action,
 	}
@@ -756,7 +756,7 @@ func getSetGlobalConfigEntryDiff(key, value string) domain.GlobalConfigEntryDiff
 	return domain.GlobalConfigEntryDiff{
 		Key: common.GlobalConfigKey(key),
 		Expected: domain.GlobalConfigValueState{
-			Value: value,
+			Value: &value,
 		},
 		NeededAction: domain.ConfigActionSet,
 	}

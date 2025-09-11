@@ -23,21 +23,31 @@ func (_m *mockApplyComponentsUseCase) EXPECT() *mockApplyComponentsUseCase_Expec
 }
 
 // ApplyComponents provides a mock function with given fields: ctx, blueprint
-func (_m *mockApplyComponentsUseCase) ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+func (_m *mockApplyComponentsUseCase) ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error) {
 	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyComponents")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) (bool, error)); ok {
+		return rf(ctx, blueprint)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) bool); ok {
 		r0 = rf(ctx, blueprint)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r1 = rf(ctx, blueprint)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // mockApplyComponentsUseCase_ApplyComponents_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ApplyComponents'
@@ -59,12 +69,12 @@ func (_c *mockApplyComponentsUseCase_ApplyComponents_Call) Run(run func(ctx cont
 	return _c
 }
 
-func (_c *mockApplyComponentsUseCase_ApplyComponents_Call) Return(_a0 error) *mockApplyComponentsUseCase_ApplyComponents_Call {
-	_c.Call.Return(_a0)
+func (_c *mockApplyComponentsUseCase_ApplyComponents_Call) Return(_a0 bool, _a1 error) *mockApplyComponentsUseCase_ApplyComponents_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockApplyComponentsUseCase_ApplyComponents_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockApplyComponentsUseCase_ApplyComponents_Call {
+func (_c *mockApplyComponentsUseCase_ApplyComponents_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) (bool, error)) *mockApplyComponentsUseCase_ApplyComponents_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
-func convertToGlobalConfigDiffDomain(dto crd.GlobalConfigDiff) domain.GlobalConfigDiffs {
+func convertToGlobalConfigDiffDomain(dto crd.ConfigDiff) domain.GlobalConfigDiffs {
 	if len(dto) == 0 {
 		return nil
 	}
@@ -18,7 +18,7 @@ func convertToGlobalConfigDiffDomain(dto crd.GlobalConfigDiff) domain.GlobalConf
 	return globalConfigDiff
 }
 
-func convertToGlobalConfigEntryDiffDomain(dto crd.GlobalConfigEntryDiff) domain.GlobalConfigEntryDiff {
+func convertToGlobalConfigEntryDiffDomain(dto crd.ConfigEntryDiff) domain.GlobalConfigEntryDiff {
 	return domain.GlobalConfigEntryDiff{
 		Key: common.GlobalConfigKey(dto.Key),
 		Actual: domain.GlobalConfigValueState{
@@ -33,26 +33,26 @@ func convertToGlobalConfigEntryDiffDomain(dto crd.GlobalConfigEntryDiff) domain.
 	}
 }
 
-func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) crd.GlobalConfigDiff {
+func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) crd.ConfigDiff {
 	if len(domainModel) == 0 {
 		return nil
 	}
 
-	globalConfigDiff := make(crd.GlobalConfigDiff, len(domainModel))
+	globalConfigDiff := make(crd.ConfigDiff, len(domainModel))
 	for i, entryDiff := range domainModel {
 		globalConfigDiff[i] = convertToGlobalConfigEntryDiffDTO(entryDiff)
 	}
 	return globalConfigDiff
 }
 
-func convertToGlobalConfigEntryDiffDTO(domainModel domain.GlobalConfigEntryDiff) crd.GlobalConfigEntryDiff {
-	return crd.GlobalConfigEntryDiff{
+func convertToGlobalConfigEntryDiffDTO(domainModel domain.GlobalConfigEntryDiff) crd.ConfigEntryDiff {
+	return crd.ConfigEntryDiff{
 		Key: string(domainModel.Key),
-		Actual: crd.GlobalConfigValueState{
+		Actual: crd.ConfigValueState{
 			Value:  domainModel.Actual.Value,
 			Exists: domainModel.Actual.Exists,
 		},
-		Expected: crd.GlobalConfigValueState{
+		Expected: crd.ConfigValueState{
 			Value:  domainModel.Expected.Value,
 			Exists: domainModel.Expected.Exists,
 		},

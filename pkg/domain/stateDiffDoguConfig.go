@@ -21,7 +21,7 @@ func (diffs DoguConfigDiffs) HasChanges() bool {
 type DoguConfigValueState ConfigValueState
 
 type ConfigValueState struct {
-	Value  string
+	Value  *string
 	Exists bool
 }
 type DoguConfigEntryDiff struct {
@@ -34,17 +34,17 @@ type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newDoguConfigEntryDiff(
 	key common.DoguConfigKey,
-	actualValue config.Value,
+	actualValue *config.Value,
 	actualExists bool,
-	expectedValue common.DoguConfigValue,
+	expectedValue *common.DoguConfigValue,
 	expectedExists bool,
 ) DoguConfigEntryDiff {
 	actual := DoguConfigValueState{
-		Value:  string(actualValue),
+		Value:  (*string)(actualValue),
 		Exists: actualExists,
 	}
 	expected := DoguConfigValueState{
-		Value:  string(expectedValue),
+		Value:  (*string)(expectedValue),
 		Exists: expectedExists,
 	}
 	return DoguConfigEntryDiff{
@@ -63,12 +63,12 @@ func determineDoguConfigDiffs(
 	// present entries
 	for key, expectedValue := range wantedConfig.Present {
 		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, exists, expectedValue, true))
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, &actualEntry, exists, &expectedValue, true))
 	}
 	// absent entries
 	for _, key := range wantedConfig.Absent {
 		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, exists, "", false))
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, &actualEntry, exists, nil, false))
 	}
 	return doguConfigDiff
 }

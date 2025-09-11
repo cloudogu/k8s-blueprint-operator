@@ -5,5 +5,5 @@ import (
 )
 
 type BodySize = resource.Quantity
-type RewriteTarget string
-type AdditionalConfig string
+type RewriteTarget *string
+type AdditionalConfig *string

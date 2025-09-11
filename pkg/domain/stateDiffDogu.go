@@ -2,11 +2,12 @@ package domain
 
 import (
 	"fmt"
+	"slices"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
-	"slices"
 )
 
 // DoguDiffs contains the Diff for all expected Dogus to the current ecosystem.DoguInstallations.
@@ -32,10 +33,10 @@ type DoguDiff struct {
 // DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
 	Namespace          cescommons.Namespace
-	Version            core.Version
-	InstallationState  TargetState
-	MinVolumeSize      ecosystem.VolumeSize
-	ReverseProxyConfig ecosystem.ReverseProxyConfig
+	Version            *core.Version
+	Absent             bool
+	MinVolumeSize      *ecosystem.VolumeSize
+	ReverseProxyConfig *ecosystem.ReverseProxyConfig
 	AdditionalMounts   []ecosystem.AdditionalMount
 }
 
@@ -57,10 +58,11 @@ func (diff *DoguDiff) String() string {
 // String returns a string representation of the DoguDiffState.
 func (diff *DoguDiffState) String() string {
 	return fmt.Sprintf(
-		"{Version: %q, Namespace: %q, InstallationState: %q}",
+		"{Version: %q, Namespace: %q, Absent: %t}",
+		//TODO NilPointer?
 		diff.Version.Raw,
 		diff.Namespace,
-		diff.InstallationState,
+		diff.Absent,
 	)
 }
 
@@ -93,16 +95,15 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 
 	if installedDogu == nil {
 		actualState = DoguDiffState{
-			InstallationState: TargetStateAbsent,
+			Absent: true,
 		}
 	} else {
 		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
 			Namespace:          installedDogu.Name.Namespace,
-			Version:            installedDogu.Version,
-			InstallationState:  TargetStatePresent,
-			MinVolumeSize:      installedDogu.MinVolumeSize,
-			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
+			Version:            &installedDogu.Version,
+			MinVolumeSize:      &installedDogu.MinVolumeSize,
+			ReverseProxyConfig: &installedDogu.ReverseProxyConfig,
 			AdditionalMounts:   installedDogu.AdditionalMounts,
 		}
 	}
@@ -114,7 +115,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 		expectedState = DoguDiffState{
 			Namespace:          blueprintDogu.Name.Namespace,
 			Version:            blueprintDogu.Version,
-			InstallationState:  blueprintDogu.TargetState,
+			Absent:             blueprintDogu.Absent,
 			MinVolumeSize:      blueprintDogu.MinVolumeSize,
 			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
 			AdditionalMounts:   blueprintDogu.AdditionalMounts,
@@ -130,25 +131,20 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 }
 
 func getNeededDoguActions(expected DoguDiffState, actual DoguDiffState) []Action {
-	if expected.InstallationState == actual.InstallationState {
-		switch expected.InstallationState {
-		case TargetStatePresent:
-			// dogu should stay installed, but maybe it needs an upgrade, downgrade or a namespace switch?
-			return getActionsForPresentDoguDiffs(expected, actual)
-		case TargetStateAbsent:
+	if expected.Absent == actual.Absent {
+		if expected.Absent {
 			return []Action{}
+		} else {
+			return getActionsForPresentDoguDiffs(expected, actual)
 		}
 	} else {
 		// actual state is always the opposite
-		switch expected.InstallationState {
-		case TargetStatePresent:
-			return []Action{ActionInstall}
-		case TargetStateAbsent:
+		if expected.Absent {
 			return []Action{ActionUninstall}
+		} else {
+			return []Action{ActionInstall}
 		}
 	}
-	// all cases should be handled above, but if new fields are added, this is a safe fallback for any bugs.
-	return []Action{}
 }
 
 func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState) []Action {
@@ -167,9 +163,9 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	if expected.ReverseProxyConfig.AdditionalConfig != actual.ReverseProxyConfig.AdditionalConfig {
 		neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
 	}
-	if expected.Version.IsNewerThan(actual.Version) {
+	if actual.Version != nil && expected.Version.IsNewerThan(*actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
-	} else if actual.Version.IsNewerThan(expected.Version) {
+	} else if expected.Version != nil && actual.Version.IsNewerThan(*expected.Version) {
 		// if downgrades are allowed is not important here.
 		// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.
 		neededActions = append(neededActions, ActionDowngrade)
@@ -178,9 +174,11 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	return neededActions
 }
 
-func appendActionForMinVolumeSize(actions []Action, expectedSize ecosystem.VolumeSize, actualSize ecosystem.VolumeSize) []Action {
+func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
 	// if expected > actual = update needed
-	if expectedSize.Cmp(actualSize) > 0 {
+	if expectedSize == nil {
+		return actions
+	} else if actualSize == nil || expectedSize.Cmp(*actualSize) > 0 {
 		return append(actions, ActionUpdateDoguResourceMinVolumeSize)
 	}
 	return actions
@@ -192,7 +190,7 @@ func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecos
 	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {
 		return append(actions, ActionUpdateDoguProxyBodySize)
 	} else {
-		if expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
+		if expectedProxyBodySize != nil && actualProxyBodySize != nil && expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
 			return append(actions, ActionUpdateDoguProxyBodySize)
 		}
 	}

@@ -29,6 +29,7 @@ var (
 		Reason:             "Completed",
 		Message:            "test",
 	}
+	trueVar = true
 )
 
 func Test_blueprintSpecRepo_GetById(t *testing.T) {
@@ -43,14 +44,14 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: &bpv2.BlueprintSpec{
 				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMask:            bpv2.BlueprintMask{},
-				AllowDoguNamespaceSwitch: true,
-				IgnoreDoguHealth:         true,
-				DryRun:                   true,
+				BlueprintMask:            &bpv2.BlueprintMask{},
+				AllowDoguNamespaceSwitch: &trueVar,
+				IgnoreDoguHealth:         &trueVar,
+				Stopped:                  &trueVar,
 			},
-			Status: bpv2.BlueprintStatus{
+			Status: &bpv2.BlueprintStatus{
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
@@ -72,7 +73,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			},
 			StateDiff:          domain.StateDiff{},
 			PersistenceContext: persistenceContext,
-			Conditions:         &[]domain.Condition{testCondition},
+			Conditions:         []domain.Condition{testCondition},
 		}, spec)
 	})
 
@@ -84,19 +85,19 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: &bpv2.BlueprintSpec{
 				Blueprint: bpv2.BlueprintManifest{
 					Dogus: []bpv2.Dogu{
 						{Name: "invalid"},
 					},
 				},
-				BlueprintMask: bpv2.BlueprintMask{
+				BlueprintMask: &bpv2.BlueprintMask{
 					Dogus: []bpv2.MaskDogu{
 						{Name: "invalid"},
 					},
 				},
 			},
-			Status: bpv2.BlueprintStatus{},
+			Status: &bpv2.BlueprintStatus{},
 		}
 		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
 		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
@@ -164,12 +165,12 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
-			EffectiveBlueprint: bpv2.BlueprintManifest{
+			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     bpv2.Config{},
+				Config:     &bpv2.Config{},
 			},
-			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{testCondition},
 		}
 		restClientMock.EXPECT().
@@ -186,7 +187,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
-			Conditions:         &[]domain.Condition{testCondition},
+			Conditions:         []domain.Condition{testCondition},
 		})
 
 		// then
@@ -236,12 +237,12 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
-			EffectiveBlueprint: bpv2.BlueprintManifest{
+			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     bpv2.Config{},
+				Config:     &bpv2.Config{},
 			},
-			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -263,7 +264,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
-			Conditions:         &[]domain.Condition{},
+			Conditions:         []domain.Condition{},
 		})
 
 		// then
@@ -279,12 +280,12 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := bpv2.BlueprintStatus{
-			EffectiveBlueprint: bpv2.BlueprintManifest{
+			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     bpv2.Config{},
+				Config:     &bpv2.Config{},
 			},
-			StateDiff:  bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := fmt.Errorf("test-error")
@@ -302,7 +303,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             nil,
 			PersistenceContext: persistenceContext,
-			Conditions:         &[]domain.Condition{},
+			Conditions:         []domain.Condition{},
 		})
 
 		// then
@@ -345,7 +346,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 			Id:                 blueprintId,
 			Events:             events,
 			PersistenceContext: persistenceContext,
-			Conditions:         &[]domain.Condition{},
+			Conditions:         []domain.Condition{},
 		}
 		err := repo.Update(ctx, spec)
 

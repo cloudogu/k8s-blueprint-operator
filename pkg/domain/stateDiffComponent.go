@@ -2,11 +2,12 @@ package domain
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"golang.org/x/exp/maps"
-	"reflect"
 )
 
 // ComponentDiffs contains the differences for all expected Components to the current ecosystem.ComponentInstallations.
@@ -51,8 +52,8 @@ type ComponentDiffState struct {
 	Namespace common.ComponentNamespace
 	// Version contains the component's version.
 	Version *semver.Version
-	// InstallationState contains the component's target state.
-	InstallationState TargetState
+	// Absent defines if the dogu should be absent in the ecosystem. Defaults to false.
+	Absent bool
 	// DeployConfig contains generic properties for the component.
 	DeployConfig ecosystem.DeployConfig
 }
@@ -88,10 +89,10 @@ func (diff *ComponentDiff) String() string {
 // String returns a string representation of the ComponentDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
-		"{Namespace: %q, Version: %q, InstallationState: %q}",
+		"{Namespace: %q, Version: %q, InstallationState: %t}",
 		diff.Namespace,
 		diff.getSafeVersionString(),
-		diff.InstallationState,
+		diff.Absent,
 	)
 }
 
@@ -139,15 +140,14 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 
 	if installedComponent == nil {
 		actualState = ComponentDiffState{
-			InstallationState: TargetStateAbsent,
+			Absent: true,
 		}
 	} else {
 		componentName = installedComponent.Name.SimpleName
 		actualState = ComponentDiffState{
-			Namespace:         installedComponent.Name.Namespace,
-			Version:           installedComponent.ExpectedVersion,
-			InstallationState: TargetStatePresent,
-			DeployConfig:      installedComponent.DeployConfig,
+			Namespace:    installedComponent.Name.Namespace,
+			Version:      installedComponent.ExpectedVersion,
+			DeployConfig: installedComponent.DeployConfig,
 		}
 	}
 
@@ -156,10 +156,10 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 	} else {
 		componentName = blueprintComponent.Name.SimpleName
 		expectedState = ComponentDiffState{
-			Namespace:         blueprintComponent.Name.Namespace,
-			Version:           blueprintComponent.Version,
-			InstallationState: blueprintComponent.TargetState,
-			DeployConfig:      blueprintComponent.DeployConfig,
+			Namespace:    blueprintComponent.Name.Namespace,
+			Version:      blueprintComponent.Version,
+			Absent:       blueprintComponent.Absent,
+			DeployConfig: blueprintComponent.DeployConfig,
 		}
 	}
 
@@ -186,7 +186,7 @@ func findComponentByName(components []Component, name common.SimpleComponentName
 }
 
 func getComponentActions(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
-	if expected.InstallationState == actual.InstallationState {
+	if expected.Absent == actual.Absent {
 		return decideOnEqualState(expected, actual)
 	}
 
@@ -196,13 +196,10 @@ func getComponentActions(expected ComponentDiffState, actual ComponentDiffState)
 func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
 	var neededActions []Action
 
-	switch expected.InstallationState {
-	case TargetStatePresent:
-		return getActionsForEqualPresentState(expected, actual), nil
-	case TargetStateAbsent:
+	if expected.Absent {
 		return neededActions, nil
-	default:
-		return nil, fmt.Errorf("component has unexpected target state %q", expected.InstallationState)
+	} else {
+		return getActionsForEqualPresentState(expected, actual), nil
 	}
 }
 
@@ -232,12 +229,9 @@ func getActionsForEqualPresentState(expected ComponentDiffState, actual Componen
 
 func decideOnDifferentState(expected ComponentDiffState) ([]Action, error) {
 	// at this place, the actual state is always the opposite to the expected state so just follow the expected state.
-	switch expected.InstallationState {
-	case TargetStatePresent:
-		return []Action{ActionInstall}, nil
-	case TargetStateAbsent:
+	if expected.Absent {
 		return []Action{ActionUninstall}, nil
-	default:
-		return nil, fmt.Errorf("component has unexpected installation state %q", expected.InstallationState)
+	} else {
+		return []Action{ActionInstall}, nil
 	}
 }

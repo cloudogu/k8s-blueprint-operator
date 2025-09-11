@@ -1,11 +1,13 @@
 package domain
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDoguConfigDiffs_HasChanges(t *testing.T) {
+	testVal := "test"
 	tests := []struct {
 		name  string
 		diffs DoguConfigDiffs
@@ -36,7 +38,7 @@ func TestDoguConfigDiffs_HasChanges(t *testing.T) {
 						Exists: false,
 					},
 					Expected: DoguConfigValueState{
-						Value:  "test",
+						Value:  &testVal,
 						Exists: true,
 					},
 					NeededAction: ConfigActionSet,
@@ -50,7 +52,7 @@ func TestDoguConfigDiffs_HasChanges(t *testing.T) {
 				SensitiveDoguConfigEntryDiff{
 					Key: dogu1Key1,
 					Actual: DoguConfigValueState{
-						Value:  "test",
+						Value:  &testVal,
 						Exists: true,
 					},
 					Expected: DoguConfigValueState{

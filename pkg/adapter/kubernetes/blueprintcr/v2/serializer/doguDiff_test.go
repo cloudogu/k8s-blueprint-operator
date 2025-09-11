@@ -1,26 +1,33 @@
 package serializer
 
 import (
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
 )
 
 func Test_convertMinimumVolumeSizeToDTO(t *testing.T) {
+	volumeSize1g := resource.MustParse("1Gi")
 	tests := []struct {
 		name       string
-		minVolSize ecosystem.VolumeSize
+		minVolSize *ecosystem.VolumeSize
 		want       string
 	}{
 		{
-			name:       "empty",
-			minVolSize: ecosystem.VolumeSize{},
+			name:       "nil",
+			minVolSize: nil,
 			want:       "",
 		},
 		{
 			name:       "empty",
-			minVolSize: resource.MustParse("1Gi"),
+			minVolSize: &ecosystem.VolumeSize{},
+			want:       "",
+		},
+		{
+			name:       "empty",
+			minVolSize: &volumeSize1g,
 			want:       "1Gi",
 		},
 	}

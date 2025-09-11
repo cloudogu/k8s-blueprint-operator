@@ -135,9 +135,9 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	blueprint := &domain.BlueprintSpec{
 		Id: "testBlueprint1",
 		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
-			Name:        redmineQualifiedDoguName,
-			Version:     version,
-			TargetState: domain.TargetStatePresent,
+			Name:    redmineQualifiedDoguName,
+			Version: &version,
+			Absent:  false,
 		}}},
 		Conditions: []domain.Condition{},
 	}

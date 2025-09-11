@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -65,7 +66,7 @@ func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
 			SourceType: ecosystem.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
+			Subfolder:  &m.Subfolder,
 		})
 	}
 	return result
@@ -87,8 +88,10 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 		reverseProxyConfig.MaxBodySize = &quantity
 	}
 
-	reverseProxyConfig.RewriteTarget = ecosystem.RewriteTarget(annotations[ecosystem.NginxIngressAnnotationRewriteTarget])
-	reverseProxyConfig.AdditionalConfig = ecosystem.AdditionalConfig(annotations[ecosystem.NginxIngressAnnotationAdditionalConfig])
+	rewriteTarget := annotations[ecosystem.NginxIngressAnnotationRewriteTarget]
+	reverseProxyConfig.RewriteTarget = &rewriteTarget
+	additionalConfig := annotations[ecosystem.NginxIngressAnnotationAdditionalConfig]
+	reverseProxyConfig.AdditionalConfig = &additionalConfig
 
 	return reverseProxyConfig, nil
 }
@@ -133,11 +136,15 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount {
 	var result []v2.DataMount
 	for _, m := range mounts {
+		subfolder := ""
+		if m.Subfolder != nil {
+			subfolder = *m.Subfolder
+		}
 		result = append(result, v2.DataMount{
 			SourceType: v2.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
+			Subfolder:  subfolder,
 		})
 	}
 	return result
@@ -151,13 +158,14 @@ func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]
 	}
 
 	rewriteTarget := config.RewriteTarget
-	if rewriteTarget != "" {
-		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = string(rewriteTarget)
+	if rewriteTarget != nil && *rewriteTarget != "" {
+		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = *rewriteTarget
+
 	}
 
 	additionalConfig := config.AdditionalConfig
-	if additionalConfig != "" {
-		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = string(additionalConfig)
+	if additionalConfig != nil && *additionalConfig != "" {
+		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = *additionalConfig
 	}
 
 	// Use nil here to delete existing annotation from the cr.

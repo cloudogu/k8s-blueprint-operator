@@ -55,14 +55,18 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
-	if err != nil {
-		return nil, err
-	}
+	var effectiveBlueprint domain.EffectiveBlueprint
+	var stateDiff domain.StateDiff
+	if blueprintCR.Status != nil {
+		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+		if err != nil {
+			return nil, err
+		}
 
-	stateDiff, err := serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
-	if err != nil {
-		return nil, err
+		stateDiff, err = serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	conditions := blueprintCR.Status.Conditions
@@ -76,10 +80,10 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		StateDiff:          stateDiff,
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
-			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
-			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,
-			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
-			DryRun:                   blueprintCR.Spec.DryRun,
+			IgnoreDoguHealth:         boolPtrToValue(blueprintCR.Spec.IgnoreDoguHealth),
+			IgnoreComponentHealth:    boolPtrToValue(blueprintCR.Spec.IgnoreComponentHealth),
+			AllowDoguNamespaceSwitch: boolPtrToValue(blueprintCR.Spec.AllowDoguNamespaceSwitch),
+			DryRun:                   boolPtrToValue(blueprintCR.Spec.Stopped),
 		},
 	}
 
@@ -106,6 +110,13 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	return blueprintSpec, nil
 }
 
+func boolPtrToValue(boolPtr *bool) bool {
+	if boolPtr != nil {
+		return *boolPtr
+	}
+	return false
+}
+
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")
@@ -123,8 +134,8 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
-		Status: v2.BlueprintStatus{
-			EffectiveBlueprint: effectiveBlueprint,
+		Status: &v2.BlueprintStatus{
+			EffectiveBlueprint: &effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
 			Conditions:         spec.Conditions,
 		},

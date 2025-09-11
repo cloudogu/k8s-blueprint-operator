@@ -3,9 +3,10 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"slices"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
-	"slices"
 )
 
 // EffectiveBlueprint describes what the wanted state after evaluating the blueprint and the blueprintMask is.
@@ -17,15 +18,15 @@ type EffectiveBlueprint struct {
 	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
 	// this blueprint was applied. Optional.
 	Components []Component
-	// Config contains all config entries to set via blueprint.
-	Config Config
+	// Config contains all config entries to set via blueprint. Optional.
+	Config *Config
 }
 
 // GetWantedDogus returns a list of all dogus which should be installed
 func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 	var wantedDogus []Dogu
 	for _, dogu := range effectiveBlueprint.Dogus {
-		if dogu.TargetState == TargetStatePresent {
+		if !dogu.Absent {
 			wantedDogus = append(wantedDogus, dogu)
 		}
 	}

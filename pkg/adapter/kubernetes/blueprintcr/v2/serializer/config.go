@@ -9,24 +9,31 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
-func ConvertToConfigDTO(config domain.Config) v2.Config {
-	var dogus map[string]v2.CombinedDoguConfig
+func ConvertToConfigDTO(config *domain.Config) *v2.Config {
+	if config == nil {
+		return nil
+	}
+
+	var dogus map[string][]v2.ConfigEntry
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
-		dogus = make(map[string]v2.CombinedDoguConfig, len(config.Dogus))
+		dogus = make(map[string][]v2.ConfigEntry, len(config.Dogus))
 		for doguName, doguConfig := range config.Dogus {
 			dogus[string(doguName)] = convertToCombinedDoguConfigDTO(doguConfig)
 		}
 	}
 
-	return v2.Config{
+	return &v2.Config{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDTO(config.Global),
 	}
 }
 
-func ConvertToConfigDomain(config v2.Config) domain.Config {
+func ConvertToConfigDomain(config *v2.Config) *domain.Config {
+	if config == nil {
+		return nil
+	}
 	var dogus map[cescommons.SimpleName]domain.CombinedDoguConfig
 	// we check for empty values to make good use of default values
 	// this makes testing easier
@@ -37,81 +44,75 @@ func ConvertToConfigDomain(config v2.Config) domain.Config {
 		}
 	}
 
-	return domain.Config{
+	return &domain.Config{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDomain(config.Global),
 	}
 }
 
-func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) v2.CombinedDoguConfig {
-	return v2.CombinedDoguConfig{
-		Config:          convertToDoguConfigDTO(config.Config),
-		SensitiveConfig: convertToSensitiveDoguConfigDTO(config.SensitiveConfig),
-	}
+func convertToCombinedDoguConfigDTO(config domain.CombinedDoguConfig) []v2.ConfigEntry {
+	var result []v2.ConfigEntry
+	result = append(result, convertToDoguConfigDTO(config.Config)...)
+	result = append(result, convertToSensitiveDoguConfigDTO(config.SensitiveConfig)...)
+
+	return result
 }
 
-func convertToCombinedDoguConfigDomain(doguName string, config v2.CombinedDoguConfig) domain.CombinedDoguConfig {
+func convertToCombinedDoguConfigDomain(doguName string, config []v2.ConfigEntry) domain.CombinedDoguConfig {
 	return domain.CombinedDoguConfig{
 		DoguName:        cescommons.SimpleName(doguName),
-		Config:          convertToDoguConfigDomain(doguName, config.Config),
-		SensitiveConfig: convertToSensitiveDoguConfigDomain(doguName, config.SensitiveConfig),
+		Config:          convertToDoguConfigDomain(doguName, config),
+		SensitiveConfig: convertToSensitiveDoguConfigDomain(doguName, config),
 	}
 }
 
-func convertToDoguConfigDTO(config domain.DoguConfig) *v2.DoguConfig {
+func convertToDoguConfigDTO(config domain.DoguConfig) []v2.ConfigEntry {
 	// empty struct -> nil
 	if len(config.Present) == 0 && len(config.Absent) == 0 {
 		return nil
 	}
 
-	var present map[string]string
+	result := make([]v2.ConfigEntry, len(config.Present)+len(config.Absent))
 	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[string]string, len(config.Present))
-		for key, value := range config.Present {
-			present[string(key.Key)] = string(value)
-		}
+	for key, value := range config.Present {
+		valueString := string(value)
+		result = append(result, v2.ConfigEntry{
+			Key:   string(key.Key),
+			Value: &valueString,
+		})
 	}
 
-	var absent []string
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]string, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = string(key.Key)
-		}
+	for _, key := range config.Absent {
+		truePtr := true
+		result = append(result, v2.ConfigEntry{
+			Key:    string(key.Key),
+			Absent: &truePtr,
+		})
 	}
 
-	return &v2.DoguConfig{
-		Present: present,
-		Absent:  absent,
-	}
+	return result
 }
 
-func convertToDoguConfigDomain(doguName string, config *v2.DoguConfig) domain.DoguConfig {
+func convertToDoguConfigDomain(doguName string, config []v2.ConfigEntry) domain.DoguConfig {
 	if config == nil {
 		return domain.DoguConfig{}
 	}
 
-	var present map[common.DoguConfigKey]common.DoguConfigValue
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[common.DoguConfigKey]common.DoguConfigValue, len(config.Present))
-		for key, value := range config.Present {
-			present[convertToDoguConfigKeyDomain(doguName, key)] = common.DoguConfigValue(value)
-		}
-	}
+	present := make(map[common.DoguConfigKey]common.DoguConfigValue, len(config))
+	absent := make([]common.DoguConfigKey, len(config))
 
-	var absent []common.DoguConfigKey
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]common.DoguConfigKey, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = convertToDoguConfigKeyDomain(doguName, key)
+	absentIndex := 0
+	for _, configEntry := range config {
+		if configEntry.Sensitive != nil && *configEntry.Sensitive == true {
+			continue
+		}
+
+		if configEntry.Absent == nil || *configEntry.Absent == false && configEntry.Value != nil {
+			present[convertToDoguConfigKeyDomain(doguName, configEntry.Key)] = common.DoguConfigValue(*configEntry.Value)
+		} else {
+			absent[absentIndex] = convertToDoguConfigKeyDomain(doguName, configEntry.Key)
+			absentIndex++
 		}
 	}
 
@@ -128,51 +129,49 @@ func convertToDoguConfigKeyDomain(doguName, key string) common.DoguConfigKey {
 	}
 }
 
-func convertToGlobalConfigDTO(config domain.GlobalConfig) v2.GlobalConfig {
-	var present map[string]string
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[string]string, len(config.Present))
-		for key, value := range config.Present {
-			present[string(key)] = string(value)
-		}
+func convertToGlobalConfigDTO(config domain.GlobalConfig) []v2.ConfigEntry {
+	// empty struct -> nil
+	if len(config.Present) == 0 && len(config.Absent) == 0 {
+		return nil
 	}
 
-	var absent []string
+	result := make([]v2.ConfigEntry, len(config.Present)+len(config.Absent))
 	// we check for empty values to make good use of default values
 	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]string, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = string(key)
-		}
+	for key, value := range config.Present {
+		valueString := string(value)
+		result = append(result, v2.ConfigEntry{
+			Key:   string(key),
+			Value: &valueString,
+		})
 	}
 
-	return v2.GlobalConfig{
-		Present: present,
-		Absent:  absent,
+	for _, key := range config.Absent {
+		truePtr := true
+		result = append(result, v2.ConfigEntry{
+			Key:    string(key),
+			Absent: &truePtr,
+		})
 	}
+
+	return result
 }
 
-func convertToGlobalConfigDomain(config v2.GlobalConfig) domain.GlobalConfig {
-	var present map[common.GlobalConfigKey]common.GlobalConfigValue
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Present) != 0 {
-		present = make(map[common.GlobalConfigKey]common.GlobalConfigValue, len(config.Present))
-		for key, value := range config.Present {
-			present[common.GlobalConfigKey(key)] = common.GlobalConfigValue(value)
-		}
+func convertToGlobalConfigDomain(config []v2.ConfigEntry) domain.GlobalConfig {
+	if config == nil {
+		return domain.GlobalConfig{}
 	}
 
-	var absent []common.GlobalConfigKey
-	// we check for empty values to make good use of default values
-	// this makes testing easier
-	if len(config.Absent) != 0 {
-		absent = make([]common.GlobalConfigKey, len(config.Absent))
-		for i, key := range config.Absent {
-			absent[i] = common.GlobalConfigKey(key)
+	present := make(map[common.GlobalConfigKey]common.GlobalConfigValue, len(config))
+	absent := make([]common.GlobalConfigKey, len(config))
+
+	absentIndex := 0
+	for _, configEntry := range config {
+		if configEntry.Absent != nil && *configEntry.Absent == false && configEntry.Value != nil {
+			present[common.GlobalConfigKey(configEntry.Key)] = common.GlobalConfigValue(*configEntry.Value)
+		} else {
+			absent[absentIndex] = common.GlobalConfigKey(configEntry.Key)
+			absentIndex++
 		}
 	}
 

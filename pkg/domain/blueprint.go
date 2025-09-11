@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -22,7 +23,7 @@ type Blueprint struct {
 	// this blueprint was applied. Optional.
 	Components []Component
 	// Config contains all config entries to set via blueprint.
-	Config Config
+	Config *Config
 }
 
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems

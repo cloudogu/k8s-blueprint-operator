@@ -1,31 +1,37 @@
 package ecosystem
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
 )
 
-var version1231, _ = core.ParseVersion("1.2.3-1")
-var version1232, _ = core.ParseVersion("1.2.3-2")
+var (
+	version1231, _   = core.ParseVersion("1.2.3-1")
+	version1232, _   = core.ParseVersion("1.2.3-2")
+	rewriteTarget    = "/"
+	additionalConfig = "additional"
+	subfolder        = "different_subfolder"
+)
 
 func TestInstallDogu(t *testing.T) {
 	volumeSize := resource.MustParse("1Gi")
 	proxyBodySize := resource.MustParse("1G")
 	dogu := InstallDogu(
 		postgresqlQualifiedName,
-		version1231,
-		volumeSize,
-		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: "/", AdditionalConfig: "additional"},
+		&version1231,
+		&volumeSize,
+		&ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
 		[]AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
 				Name:       "configmap",
 				Volume:     "volume",
-				Subfolder:  "different_subfolder",
+				Subfolder:  &subfolder,
 			},
 		},
 	)
@@ -36,15 +42,15 @@ func TestInstallDogu(t *testing.T) {
 		MinVolumeSize: volumeSize,
 		ReverseProxyConfig: ReverseProxyConfig{
 			MaxBodySize:      &proxyBodySize,
-			RewriteTarget:    "/",
-			AdditionalConfig: "additional",
+			RewriteTarget:    &rewriteTarget,
+			AdditionalConfig: &additionalConfig,
 		},
 		AdditionalMounts: []AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
 				Name:       "configmap",
 				Volume:     "volume",
-				Subfolder:  "different_subfolder",
+				Subfolder:  &subfolder,
 			},
 		},
 	}, dogu)
@@ -80,7 +86,7 @@ func TestDoguInstallation_Upgrade(t *testing.T) {
 		Version: version1231,
 	}
 
-	dogu.Upgrade(version1232)
+	dogu.Upgrade(&version1232)
 
 	assert.Equal(t, &DoguInstallation{
 		Name:    postgresqlQualifiedName,
@@ -139,10 +145,10 @@ func TestDoguInstallation_UpdateProxyRewriteTarget(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateProxyRewriteTarget("/")
+		dogu.UpdateProxyRewriteTarget(&rewriteTarget)
 
 		// then
-		assert.Equal(t, RewriteTarget("/"), dogu.ReverseProxyConfig.RewriteTarget)
+		assert.Equal(t, RewriteTarget(&rewriteTarget), dogu.ReverseProxyConfig.RewriteTarget)
 	})
 }
 
@@ -152,10 +158,10 @@ func TestDoguInstallation_UpdateProxyAdditionalConfig(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateProxyAdditionalConfig("config")
+		dogu.UpdateProxyAdditionalConfig(&additionalConfig)
 
 		// then
-		assert.Equal(t, AdditionalConfig("config"), dogu.ReverseProxyConfig.AdditionalConfig)
+		assert.Equal(t, AdditionalConfig(&additionalConfig), dogu.ReverseProxyConfig.AdditionalConfig)
 	})
 }
 
@@ -166,7 +172,7 @@ func TestDoguInstallation_UpdateMinVolumeSize(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateMinVolumeSize(volumeSize)
+		dogu.UpdateMinVolumeSize(&volumeSize)
 
 		// then
 		assert.Equal(t, volumeSize, dogu.MinVolumeSize)

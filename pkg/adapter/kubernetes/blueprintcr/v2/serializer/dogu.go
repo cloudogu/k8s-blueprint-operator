@@ -3,9 +3,11 @@ package serializer
 import (
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	"k8s.io/apimachinery/pkg/api/resource"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -23,40 +25,66 @@ func ConvertDogus(dogus []bpv2.Dogu) ([]domain.Dogu, error) {
 			continue
 		}
 
-		var version core.Version
-		if dogu.Version != "" {
-			version, err = core.ParseVersion(dogu.Version)
+		var version *core.Version
+		if dogu.Version != nil && *dogu.Version != "" {
+			coreVersion, err := core.ParseVersion(*dogu.Version)
+			version = &coreVersion
 			if err != nil {
 				errorList = append(errorList, fmt.Errorf("could not parse version of target dogu %q: %w", dogu.Name, err))
 				continue
 			}
 		}
 
-		minVolumeSizeStr := dogu.PlatformConfig.ResourceConfig.MinVolumeSize
-		minVolumeSize, minVolumeSizeErr := ecosystem.GetNonNilQuantityRef(minVolumeSizeStr)
-		if minVolumeSizeErr != nil {
-			errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", minVolumeSizeStr, dogu.Name))
-			continue
+		absent := false
+		if dogu.Absent != nil {
+			absent = *dogu.Absent
 		}
 
-		maxBodySizeStr := dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
-		maxBodySize, maxBodySizeErr := ecosystem.GetQuantityReference(maxBodySizeStr)
-		if maxBodySizeErr != nil {
-			errorList = append(errorList, fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", maxBodySizeStr, dogu.Name))
-			continue
+		var minVolumeSize, maxBodySize *resource.Quantity
+		var reverseProxyConfig *ecosystem.ReverseProxyConfig
+		var rewriteTarget, additionalConfig *string
+		var additionalMounts []ecosystem.AdditionalMount
+		if dogu.PlatformConfig != nil {
+			if dogu.PlatformConfig.ResourceConfig != nil && dogu.PlatformConfig.ResourceConfig.MinVolumeSize != nil {
+				minVolumeSizeStr := dogu.PlatformConfig.ResourceConfig.MinVolumeSize
+				minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
+				if err != nil {
+					errorList = append(errorList, fmt.Errorf("could not parse minimum volume size %q for dogu %q", *minVolumeSizeStr, dogu.Name))
+					continue
+				}
+			}
+
+			if dogu.PlatformConfig.ReverseProxyConfig != nil {
+				if dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize != nil {
+					maxBodySizeStr := dogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
+					maxBodySize, err = ecosystem.GetQuantityReference(*maxBodySizeStr)
+					if err != nil {
+						errorList = append(errorList, fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", *maxBodySizeStr, dogu.Name))
+						continue
+					}
+				}
+
+				rewriteTarget = dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget
+				additionalConfig = dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig
+				reverseProxyConfig = &ecosystem.ReverseProxyConfig{
+					MaxBodySize:      maxBodySize,
+					RewriteTarget:    rewriteTarget,
+					AdditionalConfig: additionalConfig,
+				}
+			}
+
+			if dogu.PlatformConfig.AdditionalMountsConfig != nil {
+				additionalMounts = convertAdditionalMountsFromDTOToDomain(dogu.PlatformConfig.AdditionalMountsConfig)
+			}
 		}
 
 		convertedDogus = append(convertedDogus, domain.Dogu{
-			Name:          name,
-			Version:       version,
-			TargetState:   ToDomainTargetState(dogu.Absent),
-			MinVolumeSize: *minVolumeSize,
-			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      maxBodySize,
-				RewriteTarget:    ecosystem.RewriteTarget(dogu.PlatformConfig.ReverseProxyConfig.RewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(dogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig),
-			},
-			AdditionalMounts: convertAdditionalMountsFromDTOToDomain(dogu.PlatformConfig.AdditionalMountsConfig),
+			Name:               name,
+			Version:            version,
+			Absent:             absent,
+			MinVolumeSize:      minVolumeSize,
+			ReverseProxyConfig: reverseProxyConfig,
+			AdditionalMounts:   additionalMounts,
 		})
 	}
 
@@ -80,18 +108,23 @@ func ConvertMaskDogus(dogus []bpv2.MaskDogu) ([]domain.MaskDogu, error) {
 		}
 
 		var version core.Version
-		if dogu.Version != "" {
-			version, err = core.ParseVersion(dogu.Version)
+		if dogu.Version != nil && *dogu.Version != "" {
+			version, err = core.ParseVersion(*dogu.Version)
 			if err != nil {
 				errorList = append(errorList, fmt.Errorf("could not parse version of mask dogu %q: %w", dogu.Name, err))
 				continue
 			}
 		}
 
+		absent := false
+		if dogu.Absent != nil {
+			absent = *dogu.Absent
+		}
+
 		convertedDogus = append(convertedDogus, domain.MaskDogu{
-			Name:        name,
-			Version:     version,
-			TargetState: ToDomainTargetState(dogu.Absent),
+			Name:    name,
+			Version: version,
+			Absent:  absent,
 		})
 	}
 
@@ -119,39 +152,49 @@ func convertAdditionalMountsFromDTOToDomain(mounts []bpv2.AdditionalMount) []eco
 
 func ConvertToDoguDTOs(dogus []domain.Dogu) []bpv2.Dogu {
 	converted := util.Map(dogus, func(dogu domain.Dogu) bpv2.Dogu {
+		var version *string
+		if dogu.Version != nil {
+			version = &dogu.Version.Raw
+		}
 		return bpv2.Dogu{
 			Name:           dogu.Name.String(),
-			Version:        dogu.Version.Raw,
-			Absent:         ToSerializerAbsentState(dogu.TargetState),
+			Version:        version,
+			Absent:         &dogu.Absent,
 			PlatformConfig: convertPlatformConfigDTO(dogu),
 		}
 	})
 	return converted
 }
 
-func convertPlatformConfigDTO(dogu domain.Dogu) bpv2.PlatformConfig {
+func convertPlatformConfigDTO(dogu domain.Dogu) *bpv2.PlatformConfig {
+	if dogu.ReverseProxyConfig == nil && dogu.MinVolumeSize == nil && len(dogu.AdditionalMounts) == 0 {
+		return nil
+	}
+
 	config := bpv2.PlatformConfig{}
 	config.ResourceConfig = convertResourceConfigDTO(dogu)
 	config.ReverseProxyConfig = convertReverseProxyConfigDTO(dogu)
 	config.AdditionalMountsConfig = convertAdditionalMountsConfig(dogu)
 
-	return config
+	return &config
 }
 
-func convertReverseProxyConfigDTO(dogu domain.Dogu) bpv2.ReverseProxyConfig {
+func convertReverseProxyConfigDTO(dogu domain.Dogu) *bpv2.ReverseProxyConfig {
 	config := bpv2.ReverseProxyConfig{}
-	config.RewriteTarget = string(dogu.ReverseProxyConfig.RewriteTarget)
-	config.AdditionalConfig = string(dogu.ReverseProxyConfig.AdditionalConfig)
-	config.MaxBodySize = ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize)
+	if dogu.ReverseProxyConfig != nil {
+		config.RewriteTarget = dogu.ReverseProxyConfig.RewriteTarget
+		config.AdditionalConfig = dogu.ReverseProxyConfig.AdditionalConfig
+		config.MaxBodySize = ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize)
+	}
 
-	return config
+	return &config
 }
 
-func convertResourceConfigDTO(dogu domain.Dogu) bpv2.ResourceConfig {
+func convertResourceConfigDTO(dogu domain.Dogu) *bpv2.ResourceConfig {
 	config := bpv2.ResourceConfig{}
-	config.MinVolumeSize = ecosystem.GetQuantityString(&dogu.MinVolumeSize)
+	config.MinVolumeSize = ecosystem.GetQuantityString(dogu.MinVolumeSize)
 
-	return config
+	return &config
 }
 
 func convertAdditionalMountsConfig(dogu domain.Dogu) []bpv2.AdditionalMount {
