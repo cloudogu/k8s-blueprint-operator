@@ -59,11 +59,18 @@ func (diff *DoguDiff) String() string {
 func (diff *DoguDiffState) String() string {
 	return fmt.Sprintf(
 		"{Version: %q, Namespace: %q, Absent: %t}",
-		//TODO NilPointer?
-		diff.Version.Raw,
+		diff.getSafeVersionString(),
 		diff.Namespace,
 		diff.Absent,
 	)
+}
+
+func (diff *DoguDiffState) getSafeVersionString() string {
+	if diff.Version != nil {
+		return diff.Version.String()
+	} else {
+		return ""
+	}
 }
 
 // determineDoguDiffs creates DoguDiffs for all dogus in the blueprint and all installed dogus as well.
@@ -102,8 +109,8 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 		actualState = DoguDiffState{
 			Namespace:          installedDogu.Name.Namespace,
 			Version:            &installedDogu.Version,
-			MinVolumeSize:      &installedDogu.MinVolumeSize,
-			ReverseProxyConfig: &installedDogu.ReverseProxyConfig,
+			MinVolumeSize:      installedDogu.MinVolumeSize,
+			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
 			AdditionalMounts:   installedDogu.AdditionalMounts,
 		}
 	}
@@ -154,16 +161,10 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	}
 
 	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
-	neededActions = appendActionForProxyBodySizes(neededActions, expected.ReverseProxyConfig.MaxBodySize, actual.ReverseProxyConfig.MaxBodySize)
 	neededActions = appendActionForAdditionalMounts(neededActions, expected.AdditionalMounts, actual.AdditionalMounts)
+	neededActions = appendActionForReverseProxyConfig(neededActions, expected, actual)
 
-	if expected.ReverseProxyConfig.RewriteTarget != actual.ReverseProxyConfig.RewriteTarget {
-		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
-	}
-	if expected.ReverseProxyConfig.AdditionalConfig != actual.ReverseProxyConfig.AdditionalConfig {
-		neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
-	}
-	if actual.Version != nil && expected.Version.IsNewerThan(*actual.Version) {
+	if expected.Version != nil && actual.Version != nil && expected.Version.IsNewerThan(*actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
 	} else if expected.Version != nil && actual.Version.IsNewerThan(*expected.Version) {
 		// if downgrades are allowed is not important here.
@@ -171,6 +172,35 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 		neededActions = append(neededActions, ActionDowngrade)
 	}
 
+	return neededActions
+}
+
+func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiffState, actual DoguDiffState) []Action {
+	exp := expected.ReverseProxyConfig
+	act := actual.ReverseProxyConfig
+
+	neededActions = appendActionForProxyBodySizes(neededActions, exp, act)
+
+	switch {
+	case exp == nil && act == nil:
+		// both nil → nothing to do
+
+	case exp == nil || act == nil:
+		// one nil → both fields need updating
+		neededActions = append(neededActions,
+			ActionUpdateDoguProxyRewriteTarget,
+			ActionUpdateDoguProxyAdditionalConfig,
+		)
+
+	default:
+		// both non-nil → compare fields
+		if exp.RewriteTarget != act.RewriteTarget {
+			neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
+		}
+		if exp.AdditionalConfig != act.AdditionalConfig {
+			neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
+		}
+	}
 	return neededActions
 }
 
@@ -184,7 +214,19 @@ func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.Volu
 	return actions
 }
 
-func appendActionForProxyBodySizes(actions []Action, expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) []Action {
+func appendActionForProxyBodySizes(
+	actions []Action,
+	expectedReverseProxyConfig *ecosystem.ReverseProxyConfig,
+	actualReverseProxyConfig *ecosystem.ReverseProxyConfig,
+) []Action {
+	var expectedProxyBodySize, actualProxyBodySize *ecosystem.BodySize
+	if actualReverseProxyConfig != nil {
+		actualProxyBodySize = actualReverseProxyConfig.MaxBodySize
+	}
+	if expectedReverseProxyConfig != nil {
+		expectedProxyBodySize = expectedReverseProxyConfig.MaxBodySize
+	}
+
 	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
 		return actions
 	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {

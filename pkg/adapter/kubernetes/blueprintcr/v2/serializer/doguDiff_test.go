@@ -10,25 +10,26 @@ import (
 
 func Test_convertMinimumVolumeSizeToDTO(t *testing.T) {
 	volumeSize1g := resource.MustParse("1Gi")
+	val1Gi := "1Gi"
 	tests := []struct {
 		name       string
 		minVolSize *ecosystem.VolumeSize
-		want       string
+		want       *string
 	}{
 		{
 			name:       "nil",
 			minVolSize: nil,
-			want:       "",
+			want:       nil,
 		},
 		{
 			name:       "empty",
 			minVolSize: &ecosystem.VolumeSize{},
-			want:       "",
+			want:       nil,
 		},
 		{
-			name:       "empty",
+			name:       "1Gi",
 			minVolSize: &volumeSize1g,
-			want:       "1Gi",
+			want:       &val1Gi,
 		},
 	}
 	for _, tt := range tests {

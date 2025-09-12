@@ -181,8 +181,8 @@ func TestComponentDiff_String(t *testing.T) {
 
 	assert.Equal(t, "{"+
 		"Name: \"my-component\", "+
-		"Actual: {Namespace: \"\", Version: \"3.2.1-1\", InstallationState: \"present\"}, "+
-		"Expected: {Namespace: \"\", Version: \"3.2.1-2\", InstallationState: \"present\"}, "+
+		"Actual: {Namespace: \"\", Version: \"3.2.1-1\", Absent: false}, "+
+		"Expected: {Namespace: \"\", Version: \"3.2.1-2\", Absent: false}, "+
 		"NeededActions: [\"install\"]"+
 		"}", diff.String())
 }
@@ -194,7 +194,7 @@ func TestComponentDiffState_String(t *testing.T) {
 		Absent:    false,
 	}
 
-	assert.Equal(t, `{Namespace: "k8s", Version: "3.2.1-1", InstallationState: "present"}`, diff.String())
+	assert.Equal(t, `{Namespace: "k8s", Version: "3.2.1-1", Absent: false}`, diff.String())
 }
 
 func mockTargetComponent(version *semver.Version, absent bool, deployConfig ecosystem.DeployConfig) *Component {
@@ -248,7 +248,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 					{
 						Name:    testComponentName,
 						Version: compVersion3211,
-						Absent:  true,
+						Absent:  false,
 					},
 				},
 				installedComponents: nil,
@@ -303,7 +303,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 					{
 						Name:    common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "my-component"},
 						Version: compVersion3211,
-						Absent:  true,
+						Absent:  false,
 					},
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
@@ -337,7 +337,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 					{
 						Name:    testComponentName,
 						Version: compVersion3212,
-						Absent:  true,
+						Absent:  false,
 					},
 				},
 				installedComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{

@@ -90,7 +90,7 @@ func createDoguConfigFromReferencedValues(
 }
 
 func getNeededConfigAction(expected ConfigValueState, actual ConfigValueState) ConfigAction {
-	if expected == actual {
+	if expected.Equal(actual) {
 		return ConfigActionNone
 	}
 	if !expected.Exists {

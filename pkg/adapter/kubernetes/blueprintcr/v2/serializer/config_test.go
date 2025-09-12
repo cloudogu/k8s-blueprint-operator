@@ -80,7 +80,7 @@ func Test_convertToDoguConfigDomain(t *testing.T) {
 			want: domain.DoguConfig{},
 		},
 		{
-			name: "nil config",
+			name: "empty config",
 			args: args{
 				doguName: string(testDoguKey1.DoguName),
 				config:   []v2.ConfigEntry{},
@@ -202,7 +202,7 @@ func Test_convertToGlobalConfigDomain(t *testing.T) {
 			},
 		},
 		{
-			name: "convert present",
+			name: "convert absent",
 			config: []v2.ConfigEntry{
 				{
 					Key:    "test",

@@ -13,6 +13,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	googlecmp "github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -41,7 +42,7 @@ func TestConvertToDTO(t *testing.T) {
 	tests := []struct {
 		name        string
 		domainModel domain.StateDiff
-		want        crd.StateDiff
+		want        *crd.StateDiff
 	}{
 		{
 			name: "should convert single dogu diff",
@@ -59,17 +60,17 @@ func TestConvertToDTO(t *testing.T) {
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
-			want: crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
+			want: &crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
 				"ldap": {
 					Actual: crd.DoguDiffState{
 						Namespace: "official",
 						Version:   &testCoreVersionLowStr,
-						Absent:    true,
+						Absent:    false,
 					},
 					Expected: crd.DoguDiffState{
 						Namespace: "official",
 						Version:   &testCoreVersionHighStr,
-						Absent:    true,
+						Absent:    false,
 					},
 					NeededActions: []crd.DoguAction{"upgrade"},
 				},
@@ -105,7 +106,7 @@ func TestConvertToDTO(t *testing.T) {
 					NeededActions: []domain.Action{domain.ActionUninstall},
 				},
 			}},
-			want: crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
+			want: &crd.StateDiff{DoguDiffs: map[string]crd.DoguDiff{
 				"ldap": {
 					Actual: crd.DoguDiffState{
 						Namespace: "official",
@@ -150,7 +151,7 @@ func TestConvertToDTO(t *testing.T) {
 						NeededActions: []domain.Action{domain.ActionUninstall},
 					},
 				}},
-			want: crd.StateDiff{
+			want: &crd.StateDiff{
 				DoguDiffs: map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{
 					testComponentName: {
@@ -177,7 +178,7 @@ func TestConvertToDTO(t *testing.T) {
 					"postfix": {},
 				},
 			},
-			want: crd.StateDiff{
+			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
 				DoguConfigDiffs: map[string]crd.ConfigDiff{
@@ -202,7 +203,7 @@ func TestConvertToDTO(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				}},
 			},
-			want: crd.StateDiff{
+			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
 				GlobalConfigDiff: []crd.ConfigEntryDiff{{
@@ -251,7 +252,7 @@ func TestConvertToDTO(t *testing.T) {
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
-			want: crd.StateDiff{
+			want: &crd.StateDiff{
 				ComponentDiffs: map[string]crd.ComponentDiff{},
 				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
@@ -291,7 +292,7 @@ func TestConvertToDTO(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := ConvertToStateDiffDTO(tt.domainModel); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ConvertToStateDiffDTO() = %v, want %v", got, tt.want)
-				assert.Equal(t, tt.want, got)
+				assert.Empty(t, googlecmp.Diff(tt.want, got))
 			}
 		})
 	}
@@ -421,7 +422,7 @@ func TestConvertToDomainModel(t *testing.T) {
 			},
 			want: domain.StateDiff{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "failed to parse installation state \"invalid\"") &&
+				return assert.ErrorContains(t, err, "failed to parse version \"a.b.c-d\"") &&
 					assert.ErrorContains(t, err, "failed to convert dogu diff dto \"ldap\" to domain model")
 			},
 		},
@@ -742,7 +743,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 	tests := []struct {
 		name  string
 		model domain.StateDiff
-		want  crd.StateDiff
+		want  *crd.StateDiff
 	}{
 		{
 			name: "normal dogu config",
@@ -781,7 +782,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 				},
 				GlobalConfigDiffs: nil,
 			},
-			want: crd.StateDiff{
+			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
 				DoguConfigDiffs: map[string]crd.ConfigDiff{
@@ -854,6 +855,41 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 					},
 				},
 				GlobalConfigDiffs: nil,
+			},
+			want: &crd.StateDiff{
+				DoguDiffs:      map[string]crd.DoguDiff{},
+				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguConfigDiffs: map[string]crd.ConfigDiff{
+					testDogu.String(): {
+						crd.ConfigEntryDiff{
+							Key: testDoguKey1.Key.String(),
+							Actual: crd.ConfigValueState{
+								Value:  nil,
+								Exists: true,
+							},
+							Expected: crd.ConfigValueState{
+								Value:  nil,
+								Exists: true,
+							},
+							NeededAction: crd.ConfigAction("set"),
+						},
+					},
+					testDogu2.String(): {
+						crd.ConfigEntryDiff{
+							Key: testDoguKey2.Key.String(),
+							Actual: crd.ConfigValueState{
+								Value:  nil,
+								Exists: false,
+							},
+							Expected: crd.ConfigValueState{
+								Value:  nil,
+								Exists: true,
+							},
+							NeededAction: crd.ConfigAction("set"),
+						},
+					},
+				},
+				GlobalConfigDiff: nil,
 			},
 		},
 	}

@@ -107,7 +107,7 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 	err := blueprint.validateDogus()
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "dogu target state is invalid")
+	assert.Contains(t, err.Error(), "dogu proxy body size is not in Decimal SI (\"M\" or \"G\")")
 	assert.Contains(t, err.Error(), "dogu version must not be empty")
 }
 

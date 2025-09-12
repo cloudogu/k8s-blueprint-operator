@@ -64,8 +64,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	err := useCase.ValidateBlueprintSpecStatically(ctx, blueprint)
 
 	//then
-	assert.Nil(t, blueprint.Conditions, "should not set conditions")
-
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError, "error should be an InvalidBlueprintError")

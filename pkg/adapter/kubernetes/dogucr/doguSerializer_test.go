@@ -25,7 +25,7 @@ var (
 		SimpleName: cescommons.SimpleName("postgresql"),
 	}
 	subfolder        = "subfolder"
-	subfolder2       = "subfolder2"
+	subfolder2       = "secsubfolder"
 	rewriteTarget    = "/"
 	additionalConfig = "additional"
 )
@@ -75,7 +75,7 @@ func Test_parseDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize:      defaultVolSize,
+				MinVolumeSize:      &defaultVolSize,
 				PersistenceContext: persistenceContext,
 			},
 			wantErr: false,
@@ -136,7 +136,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      defaultVolSize,
+				MinVolumeSize:      &defaultVolSize,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
 						SourceType: ecosystem.DataSourceConfigMap,
@@ -174,7 +174,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -199,7 +199,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -223,7 +223,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -355,7 +355,7 @@ func Test_toDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: volSize25G,
+				MinVolumeSize: &volSize25G,
 			},
 			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
@@ -453,7 +453,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: quantity2,
+				MinVolumeSize: &quantity2,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
@@ -513,7 +513,7 @@ func Test_getNginxIngressAnnotations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(&tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }
@@ -526,7 +526,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    ecosystem.ReverseProxyConfig
+		want    *ecosystem.ReverseProxyConfig
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -538,7 +538,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 					"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
 				},
 			},
-			want: ecosystem.ReverseProxyConfig{
+			want: &ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
 				RewriteTarget:    &rewriteTarget,
 				AdditionalConfig: &additionalConfig,
@@ -554,7 +554,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 					"nginx.ingress.kubernetes.io/proxy-body-size": "1GG",
 				},
 			},
-			want: ecosystem.ReverseProxyConfig{},
+			want: &ecosystem.ReverseProxyConfig{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, "failed to parse quantity \"1GG\"")
@@ -599,7 +599,7 @@ func Test_getNginxIngressAnnotations1(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(&tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }

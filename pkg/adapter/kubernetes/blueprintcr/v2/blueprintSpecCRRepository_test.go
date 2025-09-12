@@ -164,11 +164,11 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		expectedStatus := bpv2.BlueprintStatus{
+		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     &bpv2.Config{},
+				Config:     nil,
 			},
 			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{testCondition},
@@ -236,11 +236,11 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		expectedStatus := bpv2.BlueprintStatus{
+		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     &bpv2.Config{},
+				Config:     nil,
 			},
 			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{},
@@ -279,11 +279,11 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		expectedStatus := bpv2.BlueprintStatus{
+		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
 				Dogus:      []bpv2.Dogu{},
 				Components: []bpv2.Component{},
-				Config:     &bpv2.Config{},
+				Config:     nil,
 			},
 			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
 			Conditions: []metav1.Condition{},

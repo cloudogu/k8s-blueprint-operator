@@ -78,8 +78,8 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{},
 			PersistenceContext: persistenceContext,
-			MinVolumeSize:      quantity2,
-			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+			MinVolumeSize:      &quantity2,
+			ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
 				RewriteTarget:    &rewriteTarget,
 				AdditionalConfig: &additionalConfig,
@@ -219,13 +219,13 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            version1231,
-				MinVolumeSize:      volumeQuantity2,
+				MinVolumeSize:      &volumeQuantity2,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
 				Name:               ldapDoguName,
 				Version:            version3213,
-				MinVolumeSize:      volumeQuantity3,
+				MinVolumeSize:      &volumeQuantity3,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 		}

@@ -12,14 +12,15 @@ import (
 )
 
 func convertToComponentDiffDTO(domainModel domain.ComponentDiff) crd.ComponentDiff {
-	actualVersion := ""
-	expectedVersion := ""
+	var actualVersion, expectedVersion *string
 
 	if domainModel.Actual.Version != nil {
-		actualVersion = domainModel.Actual.Version.String()
+		actualVersionString := domainModel.Actual.Version.String()
+		actualVersion = &actualVersionString
 	}
 	if domainModel.Expected.Version != nil {
-		expectedVersion = domainModel.Expected.Version.String()
+		expectedVersionString := domainModel.Expected.Version.String()
+		expectedVersion = &expectedVersionString
 	}
 
 	neededActions := domainModel.NeededActions
@@ -31,13 +32,13 @@ func convertToComponentDiffDTO(domainModel domain.ComponentDiff) crd.ComponentDi
 	return crd.ComponentDiff{
 		Actual: crd.ComponentDiffState{
 			Namespace:    string(domainModel.Actual.Namespace),
-			Version:      &actualVersion,
+			Version:      actualVersion,
 			Absent:       domainModel.Actual.Absent,
 			DeployConfig: crd.DeployConfig(domainModel.Actual.DeployConfig),
 		},
 		Expected: crd.ComponentDiffState{
 			Namespace:    string(domainModel.Expected.Namespace),
-			Version:      &expectedVersion,
+			Version:      expectedVersion,
 			Absent:       domainModel.Expected.Absent,
 			DeployConfig: crd.DeployConfig(domainModel.Expected.DeployConfig),
 		},

@@ -33,7 +33,7 @@ func (blueprint *Blueprint) Validate() error {
 		blueprint.validateDoguUniqueness(),
 		blueprint.validateComponents(),
 		blueprint.validateComponentUniqueness(),
-		blueprint.Config.validate(),
+		blueprint.validateConfig(),
 	}
 
 	err := errors.Join(errorList...)
@@ -71,4 +71,11 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
 	return nil
+}
+
+func (blueprint *Blueprint) validateConfig() error {
+	if blueprint.Config == nil {
+		return nil
+	}
+	return blueprint.Config.validate()
 }

@@ -303,10 +303,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		// then
 		stateDiff := StateDiff{
-			DoguDiffs:                DoguDiffs{},
-			ComponentDiffs:           ComponentDiffs{},
-			DoguConfigDiffs:          map[cescommons.SimpleName]DoguConfigDiffs{},
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
+			DoguDiffs:      DoguDiffs{},
+			ComponentDiffs: ComponentDiffs{},
 		}
 
 		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
@@ -315,12 +313,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
 		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
 		assert.Equal(t, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs(nil)}, spec.Events[2])
-		assert.Equal(t, DoguConfigDiffDeterminedEvent{
-			DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{},
-		}, spec.Events[3])
-		assert.Equal(t, SensitiveDoguConfigDiffDeterminedEvent{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
-		}, spec.Events[4])
+		assert.Equal(t, DoguConfigDiffDeterminedEvent{}, spec.Events[3])
+		assert.Equal(t, SensitiveDoguConfigDiffDeterminedEvent{}, spec.Events[4])
 		assert.Equal(t, stateDiff, spec.StateDiff)
 	})
 

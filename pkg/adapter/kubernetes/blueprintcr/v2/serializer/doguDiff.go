@@ -20,40 +20,45 @@ func convertToDoguDiffDTO(domainModel domain.DoguDiff) crd.DoguDiff {
 	}
 
 	return crd.DoguDiff{
-		Actual: crd.DoguDiffState{
-			Namespace: string(domainModel.Actual.Namespace),
-			Version:   &domainModel.Actual.Version.Raw,
-			Absent:    domainModel.Actual.Absent,
-			ResourceConfig: &crd.ResourceConfig{
-				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Actual.MinVolumeSize),
-			},
-			ReverseProxyConfig: &crd.ReverseProxyConfig{
-				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Actual.ReverseProxyConfig.MaxBodySize),
-				RewriteTarget:    domainModel.Actual.ReverseProxyConfig.RewriteTarget,
-				AdditionalConfig: domainModel.Actual.ReverseProxyConfig.AdditionalConfig,
-			},
-			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Actual.AdditionalMounts),
-		},
-		Expected: crd.DoguDiffState{
-			Namespace: string(domainModel.Expected.Namespace),
-			Version:   &domainModel.Expected.Version.Raw,
-			Absent:    domainModel.Expected.Absent,
-			ResourceConfig: &crd.ResourceConfig{
-				MinVolumeSize: convertMinimumVolumeSizeToDTO(domainModel.Expected.MinVolumeSize),
-			},
-			ReverseProxyConfig: &crd.ReverseProxyConfig{
-				MaxBodySize:      ecosystem.GetQuantityString(domainModel.Expected.ReverseProxyConfig.MaxBodySize),
-				RewriteTarget:    domainModel.Expected.ReverseProxyConfig.RewriteTarget,
-				AdditionalConfig: domainModel.Expected.ReverseProxyConfig.AdditionalConfig,
-			},
-			AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.Expected.AdditionalMounts),
-		},
+		Actual:        convertToDoguDiffStateDTO(domainModel.Actual),
+		Expected:      convertToDoguDiffStateDTO(domainModel.Expected),
 		NeededActions: doguActions,
 	}
 }
 
+func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) crd.DoguDiffState {
+	var version *string
+	if domainModel.Version != nil {
+		version = &domainModel.Version.Raw
+	}
+
+	var reverseProxyConfig *crd.ReverseProxyConfig
+	if domainModel.ReverseProxyConfig != nil {
+		reverseProxyConfig = &crd.ReverseProxyConfig{
+			RewriteTarget:    domainModel.ReverseProxyConfig.RewriteTarget,
+			AdditionalConfig: domainModel.ReverseProxyConfig.AdditionalConfig,
+			MaxBodySize:      ecosystem.GetQuantityString(domainModel.ReverseProxyConfig.MaxBodySize),
+		}
+	}
+
+	var resourceConfig *crd.ResourceConfig
+	if domainModel.MinVolumeSize != nil {
+		resourceConfig = &crd.ResourceConfig{
+			MinVolumeSize: ecosystem.GetQuantityString(domainModel.MinVolumeSize),
+		}
+	}
+	return crd.DoguDiffState{
+		Namespace:          string(domainModel.Namespace),
+		Version:            version,
+		Absent:             domainModel.Absent,
+		ResourceConfig:     resourceConfig,
+		ReverseProxyConfig: reverseProxyConfig,
+		AdditionalMounts:   convertAdditionalMountsToDoguDiffDTO(domainModel.AdditionalMounts),
+	}
+}
+
 func convertMinimumVolumeSizeToDTO(minVolSize *ecosystem.VolumeSize) *string {
-	if minVolSize.IsZero() {
+	if minVolSize == nil || minVolSize.IsZero() {
 		return nil
 	} else {
 		s := minVolSize.String()
@@ -112,46 +117,50 @@ func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff
 func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, error) {
 	var errorList []error
 
-	var version core.Version
-	var versionErr error
+	var version *core.Version
+	var err error
 	if dto.Version != nil && *dto.Version != "" {
-		version, versionErr = core.ParseVersion(*dto.Version)
-		if versionErr != nil {
-			versionErr = fmt.Errorf("failed to parse version %q: %w", *dto.Version, versionErr)
+		var coreVersion core.Version
+		coreVersion, err = core.ParseVersion(*dto.Version)
+		version = &coreVersion
+		if err != nil {
+			err = fmt.Errorf("failed to parse version %q: %w", *dto.Version, err)
 		}
 	}
-	errorList = append(errorList, versionErr)
+	errorList = append(errorList, err)
 
 	var minVolumeSize, maxBodySize *resource.Quantity
-	var volumeSizeErr error
 	if dto.ResourceConfig != nil && dto.ResourceConfig.MinVolumeSize != nil {
 		minVolumeSizeStr := dto.ResourceConfig.MinVolumeSize
-		minVolumeSize, volumeSizeErr = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
-		if volumeSizeErr != nil {
-			errorList = append(errorList, fmt.Errorf("failed to parse minimum volume size %q: %w", *minVolumeSizeStr, volumeSizeErr))
+		minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
+		if err != nil {
+			errorList = append(errorList, fmt.Errorf("failed to parse minimum volume size %q: %w", *minVolumeSizeStr, err))
 		}
 	}
 
-	var bodySizeErr error
-	if dto.ReverseProxyConfig != nil && dto.ReverseProxyConfig.MaxBodySize != nil {
-		maxBodySizeStr := dto.ReverseProxyConfig.MaxBodySize
-		maxBodySize, bodySizeErr = ecosystem.GetQuantityReference(*maxBodySizeStr)
-		if bodySizeErr != nil {
-			errorList = append(errorList, fmt.Errorf("failed to parse maximum proxy body size %q: %w", *maxBodySizeStr, bodySizeErr))
+	var reverseProxyConfig *ecosystem.ReverseProxyConfig
+	if dto.ReverseProxyConfig != nil {
+		if dto.ReverseProxyConfig.MaxBodySize != nil {
+			maxBodySizeStr := dto.ReverseProxyConfig.MaxBodySize
+			maxBodySize, err = ecosystem.GetQuantityReference(*maxBodySizeStr)
+			if err != nil {
+				errorList = append(errorList, fmt.Errorf("failed to parse maximum proxy body size %q: %w", *maxBodySizeStr, err))
+			}
+		}
+		reverseProxyConfig = &ecosystem.ReverseProxyConfig{
+			MaxBodySize:      maxBodySize,
+			RewriteTarget:    dto.ReverseProxyConfig.RewriteTarget,
+			AdditionalConfig: dto.ReverseProxyConfig.AdditionalConfig,
 		}
 	}
 
 	return domain.DoguDiffState{
-		Namespace:     cescommons.Namespace(dto.Namespace),
-		Version:       &version,
-		Absent:        dto.Absent,
-		MinVolumeSize: minVolumeSize,
-		ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
-			MaxBodySize:      maxBodySize,
-			RewriteTarget:    dto.ReverseProxyConfig.RewriteTarget,
-			AdditionalConfig: dto.ReverseProxyConfig.AdditionalConfig,
-		},
-		AdditionalMounts: convertAdditionalMountsToDoguDiffDomain(dto.AdditionalMounts),
+		Namespace:          cescommons.Namespace(dto.Namespace),
+		Version:            version,
+		Absent:             dto.Absent,
+		MinVolumeSize:      minVolumeSize,
+		ReverseProxyConfig: reverseProxyConfig,
+		AdditionalMounts:   convertAdditionalMountsToDoguDiffDomain(dto.AdditionalMounts),
 	}, errors.Join(errorList...)
 }
 

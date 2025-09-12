@@ -24,6 +24,20 @@ type ConfigValueState struct {
 	Value  *string
 	Exists bool
 }
+
+func (a ConfigValueState) Equal(b ConfigValueState) bool {
+	if a.Exists != b.Exists {
+		return false
+	}
+	if a.Value == b.Value { // covers both nil and same address
+		return true
+	}
+	if a.Value == nil || b.Value == nil {
+		return false
+	}
+	return *a.Value == *b.Value
+}
+
 type DoguConfigEntryDiff struct {
 	Key          common.DoguConfigKey
 	Actual       DoguConfigValueState
@@ -62,13 +76,21 @@ func determineDoguConfigDiffs(
 	var doguConfigDiff []DoguConfigEntryDiff
 	// present entries
 	for key, expectedValue := range wantedConfig.Present {
+		var actualValue *config.Value
 		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, &actualEntry, exists, &expectedValue, true))
+		if exists {
+			actualValue = &actualEntry
+		}
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualValue, exists, &expectedValue, true))
 	}
 	// absent entries
 	for _, key := range wantedConfig.Absent {
+		var actualValue *config.Value
 		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, &actualEntry, exists, nil, false))
+		if exists {
+			actualValue = &actualEntry
+		}
+		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualValue, exists, nil, false))
 	}
 	return doguConfigDiff
 }

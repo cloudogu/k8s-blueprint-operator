@@ -25,9 +25,9 @@ type DoguInstallation struct {
 	PersistenceContext map[string]interface{}
 	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
 	// storage is needed.
-	MinVolumeSize VolumeSize
+	MinVolumeSize *VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
-	ReverseProxyConfig ReverseProxyConfig
+	ReverseProxyConfig *ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
 	AdditionalMounts []AdditionalMount
 }
@@ -54,6 +54,10 @@ type ReverseProxyConfig struct {
 	MaxBodySize      *BodySize
 	RewriteTarget    RewriteTarget
 	AdditionalConfig AdditionalConfig
+}
+
+func (r *ReverseProxyConfig) IsEmpty() bool {
+	return r == nil || (r.MaxBodySize == nil && r.RewriteTarget == nil && r.AdditionalConfig == nil)
 }
 
 // UpgradeConfig contains configuration hints regarding aspects during the upgrade of dogus.
@@ -102,21 +106,12 @@ func InstallDogu(
 		doguVersion = *version
 	}
 
-	doguVolumeSize := VolumeSize{}
-	if minVolumeSize != nil {
-		doguVolumeSize = *minVolumeSize
-	}
-
-	doguReverseProxyConfig := ReverseProxyConfig{}
-	if reverseProxyConfig != nil {
-		doguReverseProxyConfig = *reverseProxyConfig
-	}
 	return &DoguInstallation{
 		Name:               name,
 		Version:            doguVersion,
 		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
-		MinVolumeSize:      doguVolumeSize,
-		ReverseProxyConfig: doguReverseProxyConfig,
+		MinVolumeSize:      minVolumeSize,
+		ReverseProxyConfig: reverseProxyConfig,
 		AdditionalMounts:   additionalMounts,
 	}
 }
@@ -144,21 +139,27 @@ func (dogu *DoguInstallation) SwitchNamespace(newNamespace cescommons.Namespace,
 }
 
 func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
+	if dogu.ReverseProxyConfig == nil {
+		dogu.ReverseProxyConfig = &ReverseProxyConfig{}
+	}
 	dogu.ReverseProxyConfig.MaxBodySize = value
 }
 
 func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
-	dogu.MinVolumeSize = VolumeSize{}
-	if size != nil {
-		dogu.MinVolumeSize = *size
-	}
+	dogu.MinVolumeSize = size
 }
 
 func (dogu *DoguInstallation) UpdateProxyRewriteTarget(value RewriteTarget) {
+	if dogu.ReverseProxyConfig == nil {
+		dogu.ReverseProxyConfig = &ReverseProxyConfig{}
+	}
 	dogu.ReverseProxyConfig.RewriteTarget = value
 }
 
 func (dogu *DoguInstallation) UpdateProxyAdditionalConfig(value AdditionalConfig) {
+	if dogu.ReverseProxyConfig == nil {
+		dogu.ReverseProxyConfig = &ReverseProxyConfig{}
+	}
 	dogu.ReverseProxyConfig.AdditionalConfig = value
 }
 

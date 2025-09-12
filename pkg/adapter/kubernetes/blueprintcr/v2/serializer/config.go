@@ -95,7 +95,7 @@ func convertToDoguConfigDTO(config domain.DoguConfig) []v2.ConfigEntry {
 }
 
 func convertToDoguConfigDomain(doguName string, config []v2.ConfigEntry) domain.DoguConfig {
-	if config == nil {
+	if config == nil || len(config) == 0 {
 		return domain.DoguConfig{}
 	}
 
@@ -167,7 +167,7 @@ func convertToGlobalConfigDomain(config []v2.ConfigEntry) domain.GlobalConfig {
 
 	absentIndex := 0
 	for _, configEntry := range config {
-		if configEntry.Absent != nil && *configEntry.Absent == false && configEntry.Value != nil {
+		if (configEntry.Absent == nil || !*configEntry.Absent) && configEntry.Value != nil {
 			present[common.GlobalConfigKey(configEntry.Key)] = common.GlobalConfigValue(*configEntry.Value)
 		} else {
 			absent[absentIndex] = common.GlobalConfigKey(configEntry.Key)

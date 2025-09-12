@@ -41,9 +41,11 @@ func (dogu Dogu) validate() error {
 	// minVolumeSize is already checked while unmarshalling json/yaml
 
 	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.
-	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
-	if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
-		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
+	if dogu.ReverseProxyConfig != nil {
+		maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
+		if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
+			errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
+		}
 	}
 
 	for _, mount := range dogu.AdditionalMounts {

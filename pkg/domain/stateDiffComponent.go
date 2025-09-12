@@ -89,7 +89,7 @@ func (diff *ComponentDiff) String() string {
 // String returns a string representation of the ComponentDiffState.
 func (diff *ComponentDiffState) String() string {
 	return fmt.Sprintf(
-		"{Namespace: %q, Version: %q, InstallationState: %t}",
+		"{Namespace: %q, Version: %q, Absent: %t}",
 		diff.Namespace,
 		diff.getSafeVersionString(),
 		diff.Absent,

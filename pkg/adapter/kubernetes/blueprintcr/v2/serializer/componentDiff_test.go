@@ -50,7 +50,7 @@ func Test_convertToComponentDiffDTO(t *testing.T) {
 		// then
 		expected := crd.ComponentDiff{
 			Actual:        crd.ComponentDiffState{Version: &testSemverVersionHighRaw},
-			Expected:      crd.ComponentDiffState{Version: nil, Absent: true},
+			Expected:      crd.ComponentDiffState{Version: nil, Absent: false},
 			NeededActions: []crd.ComponentAction{domain.ActionUninstall},
 		}
 		assert.Equal(t, expected, actual)

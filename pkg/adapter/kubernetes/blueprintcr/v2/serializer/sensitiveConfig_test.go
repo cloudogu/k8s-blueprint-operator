@@ -123,7 +123,7 @@ func Test_convertToSensitiveDoguConfigDomain(t *testing.T) {
 			},
 		},
 		{
-			name: "convert present config",
+			name: "convert absent config",
 			args: args{
 				doguName: string(testDoguKey1.DoguName),
 				doguConfig: []v2.ConfigEntry{
