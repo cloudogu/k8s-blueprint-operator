@@ -6,8 +6,6 @@ import (
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 type BlueprintSpecChangeUseCase struct {
@@ -24,7 +22,7 @@ type BlueprintSpecChangeUseCase struct {
 }
 
 func NewBlueprintSpecChangeUseCase(
-	repo domainservice.BlueprintSpecRepository,
+	repo blueprintSpecRepository,
 	validation blueprintSpecValidationUseCase,
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
