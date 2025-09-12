@@ -15,7 +15,7 @@ gpg = new Gpg(this, docker)
 goVersion = "1.24.3"
 Makefile makefile = new Makefile(this)
 
-componentOperatorVersion=1.10.0
+componentOperatorVersion="1.10.0"
 
 // Configuration of repository
 repositoryOwner = "cloudogu"
