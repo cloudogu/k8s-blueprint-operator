@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.8.0] - 2025-09-15
+### Changed
+- [#125] ignore nginx dependencies
+
+### Removed
+- [#125] component-dependency for component-oprator-crd
+  - it is replaced by a helm capabilities-check for the component CRD
+
 ## [v2.7.0] - 2025-07-17
 ### Fixed
 - [#117] configuring operator log-level
