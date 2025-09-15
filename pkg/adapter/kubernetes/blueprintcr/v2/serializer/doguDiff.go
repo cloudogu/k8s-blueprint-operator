@@ -57,15 +57,6 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) crd.DoguDiffSta
 	}
 }
 
-func convertMinimumVolumeSizeToDTO(minVolSize *ecosystem.VolumeSize) *string {
-	if minVolSize == nil || minVolSize.IsZero() {
-		return nil
-	} else {
-		s := minVolSize.String()
-		return &s
-	}
-}
-
 func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []crd.AdditionalMount {
 	if len(mounts) == 0 {
 		// an empty slice and nil are serialized differently

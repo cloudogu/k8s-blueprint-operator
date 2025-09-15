@@ -62,7 +62,7 @@ func convertToGlobalConfigDTO(config domain.GlobalConfigEntries) []v2.ConfigEntr
 }
 
 func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
-	if config == nil || len(config) == 0 {
+	if len(config) == 0 {
 		return nil
 	}
 

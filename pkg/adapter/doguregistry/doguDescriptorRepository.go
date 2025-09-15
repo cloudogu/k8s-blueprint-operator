@@ -32,7 +32,7 @@ func (r *DoguDescriptorRepository) GetDogu(ctx context.Context, qualifiedDoguVer
 		return dogu, nil
 	}
 
-	dogu, err := r.getRemoteDogu(ctx, qualifiedDoguVersion, dogu)
+	dogu, err := r.getRemoteDogu(ctx, qualifiedDoguVersion)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (r *DoguDescriptorRepository) GetDogu(ctx context.Context, qualifiedDoguVer
 	return dogu, nil
 }
 
-func (r *DoguDescriptorRepository) getRemoteDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion, dogu *core.Dogu) (*core.Dogu, error) {
+func (r *DoguDescriptorRepository) getRemoteDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion) (*core.Dogu, error) {
 	// do not retry here. If any error happens, just reconcile later. We only do retries in application level.
 	// This makes the code way easier and non-blocking.
 	dogu, err := r.remoteRepository.Get(ctx, qualifiedDoguVersion)
