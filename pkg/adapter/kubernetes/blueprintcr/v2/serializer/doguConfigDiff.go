@@ -34,7 +34,7 @@ func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.ConfigEntryDiff
 	}
 }
 
-func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) crd.ConfigDiff {
+func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) crd.DoguConfigDiff {
 	var dtoDiffs []crd.ConfigEntryDiff
 	for _, domainDiff := range domainDiffs {
 		dtoDiffs = append(dtoDiffs, convertToDoguConfigEntryDiffDTO(domainDiff, isSensitive))

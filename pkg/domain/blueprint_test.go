@@ -60,10 +60,10 @@ func Test_validate_multipleErrors(t *testing.T) {
 		Dogus:      dogus,
 		Components: components,
 		Config: &Config{
-			Global: GlobalConfig{
-				Present: nil,
-				Absent: []common.GlobalConfigKey{
-					"",
+			Global: GlobalConfigEntries{
+				{
+					Key:    "",
+					Absent: true,
 				},
 			},
 		},
@@ -77,7 +77,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 	assert.ErrorContains(t, err, "dogu version must not be empty")
 	assert.ErrorContains(t, err, "component name must not be empty")
 	assert.ErrorContains(t, err, `namespace of component "" must not be empty`)
-	assert.ErrorContains(t, err, `key for absent global config should not be empty`)
+	assert.ErrorContains(t, err, `key for global config should not be empty`)
 }
 
 func Test_validateDogus_ok(t *testing.T) {

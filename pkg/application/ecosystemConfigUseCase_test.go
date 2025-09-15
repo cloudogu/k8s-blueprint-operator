@@ -731,7 +731,7 @@ func getRemoveDoguConfigEntryDiff(key string, doguName cescommons.SimpleName) do
 
 func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescommons.SimpleName, action domain.ConfigAction) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
-		Key: common.SensitiveDoguConfigKey{
+		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},
@@ -744,7 +744,7 @@ func getSensitiveDoguConfigEntryDiffForAction(key, value string, doguName cescom
 
 func getRemoveSensitiveDoguConfigEntryDiff(key string, doguName cescommons.SimpleName) domain.SensitiveDoguConfigEntryDiff {
 	return domain.SensitiveDoguConfigEntryDiff{
-		Key: common.SensitiveDoguConfigKey{
+		Key: common.DoguConfigKey{
 			Key:      config.Key(key),
 			DoguName: doguName,
 		},

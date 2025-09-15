@@ -58,7 +58,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	logger.V(2).Info("load referenced sensitive config")
 	// load referenced config before collecting ecosystem state
 	// if an error happens here, we save a lot of heavy work
-	var referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue
+	var referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue
 	var err error
 	if blueprint.EffectiveBlueprint.Config != nil {
 		referencedSensitiveConfig, err = useCase.sensitiveConfigRefReader.GetValues(

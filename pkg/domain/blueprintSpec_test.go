@@ -175,8 +175,8 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		}
 
 		config := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
-				officialDogu1.SimpleName: {},
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				officialDogu1.SimpleName: {ConfigEntry{Key: "test", Value: &val1}},
 			},
 		}
 
@@ -236,7 +236,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 
 	t.Run("validate only config for dogus in blueprint", func(t *testing.T) {
 		config := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
 				"my-dogu": {},
 			},
 		}
@@ -299,7 +299,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		stateDiff := StateDiff{
@@ -347,7 +347,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.NoError(t, err)
@@ -383,7 +383,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
@@ -417,7 +417,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
@@ -451,7 +451,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))

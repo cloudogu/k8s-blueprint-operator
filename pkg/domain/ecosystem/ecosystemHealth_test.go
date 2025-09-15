@@ -1,10 +1,11 @@
 package ecosystem
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestHealthResult_String(t *testing.T) {

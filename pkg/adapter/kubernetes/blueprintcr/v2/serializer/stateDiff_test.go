@@ -181,7 +181,7 @@ func TestConvertToDTO(t *testing.T) {
 			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
-				DoguConfigDiffs: map[string]crd.ConfigDiff{
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					"ldap":    {},
 					"postfix": {},
 				},
@@ -528,14 +528,14 @@ func TestConvertToDomainModel(t *testing.T) {
 		{
 			name: "succeed for multiple dogu config diffs",
 			dto: crd.StateDiff{
-				DoguConfigDiffs: map[string]crd.ConfigDiff{
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					"ldap": {
-						crd.ConfigEntryDiff{},
-						crd.ConfigEntryDiff{},
+						crd.DoguConfigDiff{},
+						crd.SensitiveDoguConfigDiff{},
 					},
 					"postfix": {
-						crd.ConfigEntryDiff{},
-						crd.ConfigEntryDiff{},
+						crd.DoguConfigDiff{},
+						crd.SensitiveDoguConfigDiff{},
 					},
 				},
 			},
@@ -556,7 +556,7 @@ func TestConvertToDomainModel(t *testing.T) {
 		{
 			name: "succeed for global config diffs",
 			dto: crd.StateDiff{
-				GlobalConfigDiff: crd.ConfigDiff{{
+				GlobalConfigDiff: crd.GlobalConfigDiff{{
 					Key: "fqdn",
 					Actual: crd.ConfigValueState{
 						Value:  &testFqdn1,
@@ -785,33 +785,37 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
-				DoguConfigDiffs: map[string]crd.ConfigDiff{
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					testDogu.String(): {
-						crd.ConfigEntryDiff{
-							Key: testDoguKey1.Key.String(),
-							Actual: crd.ConfigValueState{
-								Value:  &value1,
-								Exists: true,
+						DoguConfigDiff: crd.DoguConfigDiff{
+							{
+								Key: testDoguKey1.Key.String(),
+								Actual: crd.ConfigValueState{
+									Value:  &value1,
+									Exists: true,
+								},
+								Expected: crd.ConfigValueState{
+									Value:  &value123,
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
 							},
-							Expected: crd.ConfigValueState{
-								Value:  &value123,
-								Exists: true,
-							},
-							NeededAction: crd.ConfigAction("set"),
 						},
 					},
 					testDogu2.String(): {
-						crd.ConfigEntryDiff{
-							Key: testDoguKey2.Key.String(),
-							Actual: crd.ConfigValueState{
-								Value:  nil,
-								Exists: false,
+						DoguConfigDiff: crd.DoguConfigDiff{
+							{
+								Key: testDoguKey2.Key.String(),
+								Actual: crd.ConfigValueState{
+									Value:  nil,
+									Exists: false,
+								},
+								Expected: crd.ConfigValueState{
+									Value:  &value123,
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
 							},
-							Expected: crd.ConfigValueState{
-								Value:  &value123,
-								Exists: true,
-							},
-							NeededAction: crd.ConfigAction("set"),
 						},
 					},
 				},
@@ -859,33 +863,37 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 			want: &crd.StateDiff{
 				DoguDiffs:      map[string]crd.DoguDiff{},
 				ComponentDiffs: map[string]crd.ComponentDiff{},
-				DoguConfigDiffs: map[string]crd.ConfigDiff{
+				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					testDogu.String(): {
-						crd.ConfigEntryDiff{
-							Key: testDoguKey1.Key.String(),
-							Actual: crd.ConfigValueState{
-								Value:  nil,
-								Exists: true,
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{
+							{
+								Key: testDoguKey1.Key.String(),
+								Actual: crd.ConfigValueState{
+									Value:  nil,
+									Exists: true,
+								},
+								Expected: crd.ConfigValueState{
+									Value:  nil,
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
 							},
-							Expected: crd.ConfigValueState{
-								Value:  nil,
-								Exists: true,
-							},
-							NeededAction: crd.ConfigAction("set"),
 						},
 					},
 					testDogu2.String(): {
-						crd.ConfigEntryDiff{
-							Key: testDoguKey2.Key.String(),
-							Actual: crd.ConfigValueState{
-								Value:  nil,
-								Exists: false,
+						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{
+							{
+								Key: testDoguKey2.Key.String(),
+								Actual: crd.ConfigValueState{
+									Value:  nil,
+									Exists: false,
+								},
+								Expected: crd.ConfigValueState{
+									Value:  nil,
+									Exists: true,
+								},
+								NeededAction: crd.ConfigAction("set"),
 							},
-							Expected: crd.ConfigValueState{
-								Value:  nil,
-								Exists: true,
-							},
-							NeededAction: crd.ConfigAction("set"),
 						},
 					},
 				},

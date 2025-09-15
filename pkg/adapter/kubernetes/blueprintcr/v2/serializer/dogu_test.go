@@ -67,7 +67,7 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "dogu with max proxy body size",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &volumeSizeString}}}}},
+			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, ReverseProxyConfig: &ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize}}},
 			wantErr: assert.NoError,
 		},

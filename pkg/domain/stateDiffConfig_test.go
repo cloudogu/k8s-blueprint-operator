@@ -12,18 +12,15 @@ import (
 )
 
 var (
-	dogu1              = cescommons.SimpleName("dogu1")
-	dogu2              = cescommons.SimpleName("dogu2")
-	dogu1Key1          = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
-	dogu1Key2          = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
-	dogu1Key3          = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
-	dogu1Key4          = common.DoguConfigKey{DoguName: dogu1, Key: "key4"}
-	sensitiveDogu1Key1 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key1"}
-	sensitiveDogu1Key2 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key2"}
-	sensitiveDogu1Key3 = common.SensitiveDoguConfigKey{DoguName: dogu1, Key: "key3"}
-	val1               = "value1"
-	val2               = "value2"
-	val3               = "value3"
+	dogu1     = cescommons.SimpleName("dogu1")
+	dogu2     = cescommons.SimpleName("dogu2")
+	dogu1Key1 = common.DoguConfigKey{DoguName: dogu1, Key: "key1"}
+	dogu1Key2 = common.DoguConfigKey{DoguName: dogu1, Key: "key2"}
+	dogu1Key3 = common.DoguConfigKey{DoguName: dogu1, Key: "key3"}
+	dogu1Key4 = common.DoguConfigKey{DoguName: dogu1, Key: "key4"}
+	val1      = config.Value("value1")
+	val2      = config.Value("value2")
+	val3      = config.Value("value3")
 )
 
 func Test_determineConfigDiff(t *testing.T) {
@@ -33,7 +30,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 
 		assert.Nil(t, dogusConfigDiffs)
@@ -48,7 +45,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 
 		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
@@ -59,21 +56,30 @@ func Test_determineConfigDiff(t *testing.T) {
 		//given ecosystem config
 
 		entries, _ := config.MapToEntries(map[string]any{
-			"key1": "value1", // for action none
-			"key2": "value2", // for action set
-			"key3": "value3", // for action delete
+			"key1": val1.String(), // for action none
+			"key2": val2.String(), // for action set
+			"key3": val3.String(), // for action delete
 			// key4 is absent -> action none
 		})
 		globalConfig := config.CreateGlobalConfig(entries)
 		//given blueprint config
 		givenConfig := Config{
-			Global: GlobalConfig{
-				Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-					"key1": "value1",
-					"key2": "value3",
+			Global: GlobalConfigEntries{
+				{
+					Key:   "key1",
+					Value: &val1,
 				},
-				Absent: []common.GlobalConfigKey{
-					"key3", "key4",
+				{
+					Key:   "key2",
+					Value: &val3,
+				},
+				{
+					Key:    "key3",
+					Absent: true,
+				},
+				{
+					Key:    "key4",
+					Absent: true,
 				},
 			},
 		}
@@ -84,7 +90,7 @@ func Test_determineConfigDiff(t *testing.T) {
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 
 		//then
@@ -97,11 +103,11 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
 					Key: "key1",
 					Actual: GlobalConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					Expected: GlobalConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					NeededAction: ConfigActionNone,
@@ -112,11 +118,11 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
 					Key: "key2",
 					Actual: GlobalConfigValueState{
-						Value:  &val2,
+						Value:  (*string)(&val2),
 						Exists: true,
 					},
 					Expected: GlobalConfigValueState{
-						Value:  &val3,
+						Value:  (*string)(&val3),
 						Exists: true,
 					},
 					NeededAction: ConfigActionSet,
@@ -127,7 +133,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
 					Key: "key3",
 					Actual: GlobalConfigValueState{
-						Value:  &val3,
+						Value:  (*string)(&val3),
 						Exists: true,
 					},
 					Expected: GlobalConfigValueState{
@@ -172,17 +178,23 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
 				"dogu1": {
-					DoguName: "dogu1",
-					Config: DoguConfig{
-						Present: map[common.DoguConfigKey]common.DoguConfigValue{
-							dogu1Key1: "value1",
-							dogu1Key2: "value2",
-						},
-						Absent: []common.DoguConfigKey{
-							dogu1Key3, dogu1Key4,
-						},
+					{
+						Key:   dogu1Key1.Key,
+						Value: &val1,
+					},
+					{
+						Key:   dogu1Key2.Key,
+						Value: &val2,
+					},
+					{
+						Key:    dogu1Key3.Key,
+						Absent: true,
+					},
+					{
+						Key:    dogu1Key4.Key,
+						Absent: true,
 					},
 				},
 			},
@@ -196,7 +208,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1: doguConfig,
 			},
 			map[cescommons.SimpleName]config.DoguConfig{},
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
@@ -209,11 +221,11 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
 					Key: dogu1Key1,
 					Actual: DoguConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					Expected: DoguConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					NeededAction: ConfigActionNone,
@@ -224,11 +236,11 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
 					Key: dogu1Key2,
 					Actual: DoguConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					Expected: DoguConfigValueState{
-						Value:  &val2,
+						Value:  (*string)(&val2),
 						Exists: true,
 					},
 					NeededAction: ConfigActionSet,
@@ -239,7 +251,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
 					Key: dogu1Key3,
 					Actual: DoguConfigValueState{
-						Value:  &val1,
+						Value:  (*string)(&val1),
 						Exists: true,
 					},
 					Expected: DoguConfigValueState{
@@ -286,23 +298,28 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
 				"dogu1": {
-					DoguName: "dogu1",
-					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
-							sensitiveDogu1Key1: {
-								SecretName: "mySecret1",
-								SecretKey:  "myKey1",
-							},
-							sensitiveDogu1Key2: {
-								SecretName: "mySecret2",
-								SecretKey:  "myKey2",
-							},
+					{
+						Key:       dogu1Key1.Key,
+						Sensitive: true,
+						SecretRef: &SensitiveValueRef{
+							SecretName: "mySecret1",
+							SecretKey:  "myKey1",
 						},
-						Absent: []common.SensitiveDoguConfigKey{
-							sensitiveDogu1Key3,
+					},
+					{
+						Key:       dogu1Key2.Key,
+						Sensitive: true,
+						SecretRef: &SensitiveValueRef{
+							SecretName: "mySecret2",
+							SecretKey:  "myKey2",
 						},
+					},
+					{
+						Key:       dogu1Key3.Key,
+						Sensitive: true,
+						Absent:    true,
 					},
 				},
 			},
@@ -317,9 +334,9 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1: sensitiveDoguConfig,
 			},
 			//loaded referenced sensitive config
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				sensitiveDogu1Key1: "value1",
-				sensitiveDogu1Key2: "value2",
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{
+				dogu1Key1: "value1",
+				dogu1Key2: "value2",
 			},
 		)
 		//then
@@ -330,31 +347,31 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		entriesDogu1 := SensitiveDoguConfigDiffs{
 			{
-				Key: sensitiveDogu1Key1,
+				Key: dogu1Key1,
 				Actual: DoguConfigValueState{
-					Value:  &val1,
+					Value:  (*string)(&val1),
 					Exists: true,
 				},
 				Expected: DoguConfigValueState{
-					Value:  &val1,
+					Value:  (*string)(&val1),
 					Exists: true,
 				},
 				NeededAction: ConfigActionNone,
 			},
 			{
-				Key: sensitiveDogu1Key2,
+				Key: dogu1Key2,
 				Actual: DoguConfigValueState{
-					Value:  &val1,
+					Value:  (*string)(&val1),
 					Exists: true,
 				},
 				Expected: DoguConfigValueState{
-					Value:  &val2,
+					Value:  (*string)(&val2),
 					Exists: true,
 				},
 				NeededAction: ConfigActionSet,
 			},
 			{
-				Key: sensitiveDogu1Key3,
+				Key: dogu1Key3,
 				Actual: DoguConfigValueState{
 					Value:  nil,
 					Exists: false,
@@ -381,17 +398,15 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//given blueprint config
 		givenConfig := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
 				"dogu1": {
-					DoguName: "dogu1",
-					SensitiveConfig: SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]SensitiveValueRef{
-							sensitiveDogu1Key1: {
-								SecretName: "secret1",
-								SecretKey:  "key1",
-							},
+					{
+						Key:       dogu1Key1.Key,
+						Sensitive: true,
+						SecretRef: &SensitiveValueRef{
+							SecretName: "mySecret1",
+							SecretKey:  "myKey1",
 						},
-						Absent: []common.SensitiveDoguConfigKey{},
 					},
 				},
 			},
@@ -408,8 +423,8 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1: sensitiveDoguConfig,
 			},
 			//loaded referenced sensitive config
-			map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
-				sensitiveDogu1Key1: "value1",
+			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{
+				dogu1Key1: "value1",
 			},
 		)
 		//then
@@ -418,13 +433,13 @@ func Test_determineConfigDiff(t *testing.T) {
 		require.NotNil(t, sensitiveConfigDiffs["dogu1"])
 		require.Equal(t, 1, len(sensitiveConfigDiffs["dogu1"]))
 		assert.Empty(t, cmp.Diff(sensitiveConfigDiffs["dogu1"][0], SensitiveDoguConfigEntryDiff{
-			Key: sensitiveDogu1Key1,
+			Key: dogu1Key1,
 			Actual: DoguConfigValueState{
 				Value:  nil,
 				Exists: false,
 			},
 			Expected: DoguConfigValueState{
-				Value:  &val1,
+				Value:  (*string)(&val1),
 				Exists: true,
 			},
 			NeededAction: ConfigActionSet,
@@ -448,14 +463,14 @@ func Test_getNeededConfigAction(t *testing.T) {
 		},
 		{
 			name:     "action none, for some reason the values are different",
-			expected: ConfigValueState{Value: &val1, Exists: false},
-			actual:   ConfigValueState{Value: &val2, Exists: false},
+			expected: ConfigValueState{Value: (*string)(&val1), Exists: false},
+			actual:   ConfigValueState{Value: (*string)(&val2), Exists: false},
 			want:     ConfigActionNone,
 		},
 		{
 			name:     "action none, equal values",
-			expected: ConfigValueState{Value: &val1, Exists: true},
-			actual:   ConfigValueState{Value: &val1, Exists: true},
+			expected: ConfigValueState{Value: (*string)(&val1), Exists: true},
+			actual:   ConfigValueState{Value: (*string)(&val1), Exists: true},
 			want:     ConfigActionNone,
 		},
 		{
@@ -466,8 +481,8 @@ func Test_getNeededConfigAction(t *testing.T) {
 		},
 		{
 			name:     "update value",
-			expected: ConfigValueState{Value: &val1, Exists: true},
-			actual:   ConfigValueState{Value: &val2, Exists: true},
+			expected: ConfigValueState{Value: (*string)(&val1), Exists: true},
+			actual:   ConfigValueState{Value: (*string)(&val2), Exists: true},
 			want:     ConfigActionSet,
 		},
 		{
@@ -479,7 +494,7 @@ func Test_getNeededConfigAction(t *testing.T) {
 		{
 			name:     "remove value",
 			expected: ConfigValueState{Value: nil, Exists: false},
-			actual:   ConfigValueState{Value: &val3, Exists: true},
+			actual:   ConfigValueState{Value: (*string)(&val3), Exists: true},
 			want:     ConfigActionRemove,
 		},
 	}

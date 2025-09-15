@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"iter"
+	"maps"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	"iter"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"maps"
 )
 
 type SecretRefReader struct {
@@ -23,7 +24,7 @@ func NewSecretRefReader(secretClient secretClient) *SecretRefReader {
 	}
 }
 
-func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
+func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.DoguConfigKey]domain.SensitiveValueRef) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, maps.Values(refs))
 	sensitiveConfig, keyErrors := reader.loadKeysFromSecrets(refs, secretsByName)
 
@@ -38,11 +39,11 @@ func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.Se
 }
 
 func (reader *SecretRefReader) loadKeysFromSecrets(
-	refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+	refs map[common.DoguConfigKey]domain.SensitiveValueRef,
 	secretsByName map[string]*v1.Secret,
-) (map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue, error) {
+) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	var errs []error
-	loadedConfig := map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}
+	loadedConfig := map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}
 
 	for configKey, ref := range refs {
 		secret, found := secretsByName[ref.SecretName]

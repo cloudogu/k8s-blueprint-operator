@@ -32,7 +32,7 @@ func determineConfigDiffs(
 	globalConfig config.GlobalConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig,
-	referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) (
 	map[cescommons.SimpleName]DoguConfigDiffs,
 	map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
@@ -48,44 +48,43 @@ func determineConfigDiffs(
 }
 
 func determineDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	blueprintDoguConfigs map[cescommons.SimpleName]DoguConfigEntries,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
-	for doguName, combinedDoguConfig := range combinedDoguConfigs {
-		diffsPerDogu[doguName] = determineDoguConfigDiffs(combinedDoguConfig.Config, configByDogu)
+	for doguName, bluprintDoguConfig := range blueprintDoguConfigs {
+		diffsPerDogu[doguName] = determineDoguConfigDiffs(doguName, bluprintDoguConfig, configByDogu, false)
 	}
 	return diffsPerDogu
 }
 
 func determineSensitiveDogusConfigDiffs(
-	combinedDoguConfigs map[cescommons.SimpleName]CombinedDoguConfig,
+	blueprintDoguConfigs map[cescommons.SimpleName]DoguConfigEntries,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	referencedValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
-	for doguName, combinedDoguConfig := range combinedDoguConfigs {
-		expectedSensitiveConfig := createDoguConfigFromReferencedValues(combinedDoguConfig.SensitiveConfig, referencedValues)
-		diffsPerDogu[doguName] = determineDoguConfigDiffs(expectedSensitiveConfig, configByDogu)
+	for doguName, blueprintDoguConfig := range blueprintDoguConfigs {
+		setSensitiveConfigValues(doguName, blueprintDoguConfig, referencedValues)
+		diffsPerDogu[doguName] = determineDoguConfigDiffs(doguName, blueprintDoguConfig, configByDogu, true)
 	}
 	return diffsPerDogu
 }
 
-// createDoguConfigFromReferencedValues maps the referenced values to normal dogu config,
+// setSensitiveConfigValues maps the referenced values to normal dogu config,
 // so that the stateDiff can handle sensitive dogu config the same way as normal dogu config
-func createDoguConfigFromReferencedValues(
-	sensitiveConfig SensitiveDoguConfig,
-	referencedValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
-) DoguConfig {
-	configEntries := map[common.DoguConfigKey]common.DoguConfigValue{}
-	for key := range sensitiveConfig.Present {
-		// we checked previously that all referenced values exist. Therefore, we need no error here.
-		// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
-		configEntries[key] = referencedValues[key]
-	}
-	return DoguConfig{
-		Present: configEntries,
-		Absent:  sensitiveConfig.Absent,
+func setSensitiveConfigValues(doguName cescommons.SimpleName, configEntries DoguConfigEntries, referencedValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue) {
+	for i, entry := range configEntries {
+		if !entry.Absent && entry.Sensitive {
+			key := common.DoguConfigKey{
+				DoguName: doguName,
+				Key:      entry.Key,
+			}
+			// we checked previously that all referenced values exist. Therefore, we need no error here.
+			// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
+			sensitiveValue := referencedValues[key]
+			configEntries[i].Value = &sensitiveValue
+		}
 	}
 }
 

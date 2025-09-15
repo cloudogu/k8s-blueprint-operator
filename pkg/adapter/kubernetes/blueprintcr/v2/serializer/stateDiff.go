@@ -3,6 +3,7 @@ package serializer
 import (
 	"errors"
 	"fmt"
+	"slices"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
@@ -20,22 +21,38 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) *crd.StateDiff {
 		componentDiffs[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
 	}
 
-	var doguConfigDiffs map[string]crd.ConfigDiff
+	var dogus []cescommons.SimpleName
+	var combinedConfigDiffs map[string]crd.CombinedDoguConfigDiff
+	var doguConfigDiffByDogu map[cescommons.SimpleName]crd.DoguConfigDiff
+	var sensitiveDoguConfigDiff map[cescommons.SimpleName]crd.SensitiveDoguConfigDiff
 
 	if len(domainModel.DoguConfigDiffs) != 0 || len(domainModel.SensitiveDoguConfigDiffs) != 0 {
-		doguConfigDiffs = make(map[string]crd.ConfigDiff)
+		combinedConfigDiffs = make(map[string]crd.CombinedDoguConfigDiff)
+		doguConfigDiffByDogu = make(map[cescommons.SimpleName]crd.DoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.DoguConfigDiffs {
-			doguConfigDiffs[doguName.String()] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff, false)
+			doguConfigDiffByDogu[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff, false)
+			dogus = append(dogus, doguName)
 		}
+		sensitiveDoguConfigDiff = make(map[cescommons.SimpleName]crd.SensitiveDoguConfigDiff)
 		for doguName, doguConfigDiff := range domainModel.SensitiveDoguConfigDiffs {
-			doguConfigDiffs[doguName.String()] = append(doguConfigDiffs[doguName.String()], convertToDoguConfigEntryDiffsDTO(doguConfigDiff, true)...)
+			sensitiveDoguConfigDiff[doguName] = convertToDoguConfigEntryDiffsDTO(doguConfigDiff, true)
+			dogus = append(dogus, doguName)
+		}
+
+		// remove duplicates, so we have a complete list of all dogus with config
+		dogus = slices.Compact(dogus)
+		for _, doguName := range dogus {
+			combinedConfigDiffs[string(doguName)] = crd.CombinedDoguConfigDiff{
+				DoguConfigDiff:          doguConfigDiffByDogu[doguName],
+				SensitiveDoguConfigDiff: sensitiveDoguConfigDiff[doguName],
+			}
 		}
 	}
 
 	return &crd.StateDiff{
 		DoguDiffs:        doguDiffs,
 		ComponentDiffs:   componentDiffs,
-		DoguConfigDiffs:  doguConfigDiffs,
+		DoguConfigDiffs:  combinedConfigDiffs,
 		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiffs),
 	}
 }
@@ -72,16 +89,16 @@ func ConvertToStateDiffDomain(dto *crd.StateDiff) (domain.StateDiff, error) {
 		doguConfigDiffs = map[cescommons.SimpleName]domain.DoguConfigDiffs{}
 		sensitiveDoguConfigDiffs = map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{}
 		for doguName, doguConfigDiff := range dto.DoguConfigDiffs {
-			// TODO: remove sensitive config diff from domain
-			doguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff)
-			sensitiveDoguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, doguConfigDiff)
+			doguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, crd.ConfigDiff(doguConfigDiff.DoguConfigDiff))
+			sensitiveDoguConfigDiffs[cescommons.SimpleName(doguName)] = convertToDoguConfigDiffsDomain(doguName, crd.ConfigDiff(doguConfigDiff.SensitiveDoguConfigDiff))
 		}
 	}
 
 	return domain.StateDiff{
-		DoguDiffs:         doguDiffs,
-		ComponentDiffs:    componentDiffs,
-		DoguConfigDiffs:   doguConfigDiffs,
-		GlobalConfigDiffs: convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
+		DoguDiffs:                doguDiffs,
+		ComponentDiffs:           componentDiffs,
+		DoguConfigDiffs:          doguConfigDiffs,
+		SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs,
+		GlobalConfigDiffs:        convertToGlobalConfigDiffDomain(dto.GlobalConfigDiff),
 	}, nil
 }

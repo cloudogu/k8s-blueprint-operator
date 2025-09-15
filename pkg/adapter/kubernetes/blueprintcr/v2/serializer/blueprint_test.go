@@ -6,6 +6,7 @@ import (
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/google/go-cmp/cmp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -91,30 +92,28 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 		value42 := "42"
 		blueprint := domain.EffectiveBlueprint{
 			Config: &domain.Config{
-				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					"my-dogu": {
-						Config: domain.DoguConfig{
-							Present: map[common.DoguConfigKey]common.DoguConfigValue{
-								{
-									DoguName: "my-dogu",
-									Key:      "config",
-								}: common.DoguConfigValue(value42),
-							},
+						{
+							Key:   "config",
+							Value: (*config.Value)(&value42),
 						},
-						SensitiveConfig: domain.SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-								{
-									DoguName: "my-dogu",
-									Key:      "sensitive-config",
-								}: {
-									SecretName: "mySecret",
-									SecretKey:  "myKey",
-								},
+						{
+							Key:       "sensitive-config",
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
 							},
 						},
 					},
 				},
-				Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
+				Global: domain.GlobalConfigEntries{
+					{
+						Key:    "test/key",
+						Absent: true,
+					},
+				},
 			},
 		}
 		blueprintV2 := ConvertToBlueprintDTO(blueprint)
@@ -130,7 +129,8 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 							Value: &value42,
 						},
 						crd.ConfigEntry{
-							Key: "sensitive-config",
+							Key:       "sensitive-config",
+							Sensitive: &trueVar,
 							SecretRef: &crd.SecretReference{
 								Name: "mySecret",
 								Key:  "myKey",
@@ -246,31 +246,28 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 		Dogus:      dogus,
 		Components: components,
 		Config: &domain.Config{
-			Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 				"my-dogu": {
-					DoguName: "my-dogu",
-					Config: domain.DoguConfig{
-						Present: map[common.DoguConfigKey]common.DoguConfigValue{
-							{
-								DoguName: "my-dogu",
-								Key:      "config",
-							}: common.DoguConfigValue(value42),
-						},
+					{
+						Key:   "config",
+						Value: (*config.Value)(&value42),
 					},
-					SensitiveConfig: domain.SensitiveDoguConfig{
-						Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-							{
-								DoguName: "my-dogu",
-								Key:      "sensitive-config",
-							}: {
-								SecretName: "mySecret",
-								SecretKey:  "myKey",
-							},
+					{
+						Key:       "sensitive-config",
+						Sensitive: true,
+						SecretRef: &domain.SensitiveValueRef{
+							SecretName: "mySecret",
+							SecretKey:  "myKey",
 						},
 					},
 				},
 			},
-			Global: domain.GlobalConfig{Absent: []common.GlobalConfigKey{"test/key"}},
+			Global: domain.GlobalConfigEntries{
+				{
+					Key:    "test/key",
+					Absent: true,
+				},
+			},
 		},
 	}
 

@@ -63,28 +63,18 @@ func newGlobalConfigEntryDiff(
 }
 
 func determineGlobalConfigDiffs(
-	config GlobalConfig,
+	config GlobalConfigEntries,
 	actualConfig config.GlobalConfig,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
-	// present entries
-	for key, expectedValue := range config.Present {
+	for _, expectedConfig := range config {
 		var actualValue *common.GlobalConfigValue
-		actualEntry, actualExists := actualConfig.Get(key)
+		actualEntry, actualExists := actualConfig.Get(expectedConfig.Key)
 		if actualExists {
 			actualValue = &actualEntry
 		}
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualValue, actualExists, &expectedValue, true))
-	}
-	// absent entries
-	for _, key := range config.Absent {
-		var actualValue *common.GlobalConfigValue
-		actualEntry, actualExists := actualConfig.Get(key)
-		if actualExists {
-			actualValue = &actualEntry
-		}
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualValue, actualExists, nil, false))
+		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(expectedConfig.Key, actualValue, actualExists, expectedConfig.Value, !expectedConfig.Absent))
 	}
 	return configDiffs
 }

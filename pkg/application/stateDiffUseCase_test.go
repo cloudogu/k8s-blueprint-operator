@@ -362,12 +362,14 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: &domain.Config{
-					Global: domain.GlobalConfig{
-						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-							"globalKey1": common.GlobalConfigValue(val1),
+					Global: domain.GlobalConfigEntries{
+						{
+							Key:   "globalKey1",
+							Value: (*config.Value)(&val1),
 						},
-						Absent: []common.GlobalConfigKey{
-							"globalKey2",
+						{
+							Key:    "globalKey2",
+							Absent: true,
 						},
 					},
 				},
@@ -430,18 +432,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: &domain.Config{
-					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 						nginxStaticQualifiedDoguName.SimpleName: {
-							DoguName: nginxStaticQualifiedDoguName.SimpleName,
-							Config: domain.DoguConfig{
-								Present: map[common.DoguConfigKey]common.DoguConfigValue{
-									nginxStaticConfigKeyNginxKey1: common.DoguConfigValue(val3),
-								},
-								Absent: []common.DoguConfigKey{
-									nginxStaticConfigKeyNginxKey2,
-								},
+							{
+								Key:   nginxStaticConfigKeyNginxKey1.Key,
+								Value: (*config.Value)(&val3),
 							},
-							SensitiveConfig: domain.SensitiveDoguConfig{},
+							{
+								Key:    nginxStaticConfigKeyNginxKey2.Key,
+								Absent: true,
+							},
 						},
 					},
 				},
@@ -518,19 +518,20 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: &domain.Config{
-					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+					Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 						nginxStatic: {
-							DoguName: nginxStatic,
-							SensitiveConfig: domain.SensitiveDoguConfig{
-								Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-									nginxStaticSensitiveConfigKeyNginxKey1: {
-										SecretName: "nginx-conf",
-										SecretKey:  "nginxKey1",
-									}, // val3
-								},
-								Absent: []common.SensitiveDoguConfigKey{
-									nginxStaticSensitiveConfigKeyNginxKey2,
-								},
+							{
+								Key:       nginxStaticSensitiveConfigKeyNginxKey1.Key,
+								Sensitive: true,
+								SecretRef: &domain.SensitiveValueRef{
+									SecretName: "nginx-conf",
+									SecretKey:  "nginxKey1",
+								}, // val3
+							},
+							{
+								Key:       nginxStaticSensitiveConfigKeyNginxKey2.Key,
+								Sensitive: true,
+								Absent:    true,
 							},
 						},
 					},
@@ -574,7 +575,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		configRefReaderMock.EXPECT().
 			GetValues(
 				testCtx,
-				blueprint.EffectiveBlueprint.Config.Dogus[nginxStatic].SensitiveConfig.Present,
+				blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
 			).
 			Return(map[common.DoguConfigKey]config.Value{
 				nginxStaticConfigKeyNginxKey1: config.Value(val3),
@@ -624,35 +625,38 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
 			Config: &domain.Config{
-				Global: domain.GlobalConfig{
-					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-						"globalKey1": "globalValue",
+				Global: domain.GlobalConfigEntries{
+					{
+						Key:   "globalKey1",
+						Value: (*config.Value)(&val1),
 					},
-					Absent: []common.GlobalConfigKey{
-						"globalKey2",
+					{
+						Key:    "globalKey2",
+						Absent: true,
 					},
 				},
-				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					nginxStaticQualifiedDoguName.SimpleName: {
-						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: domain.DoguConfig{
-							Present: map[common.DoguConfigKey]common.DoguConfigValue{
-								nginxStaticConfigKeyNginxKey1: "nginxVal1",
-							},
-							Absent: []common.DoguConfigKey{
-								nginxStaticConfigKeyNginxKey2,
+						{
+							Key:   nginxStaticConfigKeyNginxKey1.Key,
+							Value: (*config.Value)(&val1),
+						},
+						{
+							Key:    nginxStaticConfigKeyNginxKey2.Key,
+							Absent: true,
+						},
+						{
+							Key:       nginxStaticSensitiveConfigKeyNginxKey1.Key,
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "nginx-conf",
+								SecretKey:  "nginxKey1",
 							},
 						},
-						SensitiveConfig: domain.SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-								nginxStaticSensitiveConfigKeyNginxKey1: {
-									SecretName: "nginx-conf",
-									SecretKey:  "nginxKey1",
-								}, //"nginxVal1"
-							},
-							Absent: []common.SensitiveDoguConfigKey{
-								nginxStaticSensitiveConfigKeyNginxKey2,
-							},
+						{
+							Key:       nginxStaticSensitiveConfigKeyNginxKey2.Key,
+							Sensitive: true,
+							Absent:    true,
 						},
 					},
 				},
@@ -705,35 +709,38 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
 			Config: &domain.Config{
-				Global: domain.GlobalConfig{
-					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-						"globalKey1": "globalValue",
+				Global: domain.GlobalConfigEntries{
+					{
+						Key:   "globalKey1",
+						Value: (*config.Value)(&val1),
 					},
-					Absent: []common.GlobalConfigKey{
-						"globalKey2",
+					{
+						Key:    "globalKey2",
+						Absent: true,
 					},
 				},
-				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					nginxStaticQualifiedDoguName.SimpleName: {
-						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: domain.DoguConfig{
-							Present: map[common.DoguConfigKey]common.DoguConfigValue{
-								nginxStaticConfigKeyNginxKey1: "nginxVal1",
-							},
-							Absent: []common.DoguConfigKey{
-								nginxStaticConfigKeyNginxKey2,
+						{
+							Key:   nginxStaticConfigKeyNginxKey1.Key,
+							Value: (*config.Value)(&val1),
+						},
+						{
+							Key:    nginxStaticConfigKeyNginxKey2.Key,
+							Absent: true,
+						},
+						{
+							Key:       nginxStaticSensitiveConfigKeyNginxKey1.Key,
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "nginx-conf",
+								SecretKey:  "nginxKey1",
 							},
 						},
-						SensitiveConfig: domain.SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-								nginxStaticSensitiveConfigKeyNginxKey1: {
-									SecretName: "nginx-conf",
-									SecretKey:  "nginxKey1",
-								}, //"nginxVal1"
-							},
-							Absent: []common.SensitiveDoguConfigKey{
-								nginxStaticSensitiveConfigKeyNginxKey2,
-							},
+						{
+							Key:       nginxStaticSensitiveConfigKeyNginxKey2.Key,
+							Sensitive: true,
+							Absent:    true,
 						},
 					},
 				},

@@ -19,7 +19,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 	tests := []struct {
 		name        string
 		domainModel domain.DoguConfigDiffs
-		want        crd.ConfigDiff
+		want        crd.DoguConfigDiff
 		isSensitive bool
 	}{
 		{
@@ -60,7 +60,7 @@ func Test_convertToDoguConfigEntryDiffsDTO(t *testing.T) {
 					NeededAction: domain.ConfigActionSet,
 				},
 			},
-			want: crd.ConfigDiff{
+			want: crd.DoguConfigDiff{
 				{
 					Key: "container_config/memory_limit",
 					Actual: crd.ConfigValueState{

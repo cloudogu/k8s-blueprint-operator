@@ -6,7 +6,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
-func convertToGlobalConfigDiffDomain(dto crd.ConfigDiff) domain.GlobalConfigDiffs {
+func convertToGlobalConfigDiffDomain(dto crd.GlobalConfigDiff) domain.GlobalConfigDiffs {
 	if len(dto) == 0 {
 		return nil
 	}
@@ -33,12 +33,12 @@ func convertToGlobalConfigEntryDiffDomain(dto crd.ConfigEntryDiff) domain.Global
 	}
 }
 
-func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) crd.ConfigDiff {
+func convertToGlobalConfigDiffDTO(domainModel domain.GlobalConfigDiffs) crd.GlobalConfigDiff {
 	if len(domainModel) == 0 {
 		return nil
 	}
 
-	globalConfigDiff := make(crd.ConfigDiff, len(domainModel))
+	globalConfigDiff := make(crd.GlobalConfigDiff, len(domainModel))
 	for i, entryDiff := range domainModel {
 		globalConfigDiff[i] = convertToGlobalConfigEntryDiffDTO(entryDiff)
 	}

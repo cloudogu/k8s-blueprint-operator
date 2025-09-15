@@ -3,33 +3,36 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
-	"golang.org/x/exp/maps"
-	"slices"
+	libconfig "github.com/cloudogu/k8s-registry-lib/config"
 )
 
 type Config struct {
-	Dogus  map[cescommons.SimpleName]CombinedDoguConfig
-	Global GlobalConfig
+	Dogus  DoguConfig
+	Global GlobalConfigEntries
 }
 
-type CombinedDoguConfig struct {
-	DoguName        cescommons.SimpleName
-	Config          DoguConfig
-	SensitiveConfig SensitiveDoguConfig
+type ConfigEntry struct {
+	// Key is the configuration key name
+	Key libconfig.Key
+	// Absent indicates whether this key should be deleted (true) or set (false)
+	Absent bool
+	// Value is used for regular (non-sensitive) configuration entries
+	// Mutually exclusive with SecretRef
+	Value *libconfig.Value
+	// Sensitive indicates whether this config is sensitive and should be stored securely (true) or not (false)
+	Sensitive bool
+	// SecretRef is used for sensitive configuration entries
+	// Mutually exclusive with Value
+	SecretRef *SensitiveValueRef
 }
 
-type DoguConfig struct {
-	Present map[common.DoguConfigKey]common.DoguConfigValue
-	Absent  []common.DoguConfigKey
-}
-
-type SensitiveDoguConfig struct {
-	Present map[common.DoguConfigKey]SensitiveValueRef
-	Absent  []common.DoguConfigKey
-}
+type DoguConfig map[cescommons.SimpleName]DoguConfigEntries
+type DoguConfigEntries ConfigEntries
+type GlobalConfigEntries ConfigEntries
+type ConfigEntries []ConfigEntry
 
 type SensitiveValueRef struct {
 	// SecretName is the name of the secret, from which the config key should be loaded.
@@ -40,63 +43,71 @@ type SensitiveValueRef struct {
 	SecretKey string `json:"secretKey"`
 }
 
-type GlobalConfig struct {
-	Present map[common.GlobalConfigKey]common.GlobalConfigValue
-	Absent  []common.GlobalConfigKey
-}
-
-func (config GlobalConfig) GetGlobalConfigKeys() []common.GlobalConfigKey {
+func (config GlobalConfigEntries) GetGlobalConfigKeys() []common.GlobalConfigKey {
 	var keys []common.GlobalConfigKey
-	keys = append(keys, maps.Keys(config.Present)...)
-	keys = append(keys, config.Absent...)
-	return keys
-}
-
-func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
-	var keys []common.DoguConfigKey
-	for _, doguConfig := range config.Dogus {
-		keys = append(keys, maps.Keys(doguConfig.Config.Present)...)
-		keys = append(keys, doguConfig.Config.Absent...)
+	for _, entry := range config {
+		keys = append(keys, entry.Key)
 	}
 	return keys
 }
 
-func (config Config) GetSensitiveConfigReferences() map[common.SensitiveDoguConfigKey]SensitiveValueRef {
-	refs := map[common.SensitiveDoguConfigKey]SensitiveValueRef{}
-	for _, doguConfig := range config.Dogus {
-		for key, ref := range doguConfig.SensitiveConfig.Present {
-			refs[key] = ref
+func (config Config) GetDoguConfigKeys() []common.DoguConfigKey {
+	return config.getDoguKeysBySensitivity(false)
+}
+
+func (config Config) GetSensitiveConfigReferences() map[common.DoguConfigKey]SensitiveValueRef {
+	refs := map[common.DoguConfigKey]SensitiveValueRef{}
+	for doguName, doguConfig := range config.Dogus {
+		for _, entry := range doguConfig {
+			if entry.SecretRef != nil {
+				key := common.DoguConfigKey{
+					DoguName: doguName,
+					Key:      entry.Key,
+				}
+				refs[key] = *entry.SecretRef
+			}
 		}
 	}
 	return refs
 }
 
-func (config Config) GetSensitiveDoguConfigKeys() []common.SensitiveDoguConfigKey {
-	var keys []common.SensitiveDoguConfigKey
-	for _, doguConfig := range config.Dogus {
-		keys = append(keys, maps.Keys(doguConfig.SensitiveConfig.Present)...)
-		keys = append(keys, doguConfig.SensitiveConfig.Absent...)
+func (config Config) GetSensitiveDoguConfigKeys() []common.DoguConfigKey {
+	return config.getDoguKeysBySensitivity(true)
+}
+
+func (config Config) getDoguKeysBySensitivity(isSensitive bool) []common.DoguConfigKey {
+	var keys []common.DoguConfigKey
+	for doguName, doguConfig := range config.Dogus {
+		for _, entry := range doguConfig {
+			if entry.Sensitive == isSensitive {
+				keys = append(keys, common.DoguConfigKey{
+					DoguName: doguName,
+					Key:      entry.Key,
+				})
+			}
+		}
 	}
 	return keys
 }
 
 // GetDogusWithChangedConfig returns a list of dogus for which possible config changes are needed.
 func (config Config) GetDogusWithChangedConfig() []cescommons.SimpleName {
-	var dogus []cescommons.SimpleName
-	for dogu, doguConfig := range config.Dogus {
-		if len(doguConfig.Config.Present) != 0 || len(doguConfig.Config.Absent) != 0 {
-			dogus = append(dogus, dogu)
-		}
-	}
-	return dogus
+	return config.getDogusWithChangedConfigBySenisitivity(false)
 }
 
 // GetDogusWithChangedSensitiveConfig returns a list of dogus for which possible sensitive config changes are needed.
 func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleName {
+	return config.getDogusWithChangedConfigBySenisitivity(true)
+}
+
+func (config Config) getDogusWithChangedConfigBySenisitivity(isSensitive bool) []cescommons.SimpleName {
 	var dogus []cescommons.SimpleName
 	for dogu, doguConfig := range config.Dogus {
-		if len(doguConfig.SensitiveConfig.Present) != 0 || len(doguConfig.SensitiveConfig.Absent) != 0 {
-			dogus = append(dogus, dogu)
+		for _, entry := range doguConfig {
+			if entry.Sensitive == isSensitive {
+				dogus = append(dogus, dogu)
+				break // we only need to know if this dogu has at least one desired config value, so we can break to next outer loop
+			}
 		}
 	}
 	return dogus
@@ -105,156 +116,107 @@ func (config Config) GetDogusWithChangedSensitiveConfig() []cescommons.SimpleNam
 func (config Config) validate() error {
 	var errs []error
 	for doguName, doguConfig := range config.Dogus {
-		if doguName != doguConfig.DoguName {
-			errs = append(errs, fmt.Errorf("dogu name %q in map and dogu name %q in value are not equal", doguName, doguConfig.DoguName))
+		if doguName == "" {
+			errs = append(errs, fmt.Errorf("dogu name for dogu config should not be empty"))
+
 		}
-		errs = append(errs, doguConfig.validate())
+		errs = append(errs, doguConfig.validate(doguName))
 	}
 	errs = append(errs, config.Global.validate())
 
 	return errors.Join(errs...)
 }
 
-func (config CombinedDoguConfig) validate() error {
-	err := errors.Join(
-		config.Config.validate(config.DoguName),
-		config.SensitiveConfig.validate(config.DoguName),
-		config.validateConflictingConfigKeys(),
-	)
+func (config DoguConfigEntries) validate(doguName cescommons.SimpleName) error {
+	var allErrs error
+	for _, entry := range config {
+		allErrs = errors.Join(allErrs, entry.validate())
+	}
+	allErrs = errors.Join(allErrs, ConfigEntries(config).validateConflictingConfigKeys())
 
-	if err != nil {
-		return fmt.Errorf("config for dogu %q is invalid: %w", config.DoguName, err)
+	if allErrs != nil {
+		return fmt.Errorf("config for dogu %q is invalid: %w", doguName, allErrs)
 	}
 	return nil
 }
 
 // validateConflictingConfigKeys checks that there are no conflicting keys in normal config and sensitive config.
 // This is a problem as both config types are loaded via the same API in dogus at the moment.
-func (config CombinedDoguConfig) validateConflictingConfigKeys() error {
-	var normalKeys []common.DoguConfigKey
-	normalKeys = append(normalKeys, maps.Keys(config.Config.Present)...)
-	normalKeys = append(normalKeys, config.Config.Absent...)
-	var sensitiveKeys []common.SensitiveDoguConfigKey
-	sensitiveKeys = append(sensitiveKeys, maps.Keys(config.SensitiveConfig.Present)...)
-	sensitiveKeys = append(sensitiveKeys, config.SensitiveConfig.Absent...)
-
+func (config ConfigEntries) validateConflictingConfigKeys() error {
 	var errorList []error
-
-	for _, sensitiveKey := range sensitiveKeys {
-		if slices.Contains(normalKeys, sensitiveKey) {
-			errorList = append(errorList, fmt.Errorf("dogu config key %q of dogu %q cannot be in normal and sensitive configuration at the same time", sensitiveKey.Key, sensitiveKey.DoguName))
+	seen := make(map[libconfig.Key]struct{})
+	for _, entry := range config {
+		if _, exists := seen[entry.Key]; exists {
+			errorList = append(errorList, fmt.Errorf("duplicate dogu config Key found: %s", entry.Key))
 		}
+		seen[entry.Key] = struct{}{}
 	}
 	return errors.Join(errorList...)
 }
 
-func validateDoguConfigKeys(keys []common.DoguConfigKey, referencedDoguName cescommons.SimpleName) error {
-	var errs []error
-	for _, configKey := range keys {
-		err := configKey.Validate()
-		if err != nil {
-			errs = append(errs, fmt.Errorf("dogu config key is invalid: %w", err))
-		}
-
-		// validate that all keys are of the same dogu
-		if referencedDoguName != configKey.DoguName {
-			errs = append(errs, fmt.Errorf("key %q of dogu %q does not match superordinate dogu name %q", configKey.Key, configKey.DoguName, referencedDoguName))
-		}
-	}
-	return errors.Join(errs...)
-}
-
-func validateNoDuplicates(presentKeys []common.DoguConfigKey, absentKeys []common.DoguConfigKey) error {
-	var errs []error
-	// no present keys in absent
-	// a duplicate needs to be in the present and the absent list, therefore we only need to check one of the lists.
-	for _, presentKey := range presentKeys {
-		if slices.Contains(absentKeys, presentKey) {
-			errs = append(errs, fmt.Errorf("key %q of dogu %q cannot be present and absent at the same time", presentKey.Key, presentKey.DoguName))
-		}
-	}
-
-	// no absent duplicates
-	absentDuplicates := util.GetDuplicates(absentKeys)
-	if len(absentDuplicates) > 0 {
-		errs = append(errs, fmt.Errorf("absent dogu config should not contain duplicate keys: %v", absentDuplicates))
-	}
-
-	// present keys cannot have duplicates because of their data structure
-
-	return errors.Join(errs...)
-}
-
-func (config DoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
+// Validate ensures ConfigEntry has valid state
+func (config ConfigEntry) validate() error {
 	var errs []error
 
-	presentKeyErr := validateDoguConfigKeys(maps.Keys(config.Present), referencedDoguName)
-	if presentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("present dogu config is invalid: %w", presentKeyErr))
+	if config.Key == "" {
+		errs = append(errs, fmt.Errorf("key for config should not be empty"))
 	}
 
-	absentKeyErr := validateDoguConfigKeys(config.Absent, referencedDoguName)
-	if absentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("absent dogu config is invalid: %w", absentKeyErr))
+	if config.Absent {
+		if config.Value != nil || config.SecretRef != nil {
+			errs = append(errs, fmt.Errorf("absent entries cannot have value or secretRef"))
+		}
+		return errors.Join(errs...)
 	}
 
-	duplicatesErr := validateNoDuplicates(maps.Keys(config.Present), config.Absent)
-	if duplicatesErr != nil {
-		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", duplicatesErr))
+	// For present entries, exactly one of Value or SecretRef must be set
+	hasValue := config.Value != nil
+	hasSecretRef := config.SecretRef != nil
+
+	// TODO: See test, is both nil allowed?
+	if hasValue == hasSecretRef {
+		errs = append(errs, fmt.Errorf("config entries can have either a value or a secretRef"))
 	}
 
 	return errors.Join(errs...)
 }
 
-func (config SensitiveDoguConfig) validate(referencedDoguName cescommons.SimpleName) error {
-	var errs []error
-
-	presentKeyErr := validateDoguConfigKeys(maps.Keys(config.Present), referencedDoguName)
-	if presentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("present sensitive dogu config is invalid: %w", presentKeyErr))
+func (config GlobalConfigEntries) validate() error {
+	var allErrs error
+	for _, entry := range config {
+		allErrs = errors.Join(allErrs, entry.validateGlobal())
 	}
+	allErrs = errors.Join(allErrs, ConfigEntries(config).validateConflictingConfigKeys())
 
-	absentKeyErr := validateDoguConfigKeys(config.Absent, referencedDoguName)
-	if absentKeyErr != nil {
-		errs = append(errs, fmt.Errorf("absent sensitive dogu config is invalid: %w", absentKeyErr))
+	if allErrs != nil {
+		return fmt.Errorf("global config is invalid: %w", allErrs)
 	}
-
-	duplicatesErr := validateNoDuplicates(maps.Keys(config.Present), config.Absent)
-	if duplicatesErr != nil {
-		errs = append(errs, fmt.Errorf("dogu config is invalid: %w", duplicatesErr))
-	}
-
-	return errors.Join(errs...)
+	return nil
 }
 
-func (config GlobalConfig) validate() error {
+func (config ConfigEntry) validateGlobal() error {
 	var errs []error
-	for configKey := range config.Present {
 
-		// empty key is not allowed
-		if string(configKey) == "" {
-			errs = append(errs, fmt.Errorf("key for present global config should not be empty"))
-		}
+	if config.Key == "" {
+		errs = append(errs, fmt.Errorf("key for global config should not be empty"))
 	}
 
-	for _, configKey := range config.Absent {
-
-		// empty key is not allowed
-		if string(configKey) == "" {
-			errs = append(errs, fmt.Errorf("key for absent global config should not be empty"))
-		}
-
-		// absent keys cannot be present
-		_, isPresent := config.Present[configKey]
-		if isPresent {
-			errs = append(errs, fmt.Errorf("global config key %q cannot be present and absent at the same time", configKey))
-		}
+	if config.Sensitive || config.SecretRef != nil {
+		errs = append(errs, fmt.Errorf("global entries cannot be sensitive"))
 	}
 
-	absentDuplicates := util.GetDuplicates(config.Absent)
-	if len(absentDuplicates) > 0 {
-		errs = append(errs, fmt.Errorf("absent global config should not contain duplicate keys: %v", absentDuplicates))
+	if config.Absent {
+		if config.Value != nil {
+			errs = append(errs, fmt.Errorf("absent entries cannot have value"))
+		}
+		return errors.Join(errs...)
 	}
+
+	// For present entries, a Value must be set
+	// TODO: See test, is empty string allowed?
+	//if config.Value == nil {
+	//	errs = append(errs, fmt.Errorf("config entries must have a value"))
+	//}
 
 	return errors.Join(errs...)
 }
