@@ -79,7 +79,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 	t.Run("additionalMounts ok", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		dogu := Dogu{Name: officialDogu1, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
@@ -95,7 +95,7 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 
 	t.Run("unknown sourceType", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		dogu := Dogu{Name: officialDogu1, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: "unsupportedType",
 				Name:       "html-config",
@@ -107,12 +107,12 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts sourceType must be one of 'ConfigMap', 'Secret': k8s/nginx-static")
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts sourceType must be one of 'ConfigMap', 'Secret': official/dogu1")
 	})
 
 	t.Run("subfolder is no relative path", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		dogu := Dogu{Name: officialDogu1, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
@@ -124,7 +124,7 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts Subfolder must be a relative path : k8s/nginx-static")
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts Subfolder must be a relative path : official/dogu1")
 	})
 
 }
