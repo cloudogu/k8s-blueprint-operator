@@ -151,128 +151,173 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 }
 
 func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
-	//given
-	subfolder := "subfolder"
-	convertedDogus := []crd.Dogu{
-		{Name: "official/dogu1", Version: &version3211.Raw, Absent: &trueVar},
-		{Name: "official/dogu2", Absent: &trueVar},
-		{Name: "premium/dogu3", Version: &version3212.Raw, Absent: &falseVar},
-		{Name: "premium/dogu4", Version: &version1233.Raw, Absent: &falseVar},
-		{
-			Name:    "premium/dogu5",
-			Version: &version1233.Raw,
-			Absent:  &falseVar,
-			PlatformConfig: &crd.PlatformConfig{
-				ResourceConfig:     nil,
-				ReverseProxyConfig: nil,
-				AdditionalMountsConfig: []crd.AdditionalMount{
+	t.Run("all ok", func(t *testing.T) {
+		//given
+		subfolder := "subfolder"
+		convertedDogus := []crd.Dogu{
+			{Name: "official/dogu1", Version: &version3211.Raw, Absent: &trueVar},
+			{Name: "official/dogu2", Absent: &trueVar},
+			{Name: "premium/dogu3", Version: &version3212.Raw, Absent: &falseVar},
+			{Name: "premium/dogu4", Version: &version1233.Raw, Absent: &falseVar},
+			{
+				Name:    "premium/dogu5",
+				Version: &version1233.Raw,
+				Absent:  &falseVar,
+				PlatformConfig: &crd.PlatformConfig{
+					ResourceConfig:     nil,
+					ReverseProxyConfig: nil,
+					AdditionalMountsConfig: []crd.AdditionalMount{
+						{
+							SourceType: crd.DataSourceConfigMap,
+							Name:       "config",
+							Volume:     "volume",
+							Subfolder:  &subfolder,
+						},
+					},
+				},
+			},
+		}
+
+		convertedComponents := []crd.Component{
+			{Name: "k8s/component1", Version: &version3211.Raw, Absent: &trueVar},
+			{Name: "k8s/component2", Absent: &trueVar},
+			{Name: "k8s-testing/component3", Version: &version3212.Raw, Absent: &falseVar},
+			{Name: "k8s-testing/component4", Version: &version1233.Raw, Absent: &falseVar},
+		}
+
+		value42 := "42"
+		dto := crd.BlueprintManifest{
+			Dogus:      convertedDogus,
+			Components: convertedComponents,
+			Config: &crd.Config{
+				Dogus: map[string][]crd.ConfigEntry{
+					"my-dogu": {
+						crd.ConfigEntry{
+							Key:   "config",
+							Value: &value42,
+						},
+						crd.ConfigEntry{
+							Key:       "sensitive-config",
+							Sensitive: &trueVar,
+							SecretRef: &crd.SecretReference{
+								Name: "mySecret",
+								Key:  "myKey",
+							},
+						},
+					},
+				},
+				Global: []crd.ConfigEntry{
 					{
-						SourceType: crd.DataSourceConfigMap,
+						Key:    "test/key",
+						Absent: &trueVar,
+					},
+				},
+			},
+		}
+		//when
+		blueprint, err := ConvertToEffectiveBlueprintDomain(&dto)
+
+		//then
+		dogus := []domain.Dogu{
+			{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: &version3211, Absent: true},
+			{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, Absent: true},
+			{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: &version3212, Absent: false},
+			{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: &version1233},
+			{
+				Name:    cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu5"},
+				Version: &version1233,
+				AdditionalMounts: []ecosystem.AdditionalMount{
+					{
+						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "config",
 						Volume:     "volume",
 						Subfolder:  &subfolder,
 					},
 				},
 			},
-		},
-	}
+		}
 
-	convertedComponents := []crd.Component{
-		{Name: "k8s/component1", Version: &version3211.Raw, Absent: &trueVar},
-		{Name: "k8s/component2", Absent: &trueVar},
-		{Name: "k8s-testing/component3", Version: &version3212.Raw, Absent: &falseVar},
-		{Name: "k8s-testing/component4", Version: &version1233.Raw, Absent: &falseVar},
-	}
-
-	value42 := "42"
-	dto := crd.BlueprintManifest{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
-		Config: &crd.Config{
-			Dogus: map[string][]crd.ConfigEntry{
-				"my-dogu": {
-					crd.ConfigEntry{
-						Key:   "config",
-						Value: &value42,
-					},
-					crd.ConfigEntry{
-						Key:       "sensitive-config",
-						Sensitive: &trueVar,
-						SecretRef: &crd.SecretReference{
-							Name: "mySecret",
-							Key:  "myKey",
+		components := []domain.Component{
+			{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, Absent: true},
+			{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, Absent: true},
+			{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, Absent: false},
+			{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
+		}
+		expected := domain.EffectiveBlueprint{
+			Dogus:      dogus,
+			Components: components,
+			Config: &domain.Config{
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
+					"my-dogu": {
+						{
+							Key:   "config",
+							Value: (*config.Value)(&value42),
+						},
+						{
+							Key:       "sensitive-config",
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "mySecret",
+								SecretKey:  "myKey",
+							},
 						},
 					},
 				},
-			},
-			Global: []crd.ConfigEntry{
-				{
-					Key:    "test/key",
-					Absent: &trueVar,
-				},
-			},
-		},
-	}
-	//when
-	blueprint, err := ConvertToEffectiveBlueprintDomain(&dto)
-
-	//then
-	dogus := []domain.Dogu{
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu1"}, Version: &version3211, Absent: true},
-		{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "dogu2"}, Absent: true},
-		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu3"}, Version: &version3212, Absent: false},
-		{Name: cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu4"}, Version: &version1233},
-		{
-			Name:    cescommons.QualifiedName{Namespace: "premium", SimpleName: "dogu5"},
-			Version: &version1233,
-			AdditionalMounts: []ecosystem.AdditionalMount{
-				{
-					SourceType: ecosystem.DataSourceConfigMap,
-					Name:       "config",
-					Volume:     "volume",
-					Subfolder:  &subfolder,
-				},
-			},
-		},
-	}
-
-	components := []domain.Component{
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, Absent: true},
-		{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, Absent: true},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, Absent: false},
-		{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
-	}
-	expected := domain.EffectiveBlueprint{
-		Dogus:      dogus,
-		Components: components,
-		Config: &domain.Config{
-			Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
-				"my-dogu": {
+				Global: domain.GlobalConfigEntries{
 					{
-						Key:   "config",
-						Value: (*config.Value)(&value42),
-					},
-					{
-						Key:       "sensitive-config",
-						Sensitive: true,
-						SecretRef: &domain.SensitiveValueRef{
-							SecretName: "mySecret",
-							SecretKey:  "myKey",
-						},
+						Key:    "test/key",
+						Absent: true,
 					},
 				},
 			},
-			Global: domain.GlobalConfigEntries{
-				{
-					Key:    "test/key",
-					Absent: true,
-				},
-			},
-		},
-	}
+		}
 
-	require.NoError(t, err)
-	assert.Empty(t, cmp.Diff(expected, blueprint))
+		require.NoError(t, err)
+		assert.Empty(t, cmp.Diff(expected, blueprint))
+	})
+
+	t.Run("when manifest is nil return empty effective blueprint", func(t *testing.T) {
+		//when
+		blueprint, err := ConvertToEffectiveBlueprintDomain(nil)
+
+		//then
+		require.NoError(t, err)
+		assert.Equal(t, domain.EffectiveBlueprint{}, blueprint)
+	})
+
+	t.Run("when convert dogu error return empty effective blueprint and error", func(t *testing.T) {
+		//given
+		dto := crd.BlueprintManifest{
+			Dogus: []crd.Dogu{
+				{Name: "dogu1", Version: &version3211.Raw}, // name contains no "/"
+			},
+		}
+
+		//when
+		blueprint, err := ConvertToEffectiveBlueprintDomain(&dto)
+
+		//then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot deserialize effective blueprint")
+		assert.Equal(t, domain.EffectiveBlueprint{}, blueprint)
+	})
+
+	t.Run("when convert component error return empty effective blueprint and error", func(t *testing.T) {
+		//given
+		dto := crd.BlueprintManifest{
+			Components: []crd.Component{
+				{Name: "k8s/k8s-dogu-operator", Version: &wrongVersion}, // name contains no "/"
+			},
+		}
+
+		//when
+		blueprint, err := ConvertToEffectiveBlueprintDomain(&dto)
+
+		//then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "cannot deserialize effective blueprint")
+		assert.Equal(t, domain.EffectiveBlueprint{}, blueprint)
+	})
 }
 
 func TestConvertToBlueprintDomain(t *testing.T) {
@@ -352,7 +397,7 @@ func TestConvertToBlueprintDomain(t *testing.T) {
 
 func TestConvertToBlueprintMaskDomain(t *testing.T) {
 	type args struct {
-		mask crd.BlueprintMask
+		mask *crd.BlueprintMask
 	}
 	tests := []struct {
 		name    string
@@ -361,14 +406,20 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
+			name:    "nil",
+			args:    args{mask: nil},
+			want:    domain.BlueprintMask{},
+			wantErr: assert.NoError,
+		},
+		{
 			name:    "empty",
-			args:    args{mask: crd.BlueprintMask{}},
+			args:    args{mask: &crd.BlueprintMask{}},
 			want:    domain.BlueprintMask{},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "will convert a MaskDogu",
-			args: args{mask: crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMask{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "official/ldap",
@@ -391,7 +442,7 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		},
 		{
 			name: "error if invalid mask",
-			args: args{mask: crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMask{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "invalid name",
@@ -407,7 +458,7 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := ConvertToBlueprintMaskDomain(&tt.args.mask)
+			got, err := ConvertToBlueprintMaskDomain(tt.args.mask)
 			if !tt.wantErr(t, err, fmt.Sprintf("ConvertToBlueprintMaskDomain(%v)", tt.args.mask)) {
 				return
 			}

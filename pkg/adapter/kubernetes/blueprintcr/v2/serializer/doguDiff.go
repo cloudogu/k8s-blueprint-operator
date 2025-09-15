@@ -91,8 +91,8 @@ func convertToDoguDiffDomain(doguName string, dto crd.DoguDiff) (domain.DoguDiff
 		actualStateErr = fmt.Errorf("failed to convert actual dogu diff state: %w", actualStateErr)
 	}
 	expectedState, expectedStateErr := convertDoguDiffStateDomain(dto.Expected)
-	if actualStateErr != nil {
-		actualStateErr = fmt.Errorf("failed to convert expected dogu diff state: %w", actualStateErr)
+	if expectedStateErr != nil {
+		expectedStateErr = fmt.Errorf("failed to convert expected dogu diff state: %w", expectedStateErr)
 	}
 
 	err := errors.Join(actualStateErr, expectedStateErr)
@@ -124,10 +124,9 @@ func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, er
 		coreVersion, err = core.ParseVersion(*dto.Version)
 		version = &coreVersion
 		if err != nil {
-			err = fmt.Errorf("failed to parse version %q: %w", *dto.Version, err)
+			errorList = append(errorList, fmt.Errorf("failed to parse version %q: %w", *dto.Version, err))
 		}
 	}
-	errorList = append(errorList, err)
 
 	var minVolumeSize, maxBodySize *resource.Quantity
 	if dto.ResourceConfig != nil && dto.ResourceConfig.MinVolumeSize != nil {
@@ -154,6 +153,10 @@ func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, er
 		}
 	}
 
+	if len(errorList) != 0 {
+		return domain.DoguDiffState{}, errors.Join(errorList...)
+	}
+
 	return domain.DoguDiffState{
 		Namespace:          cescommons.Namespace(dto.Namespace),
 		Version:            version,
@@ -161,7 +164,7 @@ func convertDoguDiffStateDomain(dto crd.DoguDiffState) (domain.DoguDiffState, er
 		MinVolumeSize:      minVolumeSize,
 		ReverseProxyConfig: reverseProxyConfig,
 		AdditionalMounts:   convertAdditionalMountsToDoguDiffDomain(dto.AdditionalMounts),
-	}, errors.Join(errorList...)
+	}, nil
 }
 
 func convertAdditionalMountsToDoguDiffDomain(mounts []crd.AdditionalMount) []ecosystem.AdditionalMount {

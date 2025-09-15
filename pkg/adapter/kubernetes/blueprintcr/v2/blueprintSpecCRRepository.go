@@ -69,9 +69,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	conditions := blueprintCR.Status.Conditions
-	if conditions == nil {
-		conditions = []domain.Condition{}
+	var conditions []domain.Condition
+	if blueprintCR.Status != nil && blueprintCR.Status.Conditions != nil {
+		conditions = blueprintCR.Status.Conditions
 	}
 
 	blueprintSpec := &domain.BlueprintSpec{

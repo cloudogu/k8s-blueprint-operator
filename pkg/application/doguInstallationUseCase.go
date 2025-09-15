@@ -32,7 +32,7 @@ func NewDoguInstallationUseCase(
 
 func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth")
-	logger.Info("check dogu health...")
+	logger.V(2).Info("check dogu health...")
 	installedDogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {
 		return ecosystem.DoguHealthResult{}, fmt.Errorf("cannot evaluate dogu health states: %w", err)
@@ -45,7 +45,7 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 // Fail-fast here, so that the possible damage is as small as possible.
 func (useCase *DoguInstallationUseCase) ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.ApplyDoguChanges")
-	logger.Info("apply dogu states")
+	logger.V(2).Info("apply dogu states")
 	// DoguDiff contains all installed dogus anyway (but some with action none) so we can load them all at once
 	dogus, err := useCase.doguRepo.GetAll(ctx)
 	if err != nil {

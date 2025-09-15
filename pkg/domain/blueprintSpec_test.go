@@ -514,7 +514,7 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 }
 
 func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
-	t.Run("should be applied", func(t *testing.T) {
+	t.Run("should be applied on global config change", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
 				DryRun: false,
@@ -524,6 +524,50 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 					{
 						Key:          "test",
 						NeededAction: ConfigActionSet,
+					},
+				},
+			},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on dogu config change", func(t *testing.T) {
+		doguKey := common.DoguConfigKey{
+			DoguName: "testDogu",
+			Key:      "testKey",
+		}
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: false,
+			},
+			StateDiff: StateDiff{
+				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
+					cescommons.SimpleName("testDogu"): {
+						{
+							Key:          doguKey,
+							NeededAction: ConfigActionSet,
+						},
+					},
+				},
+			},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on sensitive dogu config change", func(t *testing.T) {
+		doguKey := common.DoguConfigKey{
+			DoguName: "testDogu",
+			Key:      "testKey",
+		}
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				DryRun: false,
+			},
+			StateDiff: StateDiff{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
+					cescommons.SimpleName("testDogu"): {
+						{
+							Key:          doguKey,
+							NeededAction: ConfigActionSet,
+						},
 					},
 				},
 			},

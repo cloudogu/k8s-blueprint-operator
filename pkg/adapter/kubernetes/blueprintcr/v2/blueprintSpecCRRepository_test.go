@@ -77,6 +77,45 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		}, spec)
 	})
 
+	t.Run("all ok without status", func(t *testing.T) {
+		// given
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+
+		cr := &bpv2.Blueprint{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
+			Spec: &bpv2.BlueprintSpec{
+				Blueprint:                bpv2.BlueprintManifest{},
+				BlueprintMask:            &bpv2.BlueprintMask{},
+				AllowDoguNamespaceSwitch: &trueVar,
+				IgnoreDoguHealth:         &trueVar,
+				Stopped:                  &trueVar,
+			},
+		}
+		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
+
+		// when
+		spec, err := repo.GetById(ctx, blueprintId)
+
+		// then
+		require.NoError(t, err)
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
+		assert.Equal(t, &domain.BlueprintSpec{
+			Id: blueprintId,
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth:         true,
+				AllowDoguNamespaceSwitch: true,
+				DryRun:                   true,
+			},
+			StateDiff:          domain.StateDiff{},
+			PersistenceContext: persistenceContext,
+			Conditions:         nil,
+		}, spec)
+	})
+
 	t.Run("invalid blueprint and mask", func(t *testing.T) {
 		// given
 		restClientMock := newMockBlueprintInterface(t)
