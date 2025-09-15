@@ -113,7 +113,10 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 		if err != nil {
 			return nil, err
 		}
-		componentDiffs[blueprintComponent.Name.SimpleName] = compDiff
+		// only add changes to diff
+		if compDiff != nil {
+			componentDiffs[blueprintComponent.Name.SimpleName] = *compDiff
+		}
 	}
 
 	for _, installedComponent := range installedComponents {
@@ -125,7 +128,10 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 			if err != nil {
 				return nil, err
 			}
-			componentDiffs[installedComponent.Name.SimpleName] = compDiff
+			// only add changes to diff
+			if compDiff != nil {
+				componentDiffs[installedComponent.Name.SimpleName] = *compDiff
+			}
 		}
 	}
 	return maps.Values(componentDiffs), nil
@@ -134,7 +140,7 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 // determineComponentDiff creates a ComponentDiff out of a Component from the blueprint and the ecosystem.ComponentInstallation in the ecosystem.
 // If the Component is nil (was not in the blueprint), the actual state is also the expected state.
 // If the installedComponent is nil, it is considered to be not installed currently.
-func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) (ComponentDiff, error) {
+func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) (*ComponentDiff, error) {
 	var expectedState, actualState ComponentDiffState
 	componentName := common.SimpleComponentName("") // either blueprintComponent or installedComponent could be nil
 
@@ -165,10 +171,14 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 
 	nextActions, err := getComponentActions(expectedState, actualState)
 	if err != nil {
-		return ComponentDiff{}, fmt.Errorf("failed to determine diff for component %q : %w", componentName, err)
+		return nil, fmt.Errorf("failed to determine diff for component %q : %w", componentName, err)
 	}
 
-	return ComponentDiff{
+	if len(nextActions) == 0 {
+		return nil, nil
+	}
+
+	return &ComponentDiff{
 		Name:          componentName,
 		Expected:      expectedState,
 		Actual:        actualState,

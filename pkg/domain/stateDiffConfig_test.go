@@ -96,24 +96,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		//then
 		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
 		assert.Equal(t, map[cescommons.SimpleName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
-		assert.Equal(t, 4, len(globalConfigDiff))
+		assert.Equal(t, 2, len(globalConfigDiff)) // only changes
 		hitKeys := make(map[string]bool)
 		for _, diff := range globalConfigDiff {
-			if diff.Key == "key1" {
-				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
-					Key: "key1",
-					Actual: GlobalConfigValueState{
-						Value:  (*string)(&val1),
-						Exists: true,
-					},
-					Expected: GlobalConfigValueState{
-						Value:  (*string)(&val1),
-						Exists: true,
-					},
-					NeededAction: ConfigActionNone,
-				}))
-				hitKeys["key1"] = true
-			}
 			if diff.Key == "key2" {
 				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
 					Key: "key2",
@@ -144,23 +129,8 @@ func Test_determineConfigDiff(t *testing.T) {
 				}))
 				hitKeys["key3"] = true
 			}
-			if diff.Key == "key4" {
-				assert.Empty(t, cmp.Diff(diff, GlobalConfigEntryDiff{
-					Key: "key4",
-					Actual: GlobalConfigValueState{
-						Value:  nil,
-						Exists: false,
-					},
-					Expected: GlobalConfigValueState{
-						Value:  nil,
-						Exists: false,
-					},
-					NeededAction: ConfigActionNone,
-				}))
-				hitKeys["key4"] = true
-			}
 		}
-		assert.Equal(t, 4, len(hitKeys))
+		assert.Equal(t, 2, len(hitKeys))
 	})
 
 	t.Run("all actions normal dogu config", func(t *testing.T) {
@@ -214,24 +184,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		assert.Equal(t, SensitiveDoguConfigDiffs(nil), sensitiveConfigDiffs["dogu1"])
-		assert.Equal(t, 4, len(dogusConfigDiffs["dogu1"]))
+		assert.Equal(t, 2, len(dogusConfigDiffs["dogu1"])) // only changes
 		hitKeys := make(map[common.DoguConfigKey]bool)
 		for _, diff := range dogusConfigDiffs["dogu1"] {
-			if diff.Key == dogu1Key1 {
-				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
-					Key: dogu1Key1,
-					Actual: DoguConfigValueState{
-						Value:  (*string)(&val1),
-						Exists: true,
-					},
-					Expected: DoguConfigValueState{
-						Value:  (*string)(&val1),
-						Exists: true,
-					},
-					NeededAction: ConfigActionNone,
-				}))
-				hitKeys[dogu1Key1] = true
-			}
 			if diff.Key == dogu1Key2 {
 				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
 					Key: dogu1Key2,
@@ -262,27 +217,8 @@ func Test_determineConfigDiff(t *testing.T) {
 				}))
 				hitKeys[dogu1Key3] = true
 			}
-			//domain.DoguConfigEntryDiff{Key:common.DoguConfigKey{DoguName:"dogu1", Key:"key3"},
-			//Actual:domain.DoguConfigValueState{Value:"value", Exists:true},
-			//Expected:domain.DoguConfigValueState{Value:"", Exists:false},
-			//NeededAction:"set"}
-			if diff.Key == dogu1Key4 {
-				assert.Empty(t, cmp.Diff(diff, DoguConfigEntryDiff{
-					Key: dogu1Key4,
-					Actual: DoguConfigValueState{
-						Value:  nil,
-						Exists: false,
-					},
-					Expected: DoguConfigValueState{
-						Value:  nil,
-						Exists: false,
-					},
-					NeededAction: ConfigActionNone,
-				}))
-				hitKeys[dogu1Key4] = true
-			}
 		}
-		assert.Equal(t, 4, len(hitKeys))
+		assert.Equal(t, 2, len(hitKeys))
 	})
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
@@ -343,21 +279,9 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"])
 		require.NotNil(t, sensitiveConfigDiffs["dogu1"])
-		assert.Equal(t, 3, len(sensitiveConfigDiffs["dogu1"]))
+		assert.Equal(t, 1, len(sensitiveConfigDiffs["dogu1"])) // only changes
 
 		entriesDogu1 := SensitiveDoguConfigDiffs{
-			{
-				Key: dogu1Key1,
-				Actual: DoguConfigValueState{
-					Value:  (*string)(&val1),
-					Exists: true,
-				},
-				Expected: DoguConfigValueState{
-					Value:  (*string)(&val1),
-					Exists: true,
-				},
-				NeededAction: ConfigActionNone,
-			},
 			{
 				Key: dogu1Key2,
 				Actual: DoguConfigValueState{
@@ -369,18 +293,6 @@ func Test_determineConfigDiff(t *testing.T) {
 					Exists: true,
 				},
 				NeededAction: ConfigActionSet,
-			},
-			{
-				Key: dogu1Key3,
-				Actual: DoguConfigValueState{
-					Value:  nil,
-					Exists: false,
-				},
-				Expected: DoguConfigValueState{
-					Value:  nil,
-					Exists: false,
-				},
-				NeededAction: ConfigActionNone,
 			},
 		}
 		assert.ElementsMatch(t, sensitiveConfigDiffs["dogu1"], entriesDogu1)

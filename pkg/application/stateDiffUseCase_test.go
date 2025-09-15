@@ -326,20 +326,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			},
 			{
-				DoguName: "nginx-ingress",
-				Actual: domain.DoguDiffState{
-					Namespace: "k8s",
-					Version:   mustParseVersionToPtr(t, "1.8.5"),
-					Absent:    false,
-				},
-				Expected: domain.DoguDiffState{
-					Namespace: "k8s",
-					Version:   mustParseVersionToPtr(t, "1.8.5"),
-					Absent:    false,
-				},
-				NeededActions: nil,
-			},
-			{
 				DoguName: "nginx-static",
 				Actual: domain.DoguDiffState{
 					Namespace: "k8s",
@@ -409,18 +395,13 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// then
 		require.NoError(t, err)
 
+		// only changes are expected
 		expectedConfigDiff := []domain.GlobalConfigEntryDiff{
 			{
 				Key:          "globalKey1",
 				Actual:       domain.GlobalConfigValueState{Value: nil, Exists: false},
 				Expected:     domain.GlobalConfigValueState{Value: &val1, Exists: true},
 				NeededAction: domain.ConfigActionSet,
-			},
-			{
-				Key:          "globalKey2",
-				Actual:       domain.GlobalConfigValueState{Value: nil, Exists: false},
-				Expected:     domain.GlobalConfigValueState{Value: nil, Exists: false},
-				NeededAction: domain.ConfigActionNone,
 			},
 		}
 		assert.ElementsMatch(t, expectedConfigDiff, blueprint.StateDiff.GlobalConfigDiffs)

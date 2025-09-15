@@ -79,14 +79,22 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[cescommons.Sim
 	var doguDiffs = map[cescommons.SimpleName]DoguDiff{}
 	for _, blueprintDogu := range blueprintDogus {
 		installedDogu := installedDogus[blueprintDogu.Name.SimpleName]
-		doguDiffs[blueprintDogu.Name.SimpleName] = determineDoguDiff(&blueprintDogu, installedDogu)
+		determinedDoguDiff := determineDoguDiff(&blueprintDogu, installedDogu)
+		// only add changes to diff
+		if determinedDoguDiff != nil {
+			doguDiffs[blueprintDogu.Name.SimpleName] = *determinedDoguDiff
+		}
 	}
 	for _, installedDogu := range installedDogus {
 		_, found := FindDoguByName(blueprintDogus, installedDogu.Name.SimpleName)
 		// Only create DoguDiff if the installed dogu is not found in the blueprint.
 		// If the installed dogu is in blueprint the DoguDiff was already determined above.
 		if !found {
-			doguDiffs[installedDogu.Name.SimpleName] = determineDoguDiff(nil, installedDogu)
+			determinedDoguDiff := determineDoguDiff(nil, installedDogu)
+			// only add changes to diff
+			if determinedDoguDiff != nil {
+				doguDiffs[installedDogu.Name.SimpleName] = *determinedDoguDiff
+			}
 		}
 	}
 	return maps.Values(doguDiffs)
@@ -96,7 +104,7 @@ func determineDoguDiffs(blueprintDogus []Dogu, installedDogus map[cescommons.Sim
 // if the Dogu is nil (was not in the blueprint), the actual state is also the expected state.
 // if the installedDogu is nil, it is considered to be not installed currently.
 // returns a DoguDiff
-func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstallation) DoguDiff {
+func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstallation) *DoguDiff {
 	var expectedState, actualState DoguDiffState
 	var doguName cescommons.SimpleName = "" // either blueprintDogu or installedDogu could be nil
 
@@ -129,11 +137,16 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 		}
 	}
 
-	return DoguDiff{
+	actions := getNeededDoguActions(expectedState, actualState)
+	if len(actions) == 0 {
+		return nil
+	}
+
+	return &DoguDiff{
 		DoguName:      doguName,
 		Expected:      expectedState,
 		Actual:        actualState,
-		NeededActions: getNeededDoguActions(expectedState, actualState),
+		NeededActions: actions,
 	}
 }
 

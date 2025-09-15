@@ -85,7 +85,11 @@ func determineDoguConfigDiffs(doguName cescommons.SimpleName, wantedConfig DoguC
 			DoguName: doguName,
 			Key:      expectedConfig.Key,
 		}
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(configKey, actualValue, exists, expectedConfig.Value, !expectedConfig.Absent))
+		diff := newDoguConfigEntryDiff(configKey, actualValue, exists, expectedConfig.Value, !expectedConfig.Absent)
+		// only add diff if there are changes
+		if diff.NeededAction != ConfigActionNone {
+			doguConfigDiff = append(doguConfigDiff, diff)
+		}
 	}
 	return doguConfigDiff
 }

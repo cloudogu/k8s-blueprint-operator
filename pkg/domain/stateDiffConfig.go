@@ -53,7 +53,10 @@ func determineDogusConfigDiffs(
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
 	for doguName, bluprintDoguConfig := range blueprintDoguConfigs {
-		diffsPerDogu[doguName] = determineDoguConfigDiffs(doguName, bluprintDoguConfig, configByDogu, false)
+		configDiffs := determineDoguConfigDiffs(doguName, bluprintDoguConfig, configByDogu, false)
+		if len(configDiffs) > 0 {
+			diffsPerDogu[doguName] = configDiffs
+		}
 	}
 	return diffsPerDogu
 }
@@ -66,7 +69,10 @@ func determineSensitiveDogusConfigDiffs(
 	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
 	for doguName, blueprintDoguConfig := range blueprintDoguConfigs {
 		setSensitiveConfigValues(doguName, blueprintDoguConfig, referencedValues)
-		diffsPerDogu[doguName] = determineDoguConfigDiffs(doguName, blueprintDoguConfig, configByDogu, true)
+		configDiffs := determineDoguConfigDiffs(doguName, blueprintDoguConfig, configByDogu, true)
+		if len(configDiffs) > 0 {
+			diffsPerDogu[doguName] = configDiffs
+		}
 	}
 	return diffsPerDogu
 }
