@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	nginxDependencyName        = "nginx"
-	nginxStaticDependencyName  = "nginx-static"
-	nginxIngressDependencyName = "nginx-ingress"
-	registratorDependencyName  = "registrator"
+	nginxDependencyName       = "nginx"
+	registratorDependencyName = "registrator"
 )
 
 type ValidateDependenciesDomainUseCase struct {
@@ -106,18 +104,8 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		}
 
 		// Exception for the old nginx dependency from the single node Cloudogu EcoSystem.
-		// We only have to check if nginx-static and nginx-ingress are present.
+		// The nginx dependency was replaced by a the k8s-ces-gateway and k8s-ces-assets component
 		if dependencyOfWantedDogu.Name == nginxDependencyName {
-			if !checkNginxIngressAndStatic(wantedDogus) {
-				problems = append(problems, fmt.Errorf(
-					"dogu has %q dependency but %q and %q are missing in the effective blueprint",
-					nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName,
-				))
-			}
-			logger.V(2).Info(fmt.Sprintf(
-				"dogu has dependency %q. %q and %q are available.",
-				nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName,
-			))
 			continue
 		}
 
@@ -127,23 +115,6 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 	}
 	err := errors.Join(problems...)
 	return err
-}
-
-func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
-	foundNginxIngress := isDoguInSlice(wantedDogus, nginxIngressDependencyName)
-	foundNginxStatic := isDoguInSlice(wantedDogus, nginxStaticDependencyName)
-
-	return foundNginxIngress && foundNginxStatic
-}
-
-func isDoguInSlice(dogus []domain.Dogu, name cescommons.SimpleName) bool {
-	for _, dogu := range dogus {
-		if dogu.Name.SimpleName == name {
-			return true
-		}
-	}
-
-	return false
 }
 
 func checkDoguDependency(
