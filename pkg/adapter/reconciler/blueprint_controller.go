@@ -31,7 +31,7 @@ func NewBlueprintReconciler(
 	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
 }
 
-// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;watch;update;patch
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/finalizers,verbs=update
 

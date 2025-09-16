@@ -46,6 +46,7 @@ func TestApplyDogusUseCase_ApplyDogus(t *testing.T) {
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
+		// Here is the important part: we expect the update to be called only once
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 		doguInstallUseCaseMock := newMockDoguInstallationUseCase(t)
 		doguInstallUseCaseMock.EXPECT().ApplyDoguStates(testCtx, blueprint).Return(nil)

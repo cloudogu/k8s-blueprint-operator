@@ -64,7 +64,7 @@ type BlueprintConfiguration struct {
 
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
 // Here will be only checked, what can be checked without any external information, e.g. without dogu specification.
-// changed a domain.InvalidBlueprintError if blueprint is invalid
+// returns a domain.InvalidBlueprintError if blueprint is invalid
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateStatically() error {
 	var errorList []error
@@ -245,7 +245,7 @@ func (spec *BlueprintSpec) MissingConfigReferences(error error) {
 // installedDogus are a map in the form of simpleDoguName->*DoguInstallation. There should be no nil values.
 // The StateDiff is an 'as is' representation, therefore no error is thrown, e.g. if dogu namespaces are different and namespace changes are not allowed.
 // If there are not allowed actions should be considered at the start of the execution of the blueprint.
-// changed an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
+// returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
@@ -331,7 +331,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 // HandleHealthResult sets the healthCondition accordingly to the healthResult and a possible error.
 // if an error is given, the condition will be set to unknown.
-// The function changed true if the condition changed, otherwise false.
+// The function returns true if the condition changed, otherwise false.
 func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResult, err error) bool {
 	if err != nil {
 		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
@@ -375,9 +375,8 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 	return conditionChanged
 }
 
-// ShouldBeApplied changed true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
+// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	// wrote it in the long form to reduce complexity
 	if spec.Config.DryRun {
 		return false
 	}
@@ -635,7 +634,7 @@ func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 }
 
 // Complete is used to mark the blueprint as completed and to inform the user.
-// Returns true if anything changed, false otherwise.
+// Returns true if the condition changed, false otherwise.
 func (spec *BlueprintSpec) Complete() bool {
 	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:   ConditionCompleted,

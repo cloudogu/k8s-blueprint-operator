@@ -3,6 +3,7 @@ package componentcr
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -109,8 +110,7 @@ func toComponentCR(component *ecosystem.ComponentInstallation) (*compV1.Componen
 				ComponentVersionLabelKey:       component.ExpectedVersion.String(),
 				"app":                          "ces",
 				"k8s.cloudogu.com/app":         "ces",
-				"dogu.name":                    string(component.Name.SimpleName),
-				"k8s.cloudogu.com/dogu.name":   string(component.Name.SimpleName),
+				"component.name":               string(component.Name.SimpleName),
 				"app.kubernetes.io/name":       string(component.Name.SimpleName),
 				"app.kubernetes.io/version":    component.ExpectedVersion.String(),
 				"app.kubernetes.io/part-of":    "ces",

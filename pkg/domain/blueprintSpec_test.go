@@ -471,7 +471,7 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Completed", condition.Reason)
-		assert.Equal(t, "", condition.Message)
+		assert.Empty(t, condition.Message)
 		assert.Equal(t, []Event{CompletedEvent{}}, blueprint.Events)
 	})
 	t.Run("no change if executed twice", func(t *testing.T) {
@@ -487,7 +487,7 @@ func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
 		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Completed", condition.Reason)
-		assert.Equal(t, "", condition.Message)
+		assert.Empty(t, condition.Message)
 		assert.Equal(t, 0, len(blueprint.Events))
 	})
 }
@@ -510,6 +510,7 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 		blueprint.ValidateDynamically(givenErr)
 
 		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, "BlueprintSpecInvalid", blueprint.Events[0].Name())
 	})
 }
 
@@ -703,7 +704,7 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 		},
 	}
 
-	t.Run("applied", func(t *testing.T) {
+	t.Run("set condition to applied when no change", func(t *testing.T) {
 		blueprint := BlueprintSpec{
 			StateDiff: diff,
 		}
@@ -719,7 +720,7 @@ func TestBlueprintSpec_SetComponentAppliedCondition(t *testing.T) {
 		assert.Equal(t, ComponentsAppliedEvent{Diffs: diff.ComponentDiffs}, blueprint.Events[0])
 	})
 
-	t.Run("error", func(t *testing.T) {
+	t.Run("set condition to cannotApply on error", func(t *testing.T) {
 		blueprint := BlueprintSpec{
 			StateDiff: diff,
 		}
@@ -900,7 +901,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 		expected expected
 	}{
 		{
-			name: "none, diff -> NeedToApply, event",
+			name: "no condition + diff -> NeedToApply + event",
 			given: given{
 				hasDiff: true,
 			},
@@ -916,7 +917,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "none, no diff -> Applied, event",
+			name: "no condition + no diff -> Applied + event",
 			given: given{
 				hasDiff: false,
 			},
@@ -932,7 +933,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "Unknown, diff -> NeedToApply, event",
+			name: "Condition Unknown + diff -> NeedToApply + event",
 			given: given{
 				hasDiff: true,
 				condition: Condition{
@@ -953,7 +954,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "Unknown, no diff -> Applied, event",
+			name: "Condition Unknown + no diff -> Applied + event",
 			given: given{
 				hasDiff: false,
 			},
@@ -969,7 +970,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "NeedToApply, diff -> NeedToApply, event",
+			name: "Condition NeedToApply + diff -> NeedToApply + event",
 			given: given{
 				hasDiff: true,
 				condition: Condition{
@@ -991,7 +992,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "NeedToApply, diff -> NeedToApply, no event",
+			name: "Condition NeedToApply + diff -> NeedToApply + no event",
 			given: given{
 				hasDiff: true,
 				condition: Condition{
@@ -1013,7 +1014,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "NeedToApply, no diff -> Applied, event",
+			name: "Condition NeedToApply + no diff -> Applied + event",
 			given: given{
 				hasDiff: false,
 				condition: Condition{
@@ -1035,7 +1036,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "Applied, diff -> NeedToApply, event",
+			name: "Condition Applied + diff -> NeedToApply + event",
 			given: given{
 				hasDiff: true,
 				condition: Condition{
@@ -1057,7 +1058,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "Applied, no diff -> no change",
+			name: "Condition Applied + no diff -> no change",
 			given: given{
 				hasDiff: false,
 				condition: Condition{
@@ -1073,7 +1074,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "CannotApply, no diff -> no change",
+			name: "Condition CannotApply + no diff -> no change",
 			given: given{
 				hasDiff: false,
 				condition: Condition{
@@ -1089,7 +1090,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "CannotApply, diff -> no change",
+			name: "Condition CannotApply + diff -> no change",
 			given: given{
 				hasDiff: true,
 				condition: Condition{
@@ -1105,7 +1106,7 @@ func TestBlueprintSpec_setDogusAppliedConditionAfterStateDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "error given",
+			name: "on error -> Condition Unknown + error",
 			given: given{
 				hasDiff: false,
 				diffErr: assert.AnError,

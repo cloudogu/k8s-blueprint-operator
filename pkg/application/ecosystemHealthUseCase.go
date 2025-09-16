@@ -42,8 +42,8 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(
 		blueprint.Config.IgnoreDoguHealth,
 		blueprint.Config.IgnoreComponentHealth,
 	)
-	infoChanged := blueprint.HandleHealthResult(health, determineHealthError)
-	if infoChanged {
+	healthChanged := blueprint.HandleHealthResult(health, determineHealthError)
+	if healthChanged {
 		updateErr := useCase.blueprintRepo.Update(ctx, blueprint)
 		if updateErr != nil {
 			return ecosystem.HealthResult{}, fmt.Errorf(

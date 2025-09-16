@@ -47,6 +47,7 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
+		// Here is the important part: we expect the update to be called only once
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
 		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil).Twice()
