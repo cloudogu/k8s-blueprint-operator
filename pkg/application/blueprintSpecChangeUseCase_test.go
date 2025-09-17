@@ -63,7 +63,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 	}
 	testDryRunBlueprintSpec := &domain.BlueprintSpec{
 		Id:     testBlueprintId,
-		Config: domain.BlueprintConfiguration{DryRun: true},
+		Config: domain.BlueprintConfiguration{Stopped: true},
 	}
 
 	type fields struct {

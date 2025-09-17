@@ -83,7 +83,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			IgnoreDoguHealth:         boolPtrToValue(blueprintCR.Spec.IgnoreDoguHealth),
 			IgnoreComponentHealth:    boolPtrToValue(blueprintCR.Spec.IgnoreComponentHealth),
 			AllowDoguNamespaceSwitch: boolPtrToValue(blueprintCR.Spec.AllowDoguNamespaceSwitch),
-			DryRun:                   boolPtrToValue(blueprintCR.Spec.Stopped),
+			Stopped:                  boolPtrToValue(blueprintCR.Spec.Stopped),
 		},
 	}
 

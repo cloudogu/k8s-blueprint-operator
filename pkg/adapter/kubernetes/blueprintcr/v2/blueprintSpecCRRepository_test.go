@@ -69,7 +69,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:         true,
 				AllowDoguNamespaceSwitch: true,
-				DryRun:                   true,
+				Stopped:                  true,
 			},
 			StateDiff:          domain.StateDiff{},
 			PersistenceContext: persistenceContext,
@@ -108,7 +108,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:         true,
 				AllowDoguNamespaceSwitch: true,
-				DryRun:                   true,
+				Stopped:                  true,
 			},
 			StateDiff:          domain.StateDiff{},
 			PersistenceContext: persistenceContext,

@@ -128,6 +128,7 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprint(ctx context.Context, b
 		return err
 	}
 	err = useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
+	// TODO: prevent Dogu restarts here to avoid starting Dogus with config not fitting to the expected dogu version
 	if err != nil {
 		return err
 	}

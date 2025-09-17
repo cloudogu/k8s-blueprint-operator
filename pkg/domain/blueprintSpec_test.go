@@ -518,7 +518,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 	t.Run("should be applied on global config change", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: false,
+				Stopped: false,
 			},
 			StateDiff: StateDiff{
 				GlobalConfigDiffs: []GlobalConfigEntryDiff{
@@ -538,7 +538,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 		}
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: false,
+				Stopped: false,
 			},
 			StateDiff: StateDiff{
 				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
@@ -560,7 +560,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 		}
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: false,
+				Stopped: false,
 			},
 			StateDiff: StateDiff{
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
@@ -578,7 +578,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 	t.Run("should not be applied without any changes", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: false,
+				Stopped: false,
 			},
 		}
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
@@ -586,7 +586,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 	t.Run("should not be applied due to dry run", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: true,
+				Stopped: true,
 			},
 		}
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")

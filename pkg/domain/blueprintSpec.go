@@ -58,8 +58,8 @@ type BlueprintConfiguration struct {
 	IgnoreComponentHealth bool
 	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
-	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
-	DryRun bool
+	// Stopped lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+	Stopped bool
 }
 
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
@@ -377,7 +377,7 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 
 // ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	if spec.Config.DryRun {
+	if spec.Config.Stopped {
 		return false
 	}
 	return spec.StateDiff.HasChanges()

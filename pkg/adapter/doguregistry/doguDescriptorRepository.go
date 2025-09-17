@@ -74,12 +74,10 @@ func (r *DoguDescriptorRepository) getRemoteDogu(ctx context.Context, qualifiedD
 func (r *DoguDescriptorRepository) getLocalDogu(ctx context.Context, qualifiedDoguVersion cescommons.QualifiedVersion, logger logr.Logger) *core.Dogu {
 	dogu, err := r.localRepository.Get(ctx, cescommons.NewSimpleNameVersion(qualifiedDoguVersion.Name.SimpleName, qualifiedDoguVersion.Version))
 	if err == nil {
-		// TODO: move to V(2) later
-		logger.Info("local dogu descriptor hit", "dogu", qualifiedDoguVersion.Name.SimpleName)
+		logger.V(2).Info("local dogu descriptor hit", "dogu", qualifiedDoguVersion.Name.SimpleName)
 		return dogu
 	} else {
-		// TODO: move to V(2) later
-		logger.Info("local dogu descriptor miss", "error", err)
+		logger.V(2).Info("local dogu descriptor miss", "error", err)
 		return nil
 	}
 }
