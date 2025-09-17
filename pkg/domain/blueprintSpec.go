@@ -380,7 +380,8 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 	if spec.Config.Stopped {
 		return false
 	}
-	return spec.StateDiff.HasChanges()
+	// not true does not equal IsStatusConditionFalse here, because not true includes status "unknown"
+	return !meta.IsStatusConditionTrue(spec.Conditions, ConditionCompleted) || spec.StateDiff.HasChanges()
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {

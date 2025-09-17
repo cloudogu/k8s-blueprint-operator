@@ -515,6 +515,10 @@ func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
 }
 
 func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
+	conditionCompleted := Condition{
+		Type:   ConditionCompleted,
+		Status: metav1.ConditionTrue,
+	}
 	t.Run("should be applied on global config change", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
@@ -528,6 +532,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 					},
 				},
 			},
+			Conditions: []Condition{conditionCompleted},
 		}
 		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
@@ -550,6 +555,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 					},
 				},
 			},
+			Conditions: []Condition{conditionCompleted},
 		}
 		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
@@ -572,6 +578,31 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 					},
 				},
 			},
+			Conditions: []Condition{conditionCompleted},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed false", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{{
+				Type:   ConditionCompleted,
+				Status: metav1.ConditionFalse,
+			}},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed unknown", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{{
+				Type:   ConditionCompleted,
+				Status: metav1.ConditionUnknown,
+			}},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed not set", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{},
 		}
 		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
@@ -580,6 +611,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 			Config: BlueprintConfiguration{
 				Stopped: false,
 			},
+			Conditions: []Condition{conditionCompleted},
 		}
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})

@@ -86,6 +86,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	// === Apply from here on ===
 	err = useCase.applyBlueprint(ctx, blueprint)
 	if err != nil {
+		logger.Error(err, "cannot apply blueprint")
 		return err
 	}
 
