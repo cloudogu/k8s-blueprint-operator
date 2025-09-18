@@ -13,7 +13,6 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type BlueprintSpec struct {
@@ -38,12 +37,12 @@ const (
 	ConditionExecutable           = "Executable"
 	ConditionEcosystemHealthy     = "EcosystemHealthy"
 	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
-	ConditionConfigApplied        = "ConfigApplied"
-	ConditionComponentsApplied    = "ComponentsApplied"
-	ConditionDogusApplied         = "DogusApplied"
 	ConditionCompleted            = "Completed"
+	ConditionLastApplySucceeded   = "LastApplySuccessful"
 
-	ReasonCannotApply = "CannotApply"
+	ReasonLastApplyErrorAtComponents = "ComponentApplyFailure"
+	ReasonLastApplyErrorAtDogus      = "DoguApplyFailure"
+	ReasonLastApplyErrorAtConfig     = "ConfigApplyFailure"
 )
 
 var (
@@ -270,7 +269,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	}
 
 	//TODO: we need the possible error from the use case to set the condition to Unknown
-	spec.setDogusAppliedConditionAfterStateDiff(nil)
 	spec.resetCompletedConditionAfterStateDiff()
 	if spec.StateDiff.DoguDiffs.HasChanges() {
 		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
@@ -407,79 +405,6 @@ func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
 	}
 }
 
-// setDogusAppliedConditionAfterStateDiff sets the ConditionDogusApplied based on the diff, and it's current state.
-// This function gets called after creating the stateDiff. The ConditionDogusApplied could be applied in a previous run
-// either by the state diff or later while applying the dogus.
-// If there is a condition from the DoguApply-step, then do not override it, unless it is obviously outdated.
-//
-//	decision table:
-//	current condition   withDiff     withoutDiff  DiffError
-//	=======================================================
-//	none                NeedToApply	 Applied      Unknown
-//	Unknown             NeedToApply	 Applied      Unknown
-//	NeedToApply         NeedToApply	 Applied      Unknown
-//	Applied             NeedToApply	 no change    Unknown
-//	CannotApply         no change    no change    Unknown
-func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error) bool {
-	condition := meta.FindStatusCondition(spec.Conditions, ConditionDogusApplied)
-
-	//	current condition DiffError
-	//	===========================
-	//	none              Unknown
-	//	Unknown           Unknown
-	//	NeedToApply       Unknown
-	//	Applied           Unknown
-	//	CannotApply       Unknown
-	if diffErr != nil {
-		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-			Type:    ConditionDogusApplied,
-			Status:  metav1.ConditionUnknown,
-			Reason:  "CannotDetermineStateDiff",
-			Message: diffErr.Error(),
-		})
-		return conditionChanged
-	}
-
-	//	current condition   withDiff     withoutDiff
-	//	============================================
-	//	none                NeedToApply	 Applied
-	//	Unknown             NeedToApply	 Applied
-	//	NeedToApply         NeedToApply	 Applied
-	if condition == nil || condition.Status == metav1.ConditionUnknown || condition.Reason == "NeedToApply" {
-		if spec.StateDiff.DoguDiffs.HasChanges() {
-			return spec.setDogusNeedToApply()
-		} else {
-			event := newStateDiffDoguEvent(spec.StateDiff.DoguDiffs)
-			conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-				Type:    ConditionDogusApplied,
-				Status:  metav1.ConditionFalse,
-				Reason:  "Applied",
-				Message: event.Message(),
-			})
-			return conditionChanged
-		}
-	}
-	//	current condition   withDiff     withoutDiff
-	//	============================================
-	//	CannotApply         no change    no change
-	if condition.Reason == ReasonCannotApply {
-		return false
-	}
-
-	//	current condition   withDiff     withoutDiff
-	//	============================================
-	//	Applied             NeedToApply	 no change
-	if condition.Reason == "Applied" {
-		if spec.StateDiff.DoguDiffs.HasChanges() {
-			return spec.setDogusNeedToApply()
-		} else {
-			return false
-		}
-	}
-	// should never happen
-	return false
-}
-
 func (spec *BlueprintSpec) resetCompletedConditionAfterStateDiff() bool {
 	if spec.StateDiff.HasChanges() {
 		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
@@ -492,75 +417,6 @@ func (spec *BlueprintSpec) resetCompletedConditionAfterStateDiff() bool {
 	}
 
 	return false
-}
-
-func (spec *BlueprintSpec) setDogusNeedToApply() bool {
-	event := newStateDiffDoguEvent(spec.StateDiff.DoguDiffs)
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:    ConditionDogusApplied,
-		Status:  metav1.ConditionFalse,
-		Reason:  "NeedToApply",
-		Message: event.Message(),
-	})
-	return conditionChanged
-}
-
-// SetComponentsAppliedCondition informs the user about the state of the component apply.
-// If an error is given, it will set the condition to failed accordingly, otherwise it marks it as a success.
-// Returns true if the condition changed, otherwise false.
-func (spec *BlueprintSpec) SetComponentsAppliedCondition(err error) bool {
-	if err != nil {
-		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-			Type:    ConditionComponentsApplied,
-			Status:  metav1.ConditionFalse,
-			Reason:  ReasonCannotApply,
-			Message: err.Error(),
-		})
-		if conditionChanged {
-			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-		}
-		return conditionChanged
-	}
-	event := ComponentsAppliedEvent{Diffs: spec.StateDiff.ComponentDiffs}
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:    ConditionComponentsApplied,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Applied",
-		Message: event.Message(),
-	})
-	if conditionChanged && spec.StateDiff.ComponentDiffs.HasChanges() {
-		spec.Events = append(spec.Events, event)
-	}
-	return conditionChanged
-}
-
-// SetDogusAppliedCondition informs the user about the state of the dogu apply.
-// If an error is given, it will set the condition to failed accordingly, otherwise it marks it as a success.
-// Returns true if the condition changed, otherwise false.
-func (spec *BlueprintSpec) SetDogusAppliedCondition(err error) bool {
-	if err != nil {
-		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-			Type:    ConditionDogusApplied,
-			Status:  metav1.ConditionFalse,
-			Reason:  ReasonCannotApply,
-			Message: err.Error(),
-		})
-		if conditionChanged {
-			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-		}
-		return conditionChanged
-	}
-	event := DogusAppliedEvent{Diffs: spec.StateDiff.DoguDiffs}
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:    ConditionDogusApplied,
-		Status:  metav1.ConditionTrue,
-		Reason:  "Applied",
-		Message: event.Message(),
-	})
-	if conditionChanged && spec.StateDiff.DoguDiffs.HasChanges() {
-		spec.Events = append(spec.Events, event)
-	}
-	return conditionChanged
 }
 
 func (spec *BlueprintSpec) validateStateDiff() error {
@@ -607,42 +463,6 @@ func getActionNotAllowedError(action Action) *InvalidBlueprintError {
 	}
 }
 
-func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
-	event := ApplyEcosystemConfigEvent{}
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:    ConditionConfigApplied,
-		Status:  metav1.ConditionFalse,
-		Reason:  "Applying",
-		Message: event.Message(),
-	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
-	}
-}
-
-func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:    ConditionConfigApplied,
-		Status:  metav1.ConditionFalse,
-		Reason:  "ApplyingFailed",
-		Message: err.Error(),
-	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
-	}
-}
-
-func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:   ConditionConfigApplied,
-		Status: metav1.ConditionTrue,
-		Reason: "Applied",
-	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
-	}
-}
-
 // Complete is used to mark the blueprint as completed and to inform the user.
 // Returns true if the condition changed, false otherwise.
 func (spec *BlueprintSpec) Complete() bool {
@@ -651,11 +471,32 @@ func (spec *BlueprintSpec) Complete() bool {
 		Status: metav1.ConditionTrue,
 		Reason: "Completed",
 	})
+	meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionLastApplySucceeded,
+		Status: metav1.ConditionTrue,
+		Reason: "ApplySucceeded",
+	})
+
 	if conditionChanged {
-		log.Log.Info("########## Add Event")
 		spec.Events = append(spec.Events, CompletedEvent{})
-	} else {
-		log.Log.Info("########## Add No Event")
 	}
 	return conditionChanged
+}
+
+func (spec *BlueprintSpec) SetLastApplySucceededCondition(reason string, err error) bool {
+	if err != nil {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionLastApplySucceeded,
+			Status:  metav1.ConditionFalse,
+			Reason:  reason,
+			Message: err.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
+		}
+
+		return conditionChanged
+	}
+
+	return false
 }

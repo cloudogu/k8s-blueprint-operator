@@ -34,10 +34,10 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
 		assert.True(t, changed)
 		require.Equal(t, 1, len(blueprint.Events))
 		assert.Equal(t, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs}, blueprint.Events[0])
+		require.Empty(t, blueprint.Conditions)
 	})
 
 	t.Run("no update without condition change", func(t *testing.T) {
@@ -50,17 +50,21 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		// Here is the important part: we expect the update to be called only once
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 		componentInstallUseCaseMock := newMockComponentInstallationUseCase(t)
-		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(nil).Twice()
+		componentInstallUseCaseMock.EXPECT().ApplyComponentStates(testCtx, blueprint).Return(assert.AnError).Twice()
 		useCase := NewApplyComponentsUseCase(repoMock, componentInstallUseCaseMock)
 
-		changed, err := useCase.ApplyComponents(testCtx, blueprint)
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
-		assert.True(t, changed)
-		changed, err = useCase.ApplyComponents(testCtx, blueprint)
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
-		assert.False(t, changed)
+		componentsApplied, err := useCase.ApplyComponents(testCtx, blueprint)
+		require.Error(t, err)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, componentsApplied)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.NewExecutionFailedEvent(err), blueprint.Events[0])
+		// second apply
+		componentsApplied, err = useCase.ApplyComponents(testCtx, blueprint)
+		require.Error(t, err)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, componentsApplied)
+		require.Equal(t, 1, len(blueprint.Events))
 	})
 
 	t.Run("fail to apply components", func(t *testing.T) {
@@ -77,13 +81,22 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionComponentsApplied))
-		assert.True(t, changed)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, changed)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.NewExecutionFailedEvent(err), blueprint.Events[0])
 	})
 
 	t.Run("fail to update blueprint", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Conditions: []domain.Condition{},
+			StateDiff: domain.StateDiff{
+				ComponentDiffs: domain.ComponentDiffs{
+					{
+						NeededActions: []domain.Action{domain.ActionInstall},
+					},
+				},
+			},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -95,7 +108,9 @@ func TestApplyComponentsUseCase_ApplyComponents(t *testing.T) {
 		changed, err := useCase.ApplyComponents(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionComponentsApplied))
+		assert.Empty(t, blueprint.Conditions)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs}, blueprint.Events[0])
 		assert.True(t, changed)
 	})
 }

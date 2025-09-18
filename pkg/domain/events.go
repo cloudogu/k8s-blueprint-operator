@@ -265,6 +265,10 @@ type ExecutionFailedEvent struct {
 	err error
 }
 
+func NewExecutionFailedEvent(err error) ExecutionFailedEvent {
+	return ExecutionFailedEvent{err: err}
+}
+
 func (e ExecutionFailedEvent) Name() string {
 	return "ExecutionFailed"
 }
@@ -291,18 +295,6 @@ func (e ApplyEcosystemConfigEvent) Name() string {
 
 func (e ApplyEcosystemConfigEvent) Message() string {
 	return "apply ecosystem config"
-}
-
-type ApplyEcosystemConfigFailedEvent struct {
-	err error
-}
-
-func (e ApplyEcosystemConfigFailedEvent) Name() string {
-	return "ApplyEcosystemConfigFailed"
-}
-
-func (e ApplyEcosystemConfigFailedEvent) Message() string {
-	return e.err.Error()
 }
 
 type EcosystemConfigAppliedEvent struct{}

@@ -30,13 +30,17 @@ func NewApplyComponentsUseCase(
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 func (useCase *ApplyComponentsUseCase) ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error) {
 	err := useCase.componentUseCase.ApplyComponentStates(ctx, blueprint)
-	changed := blueprint.SetComponentsAppliedCondition(err)
+	isComponentsApplied := blueprint.StateDiff.ComponentDiffs.HasChanges() && err == nil
+	if isComponentsApplied {
+		blueprint.Events = append(blueprint.Events, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs})
+	}
+	conditionChanged := blueprint.SetLastApplySucceededCondition(domain.ReasonLastApplyErrorAtComponents, err)
 
-	if changed {
+	if isComponentsApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)
 		if updateErr != nil {
-			return changed, fmt.Errorf("cannot update condition while applying components: %w", errors.Join(updateErr, err))
+			return isComponentsApplied, fmt.Errorf("cannot update status while applying components: %w", errors.Join(updateErr, err))
 		}
 	}
-	return changed, err
+	return isComponentsApplied, err
 }

@@ -34,10 +34,11 @@ func TestApplyDogusUseCase_ApplyDogus(t *testing.T) {
 		changed, err := useCase.ApplyDogus(testCtx, blueprint)
 
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionDogusApplied))
 		assert.True(t, changed)
 		require.Equal(t, 1, len(blueprint.Events))
 		assert.Equal(t, domain.DogusAppliedEvent{Diffs: blueprint.StateDiff.DoguDiffs}, blueprint.Events[0])
+		require.Empty(t, blueprint.Conditions)
+
 	})
 
 	t.Run("no update without condition change", func(t *testing.T) {
@@ -49,17 +50,21 @@ func TestApplyDogusUseCase_ApplyDogus(t *testing.T) {
 		// Here is the important part: we expect the update to be called only once
 		repoMock.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
 		doguInstallUseCaseMock := newMockDoguInstallationUseCase(t)
-		doguInstallUseCaseMock.EXPECT().ApplyDoguStates(testCtx, blueprint).Return(nil)
+		doguInstallUseCaseMock.EXPECT().ApplyDoguStates(testCtx, blueprint).Return(assert.AnError)
 		useCase := NewApplyDogusUseCase(repoMock, doguInstallUseCaseMock)
 
-		changed, err := useCase.ApplyDogus(testCtx, blueprint)
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionDogusApplied))
-		assert.True(t, changed)
-		changed, err = useCase.ApplyDogus(testCtx, blueprint)
-		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionDogusApplied))
-		assert.False(t, changed)
+		dogusApplied, err := useCase.ApplyDogus(testCtx, blueprint)
+		require.Error(t, err)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, dogusApplied)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.NewExecutionFailedEvent(err), blueprint.Events[0])
+		// second apply
+		dogusApplied, err = useCase.ApplyDogus(testCtx, blueprint)
+		require.Error(t, err)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, dogusApplied)
+		require.Equal(t, 1, len(blueprint.Events))
 	})
 
 	t.Run("fail to apply dogus", func(t *testing.T) {
@@ -76,13 +81,20 @@ func TestApplyDogusUseCase_ApplyDogus(t *testing.T) {
 		changed, err := useCase.ApplyDogus(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionDogusApplied))
-		assert.True(t, changed)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionLastApplySucceeded))
+		assert.False(t, changed)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.NewExecutionFailedEvent(err), blueprint.Events[0])
 	})
 
 	t.Run("fail to update blueprint", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Conditions: []domain.Condition{},
+			StateDiff: domain.StateDiff{
+				DoguDiffs: domain.DoguDiffs{
+					{NeededActions: []domain.Action{domain.ActionInstall}},
+				},
+			},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -94,7 +106,9 @@ func TestApplyDogusUseCase_ApplyDogus(t *testing.T) {
 		changed, err := useCase.ApplyDogus(testCtx, blueprint)
 
 		require.ErrorIs(t, err, assert.AnError)
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionDogusApplied))
+		assert.Empty(t, blueprint.Conditions)
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, domain.DogusAppliedEvent{Diffs: blueprint.StateDiff.DoguDiffs}, blueprint.Events[0])
 		assert.True(t, changed)
 	})
 }

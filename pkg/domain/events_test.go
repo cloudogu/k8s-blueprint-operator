@@ -188,12 +188,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "ecosystem config applied",
 		},
 		{
-			name:            "applying ecosystem config failed",
-			event:           ApplyEcosystemConfigFailedEvent{fmt.Errorf("test-error")},
-			expectedName:    "ApplyEcosystemConfigFailed",
-			expectedMessage: "test-error",
-		},
-		{
 			name:            "await self upgrade",
 			event:           AwaitSelfUpgradeEvent{},
 			expectedName:    "AwaitSelfUpgrade",

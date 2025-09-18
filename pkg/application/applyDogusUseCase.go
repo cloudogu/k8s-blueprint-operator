@@ -30,13 +30,17 @@ func NewApplyDogusUseCase(
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 func (useCase *ApplyDogusUseCase) ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error) {
 	err := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprint)
-	changed := blueprint.SetDogusAppliedCondition(err)
+	isDogusApplied := blueprint.StateDiff.DoguDiffs.HasChanges() && err == nil
+	if isDogusApplied {
+		blueprint.Events = append(blueprint.Events, domain.DogusAppliedEvent{Diffs: blueprint.StateDiff.DoguDiffs})
+	}
+	conditionChanged := blueprint.SetLastApplySucceededCondition(domain.ReasonLastApplyErrorAtDogus, err)
 
-	if changed {
+	if isDogusApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)
 		if updateErr != nil {
-			return changed, fmt.Errorf("cannot update condition while applying dogus: %w", errors.Join(updateErr, err))
+			return isDogusApplied, fmt.Errorf("cannot update status while applying dogus: %w", errors.Join(updateErr, err))
 		}
 	}
-	return changed, err
+	return isDogusApplied, err
 }
