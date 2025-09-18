@@ -141,8 +141,7 @@ func Test_determineComponentDiff(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			compDiff, err := determineComponentDiff(tt.args.blueprintComponent, tt.args.installedComponent)
-			assert.NoError(t, err)
+			compDiff := determineComponentDiff(tt.args.blueprintComponent, tt.args.installedComponent)
 			assert.Equalf(t, tt.want, compDiff, "determineComponentDiff(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponent, tt.args.installedComponent)
 		})
 	}
@@ -337,8 +336,7 @@ func Test_determineComponentDiffs(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			compDiffs, err := determineComponentDiffs(tt.args.blueprintComponents, tt.args.installedComponents)
-			assert.NoError(t, err)
+			compDiffs := determineComponentDiffs(tt.args.blueprintComponents, tt.args.installedComponents)
 			assert.Equalf(t, tt.want, compDiffs, "determineComponentDiffs(%v, %v, %v)", tt.args.logger, tt.args.blueprintComponents, tt.args.installedComponents)
 		})
 	}

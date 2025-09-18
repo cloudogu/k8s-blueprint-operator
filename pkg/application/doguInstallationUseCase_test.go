@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -142,6 +143,28 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+
+	t.Run("action uninstall throws NotFoundError when dogu not found", func(t *testing.T) {
+		doguRepoMock := newMockDoguInstallationRepository(t)
+
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil)
+
+		// when
+		err := sut.applyDoguState(
+			testCtx,
+			domain.DoguDiff{
+				DoguName:      "postgresql",
+				NeededActions: []domain.Action{domain.ActionUninstall},
+			},
+			nil,
+			domain.BlueprintConfiguration{},
+		)
+
+		// then
+		require.Error(t, err)
+		var targetError *domainservice.NotFoundError
+		assert.ErrorAs(t, err, &targetError)
 	})
 
 	t.Run("action upgrade", func(t *testing.T) {

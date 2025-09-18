@@ -105,14 +105,11 @@ func (diff *ComponentDiffState) getSafeVersionString() string {
 }
 
 // determineComponentDiffs creates ComponentDiffs for all components in the blueprint and all installed components as well.
-func determineComponentDiffs(blueprintComponents []Component, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) ([]ComponentDiff, error) {
+func determineComponentDiffs(blueprintComponents []Component, installedComponents map[common.SimpleComponentName]*ecosystem.ComponentInstallation) []ComponentDiff {
 	var componentDiffs = map[common.SimpleComponentName]ComponentDiff{}
 	for _, blueprintComponent := range blueprintComponents {
 		installedComponent := installedComponents[blueprintComponent.Name.SimpleName]
-		compDiff, err := determineComponentDiff(&blueprintComponent, installedComponent)
-		if err != nil {
-			return nil, err
-		}
+		compDiff := determineComponentDiff(&blueprintComponent, installedComponent)
 		// only add changes to diff
 		if compDiff != nil {
 			componentDiffs[blueprintComponent.Name.SimpleName] = *compDiff
@@ -124,23 +121,20 @@ func determineComponentDiffs(blueprintComponents []Component, installedComponent
 		// Only create ComponentDiff if the installed component is not found in the blueprint.
 		// If the installed component is in blueprint the ComponentDiff was already determined above.
 		if !found {
-			compDiff, err := determineComponentDiff(nil, installedComponent)
-			if err != nil {
-				return nil, err
-			}
+			compDiff := determineComponentDiff(nil, installedComponent)
 			// only add changes to diff
 			if compDiff != nil {
 				componentDiffs[installedComponent.Name.SimpleName] = *compDiff
 			}
 		}
 	}
-	return maps.Values(componentDiffs), nil
+	return maps.Values(componentDiffs)
 }
 
 // determineComponentDiff creates a ComponentDiff out of a Component from the blueprint and the ecosystem.ComponentInstallation in the ecosystem.
 // If the Component is nil (was not in the blueprint), the actual state is also the expected state.
 // If the installedComponent is nil, it is considered to be not installed currently.
-func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) (*ComponentDiff, error) {
+func determineComponentDiff(blueprintComponent *Component, installedComponent *ecosystem.ComponentInstallation) *ComponentDiff {
 	var expectedState, actualState ComponentDiffState
 	componentName := common.SimpleComponentName("") // either blueprintComponent or installedComponent could be nil
 
@@ -169,13 +163,10 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		}
 	}
 
-	nextActions, err := getComponentActions(expectedState, actualState)
-	if err != nil {
-		return nil, fmt.Errorf("failed to determine diff for component %q : %w", componentName, err)
-	}
+	nextActions := getComponentActions(expectedState, actualState)
 
 	if len(nextActions) == 0 {
-		return nil, nil
+		return nil
 	}
 
 	return &ComponentDiff{
@@ -183,7 +174,7 @@ func determineComponentDiff(blueprintComponent *Component, installedComponent *e
 		Expected:      expectedState,
 		Actual:        actualState,
 		NeededActions: nextActions,
-	}, nil
+	}
 }
 
 func findComponentByName(components []Component, name common.SimpleComponentName) (Component, bool) {
@@ -195,7 +186,7 @@ func findComponentByName(components []Component, name common.SimpleComponentName
 	return Component{}, false
 }
 
-func getComponentActions(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
+func getComponentActions(expected ComponentDiffState, actual ComponentDiffState) []Action {
 	if expected.Absent == actual.Absent {
 		return decideOnEqualState(expected, actual)
 	}
@@ -203,13 +194,13 @@ func getComponentActions(expected ComponentDiffState, actual ComponentDiffState)
 	return decideOnDifferentState(expected)
 }
 
-func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) ([]Action, error) {
+func decideOnEqualState(expected ComponentDiffState, actual ComponentDiffState) []Action {
 	var neededActions []Action
 
 	if expected.Absent {
-		return neededActions, nil
+		return neededActions
 	} else {
-		return getActionsForEqualPresentState(expected, actual), nil
+		return getActionsForEqualPresentState(expected, actual)
 	}
 }
 
@@ -237,11 +228,11 @@ func getActionsForEqualPresentState(expected ComponentDiffState, actual Componen
 	return neededActions
 }
 
-func decideOnDifferentState(expected ComponentDiffState) ([]Action, error) {
+func decideOnDifferentState(expected ComponentDiffState) []Action {
 	// at this place, the actual state is always the opposite to the expected state so just follow the expected state.
 	if expected.Absent {
-		return []Action{ActionUninstall}, nil
+		return []Action{ActionUninstall}
 	} else {
-		return []Action{ActionInstall}, nil
+		return []Action{ActionInstall}
 	}
 }

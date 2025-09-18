@@ -63,6 +63,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var invalidBlueprintError *domain.InvalidBlueprintError
 	var healthError *domain.UnhealthyEcosystemError
 	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
+	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
@@ -89,6 +90,10 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	case errors.As(err, &awaitSelfUpgradeError):
 		errLogger.Info("wait for self upgrade")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	case errors.As(err, &stateDiffNotEmptyError):
+		errLogger.Info("requeue until state diff is empty")
+		// fast requeue here since state diff has to be determined again
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
 		return ctrl.Result{}, err // automatic requeue because of non-nil err

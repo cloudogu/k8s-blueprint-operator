@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
@@ -58,5 +59,13 @@ type AwaitSelfUpgradeError struct {
 }
 
 func (e *AwaitSelfUpgradeError) Error() string {
+	return e.Message
+}
+
+type StateDiffNotEmptyError struct {
+	Message string
+}
+
+func (e *StateDiffNotEmptyError) Error() string {
 	return e.Message
 }

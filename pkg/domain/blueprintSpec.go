@@ -13,6 +13,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type BlueprintSpec struct {
@@ -251,13 +252,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
-	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
-	if err != nil {
-		// FIXME: a proper state and event should be set, so that this error doesn't lead to an endless retry.
-		// The error here occurs, if a targetState is not properly set in components. We can remove this case
-		// when we introduce the absent flag in the domain or we just ignore this error like for dogu targetState
-		return err
-	}
+	compDiffs := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		ecosystemState.GlobalConfig,
@@ -276,6 +271,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	//TODO: we need the possible error from the use case to set the condition to Unknown
 	spec.setDogusAppliedConditionAfterStateDiff(nil)
+	spec.setCompletedConditionAfterStateDiff(nil)
 	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
 	spec.Events = append(spec.Events, NewDoguConfigDiffDeterminedEvent(spec.StateDiff.DoguConfigDiffs))
@@ -482,6 +478,28 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 	return false
 }
 
+func (spec *BlueprintSpec) setCompletedConditionAfterStateDiff(diffErr error) bool {
+	if diffErr != nil {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionCompleted,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "CannotDetermineStateDiff",
+			Message: diffErr.Error(),
+		})
+		return conditionChanged
+	} else if spec.StateDiff.HasChanges() {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionCompleted,
+			Status:  metav1.ConditionFalse,
+			Reason:  "StateDiffHasChanges",
+			Message: "Blueprint is not completed",
+		})
+		return conditionChanged
+	}
+
+	return false
+}
+
 func (spec *BlueprintSpec) setDogusNeedToApply() bool {
 	event := newStateDiffDoguEvent(spec.StateDiff.DoguDiffs)
 	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
@@ -643,7 +661,10 @@ func (spec *BlueprintSpec) Complete() bool {
 		Reason: "Completed",
 	})
 	if conditionChanged {
+		log.Log.Info("########## Add Event")
 		spec.Events = append(spec.Events, CompletedEvent{})
+	} else {
+		log.Log.Info("########## Add No Event")
 	}
 	return conditionChanged
 }

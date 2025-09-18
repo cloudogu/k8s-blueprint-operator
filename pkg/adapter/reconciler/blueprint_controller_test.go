@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"testing"
+	"time"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
-	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -200,6 +201,24 @@ func Test_decideRequeueForError(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
 		assert.Contains(t, logSinkMock.output, "0: Blueprint is invalid, therefore there will be no further evaluation.")
+	})
+	t.Run("should catch wrapped StateDiffNotEmptyError, issue a log line and requeue timely", func(t *testing.T) {
+		// given
+		logSinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logSinkMock)
+
+		intermediateErr := &domain.StateDiffNotEmptyError{
+			Message: "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{RequeueAfter: 1 * time.Second}, actual)
+		assert.Contains(t, logSinkMock.output, "0: requeue until state diff is empty")
 	})
 	t.Run("should catch general errors, issue a log line and return requeue with error", func(t *testing.T) {
 		// given

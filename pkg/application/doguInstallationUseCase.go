@@ -83,6 +83,9 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			)
 			return useCase.doguRepo.Create(ctx, newDogu)
 		case domain.ActionUninstall:
+			if doguInstallation == nil {
+				return &domainservice.NotFoundError{Message: fmt.Sprintf("dogu %q not found", doguDiff.DoguName)}
+			}
 			logger.Info("uninstall dogu")
 			return useCase.doguRepo.Delete(ctx, doguInstallation.Name.SimpleName)
 		case domain.ActionUpgrade:
