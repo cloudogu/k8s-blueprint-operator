@@ -28,46 +28,26 @@ func (b BlueprintSpecInvalidEvent) Message() string {
 	return b.ValidationError.Error()
 }
 
-type GlobalConfigDiffDeterminedEvent struct {
-	GlobalConfigDiffs GlobalConfigDiffs
+type ConfigDiffDeterminedEvent struct {
+	GlobalConfigDiffs    GlobalConfigDiffs
+	DoguConfigDiffs      map[cescommons.SimpleName]DoguConfigDiffs
+	SensitiveConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 }
 
-func (e GlobalConfigDiffDeterminedEvent) Name() string {
-	return "GlobalConfigDiffDetermined"
-}
-
-func (e GlobalConfigDiffDeterminedEvent) Message() string {
-	var stringPerAction []string
-	var actionsCounter int
-	for action, amount := range e.GlobalConfigDiffs.countByAction() {
-		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		if action != ConfigActionNone {
-			actionsCounter += amount
-		}
+func NewConfigDiffDeterminedEvent(ConfigDiffs StateDiff) ConfigDiffDeterminedEvent {
+	return ConfigDiffDeterminedEvent{
+		DoguConfigDiffs:      ConfigDiffs.DoguConfigDiffs,
+		GlobalConfigDiffs:    ConfigDiffs.GlobalConfigDiffs,
+		SensitiveConfigDiffs: ConfigDiffs.SensitiveDoguConfigDiffs,
 	}
-	slices.Sort(stringPerAction)
-	return fmt.Sprintf("global config diff determined: %d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
-type DoguConfigDiffDeterminedEvent struct {
-	DoguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs
+func (e ConfigDiffDeterminedEvent) Name() string {
+	return "ConfigDiffDetermined"
 }
 
-func NewDoguConfigDiffDeterminedEvent(
-	doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs,
-) DoguConfigDiffDeterminedEvent {
-	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
-}
-
-func (e DoguConfigDiffDeterminedEvent) Name() string {
-	return "DoguConfigDiffDetermined"
-}
-
-func (e DoguConfigDiffDeterminedEvent) Message() string {
-	return fmt.Sprintf(
-		"dogu config diff determined: %s",
-		generateDoguConfigChangeCounter(e.DoguConfigDiffs),
-	)
+func (e ConfigDiffDeterminedEvent) Message() string {
+	return fmt.Sprintf("config diff determined: %s", e.generateConfigChangeCounter())
 }
 
 type MissingConfigReferencesEvent struct {
@@ -86,31 +66,24 @@ func (e MissingConfigReferencesEvent) Message() string {
 	return e.err.Error()
 }
 
-type SensitiveDoguConfigDiffDeterminedEvent struct {
-	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
-}
+func (e ConfigDiffDeterminedEvent) generateConfigChangeCounter() string {
+	configActions := util.Map(e.GlobalConfigDiffs, func(entryDiff GlobalConfigEntryDiff) ConfigAction {
+		return entryDiff.NeededAction
+	})
+	for _, doguDiff := range e.DoguConfigDiffs {
+		configActions = append(configActions, util.Map(doguDiff, func(entryDiff DoguConfigEntryDiff) ConfigAction {
+			return entryDiff.NeededAction
+		})...)
+	}
+	for _, doguDiff := range e.SensitiveConfigDiffs {
+		configActions = append(configActions, util.Map(doguDiff, func(entryDiff SensitiveDoguConfigEntryDiff) ConfigAction {
+			return entryDiff.NeededAction
+		})...)
+	}
 
-func NewSensitiveDoguConfigDiffDeterminedEvent(
-	sensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
-) SensitiveDoguConfigDiffDeterminedEvent {
-	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
-}
-
-func (e SensitiveDoguConfigDiffDeterminedEvent) Name() string {
-	return "SensitiveDoguConfigDiffDetermined"
-}
-
-func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
-	return fmt.Sprintf(
-		"sensitive dogu config diff determined: %s",
-		generateDoguConfigChangeCounter(e.SensitiveDoguConfigDiffs),
-	)
-}
-
-func generateDoguConfigChangeCounter(doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs) string {
 	var stringPerAction []string
 	var actionsCounter int
-	for action, amount := range countByAction(doguConfigDiffs) {
+	for action, amount := range countByAction(configActions) {
 		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
 		if action != ConfigActionNone {
 			actionsCounter += amount

@@ -17,14 +17,12 @@ const (
 	ConfigActionRemove ConfigAction = "remove"
 )
 
-func countByAction(diffsByDogu map[cescommons.SimpleName]DoguConfigDiffs) map[ConfigAction]int {
-	countByAction := map[ConfigAction]int{}
-	for _, doguDiffs := range diffsByDogu {
-		for _, diff := range doguDiffs {
-			countByAction[diff.NeededAction]++
-		}
+func countByAction(configActions []ConfigAction) map[ConfigAction]int {
+	result := map[ConfigAction]int{}
+	for _, action := range configActions {
+		result[action]++
 	}
-	return countByAction
+	return result
 }
 
 func determineConfigDiffs(

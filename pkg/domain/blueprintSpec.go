@@ -271,11 +271,16 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	//TODO: we need the possible error from the use case to set the condition to Unknown
 	spec.setDogusAppliedConditionAfterStateDiff(nil)
-	spec.setCompletedConditionAfterStateDiff(nil)
-	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
-	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
-	spec.Events = append(spec.Events, NewDoguConfigDiffDeterminedEvent(spec.StateDiff.DoguConfigDiffs))
-	spec.Events = append(spec.Events, NewSensitiveDoguConfigDiffDeterminedEvent(spec.StateDiff.SensitiveDoguConfigDiffs))
+	spec.resetCompletedConditionAfterStateDiff()
+	if spec.StateDiff.DoguDiffs.HasChanges() {
+		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
+	}
+	if spec.StateDiff.ComponentDiffs.HasChanges() {
+		spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+	}
+	if spec.StateDiff.HasConfigChanges() {
+		spec.Events = append(spec.Events, NewConfigDiffDeterminedEvent(spec.StateDiff))
+	}
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
@@ -451,9 +456,6 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 				Reason:  "Applied",
 				Message: event.Message(),
 			})
-			if conditionChanged {
-				spec.Events = append(spec.Events, event)
-			}
 			return conditionChanged
 		}
 	}
@@ -478,21 +480,13 @@ func (spec *BlueprintSpec) setDogusAppliedConditionAfterStateDiff(diffErr error)
 	return false
 }
 
-func (spec *BlueprintSpec) setCompletedConditionAfterStateDiff(diffErr error) bool {
-	if diffErr != nil {
-		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-			Type:    ConditionCompleted,
-			Status:  metav1.ConditionUnknown,
-			Reason:  "CannotDetermineStateDiff",
-			Message: diffErr.Error(),
-		})
-		return conditionChanged
-	} else if spec.StateDiff.HasChanges() {
+func (spec *BlueprintSpec) resetCompletedConditionAfterStateDiff() bool {
+	if spec.StateDiff.HasChanges() {
 		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionCompleted,
 			Status:  metav1.ConditionFalse,
 			Reason:  "StateDiffHasChanges",
-			Message: "Blueprint is not completed",
+			Message: "Blueprint is being applied.",
 		})
 		return conditionChanged
 	}
@@ -508,9 +502,6 @@ func (spec *BlueprintSpec) setDogusNeedToApply() bool {
 		Reason:  "NeedToApply",
 		Message: event.Message(),
 	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, event)
-	}
 	return conditionChanged
 }
 

@@ -93,19 +93,14 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "component state diff determined: 9 actions (\"component namespace switch\": 1, \"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update component package config\": 1, \"upgrade\": 1)",
 		},
 		{
-			name: "global config diff determined",
-			event: GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs{
-				{NeededAction: ConfigActionNone},
-				{NeededAction: ConfigActionNone},
-				{NeededAction: ConfigActionSet},
-				{NeededAction: ConfigActionRemove},
-			}},
-			expectedName:    "GlobalConfigDiffDetermined",
-			expectedMessage: "global config diff determined: 2 changes (\"none\": 2, \"remove\": 1, \"set\": 1)",
-		},
-		{
-			name: "dogu config diff determined",
-			event: DoguConfigDiffDeterminedEvent{
+			name: "config diff determined",
+			event: ConfigDiffDeterminedEvent{
+				GlobalConfigDiffs: GlobalConfigDiffs{
+					{NeededAction: ConfigActionNone},
+					{NeededAction: ConfigActionNone},
+					{NeededAction: ConfigActionSet},
+					{NeededAction: ConfigActionRemove},
+				},
 				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
 					"dogu1": []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
@@ -113,9 +108,16 @@ func TestEvents(t *testing.T) {
 						{NeededAction: ConfigActionRemove},
 					},
 				},
+				SensitiveConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
+					"dogu1": []SensitiveDoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSet},
+						{NeededAction: ConfigActionRemove},
+					},
+				},
 			},
-			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
+			expectedName:    "ConfigDiffDetermined",
+			expectedMessage: "config diff determined: 6 changes (\"none\": 4, \"remove\": 3, \"set\": 3)",
 		},
 		{
 			name: "config references missing",
@@ -124,20 +126,6 @@ func TestEvents(t *testing.T) {
 			),
 			expectedName:    "MissingConfigReferences",
 			expectedMessage: assert.AnError.Error(),
-		},
-		{
-			name: "sensitive dogu config diff determined",
-			event: SensitiveDoguConfigDiffDeterminedEvent{
-				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
-					"dogu1": []SensitiveDoguConfigEntryDiff{
-						{NeededAction: ConfigActionNone},
-						{NeededAction: ConfigActionSet},
-						{NeededAction: ConfigActionRemove},
-					},
-				},
-			},
-			expectedName:    "SensitiveDoguConfigDiffDetermined",
-			expectedMessage: "sensitive dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name: "components applied",
