@@ -12,11 +12,11 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var (
 	nsOfficial = cescommons.Namespace("official")
-	nsK8s      = cescommons.Namespace("k8s")
 
 	postfix = cescommons.SimpleName("postfix")
 	ldap    = cescommons.SimpleName("ldap")
@@ -34,14 +34,14 @@ var (
 )
 
 var (
-	internalTestError                      = domainservice.NewInternalError(assert.AnError, "internal error")
+	internalTestError               = domainservice.NewInternalError(assert.AnError, "internal error")
 	ldapConfigKeyNginxKey1          = common.DoguConfigKey{DoguName: "ldap", Key: "ldapKey1"}
 	ldapConfigKeyNginxKey2          = common.DoguConfigKey{DoguName: "ldap", Key: "ldapKey2"}
 	ldapSensitiveConfigKeyNginxKey1 = ldapConfigKeyNginxKey1
 	ldapSensitiveConfigKeyNginxKey2 = ldapConfigKeyNginxKey2
-	val1                                   = "val1"
-	val2                                   = "val2"
-	val3                                   = "val3"
+	val1                            = "val1"
+	val2                            = "val2"
+	val3                            = "val3"
 )
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
@@ -165,45 +165,44 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		assert.ErrorContains(t, err, "could not determine state diff")
 		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
-	//t.Run("should fail to get sensitive dogu config", func(t *testing.T) {
-	//	// given
-	//	blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-	//
-	//	doguInstallRepoMock := newMockDoguInstallationRepository(t)
-	//	doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
-	//	componentInstallRepoMock := newMockComponentInstallationRepository(t)
-	//	componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
-	//
-	//	globalConfigRepoMock := newMockGlobalConfigRepository(t)
-	//	entries, _ := config.MapToEntries(map[string]any{})
-	//	globalConfig := config.CreateGlobalConfig(entries)
-	//	globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
-	//
-	//	doguConfigRepoMock := newMockDoguConfigRepository(t)
-	//	doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
-	//	sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
-	//	sensitiveDoguConfigRepoMock.EXPECT().
-	//		GetAllExisting(testCtx, nilDoguNameList).
-	//		Return(map[cescommons.SimpleName]config.DoguConfig{}, domainservice.NewInternalError(assert.AnError, "internal error"))
-	//	configRefReaderMock := newMockSensitiveConfigRefReader(t)
-	//	configRefReaderMock.EXPECT().
-	//		GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
-	//		Return(map[common.DoguConfigKey]config.Value{}, nil)
-	//
-	//	sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
-	//
-	//	// when
-	//	err := sut.DetermineStateDiff(testCtx, blueprint)
-	//
-	//	// then
-	//	require.Error(t, err)
-	//	assert.ErrorIs(t, err, assert.AnError)
-	//	var internalError *domainservice.InternalError
-	//	assert.ErrorAs(t, err, &internalError)
-	//	assert.ErrorContains(t, err, "could not determine state diff")
-	//	assert.ErrorContains(t, err, "could not collect ecosystem state")
-	//})
-	// TODO: Instead we should have a test with a forbidden diff action
+	t.Run("should fail to get sensitive dogu config", func(t *testing.T) {
+		// given
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", EffectiveBlueprint: domain.EffectiveBlueprint{Config: &domain.Config{}}}
+
+		doguInstallRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
+		componentInstallRepoMock := newMockComponentInstallationRepository(t)
+		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+
+		globalConfigRepoMock := newMockGlobalConfigRepository(t)
+		entries, _ := config.MapToEntries(map[string]any{})
+		globalConfig := config.CreateGlobalConfig(entries)
+		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
+
+		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
+		sensitiveDoguConfigRepoMock.EXPECT().
+			GetAllExisting(testCtx, nilDoguNameList).
+			Return(map[cescommons.SimpleName]config.DoguConfig{}, domainservice.NewInternalError(assert.AnError, "internal error"))
+		configRefReaderMock := newMockSensitiveConfigRefReader(t)
+		configRefReaderMock.EXPECT().
+			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.DoguConfigKey]config.Value{}, nil)
+
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+
+		// when
+		err := sut.DetermineStateDiff(testCtx, blueprint)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		var internalError *domainservice.InternalError
+		assert.ErrorAs(t, err, &internalError)
+		assert.ErrorContains(t, err, "could not determine state diff")
+		assert.ErrorContains(t, err, "could not collect ecosystem state")
+	})
 	t.Run("should fail to update blueprint", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
@@ -236,15 +235,31 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
+		volumeSize := resource.MustParse("2Gi")
+		bodySize := resource.MustParse("2G")
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
 			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
 					{
-						Name:    postfixQualifiedDoguName,
-						Version: mustParseVersionToPtr(t, "2.9.0"),
-						Absent:  false,
+						Name:          postfixQualifiedDoguName,
+						Version:       mustParseVersionToPtr(t, "2.9.0"),
+						Absent:        false,
+						MinVolumeSize: &volumeSize,
+						ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+							MaxBodySize:      &bodySize,
+							RewriteTarget:    &rewriteTarget,
+							AdditionalConfig: &additionalConfig,
+						},
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "configmap",
+								Volume:     "volume",
+								Subfolder:  &subfolder,
+							},
+						},
 					},
 					{
 						Name:    ldapQualifiedDoguName,
@@ -253,7 +268,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			// TODO: add config to test
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
@@ -284,9 +298,23 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				DoguName: "postfix",
 				Actual:   domain.DoguDiffState{Absent: true},
 				Expected: domain.DoguDiffState{
-					Namespace: "official",
-					Version:   mustParseVersionToPtr(t, "2.9.0"),
-					Absent:    false,
+					Namespace:     "official",
+					Version:       mustParseVersionToPtr(t, "2.9.0"),
+					Absent:        false,
+					MinVolumeSize: &volumeSize,
+					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+						MaxBodySize:      &bodySize,
+						RewriteTarget:    &rewriteTarget,
+						AdditionalConfig: &additionalConfig,
+					},
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  &subfolder,
+						},
+					},
 				},
 				NeededActions: []domain.Action{domain.ActionInstall},
 			},
