@@ -62,40 +62,43 @@ func ConvertDogus(dogus []bpv2.Dogu) ([]domain.Dogu, error) {
 }
 
 func convertPlatformConfigFromDTOToDomain(dtoDogu *bpv2.Dogu, domainDogu *domain.Dogu) error {
+	if dtoDogu.PlatformConfig == nil {
+		return nil
+	}
+
 	var minVolumeSize, maxBodySize *resource.Quantity
 	var additionalMounts []ecosystem.AdditionalMount
 	var err error
-	if dtoDogu.PlatformConfig != nil {
-		if dtoDogu.PlatformConfig.ResourceConfig != nil && dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize != nil {
-			minVolumeSizeStr := dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize
-			minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
+	if dtoDogu.PlatformConfig.ResourceConfig != nil && dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize != nil {
+		minVolumeSizeStr := dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize
+		minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
+		if err != nil {
+			return fmt.Errorf("could not parse minimum volume size %q for dogu %q", *minVolumeSizeStr, dtoDogu.Name)
+		}
+		domainDogu.MinVolumeSize = minVolumeSize
+	}
+
+	if dtoDogu.PlatformConfig.ReverseProxyConfig != nil {
+		if dtoDogu.PlatformConfig.ReverseProxyConfig.MaxBodySize != nil {
+			maxBodySizeStr := dtoDogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
+			maxBodySize, err = ecosystem.GetQuantityReference(*maxBodySizeStr)
 			if err != nil {
-				return fmt.Errorf("could not parse minimum volume size %q for dogu %q", *minVolumeSizeStr, dtoDogu.Name)
-			}
-			domainDogu.MinVolumeSize = minVolumeSize
-		}
-
-		if dtoDogu.PlatformConfig.ReverseProxyConfig != nil {
-			if dtoDogu.PlatformConfig.ReverseProxyConfig.MaxBodySize != nil {
-				maxBodySizeStr := dtoDogu.PlatformConfig.ReverseProxyConfig.MaxBodySize
-				maxBodySize, err = ecosystem.GetQuantityReference(*maxBodySizeStr)
-				if err != nil {
-					return fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", *maxBodySizeStr, dtoDogu.Name)
-				}
-			}
-
-			domainDogu.ReverseProxyConfig = &ecosystem.ReverseProxyConfig{
-				MaxBodySize:      maxBodySize,
-				RewriteTarget:    dtoDogu.PlatformConfig.ReverseProxyConfig.RewriteTarget,
-				AdditionalConfig: dtoDogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig,
+				return fmt.Errorf("could not parse maximum proxy body size %q for dogu %q", *maxBodySizeStr, dtoDogu.Name)
 			}
 		}
 
-		if dtoDogu.PlatformConfig.AdditionalMountsConfig != nil {
-			additionalMounts = convertAdditionalMountsFromDTOToDomain(dtoDogu.PlatformConfig.AdditionalMountsConfig)
-			domainDogu.AdditionalMounts = additionalMounts
+		domainDogu.ReverseProxyConfig = &ecosystem.ReverseProxyConfig{
+			MaxBodySize:      maxBodySize,
+			RewriteTarget:    dtoDogu.PlatformConfig.ReverseProxyConfig.RewriteTarget,
+			AdditionalConfig: dtoDogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig,
 		}
 	}
+
+	if dtoDogu.PlatformConfig.AdditionalMountsConfig != nil {
+		additionalMounts = convertAdditionalMountsFromDTOToDomain(dtoDogu.PlatformConfig.AdditionalMountsConfig)
+		domainDogu.AdditionalMounts = additionalMounts
+	}
+
 	return nil
 }
 
