@@ -55,18 +55,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	var effectiveBlueprint domain.EffectiveBlueprint
-	var stateDiff domain.StateDiff
-	if blueprintCR.Status != nil {
-		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
-		if err != nil {
-			return nil, err
-		}
-
-		stateDiff, err = serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
-		if err != nil {
-			return nil, err
-		}
+	effectiveBlueprint, stateDiff, err := convertBlueprintStatus(blueprintCR)
+	if err != nil {
+		return nil, err
 	}
 
 	var conditions []domain.Condition
@@ -87,6 +78,16 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 	}
 
+	err = repo.serializeBlueprintAndMask(blueprintSpec, blueprintCR, blueprintId)
+	if err != nil {
+		return nil, err
+	}
+
+	setPersistenceContext(blueprintCR, blueprintSpec)
+	return blueprintSpec, nil
+}
+
+func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *v2.Blueprint, blueprintId string) error {
 	blueprint, blueprintErr := serializerv2.ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
 	if blueprintErr != nil {
 		blueprintErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: blueprintErr}
@@ -101,13 +102,30 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
-		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
+		return fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
-	setPersistenceContext(blueprintCR, blueprintSpec)
 	blueprintSpec.Blueprint = blueprint
 	blueprintSpec.BlueprintMask = blueprintMask
-	return blueprintSpec, nil
+	return nil
+}
+
+func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprint, domain.StateDiff, error) {
+	var effectiveBlueprint domain.EffectiveBlueprint
+	var stateDiff domain.StateDiff
+	var err error
+	if blueprintCR.Status != nil {
+		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+		if err != nil {
+			return domain.EffectiveBlueprint{}, domain.StateDiff{}, err
+		}
+
+		stateDiff, err = serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
+		if err != nil {
+			return domain.EffectiveBlueprint{}, domain.StateDiff{}, err
+		}
+	}
+	return effectiveBlueprint, stateDiff, nil
 }
 
 func boolPtrToValue(boolPtr *bool) bool {

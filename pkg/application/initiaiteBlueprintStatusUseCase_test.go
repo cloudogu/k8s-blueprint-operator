@@ -121,7 +121,8 @@ func TestInitiateBlueprintStatusUseCase_InitateConditions(t *testing.T) {
 			}
 			err := useCase.InitateConditions(ctx, tt.args.blueprint)
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				assert.ErrorIs(t, err, tt.wantErr)
+				assert.ErrorContains(t, err, "cannot save blueprint spec \"\" after initially setting the conditions to unknown")
 			} else {
 				assert.NoError(t, err)
 			}

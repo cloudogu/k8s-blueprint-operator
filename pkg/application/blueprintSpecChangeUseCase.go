@@ -8,13 +8,32 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type BlueprintSpecChangeUseCase struct {
-	repo                   blueprintSpecRepository
-	initialStatus          initialBlueprintStatusUseCase
-	validation             blueprintSpecValidationUseCase
-	effectiveBlueprint     effectiveBlueprintUseCase
-	stateDiff              stateDiffUseCase
-	applyUseCase           completeBlueprintUseCase
+type BlueprintPreparationUseCases struct {
+	initialStatus      initialBlueprintStatusUseCase
+	validation         blueprintSpecValidationUseCase
+	effectiveBlueprint effectiveBlueprintUseCase
+	stateDiff          stateDiffUseCase
+	healthUseCase      ecosystemHealthUseCase
+}
+
+func NewBlueprintPreparationUseCases(
+	initialStatus initialBlueprintStatusUseCase,
+	validation blueprintSpecValidationUseCase,
+	effectiveBlueprint effectiveBlueprintUseCase,
+	stateDiff stateDiffUseCase,
+	ecosystemHealthUseCase ecosystemHealthUseCase,
+) BlueprintPreparationUseCases {
+	return BlueprintPreparationUseCases{
+		initialStatus:      initialStatus,
+		validation:         validation,
+		effectiveBlueprint: effectiveBlueprint,
+		stateDiff:          stateDiff,
+		healthUseCase:      ecosystemHealthUseCase,
+	}
+}
+
+type BlueprintApplyUseCases struct {
+	completeUseCase        completeBlueprintUseCase
 	ecosystemConfigUseCase ecosystemConfigUseCase
 	selfUpgradeUseCase     selfUpgradeUseCase
 	applyComponentUseCase  applyComponentsUseCase
@@ -22,31 +41,39 @@ type BlueprintSpecChangeUseCase struct {
 	healthUseCase          ecosystemHealthUseCase
 }
 
-func NewBlueprintSpecChangeUseCase(
-	repo blueprintSpecRepository,
-	initialStatus initialBlueprintStatusUseCase,
-	validation blueprintSpecValidationUseCase,
-	effectiveBlueprint effectiveBlueprintUseCase,
-	stateDiff stateDiffUseCase,
-	applyUseCase completeBlueprintUseCase,
+func NewBlueprintApplyUseCases(
+	completeUseCase completeBlueprintUseCase,
 	ecosystemConfigUseCase ecosystemConfigUseCase,
 	selfUpgradeUseCase selfUpgradeUseCase,
 	applyComponentUseCase applyComponentsUseCase,
 	applyDogusUseCase applyDogusUseCase,
-	ecosystemHealthUseCase ecosystemHealthUseCase,
-) *BlueprintSpecChangeUseCase {
-	return &BlueprintSpecChangeUseCase{
-		repo:                   repo,
-		initialStatus:          initialStatus,
-		validation:             validation,
-		effectiveBlueprint:     effectiveBlueprint,
-		stateDiff:              stateDiff,
-		applyUseCase:           applyUseCase,
+	healthUseCase ecosystemHealthUseCase,
+) BlueprintApplyUseCases {
+	return BlueprintApplyUseCases{
+		completeUseCase:        completeUseCase,
 		ecosystemConfigUseCase: ecosystemConfigUseCase,
 		selfUpgradeUseCase:     selfUpgradeUseCase,
 		applyComponentUseCase:  applyComponentUseCase,
 		applyDogusUseCase:      applyDogusUseCase,
-		healthUseCase:          ecosystemHealthUseCase,
+		healthUseCase:          healthUseCase,
+	}
+}
+
+type BlueprintSpecChangeUseCase struct {
+	repo                blueprintSpecRepository
+	preparationUseCases BlueprintPreparationUseCases
+	applyUseCases       BlueprintApplyUseCases
+}
+
+func NewBlueprintSpecChangeUseCase(
+	repo blueprintSpecRepository,
+	preparationUseCases BlueprintPreparationUseCases,
+	applyUseCases BlueprintApplyUseCases,
+) *BlueprintSpecChangeUseCase {
+	return &BlueprintSpecChangeUseCase{
+		repo:                repo,
+		preparationUseCases: preparationUseCases,
+		applyUseCases:       applyUseCases,
 	}
 }
 
@@ -76,7 +103,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 	logger.V(1).Info("handle blueprint")
 
-	err = useCase.prepareBlueprint(ctx, blueprint)
+	err = useCase.preparationUseCases.prepareBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}
@@ -87,7 +114,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	}
 
 	// === Apply from here on ===
-	err = useCase.applyBlueprint(ctx, blueprint)
+	err = useCase.applyUseCases.applyBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}
@@ -96,7 +123,7 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	return nil
 }
 
-func (useCase *BlueprintSpecChangeUseCase) prepareBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+func (useCase *BlueprintPreparationUseCases) prepareBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	err := useCase.initialStatus.InitateConditions(ctx, blueprint)
 	if err != nil {
 		return err
@@ -128,7 +155,7 @@ func (useCase *BlueprintSpecChangeUseCase) prepareBlueprint(ctx context.Context,
 	return nil
 }
 
-func (useCase *BlueprintSpecChangeUseCase) applyBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	err := useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
 	if err != nil {
 		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
@@ -162,7 +189,7 @@ func (useCase *BlueprintSpecChangeUseCase) applyBlueprint(ctx context.Context, b
 		}
 	}
 
-	err = useCase.applyUseCase.CompleteBlueprint(ctx, blueprint)
+	err = useCase.completeUseCase.CompleteBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}

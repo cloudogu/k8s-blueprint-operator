@@ -104,7 +104,7 @@ func convertToGlobalConfigDomain(config []v2.ConfigEntry) domain.GlobalConfigEnt
 }
 
 func convertToConfigEntriesDomain(config []v2.ConfigEntry) domain.ConfigEntries {
-	if config == nil || len(config) == 0 {
+	if len(config) == 0 {
 		return nil
 	}
 

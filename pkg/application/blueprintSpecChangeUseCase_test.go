@@ -30,13 +30,15 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	applyDoguUseCaseMock := newMockApplyDogusUseCase(t)
 	ecosystemHealthUseCaseMock := newMockEcosystemHealthUseCase(t)
 
-	// when
-	result := NewBlueprintSpecChangeUseCase(
-		blueprintSpecRepositoryMock,
+	preparationUseCases := NewBlueprintPreparationUseCases(
 		initialStatusUseCaseMock,
 		validationUseCaseMock,
 		effectiveUseCaseMock,
 		stateDiffUseCaseMock,
+		ecosystemHealthUseCaseMock,
+	)
+
+	applyUseCases := NewBlueprintApplyUseCases(
 		completeUseCaseMock,
 		ecosystemConfigUseCaseMock,
 		selfUpgradeUseCaseMock,
@@ -45,18 +47,24 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 		ecosystemHealthUseCaseMock,
 	)
 
+	// when
+	result := NewBlueprintSpecChangeUseCase(blueprintSpecRepositoryMock, preparationUseCases, applyUseCases)
+
 	// then
 	require.NotNil(t, result)
 	assert.Equal(t, blueprintSpecRepositoryMock, result.repo)
-	assert.Equal(t, validationUseCaseMock, result.validation)
-	assert.Equal(t, effectiveUseCaseMock, result.effectiveBlueprint)
-	assert.Equal(t, stateDiffUseCaseMock, result.stateDiff)
-	assert.Equal(t, ecosystemConfigUseCaseMock, result.ecosystemConfigUseCase)
-	assert.Equal(t, selfUpgradeUseCaseMock, result.selfUpgradeUseCase)
-	assert.Equal(t, applyComponentUseCaseMock, result.applyComponentUseCase)
-	assert.Equal(t, applyDoguUseCaseMock, result.applyDogusUseCase)
-	assert.Equal(t, ecosystemHealthUseCaseMock, result.healthUseCase)
-	assert.Equal(t, completeUseCaseMock, result.applyUseCase)
+	// preparation use cases
+	assert.Equal(t, validationUseCaseMock, result.preparationUseCases.validation)
+	assert.Equal(t, effectiveUseCaseMock, result.preparationUseCases.effectiveBlueprint)
+	assert.Equal(t, stateDiffUseCaseMock, result.preparationUseCases.stateDiff)
+	assert.Equal(t, ecosystemHealthUseCaseMock, result.preparationUseCases.healthUseCase)
+	assert.Equal(t, ecosystemConfigUseCaseMock, result.applyUseCases.ecosystemConfigUseCase)
+	// apply use cases
+	assert.Equal(t, selfUpgradeUseCaseMock, result.applyUseCases.selfUpgradeUseCase)
+	assert.Equal(t, applyComponentUseCaseMock, result.applyUseCases.applyComponentUseCase)
+	assert.Equal(t, applyDoguUseCaseMock, result.applyUseCases.applyDogusUseCase)
+	assert.Equal(t, completeUseCaseMock, result.applyUseCases.completeUseCase)
+	assert.Equal(t, ecosystemHealthUseCaseMock, result.applyUseCases.healthUseCase)
 }
 
 func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
@@ -831,9 +839,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				stateDiff = tt.fields.stateDiff(t)
 			}
 
-			var applyUseCase completeBlueprintUseCase
+			var completeUseCase completeBlueprintUseCase
 			if tt.fields.applyUseCase != nil {
-				applyUseCase = tt.fields.applyUseCase(t)
+				completeUseCase = tt.fields.applyUseCase(t)
 			}
 
 			var ecoConfigUseCase ecosystemConfigUseCase
@@ -862,17 +870,22 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 			}
 
 			useCase := &BlueprintSpecChangeUseCase{
-				repo:                   repo,
-				initialStatus:          initialStatus,
-				validation:             validation,
-				effectiveBlueprint:     effectiveBlueprint,
-				stateDiff:              stateDiff,
-				applyUseCase:           applyUseCase,
-				ecosystemConfigUseCase: ecoConfigUseCase,
-				selfUpgradeUseCase:     selfUpgrade,
-				applyComponentUseCase:  applyComponentUseCase,
-				applyDogusUseCase:      applyDoguUseCase,
-				healthUseCase:          ecoHealthUseCase,
+				repo: repo,
+				preparationUseCases: BlueprintPreparationUseCases{
+					initialStatus:      initialStatus,
+					validation:         validation,
+					effectiveBlueprint: effectiveBlueprint,
+					stateDiff:          stateDiff,
+					healthUseCase:      ecoHealthUseCase,
+				},
+				applyUseCases: BlueprintApplyUseCases{
+					completeUseCase:        completeUseCase,
+					ecosystemConfigUseCase: ecoConfigUseCase,
+					selfUpgradeUseCase:     selfUpgrade,
+					applyComponentUseCase:  applyComponentUseCase,
+					applyDogusUseCase:      applyDoguUseCase,
+					healthUseCase:          ecoHealthUseCase,
+				},
 			}
 			tt.wantErr(t, useCase.HandleUntilApplied(tt.args.givenCtx, tt.args.blueprintId), fmt.Sprintf("HandleUntilApplied(%v, %v)", tt.args.givenCtx, tt.args.blueprintId))
 		})

@@ -85,21 +85,28 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, healthConfigRepo)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintRepo, componentRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, blueprintRepo)
-	applyBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
+	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
 	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintRepo, componentInstallationUseCase)
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 
-	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
-		blueprintRepo, initialBlueprintStateUseCase, blueprintValidationUseCase,
-		effectiveBlueprintUseCase, stateDiffUseCase,
-		applyBlueprintSpecUseCase, ConfigUseCase,
+	preparationUseCases := application.NewBlueprintPreparationUseCases(
+		initialBlueprintStateUseCase,
+		blueprintValidationUseCase,
+		effectiveBlueprintUseCase,
+		stateDiffUseCase,
+		ecosystemHealthUseCase,
+	)
+	applyUseCases := application.NewBlueprintApplyUseCases(
+		completeBlueprintSpecUseCase,
+		ConfigUseCase,
 		selfUpgradeUseCase,
 		applyComponentUseCase,
 		applyDogusUseCase,
 		ecosystemHealthUseCase,
 	)
+	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	return &ApplicationContext{
