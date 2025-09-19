@@ -10,6 +10,7 @@ import (
 
 type BlueprintSpecChangeUseCase struct {
 	repo                   blueprintSpecRepository
+	initialStatus          initialBlueprintStatusUseCase
 	validation             blueprintSpecValidationUseCase
 	effectiveBlueprint     effectiveBlueprintUseCase
 	stateDiff              stateDiffUseCase
@@ -23,6 +24,7 @@ type BlueprintSpecChangeUseCase struct {
 
 func NewBlueprintSpecChangeUseCase(
 	repo blueprintSpecRepository,
+	initialStatus initialBlueprintStatusUseCase,
 	validation blueprintSpecValidationUseCase,
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
@@ -35,6 +37,7 @@ func NewBlueprintSpecChangeUseCase(
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
 		repo:                   repo,
+		initialStatus:          initialStatus,
 		validation:             validation,
 		effectiveBlueprint:     effectiveBlueprint,
 		stateDiff:              stateDiff,
@@ -94,7 +97,11 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 }
 
 func (useCase *BlueprintSpecChangeUseCase) prepareBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	err := useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
+	err := useCase.initialStatus.InitateConditions(ctx, blueprint)
+	if err != nil {
+		return err
+	}
+	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
 	if err != nil {
 		return err
 	}

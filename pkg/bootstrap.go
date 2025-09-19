@@ -76,6 +76,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	componentRepo := componentcr.NewComponentInstallationRepo(componentsInterface.Components(namespace))
 	healthConfigRepo := adapterhealthconfig.NewHealthConfigProvider(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
 
+	initialBlueprintStateUseCase := application.NewInitiateBlueprintStatusUseCase(blueprintRepo)
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
@@ -91,7 +92,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(
-		blueprintRepo, blueprintValidationUseCase,
+		blueprintRepo, initialBlueprintStateUseCase, blueprintValidationUseCase,
 		effectiveBlueprintUseCase, stateDiffUseCase,
 		applyBlueprintSpecUseCase, ConfigUseCase,
 		selfUpgradeUseCase,

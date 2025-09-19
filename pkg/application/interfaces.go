@@ -8,6 +8,10 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
+type initialBlueprintStatusUseCase interface {
+	InitateConditions(ctx context.Context, blueprint *domain.BlueprintSpec) error
+}
+
 type blueprintSpecValidationUseCase interface {
 	ValidateBlueprintSpecStatically(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	ValidateBlueprintSpecDynamically(ctx context.Context, blueprint *domain.BlueprintSpec) error

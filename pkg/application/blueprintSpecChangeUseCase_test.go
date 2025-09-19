@@ -3,13 +3,14 @@ package application
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/go-logr/logr"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var testCtx = context.Background()
@@ -18,6 +19,7 @@ var testBlueprintId = "testBlueprint1"
 func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	// given
 	blueprintSpecRepositoryMock := newMockBlueprintSpecRepository(t)
+	initialStatusUseCaseMock := newMockInitialBlueprintStatusUseCase(t)
 	validationUseCaseMock := newMockBlueprintSpecValidationUseCase(t)
 	effectiveUseCaseMock := newMockEffectiveBlueprintUseCase(t)
 	stateDiffUseCaseMock := newMockStateDiffUseCase(t)
@@ -31,6 +33,7 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	// when
 	result := NewBlueprintSpecChangeUseCase(
 		blueprintSpecRepositoryMock,
+		initialStatusUseCaseMock,
 		validationUseCaseMock,
 		effectiveUseCaseMock,
 		stateDiffUseCaseMock,
@@ -68,6 +71,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 
 	type fields struct {
 		repo                   func(t *testing.T) blueprintSpecRepository
+		initialStatus          func(t *testing.T) initialBlueprintStatusUseCase
 		validation             func(t *testing.T) blueprintSpecValidationUseCase
 		effectiveBlueprint     func(t *testing.T) effectiveBlueprintUseCase
 		stateDiff              func(t *testing.T) stateDiffUseCase
@@ -113,11 +117,37 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 			},
 		},
 		{
+			name: "should return error on error initially setting the blueprint status",
+			fields: fields{
+				repo: func(t *testing.T) blueprintSpecRepository {
+					m := newMockBlueprintSpecRepository(t)
+					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(assert.AnError)
+
+					return m
+				},
+			},
+			args: testArgs,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.Error(t, err)
+			},
+		},
+		{
 			name: "should return error on error validating blueprint statically",
 			fields: fields{
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -138,6 +168,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -165,6 +201,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 					return m
 				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
+					return m
+				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
 					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
@@ -188,6 +230,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -218,6 +266,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -255,6 +309,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testDryRunBlueprintSpec, nil)
 					return m
 				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testDryRunBlueprintSpec).Return(nil)
+
+					return m
+				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
 					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testDryRunBlueprintSpec).Return(nil)
@@ -286,6 +346,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -326,6 +392,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -371,6 +443,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -423,6 +501,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 					return m
 				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
+					return m
+				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
 					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
@@ -472,6 +556,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -529,6 +619,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 					return m
 				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
+					return m
+				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
 					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
@@ -583,6 +679,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
@@ -645,6 +747,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 					return m
 				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
+					return m
+				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
 					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
@@ -703,6 +811,11 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				repo = tt.fields.repo(t)
 			}
 
+			var initialStatus initialBlueprintStatusUseCase
+			if tt.fields.initialStatus != nil {
+				initialStatus = tt.fields.initialStatus(t)
+			}
+
 			var validation blueprintSpecValidationUseCase
 			if tt.fields.validation != nil {
 				validation = tt.fields.validation(t)
@@ -750,6 +863,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 
 			useCase := &BlueprintSpecChangeUseCase{
 				repo:                   repo,
+				initialStatus:          initialStatus,
 				validation:             validation,
 				effectiveBlueprint:     effectiveBlueprint,
 				stateDiff:              stateDiff,

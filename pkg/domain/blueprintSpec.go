@@ -38,7 +38,7 @@ const (
 	ConditionEcosystemHealthy     = "EcosystemHealthy"
 	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
 	ConditionCompleted            = "Completed"
-	ConditionLastApplySucceeded   = "LastApplySuccessful"
+	ConditionLastApplySucceeded   = "LastApplySucceeded"
 
 	ReasonLastApplyErrorAtComponents = "ComponentApplyFailure"
 	ReasonLastApplyErrorAtDogus      = "DoguApplyFailure"
@@ -46,6 +46,8 @@ const (
 )
 
 var (
+	BlueprintConditions = []string{ConditionValid, ConditionExecutable, ConditionEcosystemHealthy, ConditionSelfUpgradeCompleted, ConditionCompleted, ConditionLastApplySucceeded}
+
 	notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
 	// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 	notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
@@ -268,7 +270,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		GlobalConfigDiffs:        globalConfigDiffs,
 	}
 
-	//TODO: we need the possible error from the use case to set the condition to Unknown
 	spec.resetCompletedConditionAfterStateDiff()
 	if spec.StateDiff.DoguDiffs.HasChanges() {
 		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
