@@ -85,6 +85,7 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		changeHandlerMock := NewMockBlueprintChangeHandler(t)
 		sut := &BlueprintReconciler{blueprintChangeHandler: changeHandlerMock}
 
+		changeHandlerMock.EXPECT().CheckForMultipleBlueprintResources(testCtx).Return(nil)
 		changeHandlerMock.EXPECT().HandleUntilApplied(testCtx, testBlueprint).Return(nil)
 		// when
 		actual, err := sut.Reconcile(testCtx, request)
@@ -93,12 +94,29 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
 	})
-	t.Run("should fail", func(t *testing.T) {
+
+	t.Run("should succeed", func(t *testing.T) {
 		// given
 		request := ctrl.Request{NamespacedName: types.NamespacedName{Name: testBlueprint}}
 		changeHandlerMock := NewMockBlueprintChangeHandler(t)
 		sut := &BlueprintReconciler{blueprintChangeHandler: changeHandlerMock}
 
+		changeHandlerMock.EXPECT().CheckForMultipleBlueprintResources(testCtx).Return(assert.AnError)
+		// when
+		_, err := sut.Reconcile(testCtx, request)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+	})
+
+	t.Run("should fail on HandleUntilApplied error", func(t *testing.T) {
+		// given
+		request := ctrl.Request{NamespacedName: types.NamespacedName{Name: testBlueprint}}
+		changeHandlerMock := NewMockBlueprintChangeHandler(t)
+		sut := &BlueprintReconciler{blueprintChangeHandler: changeHandlerMock}
+
+		changeHandlerMock.EXPECT().CheckForMultipleBlueprintResources(testCtx).Return(nil)
 		changeHandlerMock.EXPECT().HandleUntilApplied(testCtx, testBlueprint).Return(errors.New("test"))
 		// when
 		_, err := sut.Reconcile(testCtx, request)
@@ -145,7 +163,7 @@ func Test_decideRequeueForError(t *testing.T) {
 		assert.Equal(t, ctrl.Result{RequeueAfter: 1 * time.Second}, actual)
 		assert.Contains(t, logSinkMock.output, "0: A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 	})
-	t.Run("should catch wrapped NotFoundError, issue a log line and do not requeue", func(t *testing.T) {
+	t.Run("should catch wrapped NotFoundError, issue a log line and do not requeue timely", func(t *testing.T) {
 		// given
 		logSinkMock := newTrivialTestLogSink()
 		testLogger := logr.New(logSinkMock)
@@ -163,6 +181,24 @@ func Test_decideRequeueForError(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
 		assert.Contains(t, logSinkMock.output, "0: Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+	})
+	t.Run("should catch wrapped MultipleBlueprintsError, issue a error log line and requeue", func(t *testing.T) {
+		// given
+		logSinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logSinkMock)
+
+		intermediateErr := &domain.MultipleBlueprintsError{
+			Message: "multiple blueprints found",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		actual, err := decideRequeueForError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
+		assert.Contains(t, logSinkMock.output, "0: Ecosystem contains multiple blueprints - delete all but one. Retry later")
 	})
 	t.Run("NotFoundError, should retry if referenced config is missing", func(t *testing.T) {
 		// given

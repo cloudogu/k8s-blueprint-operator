@@ -891,3 +891,37 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 		})
 	}
 }
+
+func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testing.T) {
+	t.Run("should succeed without error", func(t *testing.T) {
+		// given
+		mockRepo := newMockBlueprintSpecRepository(t)
+		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(nil)
+		useCase := &BlueprintSpecChangeUseCase{
+			repo: mockRepo,
+		}
+
+		//when
+		err := useCase.CheckForMultipleBlueprintResources(t.Context())
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("should return error on check error", func(t *testing.T) {
+		// given
+		mockRepo := newMockBlueprintSpecRepository(t)
+		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(assert.AnError)
+		useCase := &BlueprintSpecChangeUseCase{
+			repo: mockRepo,
+		}
+
+		//when
+		err := useCase.CheckForMultipleBlueprintResources(t.Context())
+
+		// then
+		require.Error(t, err)
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "check for multiple blueprints not successful")
+	})
+}

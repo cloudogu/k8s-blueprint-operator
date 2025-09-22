@@ -396,3 +396,101 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		assert.Empty(t, spec.Events, "events in aggregate should be deleted after publishing them")
 	})
 }
+
+func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
+	t.Run("No error when no blueprints found", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, nil)
+
+		// when
+		err := repo.CheckSingleton(ctx)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("No error on empty blueprintList", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(&bpv2.BlueprintList{}, nil)
+
+		// when
+		err := repo.CheckSingleton(ctx)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("No error on single blueprint resource", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		list := &bpv2.BlueprintList{
+			Items: []bpv2.Blueprint{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "blueprint-1",
+					},
+				},
+			},
+		}
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+
+		// when
+		err := repo.CheckSingleton(ctx)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("MultipleBlueprintsError on two blueprint resources", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+		list := &bpv2.BlueprintList{
+			Items: []bpv2.Blueprint{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "blueprint-1",
+					},
+				},
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Name: "blueprint-2",
+					},
+				},
+			},
+		}
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+
+		// when
+		err := repo.CheckSingleton(ctx)
+
+		// then
+		require.Error(t, err)
+		var targetErr *domain.MultipleBlueprintsError
+		assert.ErrorAs(t, err, &targetErr)
+		assert.ErrorContains(t, err, "more than one blueprint CR found")
+	})
+
+	t.Run("InternalError on List error", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, assert.AnError)
+
+		// when
+		err := repo.CheckSingleton(ctx)
+
+		// then
+		require.Error(t, err)
+		var targetErr *domainservice.InternalError
+		assert.ErrorAs(t, err, &targetErr)
+		assert.ErrorContains(t, err, "error while listing blueprint resources")
+	})
+}

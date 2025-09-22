@@ -54,6 +54,16 @@ func NewUnhealthyEcosystemError(
 	return &UnhealthyEcosystemError{WrappedError: wrappedError, Message: message, healthResult: healthResult}
 }
 
+// MultipleBlueprintsError indicates that there are multiple blueprint-resources in this namespace, which the controller cannot handle.
+type MultipleBlueprintsError struct {
+	Message string
+}
+
+// Error marks the struct as an error.
+func (e *MultipleBlueprintsError) Error() string {
+	return e.Message
+}
+
 type AwaitSelfUpgradeError struct {
 	Message string
 }

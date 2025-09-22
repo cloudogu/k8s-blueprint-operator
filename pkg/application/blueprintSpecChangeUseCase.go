@@ -196,3 +196,17 @@ func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, bluep
 	}
 	return nil
 }
+
+func (useCase *BlueprintSpecChangeUseCase) CheckForMultipleBlueprintResources(ctx context.Context) error {
+	logger := log.FromContext(ctx).WithName("BlueprintSpecChangeUseCase.CheckForMultipleBlueprintResources")
+
+	logger.V(2).Info("check for multiple blueprints")
+	err := useCase.repo.CheckSingleton(ctx)
+	if err != nil {
+		errMsg := "check for multiple blueprints not successful"
+		logger.Error(err, errMsg)
+		return fmt.Errorf("%s: %w", errMsg, err)
+	}
+
+	return nil
+}

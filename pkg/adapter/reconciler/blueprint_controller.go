@@ -45,7 +45,13 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
 
-	err := r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
+	err := r.blueprintChangeHandler.CheckForMultipleBlueprintResources(ctx)
+
+	if err != nil {
+		return decideRequeueForError(logger, err)
+	}
+
+	err = r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
 
 	if err != nil {
 		return decideRequeueForError(logger, err)
@@ -64,6 +70,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var healthError *domain.UnhealthyEcosystemError
 	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
 	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
+	var multipleBlueprintsError *domain.MultipleBlueprintsError
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
@@ -94,6 +101,10 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		errLogger.Info("requeue until state diff is empty")
 		// fast requeue here since state diff has to be determined again
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+	case errors.As(err, &multipleBlueprintsError):
+		errLogger.Error(err, "Ecosystem contains multiple blueprints - delete all but one. Retry later")
+		// fast requeue here since state diff has to be determined again
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
 		return ctrl.Result{}, err // automatic requeue because of non-nil err
