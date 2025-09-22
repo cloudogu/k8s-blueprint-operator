@@ -188,6 +188,7 @@ func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, bluep
 			return err
 		}
 	}
+	// TODO: check if config in dogus is already up to date and if installed Version is up to date
 
 	err = useCase.completeUseCase.CompleteBlueprint(ctx, blueprint)
 	if err != nil {

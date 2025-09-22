@@ -119,11 +119,6 @@ func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprin
 		if err != nil {
 			return domain.EffectiveBlueprint{}, domain.StateDiff{}, err
 		}
-
-		stateDiff, err = serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
-		if err != nil {
-			return domain.EffectiveBlueprint{}, domain.StateDiff{}, err
-		}
 	}
 	return effectiveBlueprint, stateDiff, nil
 }
