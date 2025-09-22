@@ -1,38 +1,9 @@
 package serializer
 
 import (
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"github.com/cloudogu/k8s-registry-lib/config"
 )
-
-func convertToDoguConfigDiffsDomain(doguName string, dtoDiffs crd.ConfigDiff) domain.DoguConfigDiffs {
-	var doguConfigDiff domain.DoguConfigDiffs
-	for _, entryDiff := range dtoDiffs {
-		doguConfigDiff = append(doguConfigDiff, convertToDoguConfigEntryDiffDomain(doguName, entryDiff))
-	}
-	return doguConfigDiff
-}
-
-func convertToDoguConfigEntryDiffDomain(doguName string, dto crd.ConfigEntryDiff) domain.DoguConfigEntryDiff {
-	return domain.DoguConfigEntryDiff{
-		Key: common.DoguConfigKey{
-			DoguName: cescommons.SimpleName(doguName),
-			Key:      config.Key(dto.Key),
-		},
-		Actual: domain.DoguConfigValueState{
-			Value:  dto.Actual.Value,
-			Exists: dto.Actual.Exists,
-		},
-		Expected: domain.DoguConfigValueState{
-			Value:  dto.Expected.Value,
-			Exists: dto.Expected.Exists,
-		},
-		NeededAction: domain.ConfigAction(dto.NeededAction),
-	}
-}
 
 func convertToDoguConfigEntryDiffsDTO(domainDiffs domain.DoguConfigDiffs, isSensitive bool) crd.DoguConfigDiff {
 	var dtoDiffs []crd.ConfigEntryDiff

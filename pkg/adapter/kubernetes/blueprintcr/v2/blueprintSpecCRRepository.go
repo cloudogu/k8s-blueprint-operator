@@ -55,7 +55,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, stateDiff, err := convertBlueprintStatus(blueprintCR)
+	effectiveBlueprint, err := convertBlueprintStatus(blueprintCR)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                 blueprintId,
 		EffectiveBlueprint: effectiveBlueprint,
-		StateDiff:          stateDiff,
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         boolPtrToValue(blueprintCR.Spec.IgnoreDoguHealth),
@@ -110,17 +109,16 @@ func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.B
 	return nil
 }
 
-func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprint, domain.StateDiff, error) {
+func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprint, error) {
 	var effectiveBlueprint domain.EffectiveBlueprint
-	var stateDiff domain.StateDiff
 	var err error
 	if blueprintCR.Status != nil {
 		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
 		if err != nil {
-			return domain.EffectiveBlueprint{}, domain.StateDiff{}, err
+			return domain.EffectiveBlueprint{}, err
 		}
 	}
-	return effectiveBlueprint, stateDiff, nil
+	return effectiveBlueprint, nil
 }
 
 func boolPtrToValue(boolPtr *bool) bool {
