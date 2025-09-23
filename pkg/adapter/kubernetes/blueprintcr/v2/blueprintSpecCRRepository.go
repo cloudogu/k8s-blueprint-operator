@@ -94,7 +94,7 @@ func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
 	if err != nil {
 		return &domainservice.InternalError{
 			WrappedError: err,
-			Message:      fmt.Sprintf("error while listing blueprint resources"),
+			Message:      "error while listing blueprint resources",
 		}
 	}
 

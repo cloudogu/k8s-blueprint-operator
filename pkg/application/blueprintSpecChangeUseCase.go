@@ -203,9 +203,7 @@ func (useCase *BlueprintSpecChangeUseCase) CheckForMultipleBlueprintResources(ct
 	logger.V(2).Info("check for multiple blueprints")
 	err := useCase.repo.CheckSingleton(ctx)
 	if err != nil {
-		errMsg := "check for multiple blueprints not successful"
-		logger.Error(err, errMsg)
-		return fmt.Errorf("%s: %w", errMsg, err)
+		return fmt.Errorf("%s: %w", "check for multiple blueprints not successful", err)
 	}
 
 	return nil
