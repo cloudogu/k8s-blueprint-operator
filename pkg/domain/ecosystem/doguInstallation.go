@@ -5,18 +5,23 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // DoguInstallation represents an installed or to be installed dogu in the ecosystem.
 type DoguInstallation struct {
 	// Name identifies the dogu by simple dogu name and namespace.
 	Name cescommons.QualifiedName
-	// Version is the version of the dogu
+	// Version is the desired version of the dogu
 	Version core.Version
 	// Status is the installation status of the dogu in the ecosystem
 	Status string
 	// Health is the current health status of the dogu in the ecosystem
 	Health HealthStatus
+	// InstalledVersion is the current version of the dogu
+	InstalledVersion core.Version
+	// StartedAt contains the time of the last restart of the dogu.
+	StartedAt metav1.Time
 	// UpgradeConfig contains configuration for dogu upgrades
 	UpgradeConfig UpgradeConfig
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
@@ -118,6 +123,14 @@ func InstallDogu(
 
 func (dogu *DoguInstallation) IsHealthy() bool {
 	return dogu.Health == AvailableHealthStatus
+}
+
+func (dogu *DoguInstallation) IsVersionUpToDate() bool {
+	return dogu.Version.IsEqualTo(dogu.InstalledVersion)
+}
+
+func (dogu *DoguInstallation) IsConfigUpToDate(globalConfigUpdateTime *metav1.Time, doguConfigUpdateTime *metav1.Time) bool {
+	return !dogu.StartedAt.Before(globalConfigUpdateTime) && !dogu.StartedAt.Before(doguConfigUpdateTime)
 }
 
 func (dogu *DoguInstallation) Upgrade(newVersion *core.Version) {

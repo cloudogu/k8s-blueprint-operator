@@ -484,7 +484,7 @@ func (spec *BlueprintSpec) Complete() bool {
 	return conditionChanged
 }
 
-func (spec *BlueprintSpec) SetLastApplySucceededCondition(reason string, err error) bool {
+func (spec *BlueprintSpec) SetLastApplySucceededConditionOnError(reason string, err error) bool {
 	if err != nil {
 		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionLastApplySucceeded,

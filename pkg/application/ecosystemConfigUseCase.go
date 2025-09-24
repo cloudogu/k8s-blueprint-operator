@@ -150,7 +150,7 @@ func (useCase *EcosystemConfigUseCase) handleFailedApplyEcosystemConfig(ctx cont
 		WithValues("blueprintId", blueprint.Id)
 
 	// sets condition
-	changed := blueprint.SetLastApplySucceededCondition(domain.ReasonLastApplyErrorAtConfig, err)
+	changed := blueprint.SetLastApplySucceededConditionOnError(domain.ReasonLastApplyErrorAtConfig, err)
 	if changed {
 		repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
 

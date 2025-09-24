@@ -29,6 +29,7 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	applyComponentUseCaseMock := newMockApplyComponentsUseCase(t)
 	applyDoguUseCaseMock := newMockApplyDogusUseCase(t)
 	ecosystemHealthUseCaseMock := newMockEcosystemHealthUseCase(t)
+	dogusUpToDateUseCaseMock := newMockDogusUpToDateUseCase(t)
 
 	preparationUseCases := NewBlueprintPreparationUseCases(
 		initialStatusUseCaseMock,
@@ -45,6 +46,7 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 		applyComponentUseCaseMock,
 		applyDoguUseCaseMock,
 		ecosystemHealthUseCaseMock,
+		dogusUpToDateUseCaseMock,
 	)
 
 	// when
@@ -65,6 +67,7 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	assert.Equal(t, applyDoguUseCaseMock, result.applyUseCases.applyDogusUseCase)
 	assert.Equal(t, completeUseCaseMock, result.applyUseCases.completeUseCase)
 	assert.Equal(t, ecosystemHealthUseCaseMock, result.applyUseCases.healthUseCase)
+	assert.Equal(t, dogusUpToDateUseCaseMock, result.applyUseCases.dogusUpToDateUseCase)
 }
 
 func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
@@ -89,6 +92,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 		applyComponentUseCase  func(t *testing.T) applyComponentsUseCase
 		applyDogusUseCase      func(t *testing.T) applyDogusUseCase
 		healthUseCase          func(t *testing.T) ecosystemHealthUseCase
+		upToDateUseCase        func(t *testing.T) dogusUpToDateUseCase
 	}
 	type args struct {
 		givenCtx    context.Context
@@ -682,6 +686,72 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 			},
 		},
 		{
+			name: "should return error on error checking if dogus are up to date",
+			fields: fields{
+				repo: func(t *testing.T) blueprintSpecRepository {
+					m := newMockBlueprintSpecRepository(t)
+					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
+
+					return m
+				},
+				validation: func(t *testing.T) blueprintSpecValidationUseCase {
+					m := newMockBlueprintSpecValidationUseCase(t)
+					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
+					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
+					return m
+				},
+				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
+					m := newMockEffectiveBlueprintUseCase(t)
+					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
+					return m
+				},
+				stateDiff: func(t *testing.T) stateDiffUseCase {
+					m := newMockStateDiffUseCase(t)
+					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
+					return m
+				},
+				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
+					m := newMockEcosystemHealthUseCase(t)
+					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
+					return m
+				},
+				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
+					m := newMockSelfUpgradeUseCase(t)
+					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
+					return m
+				},
+				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
+					m := newMockEcosystemConfigUseCase(t)
+					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
+					return m
+				},
+				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
+					m := newMockApplyComponentsUseCase(t)
+					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
+					return m
+				},
+				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
+					m := newMockApplyDogusUseCase(t)
+					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
+					return m
+				},
+				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
+					m := newMockDogusUpToDateUseCase(t)
+					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(assert.AnError)
+					return m
+				},
+			},
+			args: testArgs,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.Error(t, err)
+			},
+		},
+		{
 			name: "should return error on error complete blueprint",
 			fields: fields{
 				repo: func(t *testing.T) blueprintSpecRepository {
@@ -734,6 +804,11 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
 					m := newMockApplyDogusUseCase(t)
 					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
+					return m
+				},
+				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
+					m := newMockDogusUpToDateUseCase(t)
+					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(nil)
 					return m
 				},
 				applyUseCase: func(t *testing.T) completeBlueprintUseCase {
@@ -800,6 +875,11 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
 					m := newMockApplyDogusUseCase(t)
 					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
+					return m
+				},
+				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
+					m := newMockDogusUpToDateUseCase(t)
+					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(nil)
 					return m
 				},
 				applyUseCase: func(t *testing.T) completeBlueprintUseCase {
@@ -869,6 +949,11 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				ecoHealthUseCase = tt.fields.healthUseCase(t)
 			}
 
+			var upToDateUseCase dogusUpToDateUseCase
+			if tt.fields.upToDateUseCase != nil {
+				upToDateUseCase = tt.fields.upToDateUseCase(t)
+			}
+
 			useCase := &BlueprintSpecChangeUseCase{
 				repo: repo,
 				preparationUseCases: BlueprintPreparationUseCases{
@@ -885,6 +970,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					applyComponentUseCase:  applyComponentUseCase,
 					applyDogusUseCase:      applyDoguUseCase,
 					healthUseCase:          ecoHealthUseCase,
+					dogusUpToDateUseCase:   upToDateUseCase,
 				},
 			}
 			tt.wantErr(t, useCase.HandleUntilApplied(tt.args.givenCtx, tt.args.blueprintId), fmt.Sprintf("HandleUntilApplied(%v, %v)", tt.args.givenCtx, tt.args.blueprintId))

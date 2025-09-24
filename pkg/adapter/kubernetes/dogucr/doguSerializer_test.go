@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"reflect"
 	"testing"
+	"time"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -28,12 +29,14 @@ var (
 	subfolder2       = "secsubfolder"
 	rewriteTarget    = "/"
 	additionalConfig = "additional"
+	proxyBodySize    = resource.MustParse("1G")
 )
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
 		cr *v2.Dogu
 	}
+	pointInTime := metav1.NewTime(time.Date(2024, 9, 23, 10, 0, 0, 0, time.UTC))
 	tests := []struct {
 		name    string
 		args    args
@@ -63,8 +66,10 @@ func Test_parseDoguCR(t *testing.T) {
 					},
 				},
 				Status: v2.DoguStatus{
-					Status: v2.DoguStatusInstalled,
-					Health: v2.AvailableHealthStatus,
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: version3213.Raw,
+					StartedAt:        pointInTime,
 				},
 			}},
 			want: &ecosystem.DoguInstallation{
@@ -77,6 +82,8 @@ func Test_parseDoguCR(t *testing.T) {
 				},
 				MinVolumeSize:      &defaultVolSize,
 				PersistenceContext: persistenceContext,
+				InstalledVersion:   version3213,
+				StartedAt:          pointInTime,
 			},
 			wantErr: false,
 		},
@@ -103,6 +110,66 @@ func Test_parseDoguCR(t *testing.T) {
 			}},
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "cannot parse installed version",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
+						AllowNamespaceSwitch: false,
+					},
+				},
+				Status: v2.DoguStatus{
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: "xyvz",
+				},
+			}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "accepts empty installed version",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
+						AllowNamespaceSwitch: false,
+					},
+				},
+				Status: v2.DoguStatus{
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: "",
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				Status:  ecosystem.DoguStatusInstalled,
+				Health:  ecosystem.AvailableHealthStatus,
+				UpgradeConfig: ecosystem.UpgradeConfig{
+					AllowNamespaceSwitch: false,
+				},
+				MinVolumeSize:      &defaultVolSize,
+				PersistenceContext: persistenceContext,
+			},
+			wantErr: false,
 		},
 		{
 			name: "parse additional mounts",
@@ -443,7 +510,6 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			// TODO check ReverseProxy
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
@@ -454,11 +520,16 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 				MinVolumeSize: &quantity2,
+				ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					MaxBodySize:      &proxyBodySize,
+					RewriteTarget:    &rewriteTarget,
+					AdditionalConfig: &additionalConfig,
+				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 		{

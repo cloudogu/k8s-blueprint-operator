@@ -3,6 +3,7 @@ package application
 import (
 	"context"
 
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
@@ -27,6 +28,7 @@ type stateDiffUseCase interface {
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
+	CheckDogusUpToDate(ctx context.Context) ([]cescommons.SimpleName, error)
 	ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
@@ -50,6 +52,10 @@ type completeBlueprintUseCase interface {
 
 type ecosystemHealthUseCase interface {
 	CheckEcosystemHealth(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)
+}
+
+type dogusUpToDateUseCase interface {
+	CheckDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type selfUpgradeUseCase interface {

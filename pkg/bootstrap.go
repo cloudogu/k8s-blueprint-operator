@@ -82,7 +82,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintRepo)
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, componentRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, healthConfigRepo)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, healthConfigRepo, doguConfigRepo, globalConfigRepoAdapter)
 	componentInstallationUseCase := application.NewComponentInstallationUseCase(blueprintRepo, componentRepo, healthConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, componentInstallationUseCase, blueprintRepo)
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
@@ -90,6 +90,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
+	dogusUpToDateUseCase := application.NewDogusUpToDateUseCase(blueprintRepo, doguInstallationUseCase)
 
 	preparationUseCases := application.NewBlueprintPreparationUseCases(
 		initialBlueprintStateUseCase,
@@ -105,6 +106,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		applyComponentUseCase,
 		applyDogusUseCase,
 		ecosystemHealthUseCase,
+		dogusUpToDateUseCase,
 	)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)

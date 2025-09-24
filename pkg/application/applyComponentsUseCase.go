@@ -34,7 +34,7 @@ func (useCase *ApplyComponentsUseCase) ApplyComponents(ctx context.Context, blue
 	if isComponentsApplied {
 		blueprint.Events = append(blueprint.Events, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs})
 	}
-	conditionChanged := blueprint.SetLastApplySucceededCondition(domain.ReasonLastApplyErrorAtComponents, err)
+	conditionChanged := blueprint.SetLastApplySucceededConditionOnError(domain.ReasonLastApplyErrorAtComponents, err)
 
 	if isComponentsApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)

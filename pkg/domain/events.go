@@ -251,6 +251,18 @@ func (e DogusAppliedEvent) Message() string {
 	return buffer.String()
 }
 
+type DogusNotUpToDateEvent struct {
+	DogusNotUpToDate []cescommons.SimpleName
+}
+
+func (e DogusNotUpToDateEvent) Name() string {
+	return "DogusNotUpToDate"
+}
+
+func (e DogusNotUpToDateEvent) Message() string {
+	return fmt.Sprintf("dogus not up to date yet: %v", e.DogusNotUpToDate)
+}
+
 type BlueprintAppliedEvent struct{}
 
 func (e BlueprintAppliedEvent) Name() string {

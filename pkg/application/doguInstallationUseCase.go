@@ -16,17 +16,23 @@ type DoguInstallationUseCase struct {
 	blueprintSpecRepo  blueprintSpecRepository
 	doguRepo           doguInstallationRepository
 	waitConfigProvider healthWaitConfigProvider
+	doguConfigRepo     doguConfigRepository
+	globalConfigRepo   globalConfigRepository
 }
 
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
 	waitConfigProvider domainservice.HealthWaitConfigProvider,
+	doguConfigRepo doguConfigRepository,
+	globalConfigRepo globalConfigRepository,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
 		blueprintSpecRepo:  blueprintSpecRepo,
 		doguRepo:           doguRepo,
 		waitConfigProvider: waitConfigProvider,
+		doguConfigRepo:     doguConfigRepo,
+		globalConfigRepo:   globalConfigRepo,
 	}
 }
 
@@ -39,6 +45,44 @@ func (useCase *DoguInstallationUseCase) CheckDoguHealth(ctx context.Context) (ec
 	}
 	// accept experimental maps.Values as we can implement it ourselves in a minute
 	return ecosystem.CalculateDoguHealthResult(maps.Values(installedDogus)), nil
+}
+
+func (useCase *DoguInstallationUseCase) CheckDogusUpToDate(ctx context.Context) ([]cescommons.SimpleName, error) {
+	logger := log.FromContext(ctx).WithName("DoguInstallationUseCase.CheckDoguHealth")
+	logger.V(2).Info("check if dogus are up to date...")
+	installedDogus, err := useCase.doguRepo.GetAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	globalConfig, err := useCase.globalConfigRepo.Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+	globalConfigUpdateTime := globalConfig.LastUpdated
+
+	var dogusNotUpToDate []cescommons.SimpleName
+
+	for doguName, dogu := range installedDogus {
+		versionUpToDate := dogu.IsVersionUpToDate()
+		if !versionUpToDate {
+			dogusNotUpToDate = append(dogusNotUpToDate, doguName)
+			continue
+		}
+
+		doguConfig, err := useCase.doguConfigRepo.Get(ctx, doguName)
+		if err != nil {
+			return nil, err
+		}
+		doguConfigUpdateTime := doguConfig.LastUpdated
+		configUpToDate := dogu.IsConfigUpToDate(globalConfigUpdateTime, doguConfigUpdateTime)
+		if !configUpToDate {
+			dogusNotUpToDate = append(dogusNotUpToDate, doguName)
+			continue
+		}
+	}
+
+	return dogusNotUpToDate, nil
 }
 
 // ApplyDoguStates applies the expected dogu state from the Blueprint to the ecosystem.

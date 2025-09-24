@@ -34,7 +34,7 @@ func (useCase *ApplyDogusUseCase) ApplyDogus(ctx context.Context, blueprint *dom
 	if isDogusApplied {
 		blueprint.Events = append(blueprint.Events, domain.DogusAppliedEvent{Diffs: blueprint.StateDiff.DoguDiffs})
 	}
-	conditionChanged := blueprint.SetLastApplySucceededCondition(domain.ReasonLastApplyErrorAtDogus, err)
+	conditionChanged := blueprint.SetLastApplySucceededConditionOnError(domain.ReasonLastApplyErrorAtDogus, err)
 
 	if isDogusApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)

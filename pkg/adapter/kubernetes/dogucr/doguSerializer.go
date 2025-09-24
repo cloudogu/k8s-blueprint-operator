@@ -23,6 +23,11 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	}
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
+	var installedVersion core.Version
+	var installedVersionErr error
+	if cr.Status.InstalledVersion != "" {
+		installedVersion, installedVersionErr = core.ParseVersion(cr.Status.InstalledVersion)
+	}
 	doguName, nameErr := cescommons.QualifiedNameFromString(cr.Spec.Name)
 
 	// the dogu-operator has a default of 2Gi if this field is 0 or not set
@@ -33,7 +38,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 
 	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
 
-	err := errors.Join(versionErr, nameErr, volumeSizeErr, proxyErr)
+	err := errors.Join(versionErr, nameErr, volumeSizeErr, proxyErr, installedVersionErr)
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
@@ -52,6 +57,8 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		Version:            version,
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
+		InstalledVersion:   installedVersion,
+		StartedAt:          cr.Status.StartedAt,
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
 		MinVolumeSize:      &minVolumeSize,
 		ReverseProxyConfig: reverseProxyConfigEntries,

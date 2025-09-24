@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -71,6 +72,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
 	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
 	var multipleBlueprintsError *domain.MultipleBlueprintsError
+	var dogusNotUpToDateError *domain.DogusNotUpToDateError
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
@@ -104,6 +106,10 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	case errors.As(err, &multipleBlueprintsError):
 		errLogger.Error(err, "Ecosystem contains multiple blueprints - delete all but one. Retry later")
 		// fast requeue here since state diff has to be determined again
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	case errors.As(err, &dogusNotUpToDateError):
+		// really normal case
+		errLogger.Info(fmt.Sprintf("Dogus are not up to date yet. Retry later: %s", err.Error()))
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")

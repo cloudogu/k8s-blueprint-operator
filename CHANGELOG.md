@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *Breaking Change ahead!*
 
+### Added
+- [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
+
 ### Changed
 - [#119] *breaking* sensitive dogu config can now only be referenced with secrets
     - it was not safe to have these values in clear text in the blueprint
@@ -19,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#121] *breaking* the current state will now be reflected via conditions instead of the `statusPhase` field
 - [#121] *breaking* events were reworked, some events are now more general, some events got removed completely
     - Note, that events are for humans. You should not compute them for automation as they have no consistency guarantees.
+- [#121] Upgrade to Golang v1.25.1
+- [#121] Upgrade Makefiles to v10.3.0
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore

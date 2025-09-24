@@ -39,6 +39,7 @@ type BlueprintApplyUseCases struct {
 	applyComponentUseCase  applyComponentsUseCase
 	applyDogusUseCase      applyDogusUseCase
 	healthUseCase          ecosystemHealthUseCase
+	dogusUpToDateUseCase   dogusUpToDateUseCase
 }
 
 func NewBlueprintApplyUseCases(
@@ -48,6 +49,7 @@ func NewBlueprintApplyUseCases(
 	applyComponentUseCase applyComponentsUseCase,
 	applyDogusUseCase applyDogusUseCase,
 	healthUseCase ecosystemHealthUseCase,
+	dogusUpToDateUseCase dogusUpToDateUseCase,
 ) BlueprintApplyUseCases {
 	return BlueprintApplyUseCases{
 		completeUseCase:        completeUseCase,
@@ -56,6 +58,7 @@ func NewBlueprintApplyUseCases(
 		applyComponentUseCase:  applyComponentUseCase,
 		applyDogusUseCase:      applyDogusUseCase,
 		healthUseCase:          healthUseCase,
+		dogusUpToDateUseCase:   dogusUpToDateUseCase,
 	}
 }
 
@@ -188,7 +191,12 @@ func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, bluep
 			return err
 		}
 	}
-	// TODO: check if config in dogus is already up to date and if installed Version is up to date
+
+	err = useCase.dogusUpToDateUseCase.CheckDogus(ctx, blueprint)
+	if err != nil {
+		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
+		return err
+	}
 
 	err = useCase.completeUseCase.CompleteBlueprint(ctx, blueprint)
 	if err != nil {

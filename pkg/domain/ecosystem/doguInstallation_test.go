@@ -2,12 +2,14 @@ package ecosystem
 
 import (
 	"testing"
+	"time"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -177,4 +179,165 @@ func TestDoguInstallation_UpdateMinVolumeSize(t *testing.T) {
 		// then
 		assert.Equal(t, &volumeSize, dogu.MinVolumeSize)
 	})
+}
+
+func TestDoguInstallation_IsVersionUpToDate(t *testing.T) {
+	type fields struct {
+		Version          core.Version
+		InstalledVersion core.Version
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			name: "equal Versions is up to date",
+			fields: fields{
+				Version:          version1231,
+				InstalledVersion: version1231,
+			},
+			want: true,
+		},
+		{
+			name: "Version newer than installed version is not up to date",
+			fields: fields{
+				Version:          version1232,
+				InstalledVersion: version1231,
+			},
+			want: false,
+		},
+		{
+			name: "Installed version empty is not up to date",
+			fields: fields{
+				Version:          version1232,
+				InstalledVersion: core.Version{},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dogu := &DoguInstallation{
+				Version:          tt.fields.Version,
+				InstalledVersion: tt.fields.InstalledVersion,
+			}
+			assert.Equalf(t, tt.want, dogu.IsVersionUpToDate(), "IsVersionUpToDate()")
+		})
+	}
+}
+
+func TestDoguInstallation_IsConfigUpToDate(t *testing.T) {
+	timeMay := v1.NewTime(time.Date(2024, time.May, 23, 10, 0, 0, 0, time.UTC))
+	timeJune := v1.NewTime(time.Date(2024, time.June, 23, 10, 0, 0, 0, time.UTC))
+	timeJuly := v1.NewTime(time.Date(2024, time.July, 23, 10, 0, 0, 0, time.UTC))
+	type args struct {
+		globalConfigUpdateTime *v1.Time
+		doguConfigUpdateTime   *v1.Time
+	}
+	tests := []struct {
+		name      string
+		StartedAt v1.Time
+		args      args
+		want      bool
+	}{
+		{
+			name:      "all equal is up to date",
+			StartedAt: timeMay,
+			args: args{
+				globalConfigUpdateTime: &timeMay,
+				doguConfigUpdateTime:   &timeMay,
+			},
+			want: true,
+		},
+		{
+			name:      "StartedAt newest date is up to date",
+			StartedAt: timeJuly,
+			args: args{
+				globalConfigUpdateTime: &timeMay,
+				doguConfigUpdateTime:   &timeJune,
+			},
+			want: true,
+		},
+		{
+			name:      "globalConfigUpdateTime newest date is not up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: &timeJuly,
+				doguConfigUpdateTime:   &timeMay,
+			},
+			want: false,
+		},
+		{
+			name:      "doguConfigUpdateTime newest date is not up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: &timeMay,
+				doguConfigUpdateTime:   &timeJuly,
+			},
+			want: false,
+		},
+		{
+			name:      "doguConfigUpdateTime nil and StartedAt newest is up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: &timeMay,
+				doguConfigUpdateTime:   nil,
+			},
+			want: true,
+		},
+		{
+			name:      "doguConfigUpdateTime nil and StartedAt not newest is not up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: &timeJuly,
+				doguConfigUpdateTime:   nil,
+			},
+			want: false,
+		},
+		{
+			name:      "globalConfigUpdateTime nil and StartedAt newest is up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: nil,
+				doguConfigUpdateTime:   &timeMay,
+			},
+			want: true,
+		},
+		{
+			name:      "globalConfigUpdateTime nil and StartedAt not newest is not up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: nil,
+				doguConfigUpdateTime:   &timeJuly,
+			},
+			want: false,
+		},
+		{
+			name:      "globalConfigUpdateTime nil and doguConfigUpdateTime nil is up to date",
+			StartedAt: timeJune,
+			args: args{
+				globalConfigUpdateTime: nil,
+				doguConfigUpdateTime:   nil,
+			},
+			want: true,
+		},
+		{
+			name:      "StartedAt empty is not up to date",
+			StartedAt: v1.Time{},
+			args: args{
+				globalConfigUpdateTime: &timeMay,
+				doguConfigUpdateTime:   nil,
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dogu := &DoguInstallation{
+				StartedAt: tt.StartedAt,
+			}
+			assert.Equalf(t, tt.want, dogu.IsConfigUpToDate(tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime), "IsConfigUpToDate(%v, %v)", tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime)
+		})
+	}
 }

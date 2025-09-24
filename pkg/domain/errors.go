@@ -54,6 +54,15 @@ func NewUnhealthyEcosystemError(
 	return &UnhealthyEcosystemError{WrappedError: wrappedError, Message: message, healthResult: healthResult}
 }
 
+// DogusNotUpToDateError indicates that there are dogus that are not yet up to date.
+type DogusNotUpToDateError struct {
+	Message string
+}
+
+func (e *DogusNotUpToDateError) Error() string {
+	return e.Message
+}
+
 // MultipleBlueprintsError indicates that there are multiple blueprint-resources in this namespace, which the controller cannot handle.
 type MultipleBlueprintsError struct {
 	Message string
