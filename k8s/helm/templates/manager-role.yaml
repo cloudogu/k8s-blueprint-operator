@@ -9,34 +9,6 @@ metadata:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-manager-role
 rules:
-
-# issue permissions to read/update fields beyond the status or finalizer fields
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-# issue permissions to update the finalizer field that may control CR deletion
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints/finalizers
-    verbs:
-      - update
-# issue permissions to update the status which contains blueprint processing data
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints/status
-    verbs:
-      - get
-      - patch
-      - update
 # issue secret handling for Dogus
   - apiGroups:
       - ""
