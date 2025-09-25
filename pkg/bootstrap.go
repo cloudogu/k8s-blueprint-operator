@@ -88,7 +88,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
 	applyComponentUseCase := application.NewApplyComponentsUseCase(blueprintRepo, componentInstallationUseCase)
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
-	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter)
+	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter, doguRepo)
 	selfUpgradeUseCase := application.NewSelfUpgradeUseCase(blueprintRepo, componentRepo, componentInstallationUseCase, blueprintOperatorName.SimpleName)
 	dogusUpToDateUseCase := application.NewDogusUpToDateUseCase(blueprintRepo, doguInstallationUseCase)
 

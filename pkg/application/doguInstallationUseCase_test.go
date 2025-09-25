@@ -190,6 +190,8 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
+		dogu.PauseReconciliation = true // test if it gets reset on update (the dogu in the EXPECT Update call has this to false)
+
 		// when
 		err := sut.applyDoguState(
 			testCtx,

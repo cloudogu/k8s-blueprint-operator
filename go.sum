@@ -48,10 +48,12 @@ github.com/cloudogu/k8s-component-operator v0.0.0-20250923121356-c1fb311e229c h1
 github.com/cloudogu/k8s-component-operator v0.0.0-20250923121356-c1fb311e229c/go.mod h1:1NmERGUjXJdMHGMOb2CP6U9Y8NRt7I8O7juUNTIDxKM=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250919084717-d3c544ee7c96 h1:3BzzLzUliyWFwqgQn4Mp3/rW3cYeQqv0en6HFn6SVsk=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250919084717-d3c544ee7c96/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250923124722-b9569070ec13 h1:8/rEusXXKvbi+dLfUENsAvN84ItU0q6rFJDHKwh4BCQ=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250923124722-b9569070ec13/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250924122244-01339f784cd0 h1:ohitXnpL655pmZOO0LVjW/weVi1ftFKSXG7jllbRQag=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250924122244-01339f784cd0/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
 github.com/cloudogu/k8s-registry-lib v0.2.2-0.20250818112109-cfd93e57e9f6 h1:OYMO6DYX6rtzo2a88hXXTzwf8+aXt7uV+BTaEmvlls4=
 github.com/cloudogu/k8s-registry-lib v0.2.2-0.20250818112109-cfd93e57e9f6/go.mod h1:NytbB2XBjc+gr5gOJFoPjCzyxs/TuhWpKSnDJzCLQ14=
-github.com/cloudogu/k8s-registry-lib v0.5.1 h1:gbdrhETUm53GP65LoljrS1kekDDl/onBPfrOQTQpt1s=
-github.com/cloudogu/k8s-registry-lib v0.5.1/go.mod h1:mdMOgknEOrGQH1zc/3K859iPhwpqwtzigK9QrjM3Vk0=
 github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1 h1:NWoBvBwiE8yO8HqSId0+nOTBMGSjzX0yM8m6fC7Ll6E=
 github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1/go.mod h1:AGZ3bihl/sUUJ6iEtcxtALIt/UlkfUdK7HXJ6DtBivE=
 github.com/cloudogu/retry-lib v0.1.0 h1:gaAmtyjUqgHbxfCWMeUn0qnGbDH4TtZVSQkbZ1Nq6eI=

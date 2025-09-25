@@ -146,7 +146,8 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				// we just always set this value, if a new dogu CR is created via blueprint
 				MinDataVolumeSize: minVolumeSize,
 			},
-			SupportMode: false,
+			SupportMode:         false,
+			PauseReconciliation: false, // should be always false on installation
 			UpgradeConfig: v2.UpgradeConfig{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
@@ -215,6 +216,7 @@ type doguSpecPatch struct {
 	Version                      string             `json:"version"`
 	Resources                    doguResourcesPatch `json:"resources"`
 	SupportMode                  bool               `json:"supportMode"`
+	PauseReconciliation          bool               `json:"pauseReconciliation"`
 	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
 	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
 	AdditionalMounts             []v2.DataMount     `json:"additionalMounts"`
@@ -252,7 +254,8 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode
-			SupportMode: false,
+			SupportMode:         false,
+			PauseReconciliation: dogu.PauseReconciliation,
 			UpgradeConfig: upgradeConfigPatch{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				// this is a useful default as long as blueprints itself have no forceUpgrade flag implemented

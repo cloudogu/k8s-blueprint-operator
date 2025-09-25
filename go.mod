@@ -8,7 +8,7 @@ require (
 	github.com/cloudogu/cesapp-lib v0.18.1
 	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250922184523-850dede012d1
 	github.com/cloudogu/k8s-component-operator v0.0.0-20250923121356-c1fb311e229c
-	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250919084717-d3c544ee7c96
+	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250924122244-01339f784cd0
 	github.com/cloudogu/k8s-registry-lib v0.2.2-0.20250818112109-cfd93e57e9f6
 	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
 	github.com/go-logr/logr v1.4.3

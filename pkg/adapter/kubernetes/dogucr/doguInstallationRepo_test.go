@@ -341,6 +341,7 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 			"\"dataVolumeSize\":\"\"," +
 			"\"minDataVolumeSize\":\"0\"}," +
 			"\"supportMode\":false," +
+			"\"pauseReconciliation\":false," +
 			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
 			"\"additionalIngressAnnotations\":null," +
 			"\"additionalMounts\":null}" +

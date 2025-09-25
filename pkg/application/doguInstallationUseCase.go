@@ -176,6 +176,8 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 	// If this routine did not terminate until this point, it is always an update.
 	if len(doguDiff.NeededActions) > 0 {
 		logger.Info("upgrade dogu")
+		// remove potential pause reconciliation flags here so that the dogu gets updates again
+		doguInstallation.PauseReconciliation = false
 		return useCase.doguRepo.Update(ctx, doguInstallation)
 	}
 

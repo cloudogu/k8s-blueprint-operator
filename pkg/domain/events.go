@@ -260,7 +260,9 @@ func (e DogusNotUpToDateEvent) Name() string {
 }
 
 func (e DogusNotUpToDateEvent) Message() string {
-	return fmt.Sprintf("dogus not up to date yet: %v", e.DogusNotUpToDate)
+	dogusNotUpToDate := util.Map(e.DogusNotUpToDate, func(dogu cescommons.SimpleName) string { return string(dogu) })
+	slices.Sort(dogusNotUpToDate)
+	return fmt.Sprintf("%d dogu(s) not up to date yet: %s", len(dogusNotUpToDate), strings.Join(dogusNotUpToDate, ", "))
 }
 
 type BlueprintAppliedEvent struct{}

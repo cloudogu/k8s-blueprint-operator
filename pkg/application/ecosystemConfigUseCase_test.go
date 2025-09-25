@@ -1,6 +1,7 @@
 package application
 
 import (
+	"context"
 	"maps"
 	"testing"
 
@@ -8,6 +9,7 @@ import (
 	liberrors "github.com/cloudogu/ces-commons-lib/errors"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -94,8 +96,81 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		globalConfigRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(globalConfig, nil)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil)
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigRepoMock)
+		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigRepoMock, doguInstallaltionRepoMock)
+
+		// when
+		err := sut.ApplyConfig(testCtx, blueprint)
+
+		// then
+		require.NoError(t, err)
+		require.Len(t, blueprint.Events, 1)
+		assert.Equal(t, domain.EcosystemConfigAppliedEvent{}, blueprint.Events[0])
+	})
+
+	t.Run("pause reconciliation for dogus with config and version changes", func(t *testing.T) {
+		// given
+		blueprintRepoMock := newMockBlueprintSpecRepository(t)
+		doguConfigMock := newMockDoguConfigRepository(t)
+		sensitiveDoguConfigMock := newMockSensitiveDoguConfigRepository(t)
+		globalConfigRepoMock := newMockGlobalConfigRepository(t)
+
+		sensitiveCasDiff := getSensitiveDoguConfigEntryDiffForAction("key", "value", cas, domain.ConfigActionSet)
+		blueprint := &domain.BlueprintSpec{
+			StateDiff: domain.StateDiff{
+				DoguDiffs: []domain.DoguDiff{
+					{
+						DoguName:      redmine,
+						NeededActions: []domain.Action{domain.ActionUpgrade},
+					},
+					{
+						DoguName:      cas,
+						NeededActions: []domain.Action{domain.ActionUpgrade},
+					},
+				},
+				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
+					redmine: {
+						getSetDoguConfigEntryDiff("key", "value", redmine),
+					},
+				},
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
+					cas: {
+						sensitiveCasDiff,
+					},
+				},
+			},
+		}
+
+		// Just check if the routine hits the repos. Check values in concrete test of methods.
+		doguConfigMock.EXPECT().
+			GetAllExisting(testCtx, []cescommons.SimpleName{redmine}).
+			Return(map[cescommons.SimpleName]config.DoguConfig{
+				redmine: config.CreateDoguConfig(redmine, map[config.Key]config.Value{}),
+			}, nil)
+		doguConfigMock.EXPECT().UpdateOrCreate(testCtx, mock.Anything).Return(config.DoguConfig{}, nil)
+
+		sensitiveDoguConfigMock.EXPECT().
+			GetAllExisting(testCtx, []cescommons.SimpleName{cas}).
+			Return(map[cescommons.SimpleName]config.DoguConfig{
+				cas: config.CreateDoguConfig(cas, map[config.Key]config.Value{}),
+			}, nil)
+		sensitiveDoguConfigMock.EXPECT().UpdateOrCreate(testCtx, mock.Anything).Return(config.DoguConfig{}, nil)
+
+		globalConfigRepoMock.EXPECT().Get(testCtx).Return(config.GlobalConfig{}, nil)
+
+		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil)
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+			cas:     {Name: cescommons.QualifiedName{SimpleName: cas, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Run(func(ctx context.Context, dogu *ecosystem.DoguInstallation) {
+			assert.True(t, dogu.PauseReconciliation)
+		}).Return(nil).Times(2)
+		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigRepoMock, doguInstallaltionRepoMock)
 
 		// when
 		err := sut.ApplyConfig(testCtx, blueprint)
@@ -135,8 +210,10 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 			}, nil)
 		doguConfigMock.EXPECT().UpdateOrCreate(testCtx, mock.Anything).Return(config.DoguConfig{}, assert.AnError).Times(1)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil)
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
 
-		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock)
+		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock, doguInstallaltionRepoMock)
 
 		// when
 		err := sut.ApplyConfig(testCtx, blueprint)
@@ -183,8 +260,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 			}, nil)
 		sensitiveDoguConfigMock.EXPECT().UpdateOrCreate(testCtx, mock.Anything).Return(config.DoguConfig{}, assert.AnError).Times(1)
 		blueprintRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(nil)
-
-		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock)
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock, doguInstallaltionRepoMock)
 
 		// when
 		err := sut.ApplyConfig(testCtx, blueprint)
@@ -236,8 +314,9 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		globalConfigMock.EXPECT().Update(testCtx, mock.Anything).Return(globalConfig, assert.AnError)
 
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
-
-		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock)
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
+		sut := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock, doguInstallaltionRepoMock)
 
 		// when
 		err := sut.ApplyConfig(testCtx, blueprint)
@@ -253,6 +332,220 @@ func TestEcosystemConfigUseCase_ApplyConfig(t *testing.T) {
 		assert.Equal(t, domain.NewExecutionFailedEvent(err), blueprint.Events[0])
 		assert.Contains(t, blueprint.Events[0].Message(), "could not apply global config")
 		assert.Contains(t, blueprint.Events[0].Message(), "assert.AnError general error for testing")
+	})
+}
+
+func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
+	t.Run("pause reconciliation for multiple dogus when dogu config changes", func(t *testing.T) {
+		// given
+		stateDiff := domain.StateDiff{
+			DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName:      redmine,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      cas,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      postfix,
+					NeededActions: []domain.Action{}, // no action, so no pause required
+				},
+			},
+			DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
+				redmine: {
+					getSetDoguConfigEntryDiff("key", "value", redmine),
+				},
+				cas: {
+					getSetDoguConfigEntryDiff("key", "value", cas),
+				},
+				postfix: {
+					getSetDoguConfigEntryDiff("key", "value", postfix),
+				},
+			},
+		}
+
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+			cas:     {Name: cescommons.QualifiedName{SimpleName: cas, Namespace: "namespace"}},
+			postfix: {Name: cescommons.QualifiedName{SimpleName: postfix, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Run(func(ctx context.Context, dogu *ecosystem.DoguInstallation) {
+			assert.True(t, dogu.PauseReconciliation)
+		}).Return(nil).Times(2)
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("pause reconciliation for multiple dogus when sensitive config changes", func(t *testing.T) {
+		// given
+		stateDiff := domain.StateDiff{
+			DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName:      redmine,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      cas,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      postfix,
+					NeededActions: []domain.Action{}, // no action, so no pause required
+				},
+			},
+			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
+				redmine: {
+					getSetDoguConfigEntryDiff("key", "value", redmine),
+				},
+				cas: {
+					getSetDoguConfigEntryDiff("key", "value", cas),
+				},
+				postfix: {
+					getSetDoguConfigEntryDiff("key", "value", postfix),
+				},
+			},
+		}
+
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+			cas:     {Name: cescommons.QualifiedName{SimpleName: cas, Namespace: "namespace"}},
+			postfix: {Name: cescommons.QualifiedName{SimpleName: postfix, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Run(func(ctx context.Context, dogu *ecosystem.DoguInstallation) {
+			assert.True(t, dogu.PauseReconciliation)
+		}).Return(nil).Times(2)
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("pause reconciliation for multiple dogus when global config changes", func(t *testing.T) {
+		// given
+		stateDiff := domain.StateDiff{
+			DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName:      redmine,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      cas,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      postfix,
+					NeededActions: []domain.Action{}, // no action, so no pause required
+				},
+			},
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{
+				getSetGlobalConfigEntryDiff("key", "value"),
+			},
+		}
+
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+			cas:     {Name: cescommons.QualifiedName{SimpleName: cas, Namespace: "namespace"}},
+			postfix: {Name: cescommons.QualifiedName{SimpleName: postfix, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Run(func(ctx context.Context, dogu *ecosystem.DoguInstallation) {
+			assert.True(t, dogu.PauseReconciliation)
+		}).Return(nil).Times(2)
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("do not pause reconciliation for dogus without config changes", func(t *testing.T) {
+		// given
+		stateDiff := domain.StateDiff{
+			DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName:      redmine,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      cas,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+				{
+					DoguName:      postfix,
+					NeededActions: []domain.Action{}, // no action, so no pause required
+				},
+			},
+		}
+
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+			cas:     {Name: cescommons.QualifiedName{SimpleName: cas, Namespace: "namespace"}},
+			postfix: {Name: cescommons.QualifiedName{SimpleName: postfix, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		// No Update calls
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+
+		// then
+		require.NoError(t, err)
+	})
+
+	t.Run("error on get all dogus error", func(t *testing.T) {
+		// given
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, domain.StateDiff{})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "error while attempting to load dogus")
+	})
+
+	t.Run("error on update error", func(t *testing.T) {
+		// given
+		stateDiff := domain.StateDiff{
+			DoguDiffs: []domain.DoguDiff{
+				{
+					DoguName:      redmine,
+					NeededActions: []domain.Action{domain.ActionUpgrade},
+				},
+			},
+			GlobalConfigDiffs: domain.GlobalConfigDiffs{
+				getSetGlobalConfigEntryDiff("key", "value"),
+			},
+		}
+		dogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			redmine: {Name: cescommons.QualifiedName{SimpleName: redmine, Namespace: "namespace"}},
+		}
+		doguInstallaltionRepoMock := newMockDoguInstallationRepository(t)
+		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(dogus, nil)
+		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(assert.AnError)
+
+		// when
+		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "could not pause reconciliation for dogu")
 	})
 }
 
@@ -407,7 +700,7 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("should save diffs with action set", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
 		diff1 := getSetGlobalConfigEntryDiff("key1", "value1")
 		diff2 := getSetGlobalConfigEntryDiff("key2", "value2")
 		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionSet: {diff1, diff2}}
@@ -433,7 +726,7 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("should delete diffs with action remove", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
 		diff1 := getRemoveGlobalConfigEntryDiff("key")
 		diff2 := getRemoveGlobalConfigEntryDiff("key1")
 		byAction := map[domain.ConfigAction][]domain.GlobalConfigEntryDiff{domain.ConfigActionRemove: {diff1, diff2}}
@@ -457,7 +750,7 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("should return nil on action none", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
 		diff1 := domain.GlobalConfigEntryDiff{
 			NeededAction: domain.ConfigActionNone,
 		}
@@ -478,7 +771,7 @@ func TestEcosystemConfigUseCase_applyGlobalConfigDiffs(t *testing.T) {
 	t.Run("err when get fails", func(t *testing.T) {
 		// given
 		globalConfigMock := newMockGlobalConfigRepository(t)
-		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, globalConfigMock, nil)
 		diff1 := domain.GlobalConfigEntryDiff{
 			NeededAction: domain.ConfigActionSet,
 		}
@@ -554,7 +847,7 @@ func TestNewEcosystemConfigUseCase(t *testing.T) {
 		globalConfigMock := newMockGlobalConfigRepository(t)
 
 		// when
-		useCase := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock)
+		useCase := NewEcosystemConfigUseCase(blueprintRepoMock, doguConfigMock, sensitiveDoguConfigMock, globalConfigMock, nil)
 
 		// then
 		assert.Equal(t, blueprintRepoMock, useCase.blueprintRepository)

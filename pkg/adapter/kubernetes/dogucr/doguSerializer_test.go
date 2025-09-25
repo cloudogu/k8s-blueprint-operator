@@ -325,6 +325,7 @@ func Test_toDoguCR(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				PauseReconciliation: true,
 			},
 			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
@@ -352,6 +353,7 @@ func Test_toDoguCR(t *testing.T) {
 						ForceUpgrade:         false,
 					},
 					AdditionalIngressAnnotations: nil,
+					PauseReconciliation:          false, // should be always false on installation
 				},
 				Status: v2.DoguStatus{},
 			},
@@ -480,6 +482,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				PauseReconciliation: true,
 			},
 			want: &doguCRPatch{
 				Spec: doguSpecPatch{
@@ -488,6 +491,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 					UpgradeConfig: upgradeConfigPatch{
 						AllowNamespaceSwitch: true,
 					},
+					PauseReconciliation: true,
 				},
 			},
 		},
@@ -529,7 +533,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 		{
@@ -546,7 +550,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: &subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 	}

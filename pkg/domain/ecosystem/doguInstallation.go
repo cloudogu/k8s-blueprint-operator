@@ -24,6 +24,8 @@ type DoguInstallation struct {
 	StartedAt metav1.Time
 	// UpgradeConfig contains configuration for dogu upgrades
 	UpgradeConfig UpgradeConfig
+	// PauseReconciliation indicates whether the reconciliation loop should be running (pauseReconciliation=false) or not (pauseReconciliation=true).
+	PauseReconciliation bool
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
