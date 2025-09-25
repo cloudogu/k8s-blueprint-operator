@@ -67,6 +67,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                 blueprintId,
+		DisplayName:        blueprintCR.Spec.DisplayName,
 		EffectiveBlueprint: effectiveBlueprint,
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{

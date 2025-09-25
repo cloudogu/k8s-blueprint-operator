@@ -45,6 +45,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: &bpv2.BlueprintSpec{
+				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMask{},
 				AllowDoguNamespaceSwitch: &trueVar,
@@ -65,7 +66,8 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		persistenceContext := make(map[string]interface{})
 		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
 		assert.Equal(t, &domain.BlueprintSpec{
-			Id: blueprintId,
+			Id:          blueprintId,
+			DisplayName: "MyBlueprint",
 			Config: domain.BlueprintConfiguration{
 				IgnoreDoguHealth:         true,
 				AllowDoguNamespaceSwitch: true,

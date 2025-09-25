@@ -17,6 +17,7 @@ import (
 
 type BlueprintSpec struct {
 	Id                 string
+	DisplayName        string
 	Blueprint          Blueprint
 	BlueprintMask      BlueprintMask
 	EffectiveBlueprint EffectiveBlueprint
