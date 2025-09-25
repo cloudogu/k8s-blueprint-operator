@@ -53,6 +53,19 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 				{Key: testDoguKey1.Key.String(), Absent: &trueVar},
 			},
 		},
+		{
+			name: "censor sensitive config values",
+			config: domain.DoguConfigEntries{
+				{
+					Key:       testDoguKey1.Key,
+					Sensitive: true,
+					Value:     (*config.Value)(&val1),
+				},
+			},
+			want: []v2.ConfigEntry{
+				{Key: testDoguKey1.Key.String(), Sensitive: &trueVar},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

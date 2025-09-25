@@ -75,8 +75,12 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
 		}
 
 		var sensitive *bool
+		var value *string
 		if domainEntry.Sensitive {
 			sensitive = &domainEntry.Sensitive
+		} else {
+			// only set value if not sensitive
+			value = (*string)(domainEntry.Value)
 		}
 
 		var secretRef *v2.SecretReference
@@ -90,7 +94,7 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
 		result[i] = v2.ConfigEntry{
 			Key:       domainEntry.Key.String(),
 			Absent:    absent,
-			Value:     (*string)(domainEntry.Value),
+			Value:     value,
 			Sensitive: sensitive,
 			SecretRef: secretRef,
 		}
