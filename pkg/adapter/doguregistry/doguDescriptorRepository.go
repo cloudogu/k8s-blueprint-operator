@@ -37,7 +37,6 @@ func (r *DoguDescriptorRepository) GetDogu(ctx context.Context, qualifiedDoguVer
 		return nil, err
 	}
 
-	// TODO: doesn't work with "old" dogu operator
 	err = r.localRepository.Add(ctx, qualifiedDoguVersion.Name.SimpleName, dogu)
 	if err != nil {
 		// just log the error, no need to fail the reconcilation

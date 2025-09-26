@@ -74,7 +74,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		assert.Equal(t, &ecosystem.DoguInstallation{
 			Name:               postgresDoguName,
 			Version:            version3214,
-			Status:             ecosystem.DoguStatusInstalled,
+			Status:             "installed",
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{},
 			PersistenceContext: persistenceContext,

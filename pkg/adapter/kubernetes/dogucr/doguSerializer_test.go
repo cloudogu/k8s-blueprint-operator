@@ -75,7 +75,7 @@ func Test_parseDoguCR(t *testing.T) {
 			want: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
@@ -161,7 +161,7 @@ func Test_parseDoguCR(t *testing.T) {
 			want: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: false,
@@ -320,7 +320,7 @@ func Test_toDoguCR(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
@@ -419,7 +419,7 @@ func Test_toDoguCR(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
@@ -477,7 +477,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
@@ -518,7 +518,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
@@ -541,7 +541,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,

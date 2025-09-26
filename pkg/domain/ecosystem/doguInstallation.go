@@ -39,16 +39,6 @@ type DoguInstallation struct {
 	AdditionalMounts []AdditionalMount
 }
 
-// TODO: Unused constants needed?
-const (
-	DoguStatusNotInstalled = ""
-	DoguStatusInstalling   = "installing"
-	DoguStatusUpgrading    = "upgrading"
-	DoguStatusDeleting     = "deleting"
-	DoguStatusInstalled    = "installed"
-	DoguStatusPVCResizing  = "resizing PVC"
-)
-
 // Specific Nginx annotations. In future those annotations will be replaced be generalized fields in the dogu cr.
 // The dogu-operator or service-discovery will interpret them.
 const (
