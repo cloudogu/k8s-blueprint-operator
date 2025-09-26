@@ -223,8 +223,8 @@ func Test_determineDoguDiff(t *testing.T) {
 					Version: &version3212,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
-						AdditionalConfig: &additionalConfig,
-						RewriteTarget:    &rewriteConfig,
+						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+						RewriteTarget:    ecosystem.RewriteTarget(rewriteConfig),
 					},
 					MinVolumeSize: &volumeSize2,
 				},
@@ -246,8 +246,8 @@ func Test_determineDoguDiff(t *testing.T) {
 					Version:   &version3212,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
-						AdditionalConfig: &additionalConfig,
-						RewriteTarget:    &rewriteConfig,
+						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+						RewriteTarget:    ecosystem.RewriteTarget(rewriteConfig),
 					},
 					MinVolumeSize: &volumeSize2,
 				},

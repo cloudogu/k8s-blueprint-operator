@@ -96,18 +96,8 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 		reverseProxyConfig.MaxBodySize = &quantity
 	}
 
-	var rewriteTarget, additionalConfig *string
-	if annotations[ecosystem.NginxIngressAnnotationRewriteTarget] != "" {
-		rewriteTargetString := annotations[ecosystem.NginxIngressAnnotationRewriteTarget]
-		rewriteTarget = &rewriteTargetString
-		reverseProxyConfig.RewriteTarget = rewriteTarget
-	}
-
-	if annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] != "" {
-		additionalConfigString := annotations[ecosystem.NginxIngressAnnotationAdditionalConfig]
-		additionalConfig = &additionalConfigString
-		reverseProxyConfig.AdditionalConfig = additionalConfig
-	}
+	reverseProxyConfig.RewriteTarget = ecosystem.RewriteTarget(annotations[ecosystem.NginxIngressAnnotationRewriteTarget])
+	reverseProxyConfig.AdditionalConfig = ecosystem.AdditionalConfig(annotations[ecosystem.NginxIngressAnnotationAdditionalConfig])
 
 	return reverseProxyConfig, nil
 }
@@ -180,14 +170,13 @@ func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]
 	}
 
 	rewriteTarget := config.RewriteTarget
-	if rewriteTarget != nil && *rewriteTarget != "" {
-		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = *rewriteTarget
-
+	if rewriteTarget != "" {
+		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = string(rewriteTarget)
 	}
 
 	additionalConfig := config.AdditionalConfig
-	if additionalConfig != nil && *additionalConfig != "" {
-		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = *additionalConfig
+	if additionalConfig != "" {
+		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = string(additionalConfig)
 	}
 
 	// Use nil here to delete existing annotation from the cr.

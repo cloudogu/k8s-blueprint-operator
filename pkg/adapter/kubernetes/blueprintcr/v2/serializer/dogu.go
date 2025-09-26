@@ -85,8 +85,8 @@ func convertPlatformConfigFromDTOToDomain(dtoDogu *bpv2.Dogu, domainDogu *domain
 
 		domainDogu.ReverseProxyConfig = ecosystem.ReverseProxyConfig{
 			MaxBodySize:      maxBodySize,
-			RewriteTarget:    dtoDogu.PlatformConfig.ReverseProxyConfig.RewriteTarget,
-			AdditionalConfig: dtoDogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig,
+			RewriteTarget:    ecosystem.RewriteTarget(ptr.Deref(dtoDogu.PlatformConfig.ReverseProxyConfig.RewriteTarget, "")),
+			AdditionalConfig: ecosystem.AdditionalConfig(ptr.Deref(dtoDogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig, "")),
 		}
 	}
 
@@ -177,9 +177,16 @@ func convertPlatformConfigDTO(dogu domain.Dogu) *bpv2.PlatformConfig {
 }
 
 func convertReverseProxyConfigDTO(dogu domain.Dogu) *bpv2.ReverseProxyConfig {
+	var rewriteTarget, additionalConfig *string
+	if dogu.ReverseProxyConfig.RewriteTarget != "" {
+		rewriteTarget = (*string)(&dogu.ReverseProxyConfig.RewriteTarget)
+	}
+	if dogu.ReverseProxyConfig.AdditionalConfig != "" {
+		additionalConfig = (*string)(&dogu.ReverseProxyConfig.AdditionalConfig)
+	}
 	return &bpv2.ReverseProxyConfig{
-		RewriteTarget:    dogu.ReverseProxyConfig.RewriteTarget,
-		AdditionalConfig: dogu.ReverseProxyConfig.AdditionalConfig,
+		RewriteTarget:    rewriteTarget,
+		AdditionalConfig: additionalConfig,
 		MaxBodySize:      ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize),
 	}
 }

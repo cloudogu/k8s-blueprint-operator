@@ -526,8 +526,8 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				MinVolumeSize: &quantity2,
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 					MaxBodySize:      &proxyBodySize,
-					RewriteTarget:    &rewriteTarget,
-					AdditionalConfig: &additionalConfig,
+					RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+					AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
@@ -615,8 +615,8 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 			},
 			want: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    &rewriteTarget,
-				AdditionalConfig: &additionalConfig,
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return err == nil
@@ -662,8 +662,8 @@ func Test_getNginxIngressAnnotations1(t *testing.T) {
 			name: "should parse config",
 			args: args{config: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity,
-				RewriteTarget:    &rewriteTarget,
-				AdditionalConfig: &additionalConfig,
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			}},
 			want: map[string]string{
 				"nginx.ingress.kubernetes.io/proxy-body-size":       "1M",

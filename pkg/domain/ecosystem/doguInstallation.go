@@ -54,7 +54,7 @@ type ReverseProxyConfig struct {
 }
 
 func (r *ReverseProxyConfig) IsEmpty() bool {
-	return r.MaxBodySize == nil && r.RewriteTarget == nil && r.AdditionalConfig == nil
+	return r.MaxBodySize == nil && r.RewriteTarget == "" && r.AdditionalConfig == ""
 }
 
 // UpgradeConfig contains configuration hints regarding aspects during the upgrade of dogus.

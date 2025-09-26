@@ -249,8 +249,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						MinVolumeSize: &volumeSize,
 						ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 							MaxBodySize:      &bodySize,
-							RewriteTarget:    &rewriteTarget,
-							AdditionalConfig: &additionalConfig,
+							RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+							AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 						},
 						AdditionalMounts: []ecosystem.AdditionalMount{
 							{
@@ -304,8 +304,8 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					MinVolumeSize: &volumeSize,
 					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &bodySize,
-						RewriteTarget:    &rewriteTarget,
-						AdditionalConfig: &additionalConfig,
+						RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 					},
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{

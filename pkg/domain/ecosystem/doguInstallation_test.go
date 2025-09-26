@@ -27,7 +27,7 @@ func TestInstallDogu(t *testing.T) {
 		postgresqlQualifiedName,
 		&version1231,
 		&volumeSize,
-		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
+		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: RewriteTarget(rewriteTarget), AdditionalConfig: AdditionalConfig(additionalConfig)},
 		[]AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
@@ -44,8 +44,8 @@ func TestInstallDogu(t *testing.T) {
 		MinVolumeSize: &volumeSize,
 		ReverseProxyConfig: ReverseProxyConfig{
 			MaxBodySize:      &proxyBodySize,
-			RewriteTarget:    &rewriteTarget,
-			AdditionalConfig: &additionalConfig,
+			RewriteTarget:    RewriteTarget(rewriteTarget),
+			AdditionalConfig: AdditionalConfig(additionalConfig),
 		},
 		AdditionalMounts: []AdditionalMount{
 			{
@@ -147,10 +147,10 @@ func TestDoguInstallation_UpdateProxyRewriteTarget(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateProxyRewriteTarget(&rewriteTarget)
+		dogu.UpdateProxyRewriteTarget(RewriteTarget(rewriteTarget))
 
 		// then
-		assert.Equal(t, RewriteTarget(&rewriteTarget), dogu.ReverseProxyConfig.RewriteTarget)
+		assert.Equal(t, RewriteTarget(rewriteTarget), dogu.ReverseProxyConfig.RewriteTarget)
 	})
 }
 
@@ -160,10 +160,10 @@ func TestDoguInstallation_UpdateProxyAdditionalConfig(t *testing.T) {
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateProxyAdditionalConfig(&additionalConfig)
+		dogu.UpdateProxyAdditionalConfig(AdditionalConfig(additionalConfig))
 
 		// then
-		assert.Equal(t, AdditionalConfig(&additionalConfig), dogu.ReverseProxyConfig.AdditionalConfig)
+		assert.Equal(t, AdditionalConfig(additionalConfig), dogu.ReverseProxyConfig.AdditionalConfig)
 	})
 }
 

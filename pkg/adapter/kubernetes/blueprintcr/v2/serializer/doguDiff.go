@@ -28,9 +28,16 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) crd.DoguDiffSta
 
 	var reverseProxyConfig *crd.ReverseProxyConfig
 	if !domainModel.ReverseProxyConfig.IsEmpty() {
+		var rewriteTarget, additionalConfig *string
+		if domainModel.ReverseProxyConfig.RewriteTarget != "" {
+			rewriteTarget = (*string)(&domainModel.ReverseProxyConfig.RewriteTarget)
+		}
+		if domainModel.ReverseProxyConfig.AdditionalConfig != "" {
+			additionalConfig = (*string)(&domainModel.ReverseProxyConfig.AdditionalConfig)
+		}
 		reverseProxyConfig = &crd.ReverseProxyConfig{
-			RewriteTarget:    domainModel.ReverseProxyConfig.RewriteTarget,
-			AdditionalConfig: domainModel.ReverseProxyConfig.AdditionalConfig,
+			RewriteTarget:    rewriteTarget,
+			AdditionalConfig: additionalConfig,
 			MaxBodySize:      ecosystem.GetQuantityString(domainModel.ReverseProxyConfig.MaxBodySize),
 		}
 	}

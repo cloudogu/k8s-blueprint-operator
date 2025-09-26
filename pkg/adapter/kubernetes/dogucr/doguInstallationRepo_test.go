@@ -81,8 +81,8 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 			MinVolumeSize:      &quantity2,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    &rewriteTarget,
-				AdditionalConfig: &additionalConfig,
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			},
 		}, dogu)
 	})

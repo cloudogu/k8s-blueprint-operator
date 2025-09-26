@@ -27,8 +27,8 @@ func Test_convertToDoguDiffStateDTO(t *testing.T) {
 		domainDiffState := domain.DoguDiffState{
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &proxyBodySize,
-				RewriteTarget:    &rewriteTarget,
-				AdditionalConfig: &additionalConfig,
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			},
 		}
 		// when
