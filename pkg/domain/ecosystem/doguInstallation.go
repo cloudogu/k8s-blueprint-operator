@@ -86,8 +86,7 @@ type AdditionalMount struct {
 	// Volume is the name of the volume to which the data should be mounted. It is defined in the respective dogu.json.
 	Volume string
 	// Subfolder defines a subfolder in which the data should be put within the volume.
-	// +optional
-	Subfolder *string
+	Subfolder string
 }
 
 // InstallDogu is a factory for new DoguInstallation's.

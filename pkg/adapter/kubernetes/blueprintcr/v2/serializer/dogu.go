@@ -140,7 +140,7 @@ func convertAdditionalMountsFromDTOToDomain(mounts []bpv2.AdditionalMount) []eco
 			SourceType: ecosystem.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
+			Subfolder:  ptr.Deref(m.Subfolder, ""),
 		})
 	}
 
@@ -194,11 +194,15 @@ func convertResourceConfigDTO(dogu domain.Dogu) *bpv2.ResourceConfig {
 func convertAdditionalMountsConfigDTO(dogu domain.Dogu) []bpv2.AdditionalMount {
 	var config []bpv2.AdditionalMount
 	for _, m := range dogu.AdditionalMounts {
+		var subfolder *string
+		if m.Subfolder != "" {
+			subfolder = &m.Subfolder
+		}
 		config = append(config, bpv2.AdditionalMount{
 			SourceType: bpv2.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  m.Subfolder,
+			Subfolder:  subfolder,
 		})
 	}
 	return config

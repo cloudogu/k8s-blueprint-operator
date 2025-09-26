@@ -231,7 +231,7 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "config",
 						Volume:     "volume",
-						Subfolder:  &subfolder,
+						Subfolder:  subfolder,
 					},
 				},
 			},

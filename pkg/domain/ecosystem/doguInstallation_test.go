@@ -33,7 +33,7 @@ func TestInstallDogu(t *testing.T) {
 				SourceType: DataSourceConfigMap,
 				Name:       "configmap",
 				Volume:     "volume",
-				Subfolder:  &subfolder,
+				Subfolder:  subfolder,
 			},
 		},
 	)
@@ -52,7 +52,7 @@ func TestInstallDogu(t *testing.T) {
 				SourceType: DataSourceConfigMap,
 				Name:       "configmap",
 				Volume:     "volume",
-				Subfolder:  &subfolder,
+				Subfolder:  subfolder,
 			},
 		},
 	}, dogu)

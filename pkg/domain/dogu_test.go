@@ -76,7 +76,7 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  &subfolder,
+				Subfolder:  subfolder,
 			},
 		}}
 		// when
@@ -92,7 +92,7 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 				SourceType: "unsupportedType",
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  &subfolder,
+				Subfolder:  subfolder,
 			},
 		}}
 		// when
@@ -110,7 +110,7 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  &absoluteSubfolder,
+				Subfolder:  absoluteSubfolder,
 			},
 		}}
 		// when

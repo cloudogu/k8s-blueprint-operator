@@ -74,7 +74,7 @@ func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
 			SourceType: ecosystem.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  &m.Subfolder,
+			Subfolder:  m.Subfolder,
 		})
 	}
 	return result
@@ -158,15 +158,11 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount {
 	var result []v2.DataMount
 	for _, m := range mounts {
-		subfolder := ""
-		if m.Subfolder != nil {
-			subfolder = *m.Subfolder
-		}
 		result = append(result, v2.DataMount{
 			SourceType: v2.DataSourceType(m.SourceType),
 			Name:       m.Name,
 			Volume:     m.Volume,
-			Subfolder:  subfolder,
+			Subfolder:  m.Subfolder,
 		})
 	}
 	return result

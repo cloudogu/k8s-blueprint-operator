@@ -59,11 +59,15 @@ func convertAdditionalMountsToDoguDiffDTO(mounts []ecosystem.AdditionalMount) []
 	}
 	result := make([]crd.AdditionalMount, len(mounts))
 	for index, mount := range mounts {
+		var subfolder *string
+		if mount.Subfolder != "" {
+			subfolder = &mount.Subfolder
+		}
 		result[index] = crd.AdditionalMount{
 			SourceType: crd.DataSourceType(mount.SourceType),
 			Name:       mount.Name,
 			Volume:     mount.Volume,
-			Subfolder:  mount.Subfolder,
+			Subfolder:  subfolder,
 		}
 	}
 	return result

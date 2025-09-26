@@ -259,7 +259,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 				Version: &version3211,
 				Absent:  false,
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "html-config", Volume: "customhtml", Subfolder: &subfolder},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "html-config", Volume: "customhtml", Subfolder: subfolder},
 				},
 			},
 		}

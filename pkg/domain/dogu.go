@@ -55,7 +55,7 @@ func (dogu Dogu) validate() error {
 				dogu.Name,
 			))
 		}
-		if mount.Subfolder != nil && strings.HasPrefix(*mount.Subfolder, "/") {
+		if strings.HasPrefix(mount.Subfolder, "/") {
 			errorList = append(errorList, fmt.Errorf("dogu additional mounts Subfolder must be a relative path : %s", dogu.Name))
 		}
 	}
