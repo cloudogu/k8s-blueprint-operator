@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/cesapp-lib/core"
 	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/utils/ptr"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -37,12 +38,7 @@ func ConvertDogus(dogus []bpv2.Dogu) ([]domain.Dogu, error) {
 			}
 		}
 		result.Version = version
-
-		absent := false
-		if dogu.Absent != nil {
-			absent = *dogu.Absent
-		}
-		result.Absent = absent
+		result.Absent = ptr.Deref(dogu.Absent, false)
 
 		err = convertPlatformConfigFromDTOToDomain(&dogu, &result)
 		if err != nil {
@@ -122,15 +118,10 @@ func ConvertMaskDogus(dogus []bpv2.MaskDogu) ([]domain.MaskDogu, error) {
 			}
 		}
 
-		absent := false
-		if dogu.Absent != nil {
-			absent = *dogu.Absent
-		}
-
 		convertedDogus = append(convertedDogus, domain.MaskDogu{
 			Name:    name,
 			Version: version,
-			Absent:  absent,
+			Absent:  ptr.Deref(dogu.Absent, false),
 		})
 	}
 

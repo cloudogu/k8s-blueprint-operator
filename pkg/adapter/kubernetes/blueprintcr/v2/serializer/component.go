@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	"k8s.io/utils/ptr"
 
 	"github.com/Masterminds/semver/v3"
 
@@ -30,11 +31,6 @@ func ConvertComponents(components []v2.Component) ([]domain.Component, error) {
 			}
 		}
 
-		absent := false
-		if component.Absent != nil {
-			absent = *component.Absent
-		}
-
 		name, err := common.QualifiedComponentNameFromString(component.Name)
 		if err != nil {
 			errorList = append(errorList, err)
@@ -44,7 +40,7 @@ func ConvertComponents(components []v2.Component) ([]domain.Component, error) {
 		convertedComponents = append(convertedComponents, domain.Component{
 			Name:         name,
 			Version:      version,
-			Absent:       absent,
+			Absent:       ptr.Deref(component.Absent, false),
 			DeployConfig: ecosystem.DeployConfig(component.DeployConfig),
 		})
 	}
@@ -65,8 +61,7 @@ func ConvertToComponentDTOs(components []domain.Component) []v2.Component {
 		joinedComponentName := component.Name.String()
 		var version *string
 		if !component.Absent && component.Version != nil {
-			versionString := component.Version.String()
-			version = &versionString
+			version = ptr.To(component.Version.String())
 		}
 
 		return v2.Component{

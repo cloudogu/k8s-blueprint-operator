@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	bpv2client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
@@ -71,10 +72,10 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		EffectiveBlueprint: effectiveBlueprint,
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
-			IgnoreDoguHealth:         boolPtrToValue(blueprintCR.Spec.IgnoreDoguHealth),
-			IgnoreComponentHealth:    boolPtrToValue(blueprintCR.Spec.IgnoreComponentHealth),
-			AllowDoguNamespaceSwitch: boolPtrToValue(blueprintCR.Spec.AllowDoguNamespaceSwitch),
-			Stopped:                  boolPtrToValue(blueprintCR.Spec.Stopped),
+			IgnoreDoguHealth:         ptr.Deref(blueprintCR.Spec.IgnoreDoguHealth, false),
+			IgnoreComponentHealth:    ptr.Deref(blueprintCR.Spec.IgnoreComponentHealth, false),
+			AllowDoguNamespaceSwitch: ptr.Deref(blueprintCR.Spec.AllowDoguNamespaceSwitch, false),
+			Stopped:                  ptr.Deref(blueprintCR.Spec.Stopped, false),
 		},
 	}
 
@@ -144,13 +145,6 @@ func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprin
 		}
 	}
 	return effectiveBlueprint, nil
-}
-
-func boolPtrToValue(boolPtr *bool) bool {
-	if boolPtr != nil {
-		return *boolPtr
-	}
-	return false
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.

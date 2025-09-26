@@ -4,6 +4,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	libconfig "github.com/cloudogu/k8s-registry-lib/config"
+	"k8s.io/utils/ptr"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
@@ -115,16 +116,6 @@ func convertToConfigEntriesDomain(config []v2.ConfigEntry) domain.ConfigEntries 
 	result := make([]domain.ConfigEntry, len(config))
 
 	for i, v2Entry := range config {
-		absent := false
-		if v2Entry.Absent != nil {
-			absent = *v2Entry.Absent
-		}
-
-		sensitive := false
-		if v2Entry.Sensitive != nil {
-			sensitive = *v2Entry.Sensitive
-		}
-
 		var secretRef *domain.SensitiveValueRef
 		if v2Entry.SecretRef != nil {
 			secretRef = &domain.SensitiveValueRef{
@@ -135,9 +126,9 @@ func convertToConfigEntriesDomain(config []v2.ConfigEntry) domain.ConfigEntries 
 
 		result[i] = domain.ConfigEntry{
 			Key:       libconfig.Key(v2Entry.Key),
-			Absent:    absent,
+			Absent:    ptr.Deref(v2Entry.Absent, false),
 			Value:     (*libconfig.Value)(v2Entry.Value),
-			Sensitive: sensitive,
+			Sensitive: ptr.Deref(v2Entry.Sensitive, false),
 			SecretRef: secretRef,
 		}
 	}
