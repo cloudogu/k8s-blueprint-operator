@@ -220,10 +220,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 }
 
 // It is not allowed to have config without the corresponding dogu, so this will clean up the unnecessary config.
-func (spec *BlueprintSpec) removeConfigForMaskedDogus() *Config {
-	if spec.Blueprint.Config == nil {
-		return nil
-	}
+func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 	effectiveDoguConfig := maps.Clone(spec.Blueprint.Config.Dogus)
 
 	for _, dogu := range spec.BlueprintMask.Dogus {
@@ -232,7 +229,7 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() *Config {
 		}
 	}
 
-	return &Config{
+	return Config{
 		Dogus:  effectiveDoguConfig,
 		Global: spec.Blueprint.Config.Global,
 	}

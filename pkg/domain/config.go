@@ -113,6 +113,10 @@ func (config Config) getDogusWithChangedConfigBySenisitivity(isSensitive bool) [
 	return dogus
 }
 
+func (config Config) IsEmpty() bool {
+	return len(config.Dogus) == 0 && len(config.Global) == 0
+}
+
 func (config Config) validate() error {
 	var errs []error
 	for doguName, doguConfig := range config.Dogus {

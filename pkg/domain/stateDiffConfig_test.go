@@ -24,9 +24,11 @@ var (
 )
 
 func Test_determineConfigDiff(t *testing.T) {
-	t.Run("nil", func(t *testing.T) {
+	t.Run("empty", func(t *testing.T) {
+		emptyConfig := Config{}
+
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			nil,
+			emptyConfig,
 			config.CreateGlobalConfig(map[config.Key]config.Value{}),
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
@@ -35,21 +37,6 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		assert.Nil(t, dogusConfigDiffs)
 		assert.Nil(t, sensitiveConfigDiffs)
-		assert.Nil(t, globalConfigDiff)
-	})
-	t.Run("empty", func(t *testing.T) {
-		emptyConfig := Config{}
-
-		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			&emptyConfig,
-			config.CreateGlobalConfig(map[config.Key]config.Value{}),
-			map[cescommons.SimpleName]config.DoguConfig{},
-			map[cescommons.SimpleName]config.DoguConfig{},
-			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
-		)
-
-		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
-		assert.Equal(t, map[cescommons.SimpleName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 	})
 	t.Run("all actions global config", func(t *testing.T) {
@@ -86,7 +73,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			&givenConfig,
+			givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
@@ -94,8 +81,8 @@ func Test_determineConfigDiff(t *testing.T) {
 		)
 
 		//then
-		assert.Equal(t, map[cescommons.SimpleName]DoguConfigDiffs{}, dogusConfigDiffs)
-		assert.Equal(t, map[cescommons.SimpleName]SensitiveDoguConfigDiffs{}, sensitiveConfigDiffs)
+		assert.Nil(t, dogusConfigDiffs)
+		assert.Nil(t, sensitiveConfigDiffs)
 		assert.Equal(t, 2, len(globalConfigDiff)) // only changes
 		hitKeys := make(map[string]bool)
 		for _, diff := range globalConfigDiff {
@@ -172,7 +159,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			&givenConfig,
+			givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,
@@ -263,7 +250,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, globalConfigDiff := determineConfigDiffs(
-			&givenConfig,
+			givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{
@@ -326,7 +313,7 @@ func Test_determineConfigDiff(t *testing.T) {
 
 		//when
 		dogusConfigDiffs, sensitiveConfigDiffs, _ := determineConfigDiffs(
-			&givenConfig,
+			givenConfig,
 			globalConfig,
 			map[cescommons.SimpleName]config.DoguConfig{
 				dogu1: doguConfig,

@@ -19,7 +19,7 @@ type EffectiveBlueprint struct {
 	// this blueprint was applied. Optional.
 	Components []Component
 	// Config contains all config entries to set via blueprint. Optional.
-	Config *Config
+	Config Config
 }
 
 // GetWantedDogus returns a list of all dogus which should be installed
@@ -35,10 +35,6 @@ func (effectiveBlueprint *EffectiveBlueprint) GetWantedDogus() []Dogu {
 
 // validateOnlyConfigForDogusInBlueprint checks that there is only config for dogus to install in the blueprint
 func (effectiveBlueprint *EffectiveBlueprint) validateOnlyConfigForDogusInBlueprint() error {
-	if effectiveBlueprint.Config == nil {
-		return nil
-	}
-
 	wantedDogus := util.Map(effectiveBlueprint.GetWantedDogus(), func(dogu Dogu) cescommons.SimpleName {
 		return dogu.Name.SimpleName
 	})

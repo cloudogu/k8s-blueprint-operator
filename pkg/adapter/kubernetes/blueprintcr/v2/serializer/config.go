@@ -9,8 +9,8 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
-func ConvertToConfigDTO(config *domain.Config) *v2.Config {
-	if config == nil {
+func ConvertToConfigDTO(config domain.Config) *v2.Config {
+	if config.IsEmpty() {
 		return nil
 	}
 
@@ -30,9 +30,9 @@ func ConvertToConfigDTO(config *domain.Config) *v2.Config {
 	}
 }
 
-func ConvertToConfigDomain(config *v2.Config) *domain.Config {
+func ConvertToConfigDomain(config *v2.Config) domain.Config {
 	if config == nil {
-		return nil
+		return domain.Config{}
 	}
 	var dogus map[cescommons.SimpleName]domain.DoguConfigEntries
 	// we check for empty values to make good use of default values
@@ -44,7 +44,7 @@ func ConvertToConfigDomain(config *v2.Config) *domain.Config {
 		}
 	}
 
-	return &domain.Config{
+	return domain.Config{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDomain(config.Global),
 	}

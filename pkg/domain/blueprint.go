@@ -23,7 +23,7 @@ type Blueprint struct {
 	// this blueprint was applied. Optional.
 	Components []Component
 	// Config contains all config entries to set via blueprint.
-	Config *Config
+	Config Config
 }
 
 // Validate checks the structure and data of the blueprint statically and returns an error if there are any problems
@@ -74,8 +74,5 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 }
 
 func (blueprint *Blueprint) validateConfig() error {
-	if blueprint.Config == nil {
-		return nil
-	}
 	return blueprint.Config.validate()
 }

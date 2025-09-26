@@ -59,7 +59,7 @@ func Test_validate_multipleErrors(t *testing.T) {
 	blueprint := Blueprint{
 		Dogus:      dogus,
 		Components: components,
-		Config: &Config{
+		Config: Config{
 			Global: GlobalConfigEntries{
 				{
 					Key:    "",

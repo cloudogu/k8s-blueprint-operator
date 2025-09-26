@@ -5,12 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -58,21 +55,17 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	logger.V(2).Info("load referenced sensitive config")
 	// load referenced config before collecting ecosystem state
 	// if an error happens here, we save a lot of heavy work
-	var referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue
-	var err error
-	if blueprint.EffectiveBlueprint.Config != nil {
-		referencedSensitiveConfig, err = useCase.sensitiveConfigRefReader.GetValues(
-			ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
-		)
-		if err != nil {
-			err = fmt.Errorf("%s: %w", REFERENCED_CONFIG_NOT_FOUND, err)
-			blueprint.MissingConfigReferences(err)
-			updateError := useCase.blueprintSpecRepo.Update(ctx, blueprint)
-			if updateError != nil {
-				return errors.Join(updateError, err)
-			}
-			return err
+	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
+		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
+	)
+	if err != nil {
+		err = fmt.Errorf("%s: %w", REFERENCED_CONFIG_NOT_FOUND, err)
+		blueprint.MissingConfigReferences(err)
+		updateError := useCase.blueprintSpecRepo.Update(ctx, blueprint)
+		if updateError != nil {
+			return errors.Join(updateError, err)
 		}
+		return err
 	}
 
 	logger.V(2).Info("collect ecosystem state for state diff")
@@ -113,15 +106,11 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	logger.V(2).Info("collect needed global config")
 	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
 
-	var configByDogu, sensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig
-	var doguConfigErr, sensitiveConfigErr error
-	if effectiveBlueprint.Config != nil {
-		logger.V(2).Info("collect needed dogu config")
-		configByDogu, doguConfigErr = useCase.doguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
+	logger.V(2).Info("collect needed dogu config")
+	configByDogu, doguConfigErr := useCase.doguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedConfig())
 
-		logger.V(2).Info("collect needed sensitive dogu config")
-		sensitiveConfigByDogu, sensitiveConfigErr = useCase.sensitiveDoguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
-	}
+	logger.V(2).Info("collect needed sensitive dogu config")
+	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
 	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 	if joinedError != nil {

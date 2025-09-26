@@ -182,7 +182,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		}
 
 		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: dogus, Config: &config},
+			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		}
 		err := spec.CalculateEffectiveBlueprint()
@@ -243,7 +243,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		}
 
 		spec := BlueprintSpec{
-			Blueprint: Blueprint{Config: &config},
+			Blueprint: Blueprint{Config: config},
 		}
 
 		err := spec.CalculateEffectiveBlueprint()
@@ -320,7 +320,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			EffectiveBlueprint: EffectiveBlueprint{
 				Dogus:      []Dogu{{Name: officialNexus, Version: &version3211}},
 				Components: []Component{{Name: testComponentName, Version: compVersion3211}},
-				Config:     &Config{Global: GlobalConfigEntries{{Key: "test", Value: &val1}}},
+				Config:     Config{Global: GlobalConfigEntries{{Key: "test", Value: &val1}}},
 			},
 		}
 
@@ -371,8 +371,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					NeededAction: ConfigActionSet,
 				},
 			},
-			DoguConfigDiffs:          map[cescommons.SimpleName]DoguConfigDiffs{},
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
 		}
 
 		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))

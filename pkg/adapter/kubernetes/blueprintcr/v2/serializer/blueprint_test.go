@@ -91,7 +91,7 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 	t.Run("convert config", func(t *testing.T) {
 		value42 := "42"
 		blueprint := domain.EffectiveBlueprint{
-			Config: &domain.Config{
+			Config: domain.Config{
 				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					"my-dogu": {
 						{
@@ -246,7 +246,7 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 		expected := domain.EffectiveBlueprint{
 			Dogus:      dogus,
 			Components: components,
-			Config: &domain.Config{
+			Config: domain.Config{
 				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					"my-dogu": {
 						{

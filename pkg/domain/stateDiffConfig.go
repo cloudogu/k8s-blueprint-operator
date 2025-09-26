@@ -26,7 +26,7 @@ func countByAction(configActions []ConfigAction) map[ConfigAction]int {
 }
 
 func determineConfigDiffs(
-	blueprintConfig *Config,
+	blueprintConfig Config,
 	globalConfig config.GlobalConfig,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	SensitiveConfigByDogu map[cescommons.SimpleName]config.DoguConfig,
@@ -36,10 +36,6 @@ func determineConfigDiffs(
 	map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 	GlobalConfigDiffs,
 ) {
-	if blueprintConfig == nil {
-		return nil, nil, nil
-	}
-
 	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu),
 		determineSensitiveDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu, referencedSensitiveConfig),
 		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig)
@@ -49,10 +45,13 @@ func determineDogusConfigDiffs(
 	blueprintDoguConfigs map[cescommons.SimpleName]DoguConfigEntries,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
-	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
+	var diffsPerDogu map[cescommons.SimpleName]DoguConfigDiffs
 	for doguName, bluprintDoguConfig := range blueprintDoguConfigs {
 		configDiffs := determineDoguConfigDiffs(doguName, bluprintDoguConfig, configByDogu, false)
 		if len(configDiffs) > 0 {
+			if diffsPerDogu == nil {
+				diffsPerDogu = make(map[cescommons.SimpleName]DoguConfigDiffs)
+			}
 			diffsPerDogu[doguName] = configDiffs
 		}
 	}
@@ -64,11 +63,14 @@ func determineSensitiveDogusConfigDiffs(
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	referencedValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
-	diffsPerDogu := map[cescommons.SimpleName]DoguConfigDiffs{}
+	var diffsPerDogu map[cescommons.SimpleName]DoguConfigDiffs
 	for doguName, blueprintDoguConfig := range blueprintDoguConfigs {
 		setSensitiveConfigValues(doguName, blueprintDoguConfig, referencedValues)
 		configDiffs := determineDoguConfigDiffs(doguName, blueprintDoguConfig, configByDogu, true)
 		if len(configDiffs) > 0 {
+			if diffsPerDogu == nil {
+				diffsPerDogu = make(map[cescommons.SimpleName]DoguConfigDiffs)
+			}
 			diffsPerDogu[doguName] = configDiffs
 		}
 	}
