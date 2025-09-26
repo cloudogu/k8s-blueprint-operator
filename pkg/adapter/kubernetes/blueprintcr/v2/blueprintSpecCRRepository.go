@@ -73,7 +73,6 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         ptr.Deref(blueprintCR.Spec.IgnoreDoguHealth, false),
-			IgnoreComponentHealth:    ptr.Deref(blueprintCR.Spec.IgnoreComponentHealth, false),
 			AllowDoguNamespaceSwitch: ptr.Deref(blueprintCR.Spec.AllowDoguNamespaceSwitch, false),
 			Stopped:                  ptr.Deref(blueprintCR.Spec.Stopped, false),
 		},

@@ -36,16 +36,6 @@ type applyDogusUseCase interface {
 	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
-type applyComponentsUseCase interface {
-	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
-}
-
-type componentInstallationUseCase interface {
-	ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
-	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
-	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
-}
-
 type completeBlueprintUseCase interface {
 	CompleteBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
@@ -58,10 +48,6 @@ type dogusUpToDateUseCase interface {
 	CheckDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
-type selfUpgradeUseCase interface {
-	HandleSelfUpgrade(ctx context.Context, blueprint *domain.BlueprintSpec) error
-}
-
 type ecosystemConfigUseCase interface {
 	ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
@@ -72,27 +58,8 @@ type doguInstallationRepository interface {
 
 //nolint:unused
 //goland:noinspection GoUnusedType
-type componentInstallationRepository interface {
-	domainservice.ComponentInstallationRepository
-}
-
-//nolint:unused
-//goland:noinspection GoUnusedType
 type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
-}
-
-type requiredComponentsProvider interface {
-	domainservice.RequiredComponentsProvider
-}
-
-type healthWaitConfigProvider interface {
-	domainservice.HealthWaitConfigProvider
-}
-
-type healthConfigProvider interface {
-	requiredComponentsProvider
-	healthWaitConfigProvider
 }
 
 // interface duplication for mocks

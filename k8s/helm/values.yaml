@@ -18,14 +18,6 @@ manager:
     memory: 105M
   networkPolicies:
     enabled: true
-healthConfig:
-  components:
-    required:
-      - name: k8s-dogu-operator
-      - name: k8s-component-operator
-  wait:
-    timeout: 10m
-    interval: 10s
 doguRegistry:
   certificate:
     secret: dogu-registry-cert

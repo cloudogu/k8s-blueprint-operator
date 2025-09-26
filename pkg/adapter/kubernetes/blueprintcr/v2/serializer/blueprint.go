@@ -1,7 +1,6 @@
 package serializer
 
 import (
-	"errors"
 	"fmt"
 
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
@@ -10,17 +9,13 @@ import (
 
 func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) crd.BlueprintManifest {
 	return crd.BlueprintManifest{
-		Dogus:      ConvertToDoguDTOs(blueprint.Dogus),
-		Components: ConvertToComponentDTOs(blueprint.Components),
-		Config:     ConvertToConfigDTO(blueprint.Config),
+		Dogus:  ConvertToDoguDTOs(blueprint.Dogus),
+		Config: ConvertToConfigDTO(blueprint.Config),
 	}
 }
 
 func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint, error) {
-	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
-	convertedComponents, compErr := ConvertComponents(blueprint.Components)
-
-	err := errors.Join(doguErr, compErr)
+	convertedDogus, err := ConvertDogus(blueprint.Dogus)
 	if err != nil {
 		return domain.Blueprint{}, &domain.InvalidBlueprintError{
 			WrappedError: err,
@@ -29,9 +24,8 @@ func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint
 	}
 	configDomain := ConvertToConfigDomain(blueprint.Config)
 	return domain.Blueprint{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
-		Config:     configDomain,
+		Dogus:  convertedDogus,
+		Config: configDomain,
 	}, nil
 }
 
@@ -39,17 +33,13 @@ func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain
 	if blueprint == nil {
 		return domain.EffectiveBlueprint{}, nil
 	}
-	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
-	convertedComponents, compErr := ConvertComponents(blueprint.Components)
-
-	err := errors.Join(doguErr, compErr)
+	convertedDogus, err := ConvertDogus(blueprint.Dogus)
 	if err != nil {
 		return domain.EffectiveBlueprint{}, fmt.Errorf("cannot deserialize effective blueprint: %w", err)
 	}
 	return domain.EffectiveBlueprint{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
-		Config:     ConvertToConfigDomain(blueprint.Config),
+		Dogus:  convertedDogus,
+		Config: ConvertToConfigDomain(blueprint.Config),
 	}, nil
 }
 

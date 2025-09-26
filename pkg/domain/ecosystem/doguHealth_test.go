@@ -1,9 +1,10 @@
 package ecosystem
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (
@@ -74,12 +75,12 @@ func TestDoguHealthResult_String(t *testing.T) {
 		notContains  []string
 	}{
 		{
-			name:         "no dogus should result in 0 components unhealthy",
+			name:         "no dogus should result in 0 dogus unhealthy",
 			healthStates: map[HealthStatus][]cescommons.SimpleName{},
 			contains:     []string{"0 dogu(s) are unhealthy: "},
 		},
 		{
-			name: "only available dogus should result in 0 components unhealthy",
+			name: "only available dogus should result in 0 dogus unhealthy",
 			healthStates: map[HealthStatus][]cescommons.SimpleName{
 				AvailableHealthStatus: {"nginx-ingress"},
 			},

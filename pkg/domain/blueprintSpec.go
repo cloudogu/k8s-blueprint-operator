@@ -41,15 +41,13 @@ const (
 	ConditionCompleted            = "Completed"
 	ConditionLastApplySucceeded   = "LastApplySucceeded"
 
-	ReasonLastApplyErrorAtComponents = "ComponentApplyFailure"
-	ReasonLastApplyErrorAtDogus      = "DoguApplyFailure"
-	ReasonLastApplyErrorAtConfig     = "ConfigApplyFailure"
+	ReasonLastApplyErrorAtDogus  = "DoguApplyFailure"
+	ReasonLastApplyErrorAtConfig = "ConfigApplyFailure"
 )
 
 var (
 	BlueprintConditions = []string{ConditionValid, ConditionExecutable, ConditionEcosystemHealthy, ConditionSelfUpgradeCompleted, ConditionCompleted, ConditionLastApplySucceeded}
 
-	notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
 	// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 	notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 )
@@ -57,8 +55,6 @@ var (
 type BlueprintConfiguration struct {
 	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
 	IgnoreDoguHealth bool
-	// IgnoreComponentHealth forces blueprint upgrades even if components are unhealthy
-	IgnoreComponentHealth bool
 	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
 	// Stopped lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
@@ -158,9 +154,8 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	effectiveConfig := spec.removeConfigForMaskedDogus()
 
 	spec.EffectiveBlueprint = EffectiveBlueprint{
-		Dogus:      effectiveDogus,
-		Components: spec.Blueprint.Components,
-		Config:     effectiveConfig,
+		Dogus:  effectiveDogus,
+		Config: effectiveConfig,
 	}
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
@@ -251,7 +246,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
-	compDiffs := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		ecosystemState.GlobalConfig,
@@ -262,7 +256,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	spec.StateDiff = StateDiff{
 		DoguDiffs:                doguDiffs,
-		ComponentDiffs:           compDiffs,
 		DoguConfigDiffs:          doguConfigDiffs,
 		SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs,
 		GlobalConfigDiffs:        globalConfigDiffs,
@@ -271,9 +264,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	spec.resetCompletedConditionAfterStateDiff()
 	if spec.StateDiff.DoguDiffs.HasChanges() {
 		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
-	}
-	if spec.StateDiff.ComponentDiffs.HasChanges() {
-		spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
 	}
 	if spec.StateDiff.HasConfigChanges() {
 		spec.Events = append(spec.Events, NewConfigDiffDeterminedEvent(spec.StateDiff))
@@ -343,8 +333,7 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 
 	if healthResult.AllHealthy() {
 		event := EcosystemHealthyEvent{
-			doguHealthIgnored:      spec.Config.IgnoreDoguHealth,
-			componentHealthIgnored: spec.Config.IgnoreComponentHealth,
+			doguHealthIgnored: spec.Config.IgnoreDoguHealth,
 		}
 		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 			Type:    ConditionEcosystemHealthy,
@@ -425,10 +414,6 @@ func (spec *BlueprintSpec) validateStateDiff() error {
 		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateDoguDiffActions(diff)...)
 	}
 
-	for _, diff := range spec.StateDiff.ComponentDiffs {
-		invalidBlueprintErrors = append(invalidBlueprintErrors, spec.validateComponentDiffActions(diff)...)
-	}
-
 	return errors.Join(invalidBlueprintErrors...)
 }
 
@@ -439,16 +424,6 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 				return nil
 			}
 
-			return getActionNotAllowedError(action)
-		}
-
-		return nil
-	})
-}
-
-func (spec *BlueprintSpec) validateComponentDiffActions(diff ComponentDiff) []error {
-	return util.Map(diff.NeededActions, func(action Action) error {
-		if slices.Contains(notAllowedComponentActions, action) {
 			return getActionNotAllowedError(action)
 		}
 

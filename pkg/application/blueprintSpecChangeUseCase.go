@@ -35,8 +35,6 @@ func NewBlueprintPreparationUseCases(
 type BlueprintApplyUseCases struct {
 	completeUseCase        completeBlueprintUseCase
 	ecosystemConfigUseCase ecosystemConfigUseCase
-	selfUpgradeUseCase     selfUpgradeUseCase
-	applyComponentUseCase  applyComponentsUseCase
 	applyDogusUseCase      applyDogusUseCase
 	healthUseCase          ecosystemHealthUseCase
 	dogusUpToDateUseCase   dogusUpToDateUseCase
@@ -45,8 +43,6 @@ type BlueprintApplyUseCases struct {
 func NewBlueprintApplyUseCases(
 	completeUseCase completeBlueprintUseCase,
 	ecosystemConfigUseCase ecosystemConfigUseCase,
-	selfUpgradeUseCase selfUpgradeUseCase,
-	applyComponentUseCase applyComponentsUseCase,
 	applyDogusUseCase applyDogusUseCase,
 	healthUseCase ecosystemHealthUseCase,
 	dogusUpToDateUseCase dogusUpToDateUseCase,
@@ -54,8 +50,6 @@ func NewBlueprintApplyUseCases(
 	return BlueprintApplyUseCases{
 		completeUseCase:        completeUseCase,
 		ecosystemConfigUseCase: ecosystemConfigUseCase,
-		selfUpgradeUseCase:     selfUpgradeUseCase,
-		applyComponentUseCase:  applyComponentUseCase,
 		applyDogusUseCase:      applyDogusUseCase,
 		healthUseCase:          healthUseCase,
 		dogusUpToDateUseCase:   dogusUpToDateUseCase,
@@ -159,26 +153,11 @@ func (useCase *BlueprintPreparationUseCases) prepareBlueprint(ctx context.Contex
 }
 
 func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	err := useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
-	if err != nil {
-		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
-		return err
-	}
-	err = useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
+	err := useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
 	if err != nil {
 		return err
 	}
-	changedComponents, err := useCase.applyComponentUseCase.ApplyComponents(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	// check after applying components
-	if changedComponents {
-		_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-		if err != nil {
-			return err
-		}
-	}
+
 	changedDogus, err := useCase.applyDogusUseCase.ApplyDogus(ctx, blueprint)
 	if err != nil {
 		return err

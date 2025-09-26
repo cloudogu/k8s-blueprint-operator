@@ -38,35 +38,6 @@ type DoguInstallationRepository interface {
 	Delete(ctx context.Context, doguName cescommons.SimpleName) error
 }
 
-type ComponentInstallationRepository interface {
-	// GetByName loads an installed component from the ecosystem and returns
-	//  - the ecosystem.ComponentInstallation or
-	//  - a NotFoundError if the component is not installed or
-	//  - an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
-	// GetAll returns
-	//  - the installation info of all installed components or
-	//  - an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
-	// Delete deletes the component by name from the ecosystem.
-	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName common.SimpleComponentName) error
-	// Create creates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if there is an error.
-	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
-	// Update updates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if anything went wrong.
-	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
-}
-
-type RequiredComponentsProvider interface {
-	GetRequiredComponents(ctx context.Context) ([]ecosystem.RequiredComponent, error)
-}
-
-type HealthWaitConfigProvider interface {
-	GetWaitConfig(ctx context.Context) (ecosystem.WaitConfig, error)
-}
-
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or

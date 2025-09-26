@@ -32,9 +32,8 @@ type UnhealthyEcosystemError struct {
 }
 
 func (e *UnhealthyEcosystemError) Error() string {
-	unhealthyComponentsText := e.healthResult.ComponentHealth.String()
 	unhealthyDogusText := e.healthResult.DoguHealth.String()
-	combinedMessage := fmt.Sprintf("%s - %s - %s", e.Message, unhealthyDogusText, unhealthyComponentsText)
+	combinedMessage := fmt.Sprintf("%s - %s", e.Message, unhealthyDogusText)
 	if e.WrappedError != nil {
 		return fmt.Errorf("%s: %w", combinedMessage, e.WrappedError).Error()
 	}

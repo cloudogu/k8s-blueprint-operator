@@ -14,11 +14,6 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) *crd.StateDiff {
 		doguDiffs[string(doguDiff.DoguName)] = convertToDoguDiffDTO(doguDiff)
 	}
 
-	componentDiffs := make(map[string]crd.ComponentDiff, len(domainModel.ComponentDiffs))
-	for _, componentDiff := range domainModel.ComponentDiffs {
-		componentDiffs[string(componentDiff.Name)] = convertToComponentDiffDTO(componentDiff)
-	}
-
 	var dogus []cescommons.SimpleName
 	var combinedConfigDiffs map[string]crd.CombinedDoguConfigDiff
 	var doguConfigDiffByDogu map[cescommons.SimpleName]crd.DoguConfigDiff
@@ -49,7 +44,6 @@ func ConvertToStateDiffDTO(domainModel domain.StateDiff) *crd.StateDiff {
 
 	return &crd.StateDiff{
 		DoguDiffs:        doguDiffs,
-		ComponentDiffs:   componentDiffs,
 		DoguConfigDiffs:  combinedConfigDiffs,
 		GlobalConfigDiff: convertToGlobalConfigDiffDTO(domainModel.GlobalConfigDiffs),
 	}

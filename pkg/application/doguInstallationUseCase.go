@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -12,27 +13,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const noDowngradesExplanationTextFmt = "downgrades are not allowed as the data model of the %s could have changed and " +
+	"doing rollbacks to older models is not supported. " +
+	"You can downgrade %s by restoring a backup. " +
+	"If you want an 'allow-downgrades' flag, issue a feature request"
+
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo  blueprintSpecRepository
-	doguRepo           doguInstallationRepository
-	waitConfigProvider healthWaitConfigProvider
-	doguConfigRepo     doguConfigRepository
-	globalConfigRepo   globalConfigRepository
+	blueprintSpecRepo blueprintSpecRepository
+	doguRepo          doguInstallationRepository
+	doguConfigRepo    doguConfigRepository
+	globalConfigRepo  globalConfigRepository
 }
 
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
-	waitConfigProvider domainservice.HealthWaitConfigProvider,
 	doguConfigRepo doguConfigRepository,
 	globalConfigRepo globalConfigRepository,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
-		blueprintSpecRepo:  blueprintSpecRepo,
-		doguRepo:           doguRepo,
-		waitConfigProvider: waitConfigProvider,
-		doguConfigRepo:     doguConfigRepo,
-		globalConfigRepo:   globalConfigRepo,
+		blueprintSpecRepo: blueprintSpecRepo,
+		doguRepo:          doguRepo,
+		doguConfigRepo:    doguConfigRepo,
+		globalConfigRepo:  globalConfigRepo,
 	}
 }
 
@@ -72,6 +75,15 @@ func (useCase *DoguInstallationUseCase) CheckDogusUpToDate(ctx context.Context) 
 
 		doguConfig, err := useCase.doguConfigRepo.Get(ctx, doguName)
 		if err != nil {
+			// If error is a NotFoundError here, the dogu might be in the process of being deleted. Throw an internal error to reconcile this case.
+			var notFoundError *domainservice.NotFoundError
+			if errors.As(err, &notFoundError) {
+				return nil, domainservice.NewInternalError(
+					errors.Unwrap(err),
+					"dogu config does not exist for dogu %q. This might be, because the dogu is currently deleted. Retry Later",
+					doguName,
+				)
+			}
 			return nil, err
 		}
 		doguConfigUpdateTime := doguConfig.LastUpdated

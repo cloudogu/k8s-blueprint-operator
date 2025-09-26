@@ -25,8 +25,6 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	stateDiffUseCaseMock := newMockStateDiffUseCase(t)
 	completeUseCaseMock := newMockCompleteBlueprintUseCase(t)
 	ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-	selfUpgradeUseCaseMock := newMockSelfUpgradeUseCase(t)
-	applyComponentUseCaseMock := newMockApplyComponentsUseCase(t)
 	applyDoguUseCaseMock := newMockApplyDogusUseCase(t)
 	ecosystemHealthUseCaseMock := newMockEcosystemHealthUseCase(t)
 	dogusUpToDateUseCaseMock := newMockDogusUpToDateUseCase(t)
@@ -42,8 +40,6 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	applyUseCases := NewBlueprintApplyUseCases(
 		completeUseCaseMock,
 		ecosystemConfigUseCaseMock,
-		selfUpgradeUseCaseMock,
-		applyComponentUseCaseMock,
 		applyDoguUseCaseMock,
 		ecosystemHealthUseCaseMock,
 		dogusUpToDateUseCaseMock,
@@ -62,8 +58,6 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	assert.Equal(t, ecosystemHealthUseCaseMock, result.preparationUseCases.healthUseCase)
 	assert.Equal(t, ecosystemConfigUseCaseMock, result.applyUseCases.ecosystemConfigUseCase)
 	// apply use cases
-	assert.Equal(t, selfUpgradeUseCaseMock, result.applyUseCases.selfUpgradeUseCase)
-	assert.Equal(t, applyComponentUseCaseMock, result.applyUseCases.applyComponentUseCase)
 	assert.Equal(t, applyDoguUseCaseMock, result.applyUseCases.applyDogusUseCase)
 	assert.Equal(t, completeUseCaseMock, result.applyUseCases.completeUseCase)
 	assert.Equal(t, ecosystemHealthUseCaseMock, result.applyUseCases.healthUseCase)
@@ -88,8 +82,6 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 		stateDiff              func(t *testing.T) stateDiffUseCase
 		applyUseCase           func(t *testing.T) completeBlueprintUseCase
 		ecosystemConfigUseCase func(t *testing.T) ecosystemConfigUseCase
-		selfUpgradeUseCase     func(t *testing.T) selfUpgradeUseCase
-		applyComponentUseCase  func(t *testing.T) applyComponentsUseCase
 		applyDogusUseCase      func(t *testing.T) applyDogusUseCase
 		healthUseCase          func(t *testing.T) ecosystemHealthUseCase
 		upToDateUseCase        func(t *testing.T) dogusUpToDateUseCase
@@ -353,52 +345,6 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "should return error on error handle self upgrade",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
-			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
-			},
-		},
-		{
 			name: "should return error on error apply config",
 			fields: fields{
 				repo: func(t *testing.T) blueprintSpecRepository {
@@ -433,127 +379,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
-			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
-			},
-		},
-		{
-			name: "should return error on error apply components",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, assert.AnError)
-					return m
-				},
-			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
-			},
-		},
-		{
-			name: "should return error on error check health after component apply",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil).Times(1)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError).Times(1)
-					return m
-				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(true, nil)
 					return m
 				},
 			},
@@ -597,19 +425,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 					return m
 				},
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
@@ -659,19 +477,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 					return m
 				},
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
@@ -720,19 +528,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 					return m
 				},
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
@@ -786,19 +584,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 					return m
 				},
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
@@ -857,19 +645,9 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
-				selfUpgradeUseCase: func(t *testing.T) selfUpgradeUseCase {
-					m := newMockSelfUpgradeUseCase(t)
-					m.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
 				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
 					m := newMockEcosystemConfigUseCase(t)
 					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyComponentUseCase: func(t *testing.T) applyComponentsUseCase {
-					m := newMockApplyComponentsUseCase(t)
-					m.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 					return m
 				},
 				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
@@ -929,16 +707,6 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				ecoConfigUseCase = tt.fields.ecosystemConfigUseCase(t)
 			}
 
-			var selfUpgrade selfUpgradeUseCase
-			if tt.fields.selfUpgradeUseCase != nil {
-				selfUpgrade = tt.fields.selfUpgradeUseCase(t)
-			}
-
-			var applyComponentUseCase applyComponentsUseCase
-			if tt.fields.applyComponentUseCase != nil {
-				applyComponentUseCase = tt.fields.applyComponentUseCase(t)
-			}
-
 			var applyDoguUseCase applyDogusUseCase
 			if tt.fields.applyDogusUseCase != nil {
 				applyDoguUseCase = tt.fields.applyDogusUseCase(t)
@@ -966,8 +734,6 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				applyUseCases: BlueprintApplyUseCases{
 					completeUseCase:        completeUseCase,
 					ecosystemConfigUseCase: ecoConfigUseCase,
-					selfUpgradeUseCase:     selfUpgrade,
-					applyComponentUseCase:  applyComponentUseCase,
 					applyDogusUseCase:      applyDoguUseCase,
 					healthUseCase:          ecoHealthUseCase,
 					dogusUpToDateUseCase:   upToDateUseCase,

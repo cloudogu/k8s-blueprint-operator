@@ -37,9 +37,9 @@ func TestApplyBlueprintSpecUseCase_CompleteBlueprint(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Conditions: []domain.Condition{},
 			StateDiff: domain.StateDiff{
-				ComponentDiffs: []domain.ComponentDiff{
+				DoguDiffs: []domain.DoguDiff{
 					{
-						Name:          "k8s-dogu-operator",
+						DoguName:      "ldap",
 						NeededActions: []domain.Action{domain.ActionUpgrade},
 					},
 				},

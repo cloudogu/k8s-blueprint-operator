@@ -7,23 +7,20 @@ import (
 type HealthStatus = string
 
 const (
-	PendingHealthStatus      HealthStatus = ""
-	AvailableHealthStatus    HealthStatus = "available"
-	UnavailableHealthStatus  HealthStatus = "unavailable"
-	NotInstalledHealthStatus HealthStatus = "not installed"
+	PendingHealthStatus     HealthStatus = ""
+	AvailableHealthStatus   HealthStatus = "available"
+	UnavailableHealthStatus HealthStatus = "unavailable"
 )
 
 // HealthResult is a snapshot of the health states of all relevant parts of the running ecosystem.
 type HealthResult struct {
-	DoguHealth      DoguHealthResult
-	ComponentHealth ComponentHealthResult
+	DoguHealth DoguHealthResult
 }
 
 func (result HealthResult) String() string {
-	return fmt.Sprintf("ecosystem health:\n  %s\n  %s", result.DoguHealth, result.ComponentHealth)
+	return fmt.Sprintf("ecosystem health:\n  %s", result.DoguHealth)
 }
 
 func (result HealthResult) AllHealthy() bool {
-	return result.DoguHealth.AllHealthy() &&
-		result.ComponentHealth.AllHealthy()
+	return result.DoguHealth.AllHealthy()
 }

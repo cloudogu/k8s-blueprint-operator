@@ -207,11 +207,10 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:      []bpv2.Dogu{},
-				Components: []bpv2.Component{},
-				Config:     nil,
+				Dogus:  []bpv2.Dogu{},
+				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
 			Conditions: []metav1.Condition{testCondition},
 		}
 		restClientMock.EXPECT().
@@ -279,11 +278,10 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:      []bpv2.Dogu{},
-				Components: []bpv2.Component{},
-				Config:     nil,
+				Dogus:  []bpv2.Dogu{},
+				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -322,11 +320,10 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		expectedStatus := &bpv2.BlueprintStatus{
 			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:      []bpv2.Dogu{},
-				Components: []bpv2.Component{},
-				Config:     nil,
+				Dogus:  []bpv2.Dogu{},
+				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}, ComponentDiffs: map[string]bpv2.ComponentDiff{}},
+			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := fmt.Errorf("test-error")
@@ -373,11 +370,9 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		var events []domain.Event
 		events = append(events,
 			domain.StateDiffDoguDeterminedEvent{},
-			domain.StateDiffComponentDeterminedEvent{},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDoguDetermined", "dogu state diff determined: 0 actions ()")
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffComponentDetermined", "component state diff determined: 0 actions ()")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")
 
 		// when
