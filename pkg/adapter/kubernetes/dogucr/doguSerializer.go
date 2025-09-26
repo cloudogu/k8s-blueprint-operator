@@ -80,8 +80,8 @@ func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
 	return result
 }
 
-func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (*ecosystem.ReverseProxyConfig, error) {
-	reverseProxyConfig := &ecosystem.ReverseProxyConfig{}
+func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
+	reverseProxyConfig := ecosystem.ReverseProxyConfig{}
 
 	reverseProxyBodySize, bodySizeOk := annotations[ecosystem.NginxIngressAnnotationBodySize]
 	if bodySizeOk {
@@ -91,7 +91,7 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 		// See: [Documentation](https://nginx.org/en/docs/syntax.html)
 		quantity, err := resource.ParseQuantity(reverseProxyBodySize)
 		if err != nil {
-			return nil, domainservice.NewInternalError(err, "failed to parse quantity %q", reverseProxyBodySize)
+			return ecosystem.ReverseProxyConfig{}, domainservice.NewInternalError(err, "failed to parse quantity %q", reverseProxyBodySize)
 		}
 		reverseProxyConfig.MaxBodySize = &quantity
 	}
@@ -107,10 +107,6 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 		additionalConfigString := annotations[ecosystem.NginxIngressAnnotationAdditionalConfig]
 		additionalConfig = &additionalConfigString
 		reverseProxyConfig.AdditionalConfig = additionalConfig
-	}
-
-	if reverseProxyConfig.IsEmpty() {
-		return nil, nil
 	}
 
 	return reverseProxyConfig, nil
@@ -176,8 +172,8 @@ func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount
 	return result
 }
 
-func getNginxIngressAnnotations(config *ecosystem.ReverseProxyConfig) map[string]string {
-	if config == nil {
+func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {
+	if config.IsEmpty() {
 		return nil
 	}
 

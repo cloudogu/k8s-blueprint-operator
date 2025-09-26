@@ -25,7 +25,7 @@ type Dogu struct {
 	// Reducing this value below the actual volume size has no impact as we do not support downsizing.
 	MinVolumeSize *ecosystem.VolumeSize
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
-	ReverseProxyConfig *ecosystem.ReverseProxyConfig
+	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
 	AdditionalMounts []ecosystem.AdditionalMount
 }
@@ -41,11 +41,9 @@ func (dogu Dogu) validate() error {
 	// minVolumeSize is already checked while unmarshalling json/yaml
 
 	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.
-	if dogu.ReverseProxyConfig != nil {
-		maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
-		if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
-			errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
-		}
+	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
+	if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
+		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
 	}
 
 	for _, mount := range dogu.AdditionalMounts {

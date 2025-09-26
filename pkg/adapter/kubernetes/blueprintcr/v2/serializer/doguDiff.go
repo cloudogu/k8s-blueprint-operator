@@ -27,7 +27,7 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) crd.DoguDiffSta
 	}
 
 	var reverseProxyConfig *crd.ReverseProxyConfig
-	if domainModel.ReverseProxyConfig != nil {
+	if !domainModel.ReverseProxyConfig.IsEmpty() {
 		reverseProxyConfig = &crd.ReverseProxyConfig{
 			RewriteTarget:    domainModel.ReverseProxyConfig.RewriteTarget,
 			AdditionalConfig: domainModel.ReverseProxyConfig.AdditionalConfig,

@@ -39,7 +39,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 	t.Run("error on invalid proxy body size format", func(t *testing.T) {
 		// given
 		parse := resource.MustParse("1Mi")
-		dogu := Dogu{Name: officialDogu1, ReverseProxyConfig: &ecosystem.ReverseProxyConfig{MaxBodySize: &parse}}
+		dogu := Dogu{Name: officialDogu1, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &parse}}
 		// when
 		err := dogu.validate()
 		// then
@@ -59,7 +59,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 	t.Run("no error on zero size quantity", func(t *testing.T) {
 		// given
 		zeroQuantity := resource.MustParse("0")
-		dogu := Dogu{Name: officialDogu1, Version: &version123, ReverseProxyConfig: &ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
+		dogu := Dogu{Name: officialDogu1, Version: &version123, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
 		// when
 		err := dogu.validate()
 		// then

@@ -221,7 +221,7 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
 						AdditionalConfig: &additionalConfig,
 						RewriteTarget:    &rewriteConfig,
@@ -244,7 +244,7 @@ func Test_determineDoguDiff(t *testing.T) {
 				Expected: DoguDiffState{
 					Namespace: officialNamespace,
 					Version:   &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &proxyBodySize,
 						AdditionalConfig: &additionalConfig,
 						RewriteTarget:    &rewriteConfig,
@@ -304,14 +304,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
 					Version: version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},
@@ -321,14 +321,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				Actual: DoguDiffState{
 					Namespace: officialNamespace,
 					Version:   &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},
 				Expected: DoguDiffState{
 					Namespace: officialNamespace,
 					Version:   &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
 				},
@@ -341,14 +341,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
 					Version: version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity10MPtr,
 					},
 				},
@@ -358,14 +358,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				Actual: DoguDiffState{
 					Namespace: officialNamespace,
 					Version:   &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity10MPtr,
 					},
 				},
 				Expected: DoguDiffState{
 					Namespace: officialNamespace,
 					Version:   &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: quantity100MPtr,
 					},
 				},
@@ -378,14 +378,14 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
 					Version: version3212,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize: nil,
 					},
 				},

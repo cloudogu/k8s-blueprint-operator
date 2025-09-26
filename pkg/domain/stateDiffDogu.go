@@ -36,7 +36,7 @@ type DoguDiffState struct {
 	Version            *core.Version
 	Absent             bool
 	MinVolumeSize      *ecosystem.VolumeSize
-	ReverseProxyConfig *ecosystem.ReverseProxyConfig
+	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	AdditionalMounts   []ecosystem.AdditionalMount
 }
 
@@ -194,19 +194,8 @@ func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiff
 
 	neededActions = appendActionForProxyBodySizes(neededActions, exp, act)
 
-	switch {
-	case exp == nil && act == nil:
-		// both nil → nothing to do
-
-	case exp == nil || act == nil:
-		// one nil → both fields need updating
-		neededActions = append(neededActions,
-			ActionUpdateDoguProxyRewriteTarget,
-			ActionUpdateDoguProxyAdditionalConfig,
-		)
-
-	default:
-		// both non-nil → compare fields
+	// both empty → nothing to do
+	if !(exp.IsEmpty() && act.IsEmpty()) {
 		if exp.RewriteTarget != act.RewriteTarget {
 			neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
 		}
@@ -214,6 +203,7 @@ func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiff
 			neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
 		}
 	}
+
 	return neededActions
 }
 
@@ -229,16 +219,11 @@ func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.Volu
 
 func appendActionForProxyBodySizes(
 	actions []Action,
-	expectedReverseProxyConfig *ecosystem.ReverseProxyConfig,
-	actualReverseProxyConfig *ecosystem.ReverseProxyConfig,
+	expectedReverseProxyConfig ecosystem.ReverseProxyConfig,
+	actualReverseProxyConfig ecosystem.ReverseProxyConfig,
 ) []Action {
-	var expectedProxyBodySize, actualProxyBodySize *ecosystem.BodySize
-	if actualReverseProxyConfig != nil {
-		actualProxyBodySize = actualReverseProxyConfig.MaxBodySize
-	}
-	if expectedReverseProxyConfig != nil {
-		expectedProxyBodySize = expectedReverseProxyConfig.MaxBodySize
-	}
+	actualProxyBodySize := actualReverseProxyConfig.MaxBodySize
+	expectedProxyBodySize := expectedReverseProxyConfig.MaxBodySize
 
 	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
 		return actions

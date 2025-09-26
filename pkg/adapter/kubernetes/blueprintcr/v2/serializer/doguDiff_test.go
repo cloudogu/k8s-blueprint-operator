@@ -11,24 +11,21 @@ import (
 )
 
 func Test_convertToDoguDiffStateDTO(t *testing.T) {
-	t.Run("should convert empty reverse proxy config", func(t *testing.T) {
+	t.Run("should convert empty reverse proxy config to nil", func(t *testing.T) {
 		// given
 		domainDiffState := domain.DoguDiffState{
-			ReverseProxyConfig: &ecosystem.ReverseProxyConfig{},
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{},
 		}
 		// when
 		result := convertToDoguDiffStateDTO(domainDiffState)
 		// then
-		assert.NotNil(t, result.ReverseProxyConfig)
-		assert.Nil(t, result.ReverseProxyConfig.RewriteTarget)
-		assert.Nil(t, result.ReverseProxyConfig.AdditionalConfig)
-		assert.Nil(t, result.ReverseProxyConfig.MaxBodySize)
+		assert.Nil(t, result.ReverseProxyConfig)
 	})
 
 	t.Run("should convert reverse proxy config", func(t *testing.T) {
 		// given
 		domainDiffState := domain.DoguDiffState{
-			ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &proxyBodySize,
 				RewriteTarget:    &rewriteTarget,
 				AdditionalConfig: &additionalConfig,

@@ -100,7 +100,7 @@ func Test_validateDogus_multipleErrors(t *testing.T) {
 	wrongBodySize := resource.MustParse("1Ki")
 	dogus := []Dogu{
 		{Name: officialDogu1},
-		{Name: officialDogu2, ReverseProxyConfig: &ecosystem.ReverseProxyConfig{MaxBodySize: &wrongBodySize}},
+		{Name: officialDogu2, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &wrongBodySize}},
 	}
 	blueprint := Blueprint{Dogus: dogus}
 

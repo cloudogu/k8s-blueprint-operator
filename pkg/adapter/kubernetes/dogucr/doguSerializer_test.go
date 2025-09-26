@@ -524,7 +524,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 				MinVolumeSize: &quantity2,
-				ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+				ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 					MaxBodySize:      &proxyBodySize,
 					RewriteTarget:    &rewriteTarget,
 					AdditionalConfig: &additionalConfig,
@@ -588,7 +588,7 @@ func Test_getNginxIngressAnnotations(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(&tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }
@@ -601,7 +601,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    *ecosystem.ReverseProxyConfig
+		want    ecosystem.ReverseProxyConfig
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
@@ -613,7 +613,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 					"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
 				},
 			},
-			want: &ecosystem.ReverseProxyConfig{
+			want: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
 				RewriteTarget:    &rewriteTarget,
 				AdditionalConfig: &additionalConfig,
@@ -629,7 +629,7 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 					"nginx.ingress.kubernetes.io/proxy-body-size": "1GG",
 				},
 			},
-			want: &ecosystem.ReverseProxyConfig{},
+			want: ecosystem.ReverseProxyConfig{},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				assert.Error(t, err)
 				assert.ErrorContains(t, err, "failed to parse quantity \"1GG\"")
@@ -674,7 +674,7 @@ func Test_getNginxIngressAnnotations1(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(&tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
+			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }

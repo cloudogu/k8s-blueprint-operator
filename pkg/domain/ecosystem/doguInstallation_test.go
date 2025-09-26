@@ -27,7 +27,7 @@ func TestInstallDogu(t *testing.T) {
 		postgresqlQualifiedName,
 		&version1231,
 		&volumeSize,
-		&ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
+		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
 		[]AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
@@ -42,7 +42,7 @@ func TestInstallDogu(t *testing.T) {
 		Version:       version1231,
 		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
 		MinVolumeSize: &volumeSize,
-		ReverseProxyConfig: &ReverseProxyConfig{
+		ReverseProxyConfig: ReverseProxyConfig{
 			MaxBodySize:      &proxyBodySize,
 			RewriteTarget:    &rewriteTarget,
 			AdditionalConfig: &additionalConfig,

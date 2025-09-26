@@ -247,7 +247,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						Version:       mustParseVersionToPtr(t, "2.9.0"),
 						Absent:        false,
 						MinVolumeSize: &volumeSize,
-						ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+						ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 							MaxBodySize:      &bodySize,
 							RewriteTarget:    &rewriteTarget,
 							AdditionalConfig: &additionalConfig,
@@ -302,7 +302,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:       mustParseVersionToPtr(t, "2.9.0"),
 					Absent:        false,
 					MinVolumeSize: &volumeSize,
-					ReverseProxyConfig: &ecosystem.ReverseProxyConfig{
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 						MaxBodySize:      &bodySize,
 						RewriteTarget:    &rewriteTarget,
 						AdditionalConfig: &additionalConfig,

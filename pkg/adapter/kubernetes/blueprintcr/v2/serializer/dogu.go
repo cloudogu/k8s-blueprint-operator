@@ -83,7 +83,7 @@ func convertPlatformConfigFromDTOToDomain(dtoDogu *bpv2.Dogu, domainDogu *domain
 			}
 		}
 
-		domainDogu.ReverseProxyConfig = &ecosystem.ReverseProxyConfig{
+		domainDogu.ReverseProxyConfig = ecosystem.ReverseProxyConfig{
 			MaxBodySize:      maxBodySize,
 			RewriteTarget:    dtoDogu.PlatformConfig.ReverseProxyConfig.RewriteTarget,
 			AdditionalConfig: dtoDogu.PlatformConfig.ReverseProxyConfig.AdditionalConfig,
@@ -164,7 +164,7 @@ func ConvertToDoguDTOs(dogus []domain.Dogu) []bpv2.Dogu {
 }
 
 func convertPlatformConfigDTO(dogu domain.Dogu) *bpv2.PlatformConfig {
-	if dogu.ReverseProxyConfig == nil && dogu.MinVolumeSize == nil && len(dogu.AdditionalMounts) == 0 {
+	if dogu.ReverseProxyConfig.IsEmpty() && dogu.MinVolumeSize == nil && len(dogu.AdditionalMounts) == 0 {
 		return nil
 	}
 
@@ -177,14 +177,11 @@ func convertPlatformConfigDTO(dogu domain.Dogu) *bpv2.PlatformConfig {
 }
 
 func convertReverseProxyConfigDTO(dogu domain.Dogu) *bpv2.ReverseProxyConfig {
-	config := bpv2.ReverseProxyConfig{}
-	if dogu.ReverseProxyConfig != nil {
-		config.RewriteTarget = dogu.ReverseProxyConfig.RewriteTarget
-		config.AdditionalConfig = dogu.ReverseProxyConfig.AdditionalConfig
-		config.MaxBodySize = ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize)
+	return &bpv2.ReverseProxyConfig{
+		RewriteTarget:    dogu.ReverseProxyConfig.RewriteTarget,
+		AdditionalConfig: dogu.ReverseProxyConfig.AdditionalConfig,
+		MaxBodySize:      ecosystem.GetQuantityString(dogu.ReverseProxyConfig.MaxBodySize),
 	}
-
-	return &config
 }
 
 func convertResourceConfigDTO(dogu domain.Dogu) *bpv2.ResourceConfig {
