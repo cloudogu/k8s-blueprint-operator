@@ -352,9 +352,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 		require.NoError(t, err)
-		require.Equal(t, 2, len(spec.Events))
-		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
-		assert.Equal(t, NewConfigDiffDeterminedEvent(stateDiff), spec.Events[1])
+		require.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, newStateDiffEvent(stateDiff), spec.Events[0])
 		assert.Empty(t, cmp.Diff(stateDiff, spec.StateDiff))
 	})
 

@@ -21,14 +21,14 @@ func TestHealthResult_String(t *testing.T) {
 			fields: fields{
 				DoguHealth: DoguHealthResult{},
 			},
-			want: "ecosystem health:\n  0 dogu(s) are unhealthy: ",
+			want: "0 dogu(s) are unhealthy: ",
 		},
 		{
 			name: "should print dogu health results with unhealthy",
 			fields: fields{
 				DoguHealth: DoguHealthResult{DogusByStatus: map[HealthStatus][]cescommons.SimpleName{UnavailableHealthStatus: {"nginx-ingress"}}},
 			},
-			want: "ecosystem health:\n  1 dogu(s) are unhealthy: nginx-ingress",
+			want: "1 dogu(s) are unhealthy: nginx-ingress",
 		},
 	}
 	for _, tt := range tests {

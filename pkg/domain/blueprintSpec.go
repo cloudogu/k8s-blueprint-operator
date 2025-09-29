@@ -263,10 +263,7 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	spec.resetCompletedConditionAfterStateDiff()
 	if spec.StateDiff.DoguDiffs.HasChanges() {
-		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
-	}
-	if spec.StateDiff.HasConfigChanges() {
-		spec.Events = append(spec.Events, NewConfigDiffDeterminedEvent(spec.StateDiff))
+		spec.Events = append(spec.Events, newStateDiffEvent(spec.StateDiff))
 	}
 
 	invalidBlueprintError := spec.validateStateDiff()
@@ -288,32 +285,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		Status: metav1.ConditionTrue,
 		Reason: "Executable",
 	})
-	//TODO: we cannot just deduplicate the events here by detecting a condition change,
-	// because the blueprint could be executable even after a change of the blueprint.
-	// Therefore, a check with "conditionChanged" is not enough to prevent, that we regenerate all events on every reconcile.
-
-	//TODO: We could set all diff-related conditions here
-	// Con: this could override Reason and Message.
-	//		They will be set again when we try to apply.
-	//		We also could check, if there is a reason and a message and just change nothing then if there is still a diff.
-	// Pro: we don't need to update the blueprint so often -> big update here and only setting conditionTrue while applying things
-	// Con: StateDiff as it is could problematic because it hides conflict errors
-	//		(is this a real problem if we set it anyways in the next run?).
-	// 		The idea is, that we just check the needed cluster-state when we try to apply.
-	//		Then there is no central stateDiff anymore, just some independent ApplyUseCases.
-	//      I am not sure with this yet.
-	// Con: a central stateDiff could be problematic because we then check every state and
-	//		we cannot optimize it if we know, which watch triggered the reconciliation.
-
-	//TODO: The state diff will be generated at every run and will be written on the blueprint-CR.Status.
-	//		After every apply, the state diff will be empty and therefore will be deleted on the blueprint-CR.
-	//		It is only useful for dry-run or error states, where no further work happens.
-	//		Maybe we just not write it in the status anymore? How to debug then?
-	//		The old classic blueprint-process was hard to understand because there was no overview.
-	//		A separate BlueprintExecution-CR could be a solution but i am not sure, if we have enough time for that and if it is the right choice.
-	//			CR could have the diff as it's spec.
-	//			It is a single execution like k8s-jobs.
-	//			The operator will always spawn more blueprintExecutions if they fail or there is a diff left after applying.
 	return nil
 }
 
@@ -350,13 +321,17 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 	event := EcosystemUnhealthyEvent{
 		HealthResult: healthResult,
 	}
+	oldHealthyCondition := meta.FindStatusCondition(spec.Conditions, ConditionEcosystemHealthy)
+	// determine here, because the condition is a pointer and will change with the SetStatusCondition call below
+	isConditionStatusChanged := oldHealthyCondition == nil || oldHealthyCondition.Status == metav1.ConditionTrue
 	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionEcosystemHealthy,
 		Status:  metav1.ConditionFalse,
 		Reason:  "Unhealthy",
-		Message: event.Message(),
+		Message: "ecosystem health:\n  " + healthResult.String(),
 	})
-	if conditionChanged {
+	// only throw an event the first unhealthy time to avoid having too many events
+	if isConditionStatusChanged {
 		spec.Events = append(spec.Events, event)
 	}
 	return conditionChanged

@@ -173,6 +173,16 @@ func TestDoguConfig_validate(t *testing.T) {
 
 		assert.ErrorContains(t, err, "key for config should not be empty")
 	})
+	t.Run("empty value is allowed", func(t *testing.T) {
+		config := DoguConfigEntries{
+			{
+				Key: "my/key1",
+			},
+		}
+
+		err := config.validate("dogu1")
+		assert.NoError(t, err)
+	})
 	t.Run("combine errors", func(t *testing.T) {
 		config := DoguConfigEntries{
 			{

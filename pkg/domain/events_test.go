@@ -54,12 +54,12 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "EcosystemUnhealthy",
-			expectedMessage: "ecosystem health:\n  2 dogu(s) are unhealthy: admin, ldap",
+			expectedMessage: "Ecosystem became unhealthy. Reason:\n  2 dogu(s) are unhealthy: admin, ldap",
 		},
 		{
 			name: "dogu state diff determined",
-			event: newStateDiffDoguEvent(
-				DoguDiffs{
+			event: newStateDiffEvent(
+				StateDiff{DoguDiffs: DoguDiffs{
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionInstall}},
@@ -67,13 +67,13 @@ func TestEvents(t *testing.T) {
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig}},
 					{NeededActions: []Action{ActionDowngrade}},
-				}),
-			expectedName:    "StateDiffDoguDetermined",
-			expectedMessage: "dogu state diff determined: 11 actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 3, \"upgrade\": 1)",
+				}}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  0 config changes ()\n  11 dogu actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 3, \"upgrade\": 1)",
 		},
 		{
 			name: "config diff determined",
-			event: ConfigDiffDeterminedEvent{
+			event: newStateDiffEvent(StateDiff{
 				GlobalConfigDiffs: GlobalConfigDiffs{
 					{NeededAction: ConfigActionNone},
 					{NeededAction: ConfigActionNone},
@@ -87,16 +87,31 @@ func TestEvents(t *testing.T) {
 						{NeededAction: ConfigActionRemove},
 					},
 				},
-				SensitiveConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
 					"dogu1": []SensitiveDoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
 						{NeededAction: ConfigActionSet},
 						{NeededAction: ConfigActionRemove},
 					},
 				},
-			},
-			expectedName:    "ConfigDiffDetermined",
-			expectedMessage: "config diff determined: 6 changes (\"none\": 4, \"remove\": 3, \"set\": 3)",
+			}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  6 config changes (\"none\": 4, \"remove\": 3, \"set\": 3)\n  0 dogu actions ()",
+		},
+		{
+			name: "config and dogu diff determined",
+			event: newStateDiffEvent(StateDiff{
+				DoguDiffs: DoguDiffs{
+					{NeededActions: []Action{ActionInstall}},
+					{NeededActions: []Action{ActionUninstall}},
+				},
+				GlobalConfigDiffs: GlobalConfigDiffs{
+					{NeededAction: ConfigActionSet},
+					{NeededAction: ConfigActionRemove},
+				},
+			}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  2 config changes (\"remove\": 1, \"set\": 1)\n  2 dogu actions (\"install\": 1, \"uninstall\": 1)",
 		},
 		{
 			name: "config references missing",
