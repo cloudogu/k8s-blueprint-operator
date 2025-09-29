@@ -54,13 +54,15 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, fmt.Errorf("could not apply global config: %w", err))
 	}
 
-	blueprint.Events = append(blueprint.Events, domain.EcosystemConfigAppliedEvent{})
-	repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
+	if blueprint.StateDiff.HasConfigChanges() {
+		blueprint.Events = append(blueprint.Events, domain.EcosystemConfigAppliedEvent{})
+		repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
 
-	if repoErr != nil {
-		repoErr = errors.Join(repoErr, err)
-		logger.Error(repoErr, "cannot update blueprint events")
-		return fmt.Errorf("cannot update blueprint events: %w", repoErr)
+		if repoErr != nil {
+			repoErr = errors.Join(repoErr, err)
+			logger.Error(repoErr, "cannot update blueprint events")
+			return fmt.Errorf("cannot update blueprint events: %w", repoErr)
+		}
 	}
 	return nil
 }

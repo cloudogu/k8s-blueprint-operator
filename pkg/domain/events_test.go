@@ -54,7 +54,7 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "EcosystemUnhealthy",
-			expectedMessage: "Ecosystem became unhealthy. Reason:\n  2 dogu(s) are unhealthy: admin, ldap",
+			expectedMessage: "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  2 dogu(s) are unhealthy: admin, ldap",
 		},
 		{
 			name: "dogu state diff determined",
