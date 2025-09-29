@@ -177,8 +177,7 @@ func (config ConfigEntry) validate() error {
 	hasValue := config.Value != nil
 	hasSecretRef := config.SecretRef != nil
 
-	// TODO: See test, is both nil allowed?
-	if hasValue == hasSecretRef {
+	if hasValue && hasSecretRef {
 		errs = append(errs, fmt.Errorf("config entries can have either a value or a secretRef"))
 	}
 
@@ -219,12 +218,6 @@ func (config ConfigEntry) validateGlobal() error {
 		}
 		return errors.Join(errs...)
 	}
-
-	// For present entries, a Value must be set
-	// TODO: See test, is empty string allowed?
-	//if config.Value == nil {
-	//	errs = append(errs, fmt.Errorf("config entries must have a value"))
-	//}
 
 	return errors.Join(errs...)
 }
