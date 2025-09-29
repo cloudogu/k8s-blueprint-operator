@@ -192,16 +192,19 @@ func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiff
 	exp := expected.ReverseProxyConfig
 	act := actual.ReverseProxyConfig
 
+	// both empty → nothing to do
+	if exp.IsEmpty() && act.IsEmpty() {
+		return neededActions
+	}
+
 	neededActions = appendActionForProxyBodySizes(neededActions, exp, act)
 
-	// both empty → nothing to do
-	if !(exp.IsEmpty() && act.IsEmpty()) {
-		if exp.RewriteTarget != act.RewriteTarget {
-			neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
-		}
-		if exp.AdditionalConfig != act.AdditionalConfig {
-			neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
-		}
+	if exp.RewriteTarget != act.RewriteTarget {
+		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
+	}
+
+	if exp.AdditionalConfig != act.AdditionalConfig {
+		neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
 	}
 
 	return neededActions
