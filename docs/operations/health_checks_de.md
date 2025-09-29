@@ -5,9 +5,7 @@ Dabei wird folgendes geprüft:
 - Health aller Dogus anhand der Dogu-CRs
 - Health aller Components anhand der Component-CRs
 - Überprüfung, ob alle notwendigen Components installiert sind, die für das Blueprint gebraucht werden
-
-Die Health-Checks verwenden einen eingebauten Retry. 
-Timeout und Check-Interval lassen sich dafür in der [Health-Config](#health-config) festlegen.
+- Überprüfung, ob alle Dogus bereits die neueste Version und Konfiguration verwenden
 
 ## Health ignorieren
 
