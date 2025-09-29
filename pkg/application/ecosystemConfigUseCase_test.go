@@ -378,7 +378,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		}).Return(nil).Times(2)
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, stateDiff)
 
 		// then
 		require.NoError(t, err)
@@ -426,7 +427,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		}).Return(nil).Times(2)
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, stateDiff)
 
 		// then
 		require.NoError(t, err)
@@ -466,7 +468,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		}).Return(nil).Times(2)
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, stateDiff)
 
 		// then
 		require.NoError(t, err)
@@ -501,7 +504,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		// No Update calls
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, stateDiff)
 
 		// then
 		require.NoError(t, err)
@@ -513,7 +517,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		doguInstallaltionRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, domain.StateDiff{})
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, domain.StateDiff{})
 
 		// then
 		require.Error(t, err)
@@ -541,7 +546,8 @@ func TestEcosystemConfigUseCase_pauseReconciliationForDogus(t *testing.T) {
 		doguInstallaltionRepoMock.EXPECT().Update(testCtx, mock.Anything).Return(assert.AnError)
 
 		// when
-		err := pauseReconciliationForDogus(testCtx, doguInstallaltionRepoMock, stateDiff)
+		sut := NewEcosystemConfigUseCase(nil, nil, nil, nil, doguInstallaltionRepoMock)
+		err := sut.pauseReconciliationForDogus(testCtx, stateDiff)
 
 		// then
 		require.Error(t, err)
