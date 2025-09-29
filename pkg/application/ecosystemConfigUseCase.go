@@ -10,6 +10,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -37,7 +38,7 @@ func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, dogu
 func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("EcosystemConfigUseCase.ApplyConfig")
 
-	err := pauseReconciliationForDogus(ctx, useCase.doguInstallationRepository, blueprint.StateDiff)
+	err := useCase.pauseReconciliationForDogus(ctx, blueprint.StateDiff)
 	if err != nil {
 		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, fmt.Errorf("could not pause reconciliation for some dogus: %w", err))
 	}
@@ -67,30 +68,35 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 	return nil
 }
 
-func pauseReconciliationForDogus(ctx context.Context, repository doguInstallationRepository, diff domain.StateDiff) error {
-	allDogus, err := repository.GetAll(ctx)
+func (useCase *EcosystemConfigUseCase) pauseReconciliationForDogus(ctx context.Context, diff domain.StateDiff) error {
+	allDogus, err := useCase.doguInstallationRepository.GetAll(ctx)
 	if err != nil {
 		return fmt.Errorf("error while attempting to load dogus: %w", err)
 	}
 	globalConfigChanges := diff.GlobalConfigDiffs.HasChanges()
 	for _, dogu := range allDogus {
-		for _, doguDiff := range diff.DoguDiffs {
-			if doguDiff.DoguName != dogu.Name.SimpleName {
-				continue
-			}
-			if slices.Contains(doguDiff.NeededActions, domain.ActionUpgrade) &&
-				(globalConfigChanges ||
-					diff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
-					diff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges()) {
-				dogu.PauseReconciliation = true
-				err = repository.Update(ctx, dogu)
-				if err != nil {
-					return fmt.Errorf("could not pause reconciliation for dogu: %w", err)
-				}
+		doguDiff := findDoguDiff(diff, dogu)
+		if slices.Contains(doguDiff.NeededActions, domain.ActionUpgrade) &&
+			(globalConfigChanges ||
+				diff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
+				diff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges()) {
+			dogu.PauseReconciliation = true
+			err = useCase.doguInstallationRepository.Update(ctx, dogu)
+			if err != nil {
+				return fmt.Errorf("could not pause reconciliation for dogu: %w", err)
 			}
 		}
 	}
 	return nil
+}
+
+func findDoguDiff(diff domain.StateDiff, dogu *ecosystem.DoguInstallation) domain.DoguDiff {
+	for _, doguDiff := range diff.DoguDiffs {
+		if doguDiff.DoguName == dogu.Name.SimpleName {
+			return doguDiff
+		}
+	}
+	return domain.DoguDiff{}
 }
 
 func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Context, globalConfigDiffsByAction map[domain.ConfigAction][]domain.GlobalConfigEntryDiff) error {
