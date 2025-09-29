@@ -372,11 +372,11 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 
 		var events []domain.Event
 		events = append(events,
-			domain.StateDiffDoguDeterminedEvent{},
+			domain.StateDiffDeterminedEvent{},
 			domain.StateDiffComponentDeterminedEvent{},
 			domain.BlueprintSpecInvalidEvent{ValidationError: errors.New("test-error")},
 		)
-		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDoguDetermined", "dogu state diff determined: 0 actions ()")
+		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffDetermined", "state diff determined:\n  0 config changes ()\n  0 dogu actions ()")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "StateDiffComponentDetermined", "component state diff determined: 0 actions ()")
 		eventRecorderMock.EXPECT().Event(mock.Anything, corev1.EventTypeNormal, "BlueprintSpecInvalid", "test-error")
 

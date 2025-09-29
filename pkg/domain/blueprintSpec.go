@@ -270,13 +270,10 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 
 	spec.resetCompletedConditionAfterStateDiff()
 	if spec.StateDiff.DoguDiffs.HasChanges() {
-		spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
+		spec.Events = append(spec.Events, newStateDiffEvent(spec.StateDiff))
 	}
 	if spec.StateDiff.ComponentDiffs.HasChanges() {
 		spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
-	}
-	if spec.StateDiff.HasConfigChanges() {
-		spec.Events = append(spec.Events, NewConfigDiffDeterminedEvent(spec.StateDiff))
 	}
 
 	invalidBlueprintError := spec.validateStateDiff()
@@ -298,22 +295,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		Status: metav1.ConditionTrue,
 		Reason: "Executable",
 	})
-	//TODO: we cannot just deduplicate the events here by detecting a condition change,
-	// because the blueprint could be executable even after a change of the blueprint.
-	// Therefore, a check with "conditionChanged" is not enough to prevent, that we regenerate all events on every reconcile.
-
-	//TODO: We could set all diff-related conditions here
-	// Con: this could override Reason and Message.
-	//		They will be set again when we try to apply.
-	//		We also could check, if there is a reason and a message and just change nothing then if there is still a diff.
-	// Pro: we don't need to update the blueprint so often -> big update here and only setting conditionTrue while applying things
-	// Con: StateDiff as it is could problematic because it hides conflict errors
-	//		(is this a real problem if we set it anyways in the next run?).
-	// 		The idea is, that we just check the needed cluster-state when we try to apply.
-	//		Then there is no central stateDiff anymore, just some independent ApplyUseCases.
-	//      I am not sure with this yet.
-	// Con: a central stateDiff could be problematic because we then check every state and
-	//		we cannot optimize it if we know, which watch triggered the reconciliation.
 	return nil
 }
 
@@ -351,13 +332,17 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 	event := EcosystemUnhealthyEvent{
 		HealthResult: healthResult,
 	}
+	oldHealthyCondition := meta.FindStatusCondition(spec.Conditions, ConditionEcosystemHealthy)
+	// determine here, because the condition is a pointer and will change with the SetStatusCondition call below
+	isConditionStatusChanged := oldHealthyCondition == nil || oldHealthyCondition.Status == metav1.ConditionTrue
 	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
 		Type:    ConditionEcosystemHealthy,
 		Status:  metav1.ConditionFalse,
 		Reason:  "Unhealthy",
-		Message: event.Message(),
+		Message: "ecosystem health:\n  " + healthResult.String(),
 	})
-	if conditionChanged {
+	// only throw an event the first unhealthy time to avoid having too many events
+	if isConditionStatusChanged {
 		spec.Events = append(spec.Events, event)
 	}
 	return conditionChanged
