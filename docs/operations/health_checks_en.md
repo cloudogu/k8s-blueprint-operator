@@ -5,9 +5,7 @@ The following is checked:
 - Health of all Dogus based on the Dogu-CRs
 - Health of all components based on the component CRs
 - Check whether all necessary components required for the blueprint are installed
-
-The health checks use a built-in retry.
-The timeout and check interval can be defined in the [Health-Config](#health-config).
+- Check whether all Dogus already use the latest version and configuration
 
 ## Ignoring health
 
