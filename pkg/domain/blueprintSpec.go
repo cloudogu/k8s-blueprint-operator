@@ -314,16 +314,6 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	//      I am not sure with this yet.
 	// Con: a central stateDiff could be problematic because we then check every state and
 	//		we cannot optimize it if we know, which watch triggered the reconciliation.
-
-	//TODO: The state diff will be generated at every run and will be written on the blueprint-CR.Status.
-	//		After every apply, the state diff will be empty and therefore will be deleted on the blueprint-CR.
-	//		It is only useful for dry-run or error states, where no further work happens.
-	//		Maybe we just not write it in the status anymore? How to debug then?
-	//		The old classic blueprint-process was hard to understand because there was no overview.
-	//		A separate BlueprintExecution-CR could be a solution but i am not sure, if we have enough time for that and if it is the right choice.
-	//			CR could have the diff as it's spec.
-	//			It is a single execution like k8s-jobs.
-	//			The operator will always spawn more blueprintExecutions if they fail or there is a diff left after applying.
 	return nil
 }
 
