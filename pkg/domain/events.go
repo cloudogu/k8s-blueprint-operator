@@ -176,7 +176,7 @@ func (d EcosystemUnhealthyEvent) Name() string {
 }
 
 func (d EcosystemUnhealthyEvent) Message() string {
-	return "Ecosystem became unhealthy. Reason:\n  " + d.HealthResult.String()
+	return "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  " + d.HealthResult.String()
 }
 
 type BlueprintDryRunEvent struct{}

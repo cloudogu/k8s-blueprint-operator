@@ -143,16 +143,16 @@ func (useCase *BlueprintPreparationUseCases) prepareBlueprint(ctx context.Contex
 	if err != nil {
 		return err
 	}
-	err = useCase.stateDiff.DetermineStateDiff(ctx, blueprint)
-	if err != nil {
-		// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
-		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
-		return err
-	}
 	// always check health here, even if we already know here, that we don't need to apply anything
 	// because we need to update the health condition
 	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
 	if err != nil {
+		return err
+	}
+	err = useCase.stateDiff.DetermineStateDiff(ctx, blueprint)
+	if err != nil {
+		// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
+		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
 		return err
 	}
 	return nil
