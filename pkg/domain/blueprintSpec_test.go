@@ -678,7 +678,7 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 		}
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
-	t.Run("should not be applied due to dry run", func(t *testing.T) {
+	t.Run("should not be applied due to being stopped", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
 				Stopped: true,

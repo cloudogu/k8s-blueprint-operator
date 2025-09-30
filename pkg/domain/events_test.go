@@ -17,12 +17,6 @@ func TestEvents(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name:            "blueprint dry run",
-			event:           BlueprintDryRunEvent{},
-			expectedName:    "BlueprintDryRun",
-			expectedMessage: "Executed blueprint in dry run mode. Remove flag to continue",
-		},
-		{
 			name:            "blueprint spec invalid",
 			event:           BlueprintSpecInvalidEvent{ValidationError: assert.AnError},
 			expectedName:    "BlueprintSpecInvalid",
@@ -45,6 +39,12 @@ func TestEvents(t *testing.T) {
 			event:           EcosystemHealthyEvent{componentHealthIgnored: true},
 			expectedName:    "EcosystemHealthy",
 			expectedMessage: "dogu health ignored: false; component health ignored: true",
+		},
+		{
+			name:            "blueprint stopped",
+			event:           BlueprintStoppedEvent{},
+			expectedName:    "BlueprintStopped",
+			expectedMessage: "Blueprint is set as stopped and will not be applied. Remove flag to continue",
 		},
 		{
 			name: "ecosystem unhealthy upfront",
