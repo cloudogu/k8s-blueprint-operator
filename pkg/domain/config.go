@@ -185,6 +185,10 @@ func (config ConfigEntry) validate() error {
 		errs = append(errs, fmt.Errorf("config entries with secret references have to be sensitive"))
 	}
 
+	if hasValue && config.Sensitive {
+		errs = append(errs, fmt.Errorf("sensitive config entries are not allowed to have normal values"))
+	}
+
 	return errors.Join(errs...)
 }
 
