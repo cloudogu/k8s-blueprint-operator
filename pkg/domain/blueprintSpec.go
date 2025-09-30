@@ -337,7 +337,7 @@ func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResul
 	return conditionChanged
 }
 
-// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
+// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while being stopped.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
 	if spec.Config.Stopped {
 		return false

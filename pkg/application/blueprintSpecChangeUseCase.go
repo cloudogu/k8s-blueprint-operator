@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -106,8 +107,8 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	}
 
 	if !blueprint.ShouldBeApplied() {
-		// just stop the loop here on dry run or early exit
-		return nil
+		// stop the loop here on stopped-flag or early exit
+		return useCase.handleShouldNotBeApplied(ctx, logger, blueprint)
 	}
 
 	// === Apply from here on ===
@@ -117,6 +118,16 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 	}
 
 	logger.Info("blueprint successfully applied")
+	return nil
+}
+
+func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.Context, logger logr.Logger, blueprint *domain.BlueprintSpec) error {
+	logger.Info("blueprint is currently set as stopped and will not be applied")
+	blueprint.Events = append(blueprint.Events, domain.BlueprintStoppedEvent{})
+	err := useCase.repo.Update(ctx, blueprint)
+	if err != nil {
+		return fmt.Errorf("cannot update status to set stopped event: %w", err)
+	}
 	return nil
 }
 

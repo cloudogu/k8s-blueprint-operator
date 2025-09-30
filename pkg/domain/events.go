@@ -148,16 +148,6 @@ func (d EcosystemUnhealthyEvent) Message() string {
 	return "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  " + d.HealthResult.String()
 }
 
-type BlueprintDryRunEvent struct{}
-
-func (b BlueprintDryRunEvent) Name() string {
-	return "BlueprintDryRun"
-}
-
-func (b BlueprintDryRunEvent) Message() string {
-	return "Executed blueprint in dry run mode. Remove flag to continue"
-}
-
 type DogusAppliedEvent struct {
 	Diffs DoguDiffs
 }
@@ -203,6 +193,16 @@ func (e BlueprintAppliedEvent) Name() string {
 
 func (e BlueprintAppliedEvent) Message() string {
 	return "waiting for ecosystem health"
+}
+
+type BlueprintStoppedEvent struct{}
+
+func (e BlueprintStoppedEvent) Name() string {
+	return "BlueprintStopped"
+}
+
+func (e BlueprintStoppedEvent) Message() string {
+	return "Blueprint is set as stopped and will not be applied. Remove flag to continue"
 }
 
 type ExecutionFailedEvent struct {

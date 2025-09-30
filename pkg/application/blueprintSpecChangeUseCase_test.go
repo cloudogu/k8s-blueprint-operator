@@ -69,7 +69,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 		Id:        testBlueprintId,
 		StateDiff: domain.StateDiff{DoguDiffs: domain.DoguDiffs{{NeededActions: []domain.Action{domain.ActionInstall}}}},
 	}
-	testDryRunBlueprintSpec := &domain.BlueprintSpec{
+	testStoppedBlueprintSpec := &domain.BlueprintSpec{
 		Id:     testBlueprintId,
 		Config: domain.BlueprintConfiguration{Stopped: true},
 	}
@@ -306,38 +306,42 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 			},
 		},
 		{
-			name: "should return nil and do nothing on dry run",
+			name: "should return nil and throw stopped event on being stopped",
 			fields: fields{
 				repo: func(t *testing.T) blueprintSpecRepository {
 					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testDryRunBlueprintSpec, nil)
+					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testStoppedBlueprintSpec, nil)
+					m.EXPECT().Update(mock.Anything, mock.Anything).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
+						assert.Len(t, blueprint.Events, 1)
+						assert.Equal(t, domain.BlueprintStoppedEvent{}.Name(), blueprint.Events[0].Name())
+					}).Return(nil)
 					return m
 				},
 				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
 					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testDryRunBlueprintSpec).Return(nil)
+					m.EXPECT().InitateConditions(mock.Anything, testStoppedBlueprintSpec).Return(nil)
 
 					return m
 				},
 				validation: func(t *testing.T) blueprintSpecValidationUseCase {
 					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testDryRunBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testDryRunBlueprintSpec).Return(nil)
+					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testStoppedBlueprintSpec).Return(nil)
+					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testStoppedBlueprintSpec).Return(nil)
 					return m
 				},
 				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
 					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testDryRunBlueprintSpec).Return(nil)
+					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testStoppedBlueprintSpec).Return(nil)
 					return m
 				},
 				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
 					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testDryRunBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
+					m.EXPECT().CheckEcosystemHealth(mock.Anything, testStoppedBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 					return m
 				},
 				stateDiff: func(t *testing.T) stateDiffUseCase {
 					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testDryRunBlueprintSpec).Return(nil)
+					m.EXPECT().DetermineStateDiff(mock.Anything, testStoppedBlueprintSpec).Return(nil)
 					return m
 				},
 			},
