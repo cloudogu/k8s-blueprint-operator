@@ -246,6 +246,17 @@ func TestDoguConfig_validate(t *testing.T) {
 		err := config.validate("dogu1")
 		assert.ErrorContains(t, err, "config entries with secret references have to be sensitive")
 	})
+	t.Run("No sensitive with normal value", func(t *testing.T) {
+		config := DoguConfigEntries{
+			{
+				Key:       "my/key1",
+				Sensitive: true,
+				Value:     &confgiVal1,
+			},
+		}
+		err := config.validate("dogu1")
+		assert.ErrorContains(t, err, "sensitive config entries are not allowed to have normal values")
+	})
 	t.Run("secret with sensitive allowed", func(t *testing.T) {
 		config := DoguConfigEntries{
 			{
