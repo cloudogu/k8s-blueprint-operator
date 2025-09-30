@@ -1,9 +1,5 @@
 package ecosystem
 
-import (
-	"fmt"
-)
-
 type HealthStatus = string
 
 const (
@@ -18,7 +14,7 @@ type HealthResult struct {
 }
 
 func (result HealthResult) String() string {
-	return fmt.Sprintf("%s", result.DoguHealth)
+	return result.DoguHealth.String()
 }
 
 func (result HealthResult) AllHealthy() bool {
