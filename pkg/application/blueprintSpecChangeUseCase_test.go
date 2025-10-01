@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var testCtx = context.Background()
@@ -78,6 +79,13 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 	testStoppedBlueprintSpec := &domain.BlueprintSpec{
 		Id:     testBlueprintId,
 		Config: domain.BlueprintConfiguration{Stopped: true},
+	}
+	testCompletedBlueprintSpec := &domain.BlueprintSpec{
+		Id: testBlueprintId,
+		Conditions: []domain.Condition{{
+			Type:   domain.ConditionCompleted,
+			Status: metav1.ConditionTrue,
+		}},
 	}
 
 	type fields struct {
@@ -350,6 +358,45 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
 				stateDiff: func(t *testing.T) stateDiffUseCase {
 					m := newMockStateDiffUseCase(t)
 					m.EXPECT().DetermineStateDiff(mock.Anything, testStoppedBlueprintSpec).Return(nil)
+					return m
+				},
+			},
+			args:    testArgs,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should not apply on being completed and no new statediff",
+			fields: fields{
+				repo: func(t *testing.T) blueprintSpecRepository {
+					m := newMockBlueprintSpecRepository(t)
+					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testCompletedBlueprintSpec, nil)
+					return m
+				},
+				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
+					m := newMockInitialBlueprintStatusUseCase(t)
+					m.EXPECT().InitateConditions(mock.Anything, testCompletedBlueprintSpec).Return(nil)
+
+					return m
+				},
+				validation: func(t *testing.T) blueprintSpecValidationUseCase {
+					m := newMockBlueprintSpecValidationUseCase(t)
+					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testCompletedBlueprintSpec).Return(nil)
+					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testCompletedBlueprintSpec).Return(nil)
+					return m
+				},
+				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
+					m := newMockEffectiveBlueprintUseCase(t)
+					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testCompletedBlueprintSpec).Return(nil)
+					return m
+				},
+				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
+					m := newMockEcosystemHealthUseCase(t)
+					m.EXPECT().CheckEcosystemHealth(mock.Anything, testCompletedBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
+					return m
+				},
+				stateDiff: func(t *testing.T) stateDiffUseCase {
+					m := newMockStateDiffUseCase(t)
+					m.EXPECT().DetermineStateDiff(mock.Anything, testCompletedBlueprintSpec).Return(nil)
 					return m
 				},
 			},

@@ -128,11 +128,14 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 }
 
 func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.Context, logger logr.Logger, blueprint *domain.BlueprintSpec) error {
-	logger.Info("blueprint is currently set as stopped and will not be applied")
-	blueprint.Events = append(blueprint.Events, domain.BlueprintStoppedEvent{})
-	err := useCase.repo.Update(ctx, blueprint)
-	if err != nil {
-		return fmt.Errorf("cannot update status to set stopped event: %w", err)
+	// post event and log only if blueprint is stopped, all other cases are just NoOps
+	if blueprint.Config.Stopped {
+		logger.Info("blueprint is currently set as stopped and will not be applied")
+		blueprint.Events = append(blueprint.Events, domain.BlueprintStoppedEvent{})
+		err := useCase.repo.Update(ctx, blueprint)
+		if err != nil {
+			return fmt.Errorf("cannot update status to set stopped event: %w", err)
+		}
 	}
 	return nil
 }
