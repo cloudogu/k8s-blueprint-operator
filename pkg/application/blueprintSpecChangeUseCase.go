@@ -130,6 +130,8 @@ func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.
 		if err != nil {
 			return fmt.Errorf("cannot update status to set stopped event: %w", err)
 		}
+	} else {
+		logger.V(1).Info("no diff detected, no changes required")
 	}
 	return nil
 }
