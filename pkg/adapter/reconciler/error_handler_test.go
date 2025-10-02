@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
@@ -52,7 +51,7 @@ func Test_decideRequeueForError(t *testing.T) {
 		assert.Equal(t, ctrl.Result{RequeueAfter: 1 * time.Second}, actual)
 		assert.Contains(t, logSinkMock.output, "0: A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 	})
-	t.Run("should catch wrapped NotFoundError, issue a log line and requeue with backoff", func(t *testing.T) {
+	t.Run("should catch wrapped NotFoundError, issue a log line and requeue", func(t *testing.T) {
 		// given
 		logSinkMock := newTrivialTestLogSink()
 		testLogger := logr.New(logSinkMock)
@@ -68,9 +67,9 @@ func Test_decideRequeueForError(t *testing.T) {
 		actual, err := sut.handleError(testLogger, errorChain)
 
 		// then
-		require.Error(t, err)
-		assert.Equal(t, ctrl.Result{}, actual)
-		assert.Contains(t, logSinkMock.output, "0: Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
+		assert.Contains(t, logSinkMock.output, "0: Resource was not found, so maybe it was deleted in the meantime. Retry later")
 	})
 	t.Run("should catch wrapped MultipleBlueprintsError, issue a error log line and requeue", func(t *testing.T) {
 		// given
@@ -91,16 +90,17 @@ func Test_decideRequeueForError(t *testing.T) {
 		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
 		assert.Contains(t, logSinkMock.output, "0: Ecosystem contains multiple blueprints - delete all but one. Retry later")
 	})
-	t.Run("NotFoundError, should retry if referenced config is missing", func(t *testing.T) {
+	t.Run("NotFoundError, should not retry if DoNotRetry-Flag is set", func(t *testing.T) {
 		// given
 		logSinkMock := newTrivialTestLogSink()
 		testLogger := logr.New(logSinkMock)
 
 		intermediateErr := &domainservice.NotFoundError{
 			WrappedError: assert.AnError,
-			Message:      "secret xyz does not exist",
+			Message:      "Blueprint does not exist",
+			DoNotRetry:   true,
 		}
-		errorChain := fmt.Errorf("%s: %w", application.REFERENCED_CONFIG_NOT_FOUND, intermediateErr)
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
 
 		// when
 		sut := NewErrorHandler()
@@ -108,8 +108,8 @@ func Test_decideRequeueForError(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
-		assert.Contains(t, logSinkMock.output, "0: Referenced config not found. Retry later")
+		assert.Equal(t, ctrl.Result{}, actual)
+		assert.Contains(t, logSinkMock.output, "0: Did not find resource and a retry is not expected to fix this issue. There will be no further automatic evaluation.")
 	})
 	t.Run("should catch wrapped InvalidBlueprintError, issue a log line and do not requeue", func(t *testing.T) {
 		// given

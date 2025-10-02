@@ -3,10 +3,8 @@ package reconciler
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
@@ -40,7 +38,7 @@ func (h *ErrorHandler) handleError(logger logr.Logger, err error) (ctrl.Result, 
 	case errors.As(err, &conflictError):
 		return h.handleConflictError(errLogger)
 	case errors.As(err, &notFoundError):
-		return h.handleNotFoundError(errLogger, err)
+		return h.handleNotFoundError(errLogger, notFoundError)
 	case errors.As(err, &invalidBlueprintError):
 		return h.handleInvalidBlueprintError(errLogger)
 	case errors.As(err, &healthError):
@@ -67,15 +65,16 @@ func (h *ErrorHandler) handleConflictError(logger logr.Logger) (ctrl.Result, err
 	logger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 	return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 }
-func (h *ErrorHandler) handleNotFoundError(logger logr.Logger, err error) (ctrl.Result, error) {
-	if strings.Contains(err.Error(), application.REFERENCED_CONFIG_NOT_FOUND) {
-		// retry in this case because maybe the user will create the secret in a few seconds.
-		// we want to be declarative, so our API should not care about the order
-		logger.Error(err, "Referenced config not found. Retry later")
-		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+
+func (h *ErrorHandler) handleNotFoundError(logger logr.Logger, err *domainservice.NotFoundError) (ctrl.Result, error) {
+	if err.DoNotRetry {
+		// do not retry in this case, because if f.e. the blueprint is not found, nothing will bring it back, except the
+		// user, and this would trigger the reconciler by itself.
+		logger.Error(err, "Did not find resource and a retry is not expected to fix this issue. There will be no further automatic evaluation.")
+		return ctrl.Result{}, nil
 	}
-	logger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
-	return ctrl.Result{}, err // automatic requeue because of non-nil err
+	logger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry later")
+	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 }
 
 func (h *ErrorHandler) handleInvalidBlueprintError(logger logr.Logger) (ctrl.Result, error) {

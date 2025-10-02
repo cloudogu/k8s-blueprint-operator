@@ -164,7 +164,7 @@ func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFo
 type NotFoundError struct {
 	WrappedError error
 	Message      string
-	Retryable    bool
+	DoNotRetry   bool
 }
 
 // Error marks the struct as an error.

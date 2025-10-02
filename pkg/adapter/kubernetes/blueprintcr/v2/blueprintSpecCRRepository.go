@@ -48,6 +48,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("cannot load blueprint CR %q as it does not exist", blueprintId),
+				DoNotRetry:   true,
 			}
 		}
 		return nil, &domainservice.InternalError{
