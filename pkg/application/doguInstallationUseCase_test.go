@@ -1013,37 +1013,4 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, dogusNotUpToDate)
 	})
-	t.Run("internal error on dogu config Get not found error", func(t *testing.T) {
-		// given
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"postgresql": {
-				Name:             postgresqlQualifiedName,
-				Version:          version3211,
-				InstalledVersion: version3211,
-				StartedAt:        timeJuly,
-			},
-		}, nil)
-
-		globalConfigRepoMock := newMockGlobalConfigRepository(t)
-		globalConfigRepoMock.EXPECT().Get(testCtx).Return(config.GlobalConfig{}, nil)
-		doguConfigRepoMock := newMockDoguConfigRepository(t)
-		notFoundErr := domainservice.NewNotFoundError(assert.AnError, "testerror")
-		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(config.DoguConfig{}, notFoundErr)
-
-		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
-		}
-
-		// when
-		dogusNotUpToDate, err := useCase.CheckDogusUpToDate(testCtx)
-		// then
-		require.Error(t, err)
-		require.Nil(t, dogusNotUpToDate)
-		var internalError *domainservice.InternalError
-		assert.ErrorAs(t, err, &internalError)
-		assert.ErrorContains(t, err, "dogu config does not exist for dogu \"postgresql\". This might be, because the dogu is currently deleted. Retry Later")
-	})
 }

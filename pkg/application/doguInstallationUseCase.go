@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -75,15 +74,6 @@ func (useCase *DoguInstallationUseCase) CheckDogusUpToDate(ctx context.Context) 
 
 		doguConfig, err := useCase.doguConfigRepo.Get(ctx, doguName)
 		if err != nil {
-			// If error is a NotFoundError here, the dogu might be in the process of being deleted. Throw an internal error to reconcile this case.
-			var notFoundError *domainservice.NotFoundError
-			if errors.As(err, &notFoundError) {
-				return nil, domainservice.NewInternalError(
-					errors.Unwrap(err),
-					"dogu config does not exist for dogu %q. This might be, because the dogu is currently deleted. Retry Later",
-					doguName,
-				)
-			}
 			return nil, err
 		}
 		doguConfigUpdateTime := doguConfig.LastUpdated
