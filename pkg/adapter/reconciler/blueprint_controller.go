@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -81,14 +79,14 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 	case errors.As(err, &notFoundError):
-		if strings.Contains(err.Error(), application.REFERENCED_CONFIG_NOT_FOUND) {
-			// retry in this case because maybe the user will create the secret in a few seconds.
-			// we want to be declarative, so our API should not care about the order
-			errLogger.Error(err, "Referenced config not found. Retry later")
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		if notFoundError.DoNotRetry {
+			// do not retry in this case, because if f.e. the blueprint is not found, nothing will bring it back, except the
+			// user, and this would trigger the reconciler by itself.
+			logger.Error(err, "Did not find resource and a retry is not expected to fix this issue. There will be no further automatic evaluation.")
+			return ctrl.Result{}, nil
 		}
-		errLogger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
-		return ctrl.Result{}, err // automatic requeue because of non-nil err
+		logger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry later")
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{}, nil
