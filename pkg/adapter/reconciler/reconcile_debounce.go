@@ -5,7 +5,8 @@ import (
 	"time"
 )
 
-// SingletonDebounce coalesces bursts for a single blueprint.
+// SingletonDebounce debounces reconcilation events triggered by cluster resources other than the blueprint, to avoid
+// too many unnecessary reconciliations.
 type SingletonDebounce struct {
 	mu      sync.Mutex
 	next    time.Time // when the next event is allowed
@@ -30,7 +31,7 @@ func (d *SingletonDebounce) AllowOrMark(window time.Duration) bool {
 }
 
 // ShouldRequeue tells if we should do a trailing reconciliation after cooldown.
-// Returns (shouldRequeue, remainingCooldown).
+// Returns (ShouldRequeue, remainingCooldown).
 func (d *SingletonDebounce) ShouldRequeue() (bool, time.Duration) {
 	now := time.Now()
 
@@ -46,4 +47,12 @@ func (d *SingletonDebounce) ShouldRequeue() (bool, time.Duration) {
 	}
 	d.pending = false
 	return true, remaining
+}
+
+// Touch moves the window further up and clears pending
+func (d *SingletonDebounce) Touch(window time.Duration) {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	d.next = time.Now().Add(window)
+	d.pending = false
 }

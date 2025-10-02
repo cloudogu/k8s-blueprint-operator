@@ -177,6 +177,36 @@ func TestBlueprintReconciler_Reconcile(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, result.RequeueAfter > 0)
 	})
+
+	t.Run("should touch debounce window to reset it", func(t *testing.T) {
+		mockHandler := NewMockBlueprintChangeHandler(t)
+		mockRepo := NewMockBlueprintSpecRepository(t)
+
+		reconciler := NewBlueprintReconciler(mockHandler, mockRepo, "test-namespace", 5*time.Second)
+		now := time.Now()
+
+		// Set up debounce to have pending request
+		reconciler.debounce.pending = true
+		assert.True(t, reconciler.debounce.next.IsZero())
+
+		req := ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Name:      "test-blueprint",
+				Namespace: "test-namespace",
+			},
+		}
+
+		ctx := context.TODO()
+
+		mockHandler.EXPECT().CheckForMultipleBlueprintResources(ctx).Return(nil)
+		mockHandler.EXPECT().HandleUntilApplied(ctx, "test-blueprint").Return(nil)
+
+		_, err := reconciler.Reconcile(ctx, req)
+
+		assert.NoError(t, err)
+		assert.False(t, reconciler.debounce.pending)
+		assert.True(t, now.Before(reconciler.debounce.next))
+	})
 }
 
 func TestBlueprintReconciler_getBlueprintRequest(t *testing.T) {

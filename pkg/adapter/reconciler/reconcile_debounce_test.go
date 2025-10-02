@@ -113,3 +113,18 @@ func TestSingletonDebounce_Concurrency(t *testing.T) {
 		}
 	}
 }
+
+func TestSingletonDebounce_Touch(t *testing.T) {
+	t.Run("reset window and set pending to false", func(t *testing.T) {
+		// given
+		debounce := &SingletonDebounce{}
+		window := 10 * time.Millisecond
+		now := time.Now()
+		// when
+		debounce.Touch(window)
+		// then
+
+		assert.True(t, now.Before(debounce.next))
+		assert.False(t, debounce.pending)
+	})
+}
