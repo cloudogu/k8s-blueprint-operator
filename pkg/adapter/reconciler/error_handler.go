@@ -74,8 +74,8 @@ func (h *ErrorHandler) handleNotFoundError(logger logr.Logger, err error) (ctrl.
 		logger.Error(err, "Referenced config not found. Retry later")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	}
-	logger.Error(err, "Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-	return ctrl.Result{}, nil
+	logger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
+	return ctrl.Result{}, err // automatic requeue because of non-nil err
 }
 
 func (h *ErrorHandler) handleInvalidBlueprintError(logger logr.Logger) (ctrl.Result, error) {
