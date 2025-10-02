@@ -15,10 +15,26 @@ rules:
     resources:
       - secrets
     verbs:
-      - create
-      - update
       - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      - watch
 # issue PVC read-only permissions to amend the Blueprint CR with a currently configured Dogu volume size
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps # for normal dogu config
+    verbs:
+      - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      - watch
+  - apiGroups:
+      - k8s.cloudogu.com
+    resources:
+      - dogus
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - ""
     resources:

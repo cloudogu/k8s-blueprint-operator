@@ -400,7 +400,7 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, nil)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(nil, nil)
 
 		// when
 		err := repo.CheckSingleton(ctx)
@@ -413,7 +413,7 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(&bpv2.BlueprintList{}, nil)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(&bpv2.BlueprintList{}, nil)
 
 		// when
 		err := repo.CheckSingleton(ctx)
@@ -435,7 +435,7 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(list, nil)
 
 		// when
 		err := repo.CheckSingleton(ctx)
@@ -462,7 +462,7 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(list, nil)
 
 		// when
 		err := repo.CheckSingleton(ctx)
@@ -479,7 +479,7 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, assert.AnError)
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(nil, assert.AnError)
 
 		// when
 		err := repo.CheckSingleton(ctx)
@@ -490,4 +490,51 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 		assert.ErrorAs(t, err, &targetErr)
 		assert.ErrorContains(t, err, "error while listing blueprint resources")
 	})
+}
+
+func Test_blueprintSpecRepo_List(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, nil)
+
+		returnList := bpv2.BlueprintList{Items: []bpv2.Blueprint{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test1",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test2",
+				},
+			},
+		}}
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(&returnList, nil)
+
+		// when
+		list, err := repo.List(ctx)
+
+		// then
+		require.NoError(t, err)
+		assert.Len(t, list.Items, 2)
+	})
+
+	t.Run("throw internal error on list error", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, nil)
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(nil, assert.AnError)
+
+		// when
+		list, err := repo.List(ctx)
+
+		// then
+		require.Error(t, err)
+		assert.Nil(t, list)
+		var targetErr *domainservice.InternalError
+		assert.ErrorAs(t, err, &targetErr)
+		assert.ErrorContains(t, err, "error while listing blueprint resources")
+	})
+
 }

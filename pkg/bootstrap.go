@@ -88,7 +88,8 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		dogusUpToDateUseCase,
 	)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
-	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
+	debounceWindow, err := config.GetDebounceWindow()
+	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase, blueprintRepo, namespace, debounceWindow)
 
 	return &ApplicationContext{
 		Reconciler: blueprintReconciler,

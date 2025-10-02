@@ -88,15 +88,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
-	// Ask for just 2 items: enough to detect "more than one"
-	limit := int64(2)
-
-	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit})
+	list, err := repo.List(ctx)
 	if err != nil {
-		return &domainservice.InternalError{
-			WrappedError: err,
-			Message:      "error while listing blueprint resources",
-		}
+		return err
 	}
 
 	if list == nil {
@@ -109,6 +103,17 @@ func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
 	default:
 		return &domain.MultipleBlueprintsError{Message: "more than one blueprint CR found"}
 	}
+}
+
+func (repo *blueprintSpecRepo) List(ctx context.Context) (*v2.BlueprintList, error) {
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      "error while listing blueprint resources",
+		}
+	}
+	return list, nil
 }
 
 func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *v2.Blueprint, blueprintId string) error {

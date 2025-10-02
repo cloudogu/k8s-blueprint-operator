@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -196,6 +195,7 @@ func Test_startOperator(t *testing.T) {
 		//ctrlManMock.EXPECT().GetConfig().Return(restConfig)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(runtime.NewScheme())
+		ctrlManMock.EXPECT().GetCache().Return(nil)
 
 		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
 			return ctrlManMock, nil
