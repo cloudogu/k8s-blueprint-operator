@@ -59,7 +59,6 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	logger := log.FromContext(ctx).
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
-	r.debounce.Touch(r.window) // reset debounce-window because we are reconciling right now and always considering the whole cluster state
 
 	err := r.blueprintChangeHandler.CheckForMultipleBlueprintResources(ctx)
 

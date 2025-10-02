@@ -48,11 +48,3 @@ func (d *SingletonDebounce) ShouldRequeue() (bool, time.Duration) {
 	d.pending = false
 	return true, remaining
 }
-
-// Touch moves the window further up and clears pending
-func (d *SingletonDebounce) Touch(window time.Duration) {
-	d.mu.Lock()
-	defer d.mu.Unlock()
-	d.next = time.Now().Add(window)
-	d.pending = false
-}
