@@ -87,8 +87,8 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 			errLogger.Error(err, "Referenced config not found. Retry later")
 			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 		}
-		errLogger.Error(err, "Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-		return ctrl.Result{}, nil
+		errLogger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
+		return ctrl.Result{}, err // automatic requeue because of non-nil err
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{}, nil
