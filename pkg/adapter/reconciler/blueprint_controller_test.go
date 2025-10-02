@@ -163,7 +163,7 @@ func Test_decideRequeueForError(t *testing.T) {
 		assert.Equal(t, ctrl.Result{RequeueAfter: 1 * time.Second}, actual)
 		assert.Contains(t, logSinkMock.output, "0: A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 	})
-	t.Run("should catch wrapped NotFoundError, issue a log line and do not requeue timely", func(t *testing.T) {
+	t.Run("should catch wrapped NotFoundError, issue a log line and requeue with backoff", func(t *testing.T) {
 		// given
 		logSinkMock := newTrivialTestLogSink()
 		testLogger := logr.New(logSinkMock)
@@ -178,9 +178,9 @@ func Test_decideRequeueForError(t *testing.T) {
 		actual, err := decideRequeueForError(testLogger, errorChain)
 
 		// then
-		require.NoError(t, err)
+		require.Error(t, err)
 		assert.Equal(t, ctrl.Result{}, actual)
-		assert.Contains(t, logSinkMock.output, "0: Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
+		assert.Contains(t, logSinkMock.output, "0: Resource was not found, so maybe it was deleted in the meantime. Retry with backoff to see")
 	})
 	t.Run("should catch wrapped MultipleBlueprintsError, issue a error log line and requeue", func(t *testing.T) {
 		// given
