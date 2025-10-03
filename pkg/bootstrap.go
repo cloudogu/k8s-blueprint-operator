@@ -89,6 +89,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
 	debounceWindow, err := config.GetDebounceWindow()
+	if err != nil {
+		return nil, err
+	}
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase, blueprintRepo, namespace, debounceWindow)
 
 	return &ApplicationContext{
