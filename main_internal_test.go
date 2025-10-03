@@ -180,6 +180,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -220,6 +221,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -268,6 +270,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -317,6 +320,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -372,6 +376,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
