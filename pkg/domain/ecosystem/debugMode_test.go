@@ -17,6 +17,11 @@ func TestDebugMode_IsActive(t *testing.T) {
 		assert.True(t, debugMode.IsActive())
 	})
 
+	t.Run("is active on rollback", func(t *testing.T) {
+		debugMode := DebugMode{Phase: DebugModeStatusRollback}
+		assert.True(t, debugMode.IsActive())
+	})
+
 	t.Run("is not active on anything else", func(t *testing.T) {
 		debugMode := DebugMode{Phase: "not active"}
 		assert.False(t, debugMode.IsActive())
