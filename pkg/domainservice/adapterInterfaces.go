@@ -154,6 +154,13 @@ type SensitiveConfigRefReader interface {
 	)
 }
 
+type DebugModeRepository interface {
+	// GetSingleton returns the ecosystem.DebugMode or
+	//  - a NotFoundError if the debugMode information is not found in the ecosystem or
+	//  - an InternalError if there is any other error.
+	GetSingleton(ctx context.Context) (*ecosystem.DebugMode, error)
+}
+
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
 func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {
