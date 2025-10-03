@@ -7,6 +7,7 @@ require (
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.1
 	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20250925091741-275e54da827b
+	github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20250924122244-01339f784cd0
 	github.com/cloudogu/k8s-registry-lib v0.2.2-0.20250818112109-cfd93e57e9f6
 	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
@@ -28,7 +29,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
-	github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0 // indirect
 	github.com/cloudogu/retry-lib v0.1.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/docker/docker v27.4.1+incompatible // indirect

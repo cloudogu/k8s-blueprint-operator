@@ -43,6 +43,8 @@ const (
 
 	ReasonLastApplyErrorAtDogus  = "DoguApplyFailure"
 	ReasonLastApplyErrorAtConfig = "ConfigApplyFailure"
+
+	loggingKey = "logging/root"
 )
 
 var (
@@ -145,13 +147,17 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 	}
 }
 
-func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
+func (spec *BlueprintSpec) CalculateEffectiveBlueprint(isDebugModeActive bool) error {
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
 		return err
 	}
 
 	effectiveConfig := spec.removeConfigForMaskedDogus()
+	// TODO remove loglevel changes on debugMode + event + log + condition?
+	if isDebugModeActive {
+		effectiveConfig = removeLogLevelChangesFromConfig(effectiveConfig)
+	}
 
 	spec.EffectiveBlueprint = EffectiveBlueprint{
 		Dogus:  effectiveDogus,
@@ -171,6 +177,27 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 		return validationError
 	}
 	return nil
+}
+
+// removeLogLevelChangesFromConfig creates a copy of the given config with all
+// logging configuration entries removed from dogu configs. This is used in
+// debug mode to prevent log level changes from being applied.
+func removeLogLevelChangesFromConfig(config Config) Config {
+	configCopy := Config{
+		Dogus:  make(map[cescommons.SimpleName]DoguConfigEntries),
+		Global: config.Global,
+	}
+
+	for doguName, doguConfig := range config.Dogus {
+		newDoguConfig := make(DoguConfigEntries, 0, len(doguConfig))
+		for _, configEntry := range doguConfig {
+			if configEntry.Key != loggingKey {
+				newDoguConfig = append(newDoguConfig, configEntry)
+			}
+		}
+		configCopy.Dogus[doguName] = newDoguConfig
+	}
+	return configCopy
 }
 
 func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {

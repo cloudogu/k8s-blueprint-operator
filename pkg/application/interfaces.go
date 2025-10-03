@@ -62,6 +62,12 @@ type blueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
 }
 
+//nolint:unused
+//goland:noinspection GoUnusedType
+type debugModeRepository interface {
+	domainservice.DebugModeRepository
+}
+
 // interface duplication for mocks
 
 //nolint:unused

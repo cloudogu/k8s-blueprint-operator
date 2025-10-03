@@ -5,6 +5,7 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	libconfig "github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,13 @@ var premiumNexus = cescommons.QualifiedName{
 	Namespace:  "premium",
 	SimpleName: "nexus",
 }
+
+var (
+	debugValue = libconfig.Value("DEBUG")
+	infoValue  = libconfig.Value("INFO")
+	someValue1 = libconfig.Value("value1")
+	someValue2 = libconfig.Value("value2")
+)
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
@@ -131,7 +139,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		}
 
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.Nil(t, err)
 	})
@@ -151,7 +159,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		}
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -180,7 +188,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		}
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -203,7 +211,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
 		}
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.Error(t, err, "without the feature flag, namespace changes are not allowed")
 		require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/nexus\" -> \"premium/nexus\"")
@@ -223,7 +231,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
 		}
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.NoError(t, err, "with the feature flag namespace changes should be allowed")
 		require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -241,11 +249,53 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint: Blueprint{Config: config},
 		}
 
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
 		assert.Equal(t, 1, len(spec.Events))
 		assert.Equal(t, "BlueprintSpecInvalid", spec.Events[0].Name())
+	})
+
+	t.Run("should remove logging config in debug mode", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Id: "test-blueprint",
+			Blueprint: Blueprint{
+				Dogus: []Dogu{
+					{
+						Name:    cescommons.QualifiedName{Namespace: "official", SimpleName: "ldap"},
+						Version: &core.Version{Raw: "1.0.0"},
+					},
+				},
+				Config: Config{
+					Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+						"ldap": {
+							{Key: "logging/root", Value: &debugValue},
+							{Key: "server/port", Value: &someValue1},
+							{Key: "cache/enabled", Value: &someValue2},
+						},
+					},
+				},
+			},
+			BlueprintMask: BlueprintMask{},
+		}
+
+		// when
+		err := spec.CalculateEffectiveBlueprint(true) // debug mode
+
+		// then
+		assert.NoError(t, err)
+
+		// Should remove logging config in debug mode
+		ldapConfig := spec.EffectiveBlueprint.Config.Dogus["ldap"]
+		assert.Len(t, ldapConfig, 2)
+		assert.Contains(t, ldapConfig, ConfigEntry{Key: "server/port", Value: &someValue1})
+		assert.Contains(t, ldapConfig, ConfigEntry{Key: "cache/enabled", Value: &someValue2})
+
+		// Should not contain any logging config
+		for _, entry := range ldapConfig {
+			assert.NotEqual(t, "logging/root", entry.Key)
+		}
 	})
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
@@ -262,7 +312,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Dogus: dogus},
 		}
-		err := spec.CalculateEffectiveBlueprint()
+		err := spec.CalculateEffectiveBlueprint(false)
 
 		require.Nil(t, err)
 		assert.Equal(t, dogus[0], spec.EffectiveBlueprint.Dogus[0], "effective blueprint should contain dogu with all field from the original blueprint")
@@ -689,5 +739,92 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		assert.True(t, changed, "condition should change after the first call")
 		changed = blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
 		assert.False(t, changed, "condition should not change here")
+	})
+}
+
+func Test_removeLogLevelChangesFromConfig(t *testing.T) {
+	t.Run("should remove logging config entries and keep others", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"dogu1": {
+					{Key: "logging/root", Value: &debugValue},
+					{Key: "other/setting", Value: &someValue1},
+					{Key: "another/config", Value: &someValue2},
+				},
+				"dogu2": {
+					{Key: "logging/root", Value: &infoValue},
+					{Key: "database/host", Value: &someValue1},
+				},
+			},
+			Global: GlobalConfigEntries{
+				{Key: "global/setting", Value: &someValue1},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Equal(t, config.Global, result.Global, "Global config should be preserved")
+
+		// Check dogu1 config
+		dogu1Config := result.Dogus["dogu1"]
+		assert.Len(t, dogu1Config, 2, "dogu1 should have 2 config entries after removing logging")
+		assert.Contains(t, dogu1Config, ConfigEntry{Key: "other/setting", Value: &someValue1})
+		assert.Contains(t, dogu1Config, ConfigEntry{Key: "another/config", Value: &someValue2})
+		assert.NotContains(t, dogu1Config, ConfigEntry{Key: "logging/root", Value: &debugValue})
+
+		// Check dogu2 config
+		dogu2Config := result.Dogus["dogu2"]
+		assert.Len(t, dogu2Config, 1, "dogu2 should have 1 config entry after removing logging")
+		assert.Contains(t, dogu2Config, ConfigEntry{Key: "database/host", Value: &someValue1})
+	})
+
+	t.Run("should return empty config entries for dogu with only logging config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"dogu-with-only-logging": {
+					{Key: "logging/root", Value: &debugValue},
+				},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Len(t, result.Dogus["dogu-with-only-logging"], 0, "dogu with only logging should have empty config")
+	})
+
+	t.Run("should handle empty dogu config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"empty-dogu": {},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Len(t, result.Dogus["empty-dogu"], 0, "empty dogu config should remain empty")
+	})
+
+	t.Run("should handle empty config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus:  map[cescommons.SimpleName]DoguConfigEntries{},
+			Global: GlobalConfigEntries{},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Empty(t, result.Dogus, "empty dogus map should remain empty")
+		assert.Empty(t, result.Global, "empty global config should remain empty")
 	})
 }
