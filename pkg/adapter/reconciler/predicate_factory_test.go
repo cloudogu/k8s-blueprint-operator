@@ -321,7 +321,19 @@ func TestHasCesLabel(t *testing.T) {
 		expected bool
 	}{
 		{
-			name: "has ces labels",
+			name: "has ces dogu config labels",
+			obj: &corev1.ConfigMap{
+				ObjectMeta: metav1.ObjectMeta{
+					Labels: map[string]string{
+						"app":       "ces",
+						"dogu.name": "test-dogu",
+					},
+				},
+			},
+			expected: true,
+		},
+		{
+			name: "has ces global config labels",
 			obj: &corev1.ConfigMap{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{

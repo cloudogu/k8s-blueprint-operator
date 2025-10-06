@@ -53,7 +53,8 @@ func doguSpecChanged(oldObj, newObj *v2.Dogu) bool {
 }
 
 func hasCesLabel(o client.Object) bool {
-	return o.GetLabels()["app"] == "ces" && o.GetLabels()["dogu.name"] != ""
+	// Consider only CES ConfigMaps that are doguConfig or globalConfig
+	return o.GetLabels()["app"] == "ces" && (o.GetLabels()["dogu.name"] != "" || o.GetLabels()["k8s.cloudogu.com/type"] == "global-config")
 }
 
 func hasNotDoguDescriptorLabel(o client.Object) bool {
