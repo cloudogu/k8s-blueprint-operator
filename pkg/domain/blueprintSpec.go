@@ -147,17 +147,13 @@ func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError 
 	}
 }
 
-func (spec *BlueprintSpec) CalculateEffectiveBlueprint(isDebugModeActive bool) error {
+func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
 		return err
 	}
 
 	effectiveConfig := spec.removeConfigForMaskedDogus()
-	// TODO remove loglevel changes on debugMode + event + log + condition?
-	if isDebugModeActive {
-		effectiveConfig = removeLogLevelChangesFromConfig(effectiveConfig)
-	}
 
 	spec.EffectiveBlueprint = EffectiveBlueprint{
 		Dogus:  effectiveDogus,
@@ -271,10 +267,15 @@ func (spec *BlueprintSpec) MissingConfigReferences(error error) {
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
+	isDebugModeActive bool,
 ) error {
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
+	config := spec.EffectiveBlueprint.Config
+	if isDebugModeActive {
+		config = removeLogLevelChangesFromConfig(config)
+	}
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
-		spec.EffectiveBlueprint.Config,
+		config,
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
 		ecosystemState.SensitiveConfigByDogu,

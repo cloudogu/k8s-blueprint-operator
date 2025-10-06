@@ -139,7 +139,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
 		}
 
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 	})
@@ -159,7 +159,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		}
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -188,7 +188,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 		}
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -211,7 +211,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
 		}
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.Error(t, err, "without the feature flag, namespace changes are not allowed")
 		require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/nexus\" -> \"premium/nexus\"")
@@ -231,7 +231,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
 		}
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.NoError(t, err, "with the feature flag namespace changes should be allowed")
 		require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
@@ -249,54 +249,13 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 			Blueprint: Blueprint{Config: config},
 		}
 
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
 		assert.Equal(t, 1, len(spec.Events))
 		assert.Equal(t, "BlueprintSpecInvalid", spec.Events[0].Name())
 	})
 
-	t.Run("should remove logging config in debug mode", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Id: "test-blueprint",
-			Blueprint: Blueprint{
-				Dogus: []Dogu{
-					{
-						Name:    cescommons.QualifiedName{Namespace: "official", SimpleName: "ldap"},
-						Version: &core.Version{Raw: "1.0.0"},
-					},
-				},
-				Config: Config{
-					Dogus: map[cescommons.SimpleName]DoguConfigEntries{
-						"ldap": {
-							{Key: "logging/root", Value: &debugValue},
-							{Key: "server/port", Value: &someValue1},
-							{Key: "cache/enabled", Value: &someValue2},
-						},
-					},
-				},
-			},
-			BlueprintMask: BlueprintMask{},
-		}
-
-		// when
-		err := spec.CalculateEffectiveBlueprint(true) // debug mode
-
-		// then
-		assert.NoError(t, err)
-
-		// Should remove logging config in debug mode
-		ldapConfig := spec.EffectiveBlueprint.Config.Dogus["ldap"]
-		assert.Len(t, ldapConfig, 2)
-		assert.Contains(t, ldapConfig, ConfigEntry{Key: "server/port", Value: &someValue1})
-		assert.Contains(t, ldapConfig, ConfigEntry{Key: "cache/enabled", Value: &someValue2})
-
-		// Should not contain any logging config
-		for _, entry := range ldapConfig {
-			assert.NotEqual(t, "logging/root", entry.Key)
-		}
-	})
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
 			{
@@ -312,7 +271,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Dogus: dogus},
 		}
-		err := spec.CalculateEffectiveBlueprint(false)
+		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 		assert.Equal(t, dogus[0], spec.EffectiveBlueprint.Dogus[0], "effective blueprint should contain dogu with all field from the original blueprint")
@@ -343,7 +302,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -370,7 +329,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -435,7 +394,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		require.NoError(t, err)
@@ -470,7 +429,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))

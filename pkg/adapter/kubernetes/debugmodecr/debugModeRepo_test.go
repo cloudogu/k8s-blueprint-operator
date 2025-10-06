@@ -38,7 +38,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 					TargetLogLevel:      "DEBUG",
 				},
 				Status: v1.DebugModeStatus{
-					Phase: v1.StatusPhase(ecosystem.DebugModeStatusSet),
+					Phase: v1.DebugModeStatusSet,
 				},
 			}, nil)
 		debugMode, err := repo.GetSingleton(testCtx)
@@ -46,7 +46,7 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, &ecosystem.DebugMode{
-			Phase: ecosystem.DebugModeStatusSet,
+			Phase: "SetDebugMode",
 		}, debugMode)
 	})
 

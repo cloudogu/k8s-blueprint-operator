@@ -38,11 +38,11 @@ func Test_parseDoguCR(t *testing.T) {
 					TargetLogLevel:      "DEBUG",
 				},
 				Status: v1.DebugModeStatus{
-					Phase: v1.StatusPhase(ecosystem.DebugModeStatusSet),
+					Phase: v1.DebugModeStatusSet,
 				},
 			}},
 			want: &ecosystem.DebugMode{
-				Phase: ecosystem.DebugModeStatusSet,
+				Phase: "SetDebugMode",
 			},
 			wantErr: false,
 		},
