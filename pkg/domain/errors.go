@@ -72,14 +72,6 @@ func (e *MultipleBlueprintsError) Error() string {
 	return e.Message
 }
 
-type AwaitSelfUpgradeError struct {
-	Message string
-}
-
-func (e *AwaitSelfUpgradeError) Error() string {
-	return e.Message
-}
-
 type StateDiffNotEmptyError struct {
 	Message string
 }

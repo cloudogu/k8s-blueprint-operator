@@ -604,48 +604,6 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 }
 
-func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
-	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-		blueprint.MarkWaitingForSelfUpgrade()
-
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
-	})
-
-	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-
-		blueprint.MarkWaitingForSelfUpgrade()
-		blueprint.Events = []Event(nil)
-		blueprint.MarkWaitingForSelfUpgrade()
-
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if condition did not change")
-	})
-}
-
-func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
-	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-		blueprint.MarkSelfUpgradeCompleted()
-
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
-	})
-
-	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-
-		blueprint.MarkSelfUpgradeCompleted()
-		blueprint.Events = []Event(nil)
-		blueprint.MarkSelfUpgradeCompleted()
-
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
-	})
-}
-
 func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 	t.Run("healthy", func(t *testing.T) {
 		blueprint := BlueprintSpec{}
