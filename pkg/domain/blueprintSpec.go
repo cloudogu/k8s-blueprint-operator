@@ -434,3 +434,7 @@ func (spec *BlueprintSpec) SetLastApplySucceededConditionOnError(reason string, 
 
 	return false
 }
+
+func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
+	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
+}

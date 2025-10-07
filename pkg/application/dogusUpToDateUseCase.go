@@ -26,6 +26,7 @@ func NewDogusUpToDateUseCase(
 }
 
 // CheckDogus checks that all dogs are up to date.
+// returns domain.DogusNotUpToDateError if the dogu config or installed version are not up to date yet or
 // returns domainservice.ConflictError if there was a concurrent update to the blueprint or
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
 func (useCase *DogusUpToDateUseCase) CheckDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error {
