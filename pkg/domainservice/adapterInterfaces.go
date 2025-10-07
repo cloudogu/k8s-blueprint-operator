@@ -7,7 +7,6 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
-	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -51,13 +50,13 @@ type BlueprintSpecRepository interface {
 	// an InternalError if there is any other error.
 	CheckSingleton(ctx context.Context) error
 
-	// List retrieves all Blueprint resources from the Kubernetes cluster.
-	// It returns a BlueprintList containing all blueprint resources found in the cluster, or
+	// ListIds retrieves all Blueprint-Ids from the Kubernetes cluster.
+	// It returns a list of Ids containing all blueprint Ids found in the cluster, or
 	// an InternalError if the operation fails.
 	//
 	// The function uses empty ListOptions, meaning it will retrieve all blueprint resources
 	// without any filtering or pagination.
-	List(ctx context.Context) (*v2.BlueprintList, error)
+	ListIds(ctx context.Context) ([]string, error)
 
 	// Update updates a given BlueprintSpec.
 	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or

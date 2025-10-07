@@ -89,9 +89,15 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
-	list, err := repo.List(ctx)
+	// Ask for just 2 items: enough to detect "more than one"
+	limit := int64(2)
+
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit})
 	if err != nil {
-		return err
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      "error while listing blueprint resources",
+		}
 	}
 
 	if list == nil {
@@ -106,7 +112,7 @@ func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
 	}
 }
 
-func (repo *blueprintSpecRepo) List(ctx context.Context) (*v2.BlueprintList, error) {
+func (repo *blueprintSpecRepo) ListIds(ctx context.Context) ([]string, error) {
 	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
 		return nil, &domainservice.InternalError{
@@ -114,7 +120,12 @@ func (repo *blueprintSpecRepo) List(ctx context.Context) (*v2.BlueprintList, err
 			Message:      "error while listing blueprint resources",
 		}
 	}
-	return list, nil
+
+	result := make([]string, len(list.Items))
+	for index, blueprint := range list.Items {
+		result[index] = blueprint.Name
+	}
+	return result, nil
 }
 
 func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *v2.Blueprint, blueprintId string) error {
