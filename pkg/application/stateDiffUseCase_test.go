@@ -271,7 +271,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"ldap": {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.1.1")},
+			"ldap": {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.1.1"), InstalledVersion: mustParseVersion(t, "1.1.1")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 
@@ -325,9 +325,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			{
 				DoguName: "ldap",
 				Actual: domain.DoguDiffState{
-					Namespace: "official",
-					Version:   mustParseVersionToPtr(t, "1.1.1"),
-					Absent:    false,
+					Namespace:        "official",
+					Version:          mustParseVersionToPtr(t, "1.1.1"),
+					InstalledVersion: mustParseVersionToPtr(t, "1.1.1"),
+					Absent:           false,
 				},
 				Expected: domain.DoguDiffState{
 					Namespace: "official",
