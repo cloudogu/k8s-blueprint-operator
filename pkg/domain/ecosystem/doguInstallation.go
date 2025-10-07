@@ -161,3 +161,7 @@ func (dogu *DoguInstallation) UpdateProxyAdditionalConfig(value AdditionalConfig
 func (dogu *DoguInstallation) UpdateAdditionalMounts(mounts []AdditionalMount) {
 	dogu.AdditionalMounts = mounts
 }
+
+func (dogu *DoguInstallation) SetReconciliationPaused(isPaused bool) {
+	dogu.PauseReconciliation = isPaused
+}

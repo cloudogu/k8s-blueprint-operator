@@ -56,7 +56,7 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 	}
 
 	if blueprint.StateDiff.HasConfigChanges() {
-		blueprint.Events = append(blueprint.Events, domain.EcosystemConfigAppliedEvent{})
+		blueprint.MarkEcosystemConfigApplied()
 		repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
 
 		if repoErr != nil {
@@ -80,7 +80,7 @@ func (useCase *EcosystemConfigUseCase) pauseReconciliationForDogus(ctx context.C
 			(globalConfigChanges ||
 				diff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
 				diff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges()) {
-			dogu.PauseReconciliation = true
+			dogu.SetReconciliationPaused(true)
 			err = useCase.doguInstallationRepository.Update(ctx, dogu)
 			if err != nil {
 				return fmt.Errorf("could not pause reconciliation for dogu: %w", err)

@@ -73,14 +73,14 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter, doguRepo)
 	dogusUpToDateUseCase := application.NewDogusUpToDateUseCase(blueprintRepo, doguInstallationUseCase)
 
-	preparationUseCases := application.NewBlueprintPreparationUseCases(
+	preparationUseCases := application.NewBlueprintPreparationUseCase(
 		initialBlueprintStateUseCase,
 		blueprintValidationUseCase,
 		effectiveBlueprintUseCase,
 		stateDiffUseCase,
 		ecosystemHealthUseCase,
 	)
-	applyUseCases := application.NewBlueprintApplyUseCases(
+	applyUseCases := application.NewBlueprintApplyUseCase(
 		completeBlueprintSpecUseCase,
 		ConfigUseCase,
 		applyDogusUseCase,
