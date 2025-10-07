@@ -231,7 +231,15 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 
 // MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
 func (spec *BlueprintSpec) MissingConfigReferences(error error) {
-	spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:    ConditionExecutable,
+		Status:  metav1.ConditionFalse,
+		Reason:  "MissingConfigReferences",
+		Message: error.Error(),
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
+	}
 }
 
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.

@@ -270,11 +270,27 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 }
 
 func TestBlueprintSpec_MissingConfigReferences(t *testing.T) {
-	blueprint := BlueprintSpec{}
-	blueprint.MissingConfigReferences(assert.AnError)
-	require.Equal(t, 1, len(blueprint.Events))
-	assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
-	assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+	t.Run("first call -> new event", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+		blueprint.MissingConfigReferences(assert.AnError)
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
+		assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionExecutable))
+	})
+
+	t.Run("repeated call -> no event", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+
+		blueprint.MissingConfigReferences(assert.AnError)
+		blueprint.Events = []Event(nil)
+		blueprint.MissingConfigReferences(assert.AnError)
+
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionExecutable))
+		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
+	})
+
 }
 
 func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
