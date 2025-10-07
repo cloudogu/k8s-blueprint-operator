@@ -81,7 +81,6 @@ func NewBlueprintSpecChangeUseCase(
 // Returns a domainservice.NotFoundError if the blueprintId does not correspond to a blueprintSpec or
 // a domainservice.InternalError if there is any error while loading or persisting the blueprintSpec or
 // a domainservice.ConflictError if there was a concurrent write or
-// a domain.AwaitSelfUpgradeError if we need to wait for a self-upgrade or
 // a domain.InvalidBlueprintError if the blueprint is invalid.
 func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.Context, blueprintId string) error {
 	logger := log.FromContext(givenCtx).
@@ -188,7 +187,6 @@ func (useCase *BlueprintApplyUseCases) applyBlueprint(ctx context.Context, bluep
 
 	err = useCase.dogusUpToDateUseCase.CheckDogus(ctx, blueprint)
 	if err != nil {
-		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
 		return err
 	}
 

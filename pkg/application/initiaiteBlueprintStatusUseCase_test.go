@@ -56,7 +56,7 @@ func TestInitiateBlueprintStatusUseCase_InitateConditions(t *testing.T) {
 					},
 				},
 			},
-			wantUnknownConditions: []string{domain.ConditionExecutable, domain.ConditionEcosystemHealthy, domain.ConditionCompleted, domain.ConditionSelfUpgradeCompleted},
+			wantUnknownConditions: []string{domain.ConditionExecutable, domain.ConditionEcosystemHealthy, domain.ConditionCompleted},
 			wantErr:               nil,
 		},
 		{
@@ -72,9 +72,6 @@ func TestInitiateBlueprintStatusUseCase_InitateConditions(t *testing.T) {
 						},
 						{
 							Type: domain.ConditionEcosystemHealthy,
-						},
-						{
-							Type: domain.ConditionSelfUpgradeCompleted,
 						},
 						{
 							Type: domain.ConditionCompleted,
