@@ -197,7 +197,7 @@ func Test_decideRequeueForError(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
-		assert.Contains(t, logSinkMock.output, "0: Ecosystem contains multiple blueprints - delete all but one. Retry later")
+		assert.Contains(t, logSinkMock.output, "0: Ecosystem contains multiple blueprints - delete all except one. Retry later")
 	})
 	t.Run("NotFoundError, should not retry if DoNotRetry-Flag is set", func(t *testing.T) {
 		// given

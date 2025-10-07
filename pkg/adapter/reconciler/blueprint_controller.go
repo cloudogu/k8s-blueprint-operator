@@ -102,7 +102,7 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		// fast requeue here since state diff has to be determined again
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
 	case errors.As(err, &multipleBlueprintsError):
-		errLogger.Error(err, "Ecosystem contains multiple blueprints - delete all but one. Retry later")
+		errLogger.Error(err, "Ecosystem contains multiple blueprints - delete all except one. Retry later")
 		// fast requeue here since state diff has to be determined again
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	case errors.As(err, &dogusNotUpToDateError):
