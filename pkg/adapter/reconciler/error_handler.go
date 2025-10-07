@@ -28,7 +28,6 @@ func (h *ErrorHandler) handleError(logger logr.Logger, err error) (ctrl.Result, 
 	var notFoundError *domainservice.NotFoundError
 	var invalidBlueprintError *domain.InvalidBlueprintError
 	var healthError *domain.UnhealthyEcosystemError
-	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
 	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
 	var multipleBlueprintsError *domain.MultipleBlueprintsError
 	var dogusNotUpToDateError *domain.DogusNotUpToDateError
@@ -43,8 +42,6 @@ func (h *ErrorHandler) handleError(logger logr.Logger, err error) (ctrl.Result, 
 		return h.handleInvalidBlueprintError(errLogger)
 	case errors.As(err, &healthError):
 		return h.handleHealthError(errLogger)
-	case errors.As(err, &awaitSelfUpgradeError):
-		return h.handleAwaitSelfUpgradeError(errLogger)
 	case errors.As(err, &stateDiffNotEmptyError):
 		return h.handleStateDiffNotEmptyError(errLogger)
 	case errors.As(err, &multipleBlueprintsError):
@@ -86,11 +83,6 @@ func (h *ErrorHandler) handleHealthError(logger logr.Logger) (ctrl.Result, error
 	// really normal case
 	logger.Info("Ecosystem is unhealthy. Retry later")
 	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-}
-
-func (h *ErrorHandler) handleAwaitSelfUpgradeError(logger logr.Logger) (ctrl.Result, error) {
-	logger.Info("wait for self upgrade")
-	return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 }
 
 func (h *ErrorHandler) handleStateDiffNotEmptyError(logger logr.Logger) (ctrl.Result, error) {

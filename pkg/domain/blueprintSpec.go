@@ -34,19 +34,18 @@ type BlueprintSpec struct {
 type Condition = metav1.Condition
 
 const (
-	ConditionValid                = "Valid"
-	ConditionExecutable           = "Executable"
-	ConditionEcosystemHealthy     = "EcosystemHealthy"
-	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
-	ConditionCompleted            = "Completed"
-	ConditionLastApplySucceeded   = "LastApplySucceeded"
+	ConditionValid              = "Valid"
+	ConditionExecutable         = "Executable"
+	ConditionEcosystemHealthy   = "EcosystemHealthy"
+	ConditionCompleted          = "Completed"
+	ConditionLastApplySucceeded = "LastApplySucceeded"
 
 	ReasonLastApplyErrorAtDogus  = "DoguApplyFailure"
 	ReasonLastApplyErrorAtConfig = "ConfigApplyFailure"
 )
 
 var (
-	BlueprintConditions = []string{ConditionValid, ConditionExecutable, ConditionEcosystemHealthy, ConditionSelfUpgradeCompleted, ConditionCompleted, ConditionLastApplySucceeded}
+	BlueprintConditions = []string{ConditionValid, ConditionExecutable, ConditionEcosystemHealthy, ConditionCompleted, ConditionLastApplySucceeded}
 
 	// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
 	notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
@@ -344,28 +343,6 @@ func (spec *BlueprintSpec) ShouldBeApplied() bool {
 	}
 	// not true does not equal IsStatusConditionFalse here, because not true includes status "unknown"
 	return !meta.IsStatusConditionTrue(spec.Conditions, ConditionCompleted) || spec.StateDiff.HasChanges()
-}
-
-func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:   ConditionSelfUpgradeCompleted,
-		Status: metav1.ConditionFalse,
-		Reason: "AwaitSelfUpgrade",
-	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
-	}
-}
-
-func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
-	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
-		Type:   ConditionSelfUpgradeCompleted,
-		Status: metav1.ConditionTrue,
-		Reason: "Completed",
-	})
-	if conditionChanged {
-		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
-	}
 }
 
 func (spec *BlueprintSpec) resetCompletedConditionAfterStateDiff() bool {
