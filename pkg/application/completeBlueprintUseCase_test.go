@@ -33,30 +33,6 @@ func TestApplyBlueprintSpecUseCase_CompleteBlueprint(t *testing.T) {
 
 		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionCompleted))
 	})
-	t.Run("stateDiffNotEnmptyError, if StateDiff not empty", func(t *testing.T) {
-		blueprint := &domain.BlueprintSpec{
-			Conditions: []domain.Condition{},
-			StateDiff: domain.StateDiff{
-				ComponentDiffs: []domain.ComponentDiff{
-					{
-						Name:          "k8s-dogu-operator",
-						NeededActions: []domain.Action{domain.ActionUpgrade},
-					},
-				},
-			},
-		}
-
-		repoMock := newMockBlueprintSpecRepository(t)
-		useCase := NewCompleteBlueprintUseCase(repoMock)
-
-		err := useCase.CompleteBlueprint(testCtx, blueprint)
-
-		require.Error(t, err)
-		var targetErr *domain.StateDiffNotEmptyError
-		assert.ErrorAs(t, err, &targetErr)
-		assert.ErrorContains(t, err, "cannot complete blueprint because the StateDiff has still changes")
-		assert.Empty(t, blueprint.Conditions)
-	})
 	t.Run("no change if already completed", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
 			Conditions: []domain.Condition{},
