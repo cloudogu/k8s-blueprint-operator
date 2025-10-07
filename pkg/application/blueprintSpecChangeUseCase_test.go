@@ -2,7 +2,6 @@ package application
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -14,785 +13,414 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-var testCtx = context.Background()
-var testBlueprintId = "testBlueprint1"
-
-func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
-	// given
-	blueprintSpecRepositoryMock := newMockBlueprintSpecRepository(t)
-	initialStatusUseCaseMock := newMockInitialBlueprintStatusUseCase(t)
-	validationUseCaseMock := newMockBlueprintSpecValidationUseCase(t)
-	effectiveUseCaseMock := newMockEffectiveBlueprintUseCase(t)
-	stateDiffUseCaseMock := newMockStateDiffUseCase(t)
-	completeUseCaseMock := newMockCompleteBlueprintUseCase(t)
-	ecosystemConfigUseCaseMock := newMockEcosystemConfigUseCase(t)
-	applyDoguUseCaseMock := newMockApplyDogusUseCase(t)
-	ecosystemHealthUseCaseMock := newMockEcosystemHealthUseCase(t)
-	dogusUpToDateUseCaseMock := newMockDogusUpToDateUseCase(t)
-
-	preparationUseCases := NewBlueprintPreparationUseCases(
-		initialStatusUseCaseMock,
-		validationUseCaseMock,
-		effectiveUseCaseMock,
-		stateDiffUseCaseMock,
-		ecosystemHealthUseCaseMock,
-	)
-
-	applyUseCases := NewBlueprintApplyUseCases(
-		completeUseCaseMock,
-		ecosystemConfigUseCaseMock,
-		applyDoguUseCaseMock,
-		ecosystemHealthUseCaseMock,
-		dogusUpToDateUseCaseMock,
-	)
-
-	// when
-	result := NewBlueprintSpecChangeUseCase(blueprintSpecRepositoryMock, preparationUseCases, applyUseCases)
-
-	// then
-	require.NotNil(t, result)
-	assert.Equal(t, blueprintSpecRepositoryMock, result.repo)
-	// preparation use cases
-	assert.Equal(t, validationUseCaseMock, result.preparationUseCases.validation)
-	assert.Equal(t, effectiveUseCaseMock, result.preparationUseCases.effectiveBlueprint)
-	assert.Equal(t, stateDiffUseCaseMock, result.preparationUseCases.stateDiff)
-	assert.Equal(t, ecosystemHealthUseCaseMock, result.preparationUseCases.healthUseCase)
-	assert.Equal(t, ecosystemConfigUseCaseMock, result.applyUseCases.ecosystemConfigUseCase)
-	// apply use cases
-	assert.Equal(t, applyDoguUseCaseMock, result.applyUseCases.applyDogusUseCase)
-	assert.Equal(t, completeUseCaseMock, result.applyUseCases.completeUseCase)
-	assert.Equal(t, ecosystemHealthUseCaseMock, result.applyUseCases.healthUseCase)
-	assert.Equal(t, dogusUpToDateUseCaseMock, result.applyUseCases.dogusUpToDateUseCase)
-}
-
-func TestBlueprintSpecChangeUseCase_HandleUntilApplied(t *testing.T) {
-	testBlueprintSpec := &domain.BlueprintSpec{
+var (
+	testCtx           = context.Background()
+	testBlueprintId   = "testBlueprint1"
+	testBlueprintSpec = &domain.BlueprintSpec{
 		Id:        testBlueprintId,
 		StateDiff: domain.StateDiff{DoguDiffs: domain.DoguDiffs{{NeededActions: []domain.Action{domain.ActionInstall}}}},
 	}
-	testStoppedBlueprintSpec := &domain.BlueprintSpec{
+	testBlueprintSpecEmptyDiff = &domain.BlueprintSpec{
+		Id: testBlueprintId,
+	}
+	testStoppedBlueprintSpec = &domain.BlueprintSpec{
 		Id:     testBlueprintId,
 		Config: domain.BlueprintConfiguration{Stopped: true},
 	}
-	testCompletedBlueprintSpec := &domain.BlueprintSpec{
+	testCompletedBlueprintSpec = &domain.BlueprintSpec{
 		Id: testBlueprintId,
 		Conditions: []domain.Condition{{
 			Type:   domain.ConditionCompleted,
 			Status: metav1.ConditionTrue,
 		}},
 	}
+)
 
-	type fields struct {
-		repo                   func(t *testing.T) blueprintSpecRepository
-		initialStatus          func(t *testing.T) initialBlueprintStatusUseCase
-		validation             func(t *testing.T) blueprintSpecValidationUseCase
-		effectiveBlueprint     func(t *testing.T) effectiveBlueprintUseCase
-		stateDiff              func(t *testing.T) stateDiffUseCase
-		applyUseCase           func(t *testing.T) completeBlueprintUseCase
-		ecosystemConfigUseCase func(t *testing.T) ecosystemConfigUseCase
-		applyDogusUseCase      func(t *testing.T) applyDogusUseCase
-		healthUseCase          func(t *testing.T) ecosystemHealthUseCase
-		upToDateUseCase        func(t *testing.T) dogusUpToDateUseCase
-	}
-	type args struct {
-		givenCtx    context.Context
-		blueprintId string
-	}
+func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
+	// given
+	mocks := createAllMocks(t)
+	preparationUseCases := NewBlueprintPreparationUseCase(
+		mocks.initialStatus,
+		mocks.validation,
+		mocks.effectiveBlueprint,
+		mocks.stateDiff,
+		mocks.ecosystemHealth,
+	)
+	applyUseCases := NewBlueprintApplyUseCase(
+		mocks.completeBlueprint,
+		mocks.ecosystemConfig,
+		mocks.applyDogus,
+		mocks.ecosystemHealth,
+		mocks.dogusUpToDate,
+	)
 
-	testArgs := args{
-		givenCtx:    testCtx,
-		blueprintId: testBlueprintId,
-	}
+	// when
+	result := NewBlueprintSpecChangeUseCase(mocks.repo, preparationUseCases, applyUseCases)
 
+	// then
+	require.NotNil(t, result)
+	assert.Equal(t, mocks.repo, result.repo)
+	assertPreparationUseCases(t, result.preparationUseCase, mocks)
+	assertApplyUseCases(t, result.applyUseCase, mocks)
+}
+
+type allMocks struct {
+	repo               *mockBlueprintSpecRepository
+	initialStatus      *mockInitialBlueprintStatusUseCase
+	validation         *mockBlueprintSpecValidationUseCase
+	effectiveBlueprint *mockEffectiveBlueprintUseCase
+	stateDiff          *mockStateDiffUseCase
+	completeBlueprint  *mockCompleteBlueprintUseCase
+	ecosystemConfig    *mockEcosystemConfigUseCase
+	applyDogus         *mockApplyDogusUseCase
+	ecosystemHealth    *mockEcosystemHealthUseCase
+	dogusUpToDate      *mockDogusUpToDateUseCase
+}
+
+func createAllMocks(t *testing.T) *allMocks {
+	return &allMocks{
+		repo:               newMockBlueprintSpecRepository(t),
+		initialStatus:      newMockInitialBlueprintStatusUseCase(t),
+		validation:         newMockBlueprintSpecValidationUseCase(t),
+		effectiveBlueprint: newMockEffectiveBlueprintUseCase(t),
+		stateDiff:          newMockStateDiffUseCase(t),
+		completeBlueprint:  newMockCompleteBlueprintUseCase(t),
+		ecosystemConfig:    newMockEcosystemConfigUseCase(t),
+		applyDogus:         newMockApplyDogusUseCase(t),
+		ecosystemHealth:    newMockEcosystemHealthUseCase(t),
+		dogusUpToDate:      newMockDogusUpToDateUseCase(t),
+	}
+}
+
+func assertPreparationUseCases(t *testing.T, useCases BlueprintPreparationUseCase, mocks *allMocks) {
+	assert.Equal(t, mocks.validation, useCases.validation)
+	assert.Equal(t, mocks.effectiveBlueprint, useCases.effectiveBlueprint)
+	assert.Equal(t, mocks.stateDiff, useCases.stateDiff)
+	assert.Equal(t, mocks.ecosystemHealth, useCases.healthUseCase)
+}
+
+func assertApplyUseCases(t *testing.T, useCases BlueprintApplyUseCase, mocks *allMocks) {
+	assert.Equal(t, mocks.ecosystemConfig, useCases.ecosystemConfigUseCase)
+	assert.Equal(t, mocks.applyDogus, useCases.applyDogusUseCase)
+	assert.Equal(t, mocks.completeBlueprint, useCases.completeUseCase)
+	assert.Equal(t, mocks.ecosystemHealth, useCases.healthUseCase)
+	assert.Equal(t, mocks.dogusUpToDate, useCases.dogusUpToDateUseCase)
+}
+
+func TestBlueprintSpecChangeUseCase_HandleUntilApplied_RepositoryErrors(t *testing.T) {
+	t.Run("should return error on error getting blueprint by id", func(t *testing.T) {
+		// given
+		mocks := createAllMocks(t)
+		mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(nil, assert.AnError).Run(func(ctx context.Context, blueprintId string) {
+			logger, err := logr.FromContext(ctx)
+			require.NoError(t, err)
+			assert.NotNil(t, logger)
+		})
+
+		useCase := createUseCase(mocks)
+
+		// when
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+
+		// then
+		assert.ErrorContains(t, err, "cannot load blueprint spec")
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_HandleUntilApplied_PreparationPhaseErrors(t *testing.T) {
 	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr assert.ErrorAssertionFunc
+		name        string
+		setupMocks  func(*allMocks)
+		wantErrTest func(*testing.T, error)
 	}{
 		{
-			name: "should return error on error getting blueprint by id",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(nil, assert.AnError).Run(func(ctx context.Context, blueprintId string) {
-						logger, err := logr.FromContext(ctx)
-						require.NoError(t, err)
-						assert.NotNil(t, logger)
-					})
-					return m
-				},
-			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorContains(t, err, "cannot load blueprint spec")
-			},
-		},
-		{
 			name: "should return error on error initially setting the blueprint status",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error validating blueprint statically",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error calculate effective blueprint",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+				mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error validating blueprint dynamically",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+				mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error checking ecosystem health",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+				mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error determining state diff",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+				mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
+				mocks.stateDiff.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
-		{
-			name: "should return nil and throw stopped event on being stopped",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testStoppedBlueprintSpec, nil)
-					m.EXPECT().Update(mock.Anything, mock.Anything).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
-						assert.Len(t, blueprint.Events, 1)
-						assert.Equal(t, domain.BlueprintStoppedEvent{}.Name(), blueprint.Events[0].Name())
-					}).Return(nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testStoppedBlueprintSpec).Return(nil)
+	}
 
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testStoppedBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testStoppedBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testStoppedBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testStoppedBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testStoppedBlueprintSpec).Return(nil)
-					return m
-				},
-			},
-			args:    testArgs,
-			wantErr: assert.NoError,
-		},
-		{
-			name: "should not apply on being completed and no new statediff",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testCompletedBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testCompletedBlueprintSpec).Return(nil)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mocks := createAllMocks(t)
+			tt.setupMocks(mocks)
+			useCase := createUseCase(mocks)
 
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testCompletedBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testCompletedBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testCompletedBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testCompletedBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testCompletedBlueprintSpec).Return(nil)
-					return m
-				},
-			},
-			args:    testArgs,
-			wantErr: assert.NoError,
-		},
+			err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+			tt.wantErrTest(t, err)
+		})
+	}
+}
+
+func TestBlueprintSpecChangeUseCase_HandleUntilApplied_SpecialBlueprintStates(t *testing.T) {
+	t.Run("should handle stopped blueprint", func(t *testing.T) {
+		// given
+		mocks := createAllMocks(t)
+		mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testStoppedBlueprintSpec, nil)
+		setupSuccessfulPreparationPhase(mocks, testStoppedBlueprintSpec)
+		mocks.repo.EXPECT().Update(mock.Anything, mock.Anything).Run(func(ctx context.Context, blueprint *domain.BlueprintSpec) {
+			assert.Len(t, blueprint.Events, 1)
+			assert.Equal(t, domain.BlueprintStoppedEvent{}.Name(), blueprint.Events[0].Name())
+		}).Return(nil)
+
+		useCase := createUseCase(mocks)
+
+		// when
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+
+		// then
+		assert.NoError(t, err)
+	})
+
+	t.Run("should not apply completed blueprint with no diff", func(t *testing.T) {
+		// given
+		mocks := createAllMocks(t)
+		mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testCompletedBlueprintSpec, nil)
+		setupSuccessfulPreparationPhase(mocks, testCompletedBlueprintSpec)
+
+		useCase := createUseCase(mocks)
+
+		// when
+		err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+
+		// then
+		assert.NoError(t, err)
+	})
+}
+
+func TestBlueprintSpecChangeUseCase_HandleUntilApplied_ApplyPhaseErrors(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupMocks  func(*allMocks)
+		wantErrTest func(*testing.T, error)
+	}{
 		{
 			name: "should return error on error apply config",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
+				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error apply dogus",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
-					m := newMockApplyDogusUseCase(t)
-					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
+				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error check health after dogu apply",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil).Times(1)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
-					m := newMockApplyDogusUseCase(t)
-					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(true, nil)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
+				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(true, nil)
+				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
 			name: "should return error on error checking if dogus are up to date",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
-					m := newMockApplyDogusUseCase(t)
-					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
-					return m
-				},
-				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
-					m := newMockDogusUpToDateUseCase(t)
-					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
+				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
+				mocks.dogusUpToDate.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mocks := createAllMocks(t)
+			tt.setupMocks(mocks)
+			useCase := createUseCase(mocks)
+
+			err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+			tt.wantErrTest(t, err)
+		})
+	}
+}
+
+func TestBlueprintSpecChangeUseCase_HandleUntilApplied_CompletionScenarios(t *testing.T) {
+	tests := []struct {
+		name        string
+		setupMocks  func(*allMocks)
+		wantErrTest func(*testing.T, error)
+	}{
+		{
+			name: "should return nil on complete success",
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpecEmptyDiff, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpecEmptyDiff)
+				setupSuccessfulApplyPhaseExceptComplete(mocks, testBlueprintSpecEmptyDiff)
+				mocks.completeBlueprint.EXPECT().CompleteBlueprint(mock.Anything, testBlueprintSpecEmptyDiff).Return(nil)
+			},
+			wantErrTest: func(t *testing.T, err error) {
+				assert.NoError(t, err)
 			},
 		},
 		{
 			name: "should return error on error complete blueprint",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
-					m := newMockApplyDogusUseCase(t)
-					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
-					return m
-				},
-				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
-					m := newMockDogusUpToDateUseCase(t)
-					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyUseCase: func(t *testing.T) completeBlueprintUseCase {
-					m := newMockCompleteBlueprintUseCase(t)
-					m.EXPECT().CompleteBlueprint(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-					return m
-				},
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpecEmptyDiff, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpecEmptyDiff)
+				setupSuccessfulApplyPhaseExceptComplete(mocks, testBlueprintSpecEmptyDiff)
+				mocks.completeBlueprint.EXPECT().CompleteBlueprint(mock.Anything, testBlueprintSpecEmptyDiff).Return(assert.AnError)
 			},
-			args: testArgs,
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.Error(t, err)
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
 			},
 		},
 		{
-			name: "should return nil on success",
-			fields: fields{
-				repo: func(t *testing.T) blueprintSpecRepository {
-					m := newMockBlueprintSpecRepository(t)
-					m.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-					return m
-				},
-				initialStatus: func(t *testing.T) initialBlueprintStatusUseCase {
-					m := newMockInitialBlueprintStatusUseCase(t)
-					m.EXPECT().InitateConditions(mock.Anything, testBlueprintSpec).Return(nil)
-
-					return m
-				},
-				validation: func(t *testing.T) blueprintSpecValidationUseCase {
-					m := newMockBlueprintSpecValidationUseCase(t)
-					m.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, testBlueprintSpec).Return(nil)
-					m.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				effectiveBlueprint: func(t *testing.T) effectiveBlueprintUseCase {
-					m := newMockEffectiveBlueprintUseCase(t)
-					m.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				healthUseCase: func(t *testing.T) ecosystemHealthUseCase {
-					m := newMockEcosystemHealthUseCase(t)
-					m.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
-					return m
-				},
-				stateDiff: func(t *testing.T) stateDiffUseCase {
-					m := newMockStateDiffUseCase(t)
-					m.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				ecosystemConfigUseCase: func(t *testing.T) ecosystemConfigUseCase {
-					m := newMockEcosystemConfigUseCase(t)
-					m.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyDogusUseCase: func(t *testing.T) applyDogusUseCase {
-					m := newMockApplyDogusUseCase(t)
-					m.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
-					return m
-				},
-				upToDateUseCase: func(t *testing.T) dogusUpToDateUseCase {
-					m := newMockDogusUpToDateUseCase(t)
-					m.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
-				applyUseCase: func(t *testing.T) completeBlueprintUseCase {
-					m := newMockCompleteBlueprintUseCase(t)
-					m.EXPECT().CompleteBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
-					return m
-				},
+			name: "should return StateDiffNotEmptyError when diff not empty",
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
+				setupSuccessfulApplyPhaseExceptComplete(mocks, testBlueprintSpec)
 			},
-			args:    testArgs,
-			wantErr: assert.NoError,
+			wantErrTest: func(t *testing.T, err error) {
+				var targetError *domain.StateDiffNotEmptyError
+				assert.Error(t, err)
+				assert.ErrorAs(t, err, &targetError)
+			},
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var repo blueprintSpecRepository
-			if tt.fields.repo != nil {
-				repo = tt.fields.repo(t)
-			}
+			mocks := createAllMocks(t)
+			tt.setupMocks(mocks)
+			useCase := createUseCase(mocks)
 
-			var initialStatus initialBlueprintStatusUseCase
-			if tt.fields.initialStatus != nil {
-				initialStatus = tt.fields.initialStatus(t)
-			}
-
-			var validation blueprintSpecValidationUseCase
-			if tt.fields.validation != nil {
-				validation = tt.fields.validation(t)
-			}
-
-			var effectiveBlueprint effectiveBlueprintUseCase
-			if tt.fields.effectiveBlueprint != nil {
-				effectiveBlueprint = tt.fields.effectiveBlueprint(t)
-			}
-
-			var stateDiff stateDiffUseCase
-			if tt.fields.stateDiff != nil {
-				stateDiff = tt.fields.stateDiff(t)
-			}
-
-			var completeUseCase completeBlueprintUseCase
-			if tt.fields.applyUseCase != nil {
-				completeUseCase = tt.fields.applyUseCase(t)
-			}
-
-			var ecoConfigUseCase ecosystemConfigUseCase
-			if tt.fields.ecosystemConfigUseCase != nil {
-				ecoConfigUseCase = tt.fields.ecosystemConfigUseCase(t)
-			}
-
-			var applyDoguUseCase applyDogusUseCase
-			if tt.fields.applyDogusUseCase != nil {
-				applyDoguUseCase = tt.fields.applyDogusUseCase(t)
-			}
-
-			var ecoHealthUseCase ecosystemHealthUseCase
-			if tt.fields.healthUseCase != nil {
-				ecoHealthUseCase = tt.fields.healthUseCase(t)
-			}
-
-			var upToDateUseCase dogusUpToDateUseCase
-			if tt.fields.upToDateUseCase != nil {
-				upToDateUseCase = tt.fields.upToDateUseCase(t)
-			}
-
-			useCase := &BlueprintSpecChangeUseCase{
-				repo: repo,
-				preparationUseCases: BlueprintPreparationUseCases{
-					initialStatus:      initialStatus,
-					validation:         validation,
-					effectiveBlueprint: effectiveBlueprint,
-					stateDiff:          stateDiff,
-					healthUseCase:      ecoHealthUseCase,
-				},
-				applyUseCases: BlueprintApplyUseCases{
-					completeUseCase:        completeUseCase,
-					ecosystemConfigUseCase: ecoConfigUseCase,
-					applyDogusUseCase:      applyDoguUseCase,
-					healthUseCase:          ecoHealthUseCase,
-					dogusUpToDateUseCase:   upToDateUseCase,
-				},
-			}
-			tt.wantErr(t, useCase.HandleUntilApplied(tt.args.givenCtx, tt.args.blueprintId), fmt.Sprintf("HandleUntilApplied(%v, %v)", tt.args.givenCtx, tt.args.blueprintId))
+			err := useCase.HandleUntilApplied(testCtx, testBlueprintId)
+			tt.wantErrTest(t, err)
 		})
 	}
+}
+
+func createUseCase(mocks *allMocks) *BlueprintSpecChangeUseCase {
+	preparationUseCases := BlueprintPreparationUseCase{
+		initialStatus:      mocks.initialStatus,
+		validation:         mocks.validation,
+		effectiveBlueprint: mocks.effectiveBlueprint,
+		stateDiff:          mocks.stateDiff,
+		healthUseCase:      mocks.ecosystemHealth,
+	}
+	applyUseCases := BlueprintApplyUseCase{
+		completeUseCase:        mocks.completeBlueprint,
+		ecosystemConfigUseCase: mocks.ecosystemConfig,
+		applyDogusUseCase:      mocks.applyDogus,
+		healthUseCase:          mocks.ecosystemHealth,
+		dogusUpToDateUseCase:   mocks.dogusUpToDate,
+	}
+
+	return &BlueprintSpecChangeUseCase{
+		repo:               mocks.repo,
+		preparationUseCase: preparationUseCases,
+		applyUseCase:       applyUseCases,
+	}
+}
+
+func setupSuccessfulPreparationPhase(mocks *allMocks, spec *domain.BlueprintSpec) {
+	mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+	mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+	mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, spec).Return(nil)
+	mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, spec).Return(nil)
+	mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, spec).Return(ecosystem.HealthResult{}, nil).Times(1)
+	mocks.stateDiff.EXPECT().DetermineStateDiff(mock.Anything, spec).Return(nil)
+}
+
+func setupSuccessfulApplyPhaseExceptComplete(mocks *allMocks, spec *domain.BlueprintSpec) {
+	mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, spec).Return(nil)
+	mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, spec).Return(false, nil)
+	mocks.dogusUpToDate.EXPECT().CheckDogus(mock.Anything, spec).Return(nil)
+	// Note: no completeBlueprint expectation - this allows the completion steps to be tested
 }
 
 func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testing.T) {
