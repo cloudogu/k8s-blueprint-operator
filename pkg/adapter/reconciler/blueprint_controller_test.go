@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -183,21 +182,12 @@ func TestBlueprintReconciler_getBlueprintRequest(t *testing.T) {
 	ctx := context.TODO()
 
 	t.Run("one blueprint gets successful request", func(t *testing.T) {
-		list := &bpv2.BlueprintList{
-			Items: []bpv2.Blueprint{
-				{
-					ObjectMeta: metav1.ObjectMeta{
-						Name:      "test-blueprint",
-						Namespace: "test-namespace",
-					},
-				},
-			},
-		}
+		idList := []string{"test-blueprint"}
 
 		mockRepo := NewMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().List(ctx).Return(list, nil)
+		mockRepo.EXPECT().ListIds(ctx).Return(idList, nil)
 
-		reconciler := &BlueprintReconciler{blueprintRepo: mockRepo}
+		reconciler := &BlueprintReconciler{blueprintRepo: mockRepo, namespace: "test-namespace"}
 		result := reconciler.getBlueprintRequest(ctx)
 
 		expected := []reconcile.Request{{
@@ -212,7 +202,7 @@ func TestBlueprintReconciler_getBlueprintRequest(t *testing.T) {
 
 	t.Run("no reconcile request on error from repository", func(t *testing.T) {
 		mockRepo := NewMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().List(ctx).Return(nil, errors.New("repo error"))
+		mockRepo.EXPECT().ListIds(ctx).Return(nil, errors.New("repo error"))
 
 		reconciler := &BlueprintReconciler{blueprintRepo: mockRepo}
 		result := reconciler.getBlueprintRequest(ctx)
@@ -221,10 +211,8 @@ func TestBlueprintReconciler_getBlueprintRequest(t *testing.T) {
 	})
 
 	t.Run("no reconcile request when no blueprints", func(t *testing.T) {
-		list := &bpv2.BlueprintList{Items: []bpv2.Blueprint{}}
-
 		mockRepo := NewMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().List(ctx).Return(list, nil)
+		mockRepo.EXPECT().ListIds(ctx).Return([]string{}, nil)
 
 		reconciler := &BlueprintReconciler{blueprintRepo: mockRepo}
 		result := reconciler.getBlueprintRequest(ctx)
@@ -233,15 +221,10 @@ func TestBlueprintReconciler_getBlueprintRequest(t *testing.T) {
 	})
 
 	t.Run("no reconcile request when multiple blueprints", func(t *testing.T) {
-		list := &bpv2.BlueprintList{
-			Items: []bpv2.Blueprint{
-				{ObjectMeta: metav1.ObjectMeta{Name: "bp1"}},
-				{ObjectMeta: metav1.ObjectMeta{Name: "bp2"}},
-			},
-		}
+		idList := []string{"bp1", "bp2"}
 
 		mockRepo := NewMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().List(ctx).Return(list, nil)
+		mockRepo.EXPECT().ListIds(ctx).Return(idList, nil)
 
 		reconciler := &BlueprintReconciler{blueprintRepo: mockRepo}
 		result := reconciler.getBlueprintRequest(ctx)

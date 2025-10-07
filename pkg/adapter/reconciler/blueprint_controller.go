@@ -148,15 +148,15 @@ func (r *BlueprintReconciler) getDoguKind(mgr ctrl.Manager) source.TypedSyncingS
 }
 
 func (r *BlueprintReconciler) getBlueprintRequest(ctx context.Context) []reconcile.Request {
-	list, err := r.blueprintRepo.List(ctx)
-	if err != nil || len(list.Items) != 1 {
+	idList, err := r.blueprintRepo.ListIds(ctx)
+	if err != nil || len(idList) != 1 {
 		return nil
 	}
 
 	blueprintRequest := []reconcile.Request{{
 		NamespacedName: types.NamespacedName{
-			Name:      list.Items[0].Name,
-			Namespace: list.Items[0].Namespace,
+			Name:      idList[0],
+			Namespace: r.namespace,
 		},
 	}}
 	return blueprintRequest
