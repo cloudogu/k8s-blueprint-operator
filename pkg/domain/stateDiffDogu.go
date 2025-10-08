@@ -203,17 +203,12 @@ func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiff
 		return neededActions
 	}
 
-	neededActions = appendActionForProxyBodySizes(neededActions, exp, act)
-
-	if exp.RewriteTarget != act.RewriteTarget {
-		neededActions = append(neededActions, ActionUpdateDoguProxyRewriteTarget)
+	if exp.RewriteTarget != act.RewriteTarget || exp.AdditionalConfig != act.AdditionalConfig {
+		neededActions = append(neededActions, ActionUpdateDoguReverseProxyConfig)
+		return neededActions // early return to avoid duplicate actions
 	}
 
-	if exp.AdditionalConfig != act.AdditionalConfig {
-		neededActions = append(neededActions, ActionUpdateDoguProxyAdditionalConfig)
-	}
-
-	return neededActions
+	return appendActionForProxyBodySizes(neededActions, exp, act)
 }
 
 func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
@@ -237,10 +232,10 @@ func appendActionForProxyBodySizes(
 	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
 		return actions
 	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {
-		return append(actions, ActionUpdateDoguProxyBodySize)
+		return append(actions, ActionUpdateDoguReverseProxyConfig)
 	} else {
 		if expectedProxyBodySize != nil && actualProxyBodySize != nil && expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
-			return append(actions, ActionUpdateDoguProxyBodySize)
+			return append(actions, ActionUpdateDoguReverseProxyConfig)
 		}
 	}
 	return actions

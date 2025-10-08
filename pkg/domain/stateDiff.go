@@ -23,16 +23,10 @@ const (
 	ActionDowngrade                       = "downgrade"
 	ActionResetVersion                    = "reset version"
 	ActionSwitchDoguNamespace             = "dogu namespace switch"
-	ActionUpdateDoguProxyBodySize         = "update proxy body size"
-	ActionUpdateDoguProxyRewriteTarget    = "update proxy rewrite target"
-	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
+	ActionUpdateDoguReverseProxyConfig    = "update reverse proxy"
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
 	ActionUpdateAdditionalMounts          = "update additional mounts"
 )
-
-func (a Action) IsDoguProxyAction() bool {
-	return a == ActionUpdateDoguProxyBodySize || a == ActionUpdateDoguProxyAdditionalConfig || a == ActionUpdateDoguProxyRewriteTarget
-}
 
 func (diff StateDiff) HasChanges() bool {
 	return diff.DoguDiffs.HasChanges() ||

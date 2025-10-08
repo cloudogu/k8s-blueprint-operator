@@ -9,8 +9,7 @@ metadata:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-blueprint-editor-role
 rules:
-
-  # issue permissions to read/update fields beyond the status or finalizer fields
+  # issue permissions to read/update fields beyond the status
   - apiGroups:
       - k8s.cloudogu.com
     resources:
@@ -21,13 +20,6 @@ rules:
       - patch
       - update
       - watch
-  # issue permissions to update the finalizer field that may control CR deletion
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints/finalizers
-    verbs:
-      - update
   # issue permissions to update the status which contains blueprint processing data
   - apiGroups:
       - k8s.cloudogu.com

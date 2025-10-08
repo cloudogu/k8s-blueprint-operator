@@ -77,18 +77,12 @@ func (s StateDiffDeterminedEvent) Name() string {
 	return "StateDiffDetermined"
 }
 
-const groupedDoguProxyAction = "update reverse proxy"
-
 // Message contains the StateDiffDoguDeterminedEvent's statistics message.
 func (s StateDiffDeterminedEvent) Message() string {
 	var amountActions = map[Action]int{}
 	for _, diff := range s.doguDiffs {
 		for _, action := range diff.NeededActions {
-			if action.IsDoguProxyAction() {
-				amountActions[groupedDoguProxyAction]++
-			} else {
-				amountActions[action]++
-			}
+			amountActions[action]++
 		}
 	}
 

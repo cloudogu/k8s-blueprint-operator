@@ -291,7 +291,7 @@ func Test_determineDoguDiff(t *testing.T) {
 					},
 					MinVolumeSize: &volumeSize2,
 				},
-				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig, ActionUpgrade},
+				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguReverseProxyConfig, ActionUpgrade},
 			},
 		},
 		{
@@ -376,7 +376,7 @@ func Test_determineDoguDiff(t *testing.T) {
 						MaxBodySize: quantity100MPtr,
 					},
 				},
-				NeededActions: []Action{ActionUpdateDoguProxyBodySize},
+				NeededActions: []Action{ActionUpdateDoguReverseProxyConfig},
 			},
 		},
 		{
@@ -415,7 +415,7 @@ func Test_determineDoguDiff(t *testing.T) {
 						MaxBodySize: quantity100MPtr,
 					},
 				},
-				NeededActions: []Action{ActionUpdateDoguProxyBodySize},
+				NeededActions: []Action{ActionUpdateDoguReverseProxyConfig},
 			},
 		},
 		{

@@ -154,17 +154,9 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			logger.Info("update minimum volume size for dogu")
 			doguInstallation.UpdateMinVolumeSize(doguDiff.Expected.MinVolumeSize)
 			continue
-		case domain.ActionUpdateDoguProxyBodySize:
-			logger.Info("update proxy body size for dogu")
-			doguInstallation.UpdateProxyBodySize(doguDiff.Expected.ReverseProxyConfig.MaxBodySize)
-			continue
-		case domain.ActionUpdateDoguProxyRewriteTarget:
-			logger.Info("update proxy rewrite target for dogu")
-			doguInstallation.UpdateProxyRewriteTarget(doguDiff.Expected.ReverseProxyConfig.RewriteTarget)
-			continue
-		case domain.ActionUpdateDoguProxyAdditionalConfig:
-			logger.Info("update proxy additional config for dogu")
-			doguInstallation.UpdateProxyAdditionalConfig(doguDiff.Expected.ReverseProxyConfig.AdditionalConfig)
+		case domain.ActionUpdateDoguReverseProxyConfig:
+			logger.Info("update proxy config for dogu")
+			doguInstallation.UpdateProxyConfig(doguDiff.Expected.ReverseProxyConfig)
 			continue
 		case domain.ActionUpdateAdditionalMounts:
 			logger.Info("update additional mounts")
