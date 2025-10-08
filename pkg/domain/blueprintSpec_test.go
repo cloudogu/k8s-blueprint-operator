@@ -802,3 +802,102 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		assert.False(t, changed, "condition should not change here")
 	})
 }
+
+func TestBlueprintSpec_MarkBlueprintStopped(t *testing.T) {
+	t.Run("should add a blueprint stopped event", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		spec.MarkBlueprintStopped()
+		// then
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, BlueprintStoppedEvent{}, spec.Events[0])
+	})
+}
+
+func TestBlueprintSpec_MarkDogusApplied(t *testing.T) {
+	t.Run("should add event if dogus are applied and no error occurred", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			StateDiff: StateDiff{
+				DoguDiffs: DoguDiffs{{DoguName: "test"}},
+			},
+		}
+		// when
+		changed := spec.MarkDogusApplied(true, nil)
+		// then
+		assert.False(t, changed)
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, DogusAppliedEvent{Diffs: DoguDiffs{{DoguName: "test"}}}, spec.Events[0])
+		assert.Nil(t, meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded))
+	})
+
+	t.Run("should not add event if dogus are not applied and no error occurred", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		changed := spec.MarkDogusApplied(false, nil)
+		// then
+		assert.False(t, changed)
+		require.Empty(t, spec.Events)
+		assert.Nil(t, meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded))
+	})
+
+	t.Run("should add event and set condition on error", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			StateDiff: StateDiff{
+				DoguDiffs: DoguDiffs{{DoguName: "test"}},
+			},
+		}
+		// when
+		changed := spec.MarkDogusApplied(true, assert.AnError)
+		// then
+		assert.True(t, changed)
+		require.Len(t, spec.Events, 2)
+		assert.Equal(t, DogusAppliedEvent{Diffs: DoguDiffs{{DoguName: "test"}}}, spec.Events[0])
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, spec.Events[1])
+
+		condition := meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded)
+		require.NotNil(t, condition)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, ReasonLastApplyErrorAtDogus, condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("should not add applied event but set condition on error", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		changed := spec.MarkDogusApplied(false, assert.AnError)
+		// then
+		assert.True(t, changed)
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, spec.Events[0])
+
+		condition := meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded)
+		require.NotNil(t, condition)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, ReasonLastApplyErrorAtDogus, condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("should not change condition if already set", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Conditions: []Condition{
+				{
+					Type:    ConditionLastApplySucceeded,
+					Status:  metav1.ConditionFalse,
+					Reason:  ReasonLastApplyErrorAtDogus,
+					Message: assert.AnError.Error(),
+				},
+			},
+		}
+		// when
+		changed := spec.MarkDogusApplied(false, assert.AnError)
+		// then
+		assert.False(t, changed)
+		require.Empty(t, spec.Events)
+	})
+}
