@@ -76,7 +76,7 @@ func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.
 	// post event and log only if blueprint is stopped, all other cases are just NoOps
 	if blueprint.Config.Stopped {
 		logger.Info("blueprint is currently set as stopped and will not be applied")
-		blueprint.Events = append(blueprint.Events, domain.BlueprintStoppedEvent{})
+		blueprint.MarkBlueprintStopped()
 		err := useCase.repo.Update(ctx, blueprint)
 		if err != nil {
 			return fmt.Errorf("cannot update status to set stopped event: %w", err)
