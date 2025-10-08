@@ -466,3 +466,15 @@ func (spec *BlueprintSpec) SetLastApplySucceededConditionOnError(reason string, 
 func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
 	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 }
+
+func (spec *BlueprintSpec) MarkBlueprintStopped() {
+	spec.Events = append(spec.Events, BlueprintStoppedEvent{})
+}
+
+func (spec *BlueprintSpec) MarkDogusApplied(isDogusApplied bool, err error) bool {
+	if isDogusApplied {
+		spec.Events = append(spec.Events, DogusAppliedEvent{Diffs: spec.StateDiff.DoguDiffs})
+	}
+	conditionChanged := spec.SetLastApplySucceededConditionOnError(ReasonLastApplyErrorAtDogus, err)
+	return conditionChanged
+}
