@@ -142,20 +142,12 @@ func (dogu *DoguInstallation) SwitchNamespace(newNamespace cescommons.Namespace,
 	return nil
 }
 
-func (dogu *DoguInstallation) UpdateProxyBodySize(value *BodySize) {
-	dogu.ReverseProxyConfig.MaxBodySize = value
-}
-
 func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
 	dogu.MinVolumeSize = size
 }
 
-func (dogu *DoguInstallation) UpdateProxyRewriteTarget(value RewriteTarget) {
-	dogu.ReverseProxyConfig.RewriteTarget = value
-}
-
-func (dogu *DoguInstallation) UpdateProxyAdditionalConfig(value AdditionalConfig) {
-	dogu.ReverseProxyConfig.AdditionalConfig = value
+func (dogu *DoguInstallation) UpdateProxyConfig(config ReverseProxyConfig) {
+	dogu.ReverseProxyConfig = config
 }
 
 func (dogu *DoguInstallation) UpdateAdditionalMounts(mounts []AdditionalMount) {

@@ -127,42 +127,23 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 	})
 }
 
-func TestDoguInstallation_UpdateProxyBodySize(t *testing.T) {
+func TestDoguInstallation_UpdateProxyConfig(t *testing.T) {
 	t.Run("should set property", func(t *testing.T) {
 		// given
 		bodySize := resource.MustParse("1G")
 		dogu := DoguInstallation{}
 
 		// when
-		dogu.UpdateProxyBodySize(&bodySize)
+		reverseProxyConfig := ReverseProxyConfig{
+			MaxBodySize:      &bodySize,
+			RewriteTarget:    RewriteTarget(rewriteTarget),
+			AdditionalConfig: AdditionalConfig(additionalConfig),
+		}
+		dogu.UpdateProxyConfig(reverseProxyConfig)
 
 		// then
 		assert.Equal(t, &bodySize, dogu.ReverseProxyConfig.MaxBodySize)
-	})
-}
-
-func TestDoguInstallation_UpdateProxyRewriteTarget(t *testing.T) {
-	t.Run("should set property", func(t *testing.T) {
-		// given
-		dogu := DoguInstallation{}
-
-		// when
-		dogu.UpdateProxyRewriteTarget(RewriteTarget(rewriteTarget))
-
-		// then
 		assert.Equal(t, RewriteTarget(rewriteTarget), dogu.ReverseProxyConfig.RewriteTarget)
-	})
-}
-
-func TestDoguInstallation_UpdateProxyAdditionalConfig(t *testing.T) {
-	t.Run("should set property", func(t *testing.T) {
-		// given
-		dogu := DoguInstallation{}
-
-		// when
-		dogu.UpdateProxyAdditionalConfig(AdditionalConfig(additionalConfig))
-
-		// then
 		assert.Equal(t, AdditionalConfig(additionalConfig), dogu.ReverseProxyConfig.AdditionalConfig)
 	})
 }
