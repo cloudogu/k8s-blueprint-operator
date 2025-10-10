@@ -1,4 +1,4 @@
-# Installation
+# Installing the Operator
 
 To install the `k8s-blueprint-operator` as a component,
 apply the following component to the cluster namespace
