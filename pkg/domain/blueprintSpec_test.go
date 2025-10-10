@@ -425,7 +425,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					{
 						Name: cescommons.QualifiedName{
 							Namespace:  "namespace-change",
-							SimpleName: "name",
+							SimpleName: "ldap",
 						},
 					},
 				},
@@ -437,9 +437,9 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-				"name": {Name: cescommons.QualifiedName{
+				"ldap": {Name: cescommons.QualifiedName{
 					Namespace:  "namespace",
-					SimpleName: "name",
+					SimpleName: "ldap",
 				}},
 			},
 		}
@@ -450,7 +450,46 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
+		assert.ErrorContains(t, err, "ldap: action \"dogu namespace switch\" is not allowed")
+	})
+
+	t.Run("invalid blueprint state with not allowed dogu downgrade", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Dogus: []Dogu{
+					{
+						Name: cescommons.QualifiedName{
+							Namespace:  "namespace",
+							SimpleName: "ldap",
+						},
+						Version: &version3211,
+					},
+				},
+			},
+			Config: BlueprintConfiguration{},
+		}
+
+		clusterState := ecosystem.EcosystemState{
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+				"ldap": {
+					Name: cescommons.QualifiedName{
+						Namespace:  "namespace",
+						SimpleName: "ldap",
+					},
+					Version:          version3212,
+					InstalledVersion: version3212,
+				},
+			},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+
+		// then
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "ldap: action \"downgrade\" is not allowed")
 	})
 }
 

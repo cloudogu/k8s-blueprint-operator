@@ -8,6 +8,7 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -34,11 +35,11 @@ type BlueprintSpec struct {
 type Condition = metav1.Condition
 
 const (
-	ConditionValid              = "Valid"
-	ConditionExecutable         = "Executable"
-	ConditionEcosystemHealthy   = "EcosystemHealthy"
-	ConditionCompleted          = "Completed"
-	ConditionLastApplySucceeded = "LastApplySucceeded"
+	ConditionValid              = v2.ConditionValid
+	ConditionExecutable         = v2.ConditionExecutable
+	ConditionEcosystemHealthy   = v2.ConditionEcosystemHealthy
+	ConditionCompleted          = v2.ConditionCompleted
+	ConditionLastApplySucceeded = v2.ConditionLastApplySucceeded
 
 	ReasonLastApplyErrorAtDogus  = "DoguApplyFailure"
 	ReasonLastApplyErrorAtConfig = "ConfigApplyFailure"
@@ -412,16 +413,16 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 				return nil
 			}
 
-			return getActionNotAllowedError(action)
+			return getActionNotAllowedError(action, diff.DoguName)
 		}
 
 		return nil
 	})
 }
 
-func getActionNotAllowedError(action Action) *InvalidBlueprintError {
+func getActionNotAllowedError(action Action, name cescommons.SimpleName) *InvalidBlueprintError {
 	return &InvalidBlueprintError{
-		Message: fmt.Sprintf("action %q is not allowed", action),
+		Message: fmt.Sprintf("%s: action %q is not allowed", name, action),
 	}
 }
 

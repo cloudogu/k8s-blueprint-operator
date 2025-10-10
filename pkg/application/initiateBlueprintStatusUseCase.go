@@ -10,7 +10,7 @@ import (
 )
 
 // InitiateBlueprintStatusUseCase contains all use cases which are needed to initiate the
-// blueprint status after the determining the state diff.
+// blueprint status when it has not yet been fully set.
 //
 // Use cases:
 // - InitateConditions
