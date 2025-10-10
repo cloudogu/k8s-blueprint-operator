@@ -17,8 +17,6 @@ rules:
     verbs:
       - get
       - list
-      - patch
-      - update
       - watch
   # issue permissions to update the status which contains blueprint processing data
   - apiGroups:
