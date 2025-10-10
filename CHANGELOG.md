@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
 - [#129] Reconciliation of the blueprint on changes of dogu-crs, ces-configMaps and ces-secrets
+- [#131] Ignore loglevel changes while debug-mode is active
 
 ### Changed
 - [#119] *breaking* sensitive dogu config can now only be referenced with secrets
