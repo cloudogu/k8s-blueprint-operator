@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"testing"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -441,7 +442,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					{
 						Name: cescommons.QualifiedName{
 							Namespace:  "namespace-change",
-							SimpleName: "name",
+							SimpleName: "ldap",
 						},
 					},
 				},
@@ -453,9 +454,9 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-				"name": {Name: cescommons.QualifiedName{
+				"ldap": {Name: cescommons.QualifiedName{
 					Namespace:  "namespace",
-					SimpleName: "name",
+					SimpleName: "ldap",
 				}},
 			},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
@@ -467,7 +468,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
+		assert.ErrorContains(t, err, "ldap: action \"dogu namespace switch\" is not allowed")
 	})
 
 	t.Run("should return error with not allowed component namespace switch action", func(t *testing.T) {
@@ -501,7 +502,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
+		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"component namespace switch\" is not allowed", testComponentName.SimpleName))
 	})
 
 	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
@@ -535,7 +536,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
+		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"downgrade\" is not allowed", testComponentName.SimpleName))
 	})
 }
 

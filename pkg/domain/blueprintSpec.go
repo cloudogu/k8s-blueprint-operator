@@ -423,7 +423,7 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 				return nil
 			}
 
-			return getActionNotAllowedError(action)
+			return getActionNotAllowedError(action, string(diff.DoguName))
 		}
 
 		return nil
@@ -433,16 +433,16 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 func (spec *BlueprintSpec) validateComponentDiffActions(diff ComponentDiff) []error {
 	return util.Map(diff.NeededActions, func(action Action) error {
 		if slices.Contains(notAllowedComponentActions, action) {
-			return getActionNotAllowedError(action)
+			return getActionNotAllowedError(action, string(diff.Name))
 		}
 
 		return nil
 	})
 }
 
-func getActionNotAllowedError(action Action) *InvalidBlueprintError {
+func getActionNotAllowedError(action Action, name string) *InvalidBlueprintError {
 	return &InvalidBlueprintError{
-		Message: fmt.Sprintf("action %q is not allowed", action),
+		Message: fmt.Sprintf("%s: action %q is not allowed", name, action),
 	}
 }
 
