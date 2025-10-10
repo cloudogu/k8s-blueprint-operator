@@ -8,6 +8,7 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -34,12 +35,12 @@ type BlueprintSpec struct {
 type Condition = metav1.Condition
 
 const (
-	ConditionValid                = "Valid"
-	ConditionExecutable           = "Executable"
-	ConditionEcosystemHealthy     = "EcosystemHealthy"
-	ConditionSelfUpgradeCompleted = "SelfUpgradeCompleted"
-	ConditionCompleted            = "Completed"
-	ConditionLastApplySucceeded   = "LastApplySucceeded"
+	ConditionValid                = v2.ConditionValid
+	ConditionExecutable           = v2.ConditionExecutable
+	ConditionEcosystemHealthy     = v2.ConditionEcosystemHealthy
+	ConditionSelfUpgradeCompleted = v2.ConditionSelfUpgradeCompleted
+	ConditionCompleted            = v2.ConditionCompleted
+	ConditionLastApplySucceeded   = v2.ConditionLastApplySucceeded
 
 	ReasonLastApplyErrorAtComponents = "ComponentApplyFailure"
 	ReasonLastApplyErrorAtDogus      = "DoguApplyFailure"
