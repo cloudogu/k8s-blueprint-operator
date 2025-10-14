@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - it was not safe to have these values in clear text in the blueprint
 - [#119] we now support blueprint v2 CRs
 - [#121] health checks before and after applying the blueprint are now non-blocking
+- [#133] updated and added docs for the operator
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore
