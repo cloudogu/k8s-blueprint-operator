@@ -44,7 +44,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMask{},
@@ -88,7 +88,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMask{},
 				AllowDoguNamespaceSwitch: &trueVar,
@@ -126,7 +126,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				Blueprint: bpv2.BlueprintManifest{
 					Dogus: []bpv2.Dogu{
 						{Name: "invalid"},
