@@ -1,11 +1,37 @@
 package serializer
 
 import (
+	"errors"
 	"fmt"
 
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
+
+func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *crd.Blueprint, blueprintId string) error {
+	blueprint, blueprintErr := ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
+	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
+	serializationErr := errors.Join(blueprintErr, maskErr)
+	if serializationErr != nil {
+		return serializationErr
+	}
+
+	blueprintSpec.Blueprint = blueprint
+	blueprintSpec.BlueprintMask = blueprintMask
+	return nil
+}
+
+func ConvertBlueprintStatus(blueprintCR *crd.Blueprint) (domain.EffectiveBlueprint, error) {
+	var effectiveBlueprint domain.EffectiveBlueprint
+	var err error
+	if blueprintCR.Status != nil {
+		effectiveBlueprint, err = ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+		if err != nil {
+			return domain.EffectiveBlueprint{}, err
+		}
+	}
+	return effectiveBlueprint, nil
+}
 
 func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) crd.BlueprintManifest {
 	return crd.BlueprintManifest{

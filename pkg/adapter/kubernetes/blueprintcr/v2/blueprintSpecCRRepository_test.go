@@ -140,8 +140,9 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			},
 			Status: &bpv2.BlueprintStatus{},
 		}
-		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
-		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
+		errMsg := "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'\n" +
+			"cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'"
+		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", errMsg)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
