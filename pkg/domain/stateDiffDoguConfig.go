@@ -21,9 +21,23 @@ func (diffs DoguConfigDiffs) HasChanges() bool {
 type DoguConfigValueState ConfigValueState
 
 type ConfigValueState struct {
-	Value  string
+	Value  *string
 	Exists bool
 }
+
+func (a ConfigValueState) Equal(b ConfigValueState) bool {
+	if a.Exists != b.Exists {
+		return false
+	}
+	if a.Value == b.Value { // covers both nil and same address
+		return true
+	}
+	if a.Value == nil || b.Value == nil {
+		return false
+	}
+	return *a.Value == *b.Value
+}
+
 type DoguConfigEntryDiff struct {
 	Key          common.DoguConfigKey
 	Actual       DoguConfigValueState
@@ -34,17 +48,17 @@ type SensitiveDoguConfigEntryDiff = DoguConfigEntryDiff
 
 func newDoguConfigEntryDiff(
 	key common.DoguConfigKey,
-	actualValue config.Value,
+	actualValue *config.Value,
 	actualExists bool,
-	expectedValue common.DoguConfigValue,
+	expectedValue *common.DoguConfigValue,
 	expectedExists bool,
 ) DoguConfigEntryDiff {
 	actual := DoguConfigValueState{
-		Value:  string(actualValue),
+		Value:  (*string)(actualValue),
 		Exists: actualExists,
 	}
 	expected := DoguConfigValueState{
-		Value:  string(expectedValue),
+		Value:  (*string)(expectedValue),
 		Exists: expectedExists,
 	}
 	return DoguConfigEntryDiff{
@@ -55,20 +69,27 @@ func newDoguConfigEntryDiff(
 	}
 }
 
-func determineDoguConfigDiffs(
-	wantedConfig DoguConfig,
-	actualConfig map[cescommons.SimpleName]config.DoguConfig,
-) DoguConfigDiffs {
+func determineDoguConfigDiffs(doguName cescommons.SimpleName, wantedConfig DoguConfigEntries, actualConfig map[cescommons.SimpleName]config.DoguConfig, isSensitive bool) DoguConfigDiffs {
 	var doguConfigDiff []DoguConfigEntryDiff
-	// present entries
-	for key, expectedValue := range wantedConfig.Present {
-		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, exists, expectedValue, true))
-	}
-	// absent entries
-	for _, key := range wantedConfig.Absent {
-		actualEntry, exists := actualConfig[key.DoguName].Get(key.Key)
-		doguConfigDiff = append(doguConfigDiff, newDoguConfigEntryDiff(key, actualEntry, exists, "", false))
+	for _, expectedConfig := range wantedConfig {
+		if expectedConfig.Sensitive != isSensitive {
+			continue // skip if not match sensitivity
+		}
+
+		var actualValue *config.Value
+		actualEntry, exists := actualConfig[doguName].Get(expectedConfig.Key)
+		if exists {
+			actualValue = &actualEntry
+		}
+		configKey := common.DoguConfigKey{
+			DoguName: doguName,
+			Key:      expectedConfig.Key,
+		}
+		diff := newDoguConfigEntryDiff(configKey, actualValue, exists, expectedConfig.Value, !expectedConfig.Absent)
+		// only add diff if there are changes
+		if diff.NeededAction != ConfigActionNone {
+			doguConfigDiff = append(doguConfigDiff, diff)
+		}
 	}
 	return doguConfigDiff
 }

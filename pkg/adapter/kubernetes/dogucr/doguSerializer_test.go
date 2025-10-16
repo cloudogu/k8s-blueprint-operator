@@ -2,31 +2,41 @@ package dogucr
 
 import (
 	"fmt"
+	"reflect"
+	"testing"
+	"time"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"reflect"
-	"testing"
 )
 
-var postgresDoguName = cescommons.QualifiedName{
-	Namespace:  cescommons.Namespace("official"),
-	SimpleName: cescommons.SimpleName("postgresql"),
-}
-var ldapDoguName = cescommons.QualifiedName{
-	Namespace:  "official",
-	SimpleName: "ldap",
-}
-var volSize25G = resource.MustParse("25G")
-var defaultVolSize = resource.MustParse(v2.DefaultVolumeSize)
+var (
+	ldapDoguName = cescommons.QualifiedName{
+		Namespace:  "official",
+		SimpleName: "ldap",
+	}
+	volSize25G       = resource.MustParse("25G")
+	defaultVolSize   = resource.MustParse(v2.DefaultVolumeSize)
+	postgresDoguName = cescommons.QualifiedName{
+		Namespace:  cescommons.Namespace("official"),
+		SimpleName: cescommons.SimpleName("postgresql"),
+	}
+	subfolder        = "subfolder"
+	subfolder2       = "secsubfolder"
+	rewriteTarget    = "/"
+	additionalConfig = "additional"
+	proxyBodySize    = resource.MustParse("1G")
+)
 
 func Test_parseDoguCR(t *testing.T) {
 	type args struct {
 		cr *v2.Dogu
 	}
+	pointInTime := metav1.NewTime(time.Date(2024, 9, 23, 10, 0, 0, 0, time.UTC))
 	tests := []struct {
 		name    string
 		args    args
@@ -56,20 +66,24 @@ func Test_parseDoguCR(t *testing.T) {
 					},
 				},
 				Status: v2.DoguStatus{
-					Status: v2.DoguStatusInstalled,
-					Health: v2.AvailableHealthStatus,
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: version3213.Raw,
+					StartedAt:        pointInTime,
 				},
 			}},
 			want: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize:      defaultVolSize,
+				MinVolumeSize:      &defaultVolSize,
 				PersistenceContext: persistenceContext,
+				InstalledVersion:   version3213,
+				StartedAt:          pointInTime,
 			},
 			wantErr: false,
 		},
@@ -96,6 +110,66 @@ func Test_parseDoguCR(t *testing.T) {
 			}},
 			want:    nil,
 			wantErr: true,
+		},
+		{
+			name: "cannot parse installed version",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
+						AllowNamespaceSwitch: false,
+					},
+				},
+				Status: v2.DoguStatus{
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: "xyvz",
+				},
+			}},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "accepts empty installed version",
+			args: args{cr: &v2.Dogu{
+				TypeMeta: metav1.TypeMeta{},
+				ObjectMeta: metav1.ObjectMeta{
+					Name:            "postgresql",
+					ResourceVersion: "abc",
+				},
+				Spec: v2.DoguSpec{
+					Name:      "official/postgresql",
+					Version:   version3214.Raw,
+					Resources: v2.DoguResources{},
+					UpgradeConfig: v2.UpgradeConfig{
+						AllowNamespaceSwitch: false,
+					},
+				},
+				Status: v2.DoguStatus{
+					Status:           v2.DoguStatusInstalled,
+					Health:           v2.AvailableHealthStatus,
+					InstalledVersion: "",
+				},
+			}},
+			want: &ecosystem.DoguInstallation{
+				Name:    postgresDoguName,
+				Version: version3214,
+				Status:  "installed",
+				Health:  ecosystem.AvailableHealthStatus,
+				UpgradeConfig: ecosystem.UpgradeConfig{
+					AllowNamespaceSwitch: false,
+				},
+				MinVolumeSize:      &defaultVolSize,
+				PersistenceContext: persistenceContext,
+			},
+			wantErr: false,
 		},
 		{
 			name: "parse additional mounts",
@@ -129,19 +203,19 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      defaultVolSize,
+				MinVolumeSize:      &defaultVolSize,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configmap",
 						Volume:     "volume",
-						Subfolder:  "subfolder",
+						Subfolder:  subfolder,
 					},
 					{
 						SourceType: ecosystem.DataSourceSecret,
 						Name:       "secret",
 						Volume:     "secvolume",
-						Subfolder:  "secsubfolder",
+						Subfolder:  subfolder2,
 					},
 				},
 			},
@@ -167,7 +241,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -192,7 +266,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -216,7 +290,7 @@ func Test_parseDoguCR(t *testing.T) {
 				Name:               postgresDoguName,
 				Version:            version3214,
 				PersistenceContext: persistenceContext,
-				MinVolumeSize:      volSize25G,
+				MinVolumeSize:      &volSize25G,
 			},
 			wantErr: false,
 		},
@@ -246,11 +320,12 @@ func Test_toDoguCR(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				PauseReconciliation: true,
 			},
 			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
@@ -278,6 +353,7 @@ func Test_toDoguCR(t *testing.T) {
 						ForceUpgrade:         false,
 					},
 					AdditionalIngressAnnotations: nil,
+					PauseReconciliation:          false, // should be always false on installation
 				},
 				Status: v2.DoguStatus{},
 			},
@@ -292,13 +368,13 @@ func Test_toDoguCR(t *testing.T) {
 						SourceType: ecosystem.DataSourceConfigMap,
 						Name:       "configmap",
 						Volume:     "volume",
-						Subfolder:  "subfolder",
+						Subfolder:  subfolder,
 					},
 					{
 						SourceType: ecosystem.DataSourceSecret,
 						Name:       "secret",
 						Volume:     "secvolume",
-						Subfolder:  "secsubfolder",
+						Subfolder:  subfolder2,
 					},
 				},
 			},
@@ -343,12 +419,12 @@ func Test_toDoguCR(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: volSize25G,
+				MinVolumeSize: &volSize25G,
 			},
 			want: &v2.Dogu{
 				TypeMeta: metav1.TypeMeta{},
@@ -401,11 +477,12 @@ func Test_toDoguCRPatch(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				PauseReconciliation: true,
 			},
 			want: &doguCRPatch{
 				Spec: doguSpecPatch{
@@ -414,6 +491,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 					UpgradeConfig: upgradeConfigPatch{
 						AllowNamespaceSwitch: true,
 					},
+					PauseReconciliation: true,
 				},
 			},
 		},
@@ -436,22 +514,26 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 		wantErr assert.ErrorAssertionFunc
 	}{
 		{
-			// TODO check ReverseProxy
 			name: "ok",
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: quantity2,
+				MinVolumeSize: &quantity2,
+				ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+					MaxBodySize:      &proxyBodySize,
+					RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+					AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 		{
@@ -459,16 +541,16 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 			dogu: &ecosystem.DoguInstallation{
 				Name:    postgresDoguName,
 				Version: version3214,
-				Status:  ecosystem.DoguStatusInstalled,
+				Status:  "installed",
 				Health:  ecosystem.AvailableHealthStatus,
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: "subfolder"},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 	}
@@ -528,13 +610,13 @@ func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
 				annotations: v2.IngressAnnotations{
 					"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
 					"nginx.ingress.kubernetes.io/rewrite-target":        "/",
-					"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
+					"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
 				},
 			},
 			want: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    "/",
-				AdditionalConfig: "snippet",
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			},
 			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
 				return err == nil
@@ -580,8 +662,8 @@ func Test_getNginxIngressAnnotations1(t *testing.T) {
 			name: "should parse config",
 			args: args{config: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity,
-				RewriteTarget:    "/",
-				AdditionalConfig: "additional",
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			}},
 			want: map[string]string{
 				"nginx.ingress.kubernetes.io/proxy-body-size":       "1M",

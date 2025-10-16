@@ -2,9 +2,10 @@ package componentcr
 
 import (
 	"context"
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
@@ -345,8 +346,7 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 					ComponentVersionLabelKey:       component.ExpectedVersion.String(),
 					"app":                          "ces",
 					"k8s.cloudogu.com/app":         "ces",
-					"dogu.name":                    string(component.Name.SimpleName),
-					"k8s.cloudogu.com/dogu.name":   string(component.Name.SimpleName),
+					"component.name":               string(component.Name.SimpleName),
 					"app.kubernetes.io/name":       string(component.Name.SimpleName),
 					"app.kubernetes.io/version":    component.ExpectedVersion.String(),
 					"app.kubernetes.io/part-of":    "ces",
@@ -410,8 +410,7 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 					ComponentVersionLabelKey:       component.ExpectedVersion.String(),
 					"app":                          "ces",
 					"k8s.cloudogu.com/app":         "ces",
-					"dogu.name":                    string(component.Name.SimpleName),
-					"k8s.cloudogu.com/dogu.name":   string(component.Name.SimpleName),
+					"component.name":               string(component.Name.SimpleName),
 					"app.kubernetes.io/name":       string(component.Name.SimpleName),
 					"app.kubernetes.io/version":    component.ExpectedVersion.String(),
 					"app.kubernetes.io/part-of":    "ces",

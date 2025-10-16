@@ -17,12 +17,6 @@ func TestEvents(t *testing.T) {
 		expectedMessage string
 	}{
 		{
-			name:            "blueprint dry run",
-			event:           BlueprintDryRunEvent{},
-			expectedName:    "BlueprintDryRun",
-			expectedMessage: "Executed blueprint in dry run mode. Remove flag to continue",
-		},
-		{
 			name:            "blueprint spec invalid",
 			event:           BlueprintSpecInvalidEvent{ValidationError: assert.AnError},
 			expectedName:    "BlueprintSpecInvalid",
@@ -47,6 +41,12 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "dogu health ignored: false; component health ignored: true",
 		},
 		{
+			name:            "blueprint stopped",
+			event:           BlueprintStoppedEvent{},
+			expectedName:    "BlueprintStopped",
+			expectedMessage: "Blueprint is set as stopped and will not be applied. Remove flag to continue",
+		},
+		{
 			name: "ecosystem unhealthy upfront",
 			event: EcosystemUnhealthyEvent{
 				HealthResult: ecosystem.HealthResult{
@@ -60,22 +60,22 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "EcosystemUnhealthy",
-			expectedMessage: "ecosystem health:\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
+			expectedMessage: "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
 		},
 		{
 			name: "dogu state diff determined",
-			event: newStateDiffDoguEvent(
-				DoguDiffs{
+			event: newStateDiffEvent(
+				StateDiff{DoguDiffs: DoguDiffs{
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionInstall}},
 					{NeededActions: []Action{ActionUninstall}},
 					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguProxyBodySize, ActionUpdateDoguProxyRewriteTarget, ActionUpdateDoguProxyAdditionalConfig}},
+					{NeededActions: []Action{ActionUpgrade, ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguReverseProxyConfig}},
 					{NeededActions: []Action{ActionDowngrade}},
-				}),
-			expectedName:    "StateDiffDoguDetermined",
-			expectedMessage: "dogu state diff determined: 11 actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 3, \"upgrade\": 1)",
+				}}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  0 config changes ()\n  9 dogu actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 1, \"upgrade\": 1)",
 		},
 		{
 			name: "component state diff determined",
@@ -93,19 +93,14 @@ func TestEvents(t *testing.T) {
 			expectedMessage: "component state diff determined: 9 actions (\"component namespace switch\": 1, \"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update component package config\": 1, \"upgrade\": 1)",
 		},
 		{
-			name: "global config diff determined",
-			event: GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs{
-				{NeededAction: ConfigActionNone},
-				{NeededAction: ConfigActionNone},
-				{NeededAction: ConfigActionSet},
-				{NeededAction: ConfigActionRemove},
-			}},
-			expectedName:    "GlobalConfigDiffDetermined",
-			expectedMessage: "global config diff determined: 2 changes (\"none\": 2, \"remove\": 1, \"set\": 1)",
-		},
-		{
-			name: "dogu config diff determined",
-			event: DoguConfigDiffDeterminedEvent{
+			name: "config diff determined",
+			event: newStateDiffEvent(StateDiff{
+				GlobalConfigDiffs: GlobalConfigDiffs{
+					{NeededAction: ConfigActionNone},
+					{NeededAction: ConfigActionNone},
+					{NeededAction: ConfigActionSet},
+					{NeededAction: ConfigActionRemove},
+				},
 				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
 					"dogu1": []DoguConfigEntryDiff{
 						{NeededAction: ConfigActionNone},
@@ -113,9 +108,31 @@ func TestEvents(t *testing.T) {
 						{NeededAction: ConfigActionRemove},
 					},
 				},
-			},
-			expectedName:    "DoguConfigDiffDetermined",
-			expectedMessage: "dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
+					"dogu1": []SensitiveDoguConfigEntryDiff{
+						{NeededAction: ConfigActionNone},
+						{NeededAction: ConfigActionSet},
+						{NeededAction: ConfigActionRemove},
+					},
+				},
+			}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  6 config changes (\"none\": 4, \"remove\": 3, \"set\": 3)\n  0 dogu actions ()",
+		},
+		{
+			name: "config and dogu diff determined",
+			event: newStateDiffEvent(StateDiff{
+				DoguDiffs: DoguDiffs{
+					{NeededActions: []Action{ActionInstall}},
+					{NeededActions: []Action{ActionUninstall}},
+				},
+				GlobalConfigDiffs: GlobalConfigDiffs{
+					{NeededAction: ConfigActionSet},
+					{NeededAction: ConfigActionRemove},
+				},
+			}),
+			expectedName:    "StateDiffDetermined",
+			expectedMessage: "state diff determined:\n  2 config changes (\"remove\": 1, \"set\": 1)\n  2 dogu actions (\"install\": 1, \"uninstall\": 1)",
 		},
 		{
 			name: "config references missing",
@@ -124,20 +141,6 @@ func TestEvents(t *testing.T) {
 			),
 			expectedName:    "MissingConfigReferences",
 			expectedMessage: assert.AnError.Error(),
-		},
-		{
-			name: "sensitive dogu config diff determined",
-			event: SensitiveDoguConfigDiffDeterminedEvent{
-				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
-					"dogu1": []SensitiveDoguConfigEntryDiff{
-						{NeededAction: ConfigActionNone},
-						{NeededAction: ConfigActionSet},
-						{NeededAction: ConfigActionRemove},
-					},
-				},
-			},
-			expectedName:    "SensitiveDoguConfigDiffDetermined",
-			expectedMessage: "sensitive dogu config diff determined: 2 changes (\"none\": 1, \"remove\": 1, \"set\": 1)",
 		},
 		{
 			name: "components applied",
@@ -198,12 +201,6 @@ func TestEvents(t *testing.T) {
 			event:           EcosystemConfigAppliedEvent{},
 			expectedName:    "EcosystemConfigApplied",
 			expectedMessage: "ecosystem config applied",
-		},
-		{
-			name:            "applying ecosystem config failed",
-			event:           ApplyEcosystemConfigFailedEvent{fmt.Errorf("test-error")},
-			expectedName:    "ApplyEcosystemConfigFailed",
-			expectedMessage: "test-error",
 		},
 		{
 			name:            "await self upgrade",

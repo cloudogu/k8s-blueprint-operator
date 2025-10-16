@@ -28,15 +28,19 @@ func NewApplyComponentsUseCase(
 // The conditions in the blueprint will be set accordingly.
 // returns domainservice.ConflictError if there was a concurrent update to the blueprint or
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
-func (useCase *ApplyComponentsUseCase) ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+func (useCase *ApplyComponentsUseCase) ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error) {
 	err := useCase.componentUseCase.ApplyComponentStates(ctx, blueprint)
-	changed := blueprint.SetComponentsAppliedCondition(err)
+	isComponentsApplied := blueprint.StateDiff.ComponentDiffs.HasChanges() && err == nil
+	if isComponentsApplied {
+		blueprint.Events = append(blueprint.Events, domain.ComponentsAppliedEvent{Diffs: blueprint.StateDiff.ComponentDiffs})
+	}
+	conditionChanged := blueprint.SetLastApplySucceededConditionOnError(domain.ReasonLastApplyErrorAtComponents, err)
 
-	if changed {
+	if isComponentsApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)
 		if updateErr != nil {
-			return fmt.Errorf("cannot update condition while applying components: %w", errors.Join(updateErr, err))
+			return isComponentsApplied, fmt.Errorf("cannot update status while applying components: %w", errors.Join(updateErr, err))
 		}
 	}
-	return err
+	return isComponentsApplied, err
 }

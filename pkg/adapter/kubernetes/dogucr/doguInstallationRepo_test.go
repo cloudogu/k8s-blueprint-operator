@@ -3,6 +3,8 @@ package dogucr
 import (
 	"context"
 	"errors"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -16,7 +18,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 )
 
 var version3214, _ = core.ParseVersion("3.2.1-4")
@@ -68,18 +69,20 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 		// then
 		require.NoError(t, err)
 		quantity1 := resource.MustParse("1G")
+		rewriteTarget := "/"
+		additionalConfig := "snippet"
 		assert.Equal(t, &ecosystem.DoguInstallation{
 			Name:               postgresDoguName,
 			Version:            version3214,
-			Status:             ecosystem.DoguStatusInstalled,
+			Status:             "installed",
 			Health:             ecosystem.AvailableHealthStatus,
 			UpgradeConfig:      ecosystem.UpgradeConfig{},
 			PersistenceContext: persistenceContext,
-			MinVolumeSize:      quantity2,
+			MinVolumeSize:      &quantity2,
 			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 				MaxBodySize:      &quantity1,
-				RewriteTarget:    "/",
-				AdditionalConfig: "snippet",
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
 			},
 		}, dogu)
 	})
@@ -216,13 +219,13 @@ func Test_doguInstallationRepo_GetAll(t *testing.T) {
 			"postgresql": {
 				Name:               postgresDoguName,
 				Version:            version1231,
-				MinVolumeSize:      volumeQuantity2,
+				MinVolumeSize:      &volumeQuantity2,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 			"ldap": {
 				Name:               ldapDoguName,
 				Version:            version3213,
-				MinVolumeSize:      volumeQuantity3,
+				MinVolumeSize:      &volumeQuantity3,
 				PersistenceContext: map[string]interface{}{"doguInstallationRepoContext": doguInstallationRepoContext{resourceVersion: ""}},
 			},
 		}
@@ -338,6 +341,7 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 			"\"dataVolumeSize\":\"\"," +
 			"\"minDataVolumeSize\":\"0\"}," +
 			"\"supportMode\":false," +
+			"\"pauseReconciliation\":false," +
 			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
 			"\"additionalIngressAnnotations\":null," +
 			"\"additionalMounts\":null}" +

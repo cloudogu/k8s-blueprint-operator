@@ -26,17 +26,19 @@ func NewApplyDogusUseCase(
 
 // ApplyDogus applies dogus if necessary.
 // The conditions in the blueprint will be set accordingly.
+// returns true if the dogus were applied, false if not.
 // returns domainservice.ConflictError if there was a concurrent update to the blueprint or
 // returns a domainservice.InternalError if there was an unspecified error while collecting or modifying the ecosystem state.
-func (useCase *ApplyDogusUseCase) ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+func (useCase *ApplyDogusUseCase) ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error) {
 	err := useCase.doguInstallUseCase.ApplyDoguStates(ctx, blueprint)
-	changed := blueprint.SetDogusAppliedCondition(err)
+	isDogusApplied := blueprint.StateDiff.DoguDiffs.HasChanges() && err == nil
+	conditionChanged := blueprint.MarkDogusApplied(isDogusApplied, err)
 
-	if changed {
+	if isDogusApplied || conditionChanged {
 		updateErr := useCase.repo.Update(ctx, blueprint)
 		if updateErr != nil {
-			return fmt.Errorf("cannot update condition while applying dogus: %w", errors.Join(updateErr, err))
+			return isDogusApplied, fmt.Errorf("cannot update status while applying dogus: %w", errors.Join(updateErr, err))
 		}
 	}
-	return err
+	return isDogusApplied, err
 }

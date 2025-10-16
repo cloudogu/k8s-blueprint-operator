@@ -13,10 +13,8 @@ import (
 )
 
 const (
-	nginxDependencyName        = "nginx"
-	nginxStaticDependencyName  = "nginx-static"
-	nginxIngressDependencyName = "nginx-ingress"
-	registratorDependencyName  = "registrator"
+	nginxDependencyName       = "nginx"
+	registratorDependencyName = "registrator"
 )
 
 type ValidateDependenciesDomainUseCase struct {
@@ -38,9 +36,13 @@ func (useCase *ValidateDependenciesDomainUseCase) ValidateDependenciesForAllDogu
 	logger := log.FromContext(ctx).WithName("ValidateDependenciesDomainUseCase.ValidateDependenciesForAllDogus")
 	wantedDogus := effectiveBlueprint.GetWantedDogus()
 	dogusToLoad := util.Map(wantedDogus, func(dogu domain.Dogu) cescommons.QualifiedVersion {
+		doguVersion := core.Version{}
+		if dogu.Version != nil {
+			doguVersion = *dogu.Version
+		}
 		return cescommons.QualifiedVersion{
 			Name:    dogu.Name,
-			Version: dogu.Version,
+			Version: doguVersion,
 		}
 	})
 	logger.V(2).Info("load dogu specifications...", "wantedDogus", wantedDogus)
@@ -102,18 +104,8 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		}
 
 		// Exception for the old nginx dependency from the single node Cloudogu EcoSystem.
-		// We only have to check if nginx-static and nginx-ingress are present.
+		// The nginx dependency was replaced by a the k8s-ces-gateway and k8s-ces-assets component
 		if dependencyOfWantedDogu.Name == nginxDependencyName {
-			if !checkNginxIngressAndStatic(wantedDogus) {
-				problems = append(problems, fmt.Errorf(
-					"dogu has %q dependency but %q and %q are missing in the effective blueprint",
-					nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName,
-				))
-			}
-			logger.V(2).Info(fmt.Sprintf(
-				"dogu has dependency %q. %q and %q are available.",
-				nginxDependencyName, nginxIngressDependencyName, nginxStaticDependencyName,
-			))
 			continue
 		}
 
@@ -123,23 +115,6 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 	}
 	err := errors.Join(problems...)
 	return err
-}
-
-func checkNginxIngressAndStatic(wantedDogus []domain.Dogu) bool {
-	foundNginxIngress := isDoguInSlice(wantedDogus, nginxIngressDependencyName)
-	foundNginxStatic := isDoguInSlice(wantedDogus, nginxStaticDependencyName)
-
-	return foundNginxIngress && foundNginxStatic
-}
-
-func isDoguInSlice(dogus []domain.Dogu, name cescommons.SimpleName) bool {
-	for _, dogu := range dogus {
-		if dogu.Name.SimpleName == name {
-			return true
-		}
-	}
-
-	return false
 }
 
 func checkDoguDependency(
@@ -165,7 +140,11 @@ func checkDependencyVersion(doguInBlueprint domain.Dogu, expectedVersion string)
 	if err != nil {
 		return fmt.Errorf("failed to parse version comparator of version %s for dogu dependency %s: %w", expectedVersion, doguInBlueprint.Name, err)
 	}
-	allows, err := comparator.Allows(doguInBlueprint.Version)
+	doguInBlueprintVersion := core.Version{}
+	if doguInBlueprint.Version != nil {
+		doguInBlueprintVersion = *doguInBlueprint.Version
+	}
+	allows, err := comparator.Allows(doguInBlueprintVersion)
 	if err != nil {
 		return fmt.Errorf("an error occurred when comparing the versions: %w", err)
 	}

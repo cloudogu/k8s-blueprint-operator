@@ -4,47 +4,26 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 type BlueprintSpecChangeUseCase struct {
-	repo                   blueprintSpecRepository
-	validation             blueprintSpecValidationUseCase
-	effectiveBlueprint     effectiveBlueprintUseCase
-	stateDiff              stateDiffUseCase
-	applyUseCase           completeBlueprintUseCase
-	ecosystemConfigUseCase ecosystemConfigUseCase
-	selfUpgradeUseCase     selfUpgradeUseCase
-	applyComponentUseCase  applyComponentsUseCase
-	applyDogusUseCase      applyDogusUseCase
-	healthUseCase          ecosystemHealthUseCase
+	repo               blueprintSpecRepository
+	preparationUseCase BlueprintPreparationUseCase
+	applyUseCase       BlueprintApplyUseCase
 }
 
 func NewBlueprintSpecChangeUseCase(
-	repo domainservice.BlueprintSpecRepository,
-	validation blueprintSpecValidationUseCase,
-	effectiveBlueprint effectiveBlueprintUseCase,
-	stateDiff stateDiffUseCase,
-	applyUseCase completeBlueprintUseCase,
-	ecosystemConfigUseCase ecosystemConfigUseCase,
-	selfUpgradeUseCase selfUpgradeUseCase,
-	applyComponentUseCase applyComponentsUseCase,
-	applyDogusUseCase applyDogusUseCase,
-	ecosystemHealthUseCase ecosystemHealthUseCase,
+	repo blueprintSpecRepository,
+	preparationUseCase BlueprintPreparationUseCase,
+	applyUseCase BlueprintApplyUseCase,
 ) *BlueprintSpecChangeUseCase {
 	return &BlueprintSpecChangeUseCase{
-		repo:                   repo,
-		validation:             validation,
-		effectiveBlueprint:     effectiveBlueprint,
-		stateDiff:              stateDiff,
-		applyUseCase:           applyUseCase,
-		ecosystemConfigUseCase: ecosystemConfigUseCase,
-		selfUpgradeUseCase:     selfUpgradeUseCase,
-		applyComponentUseCase:  applyComponentUseCase,
-		applyDogusUseCase:      applyDogusUseCase,
-		healthUseCase:          ecosystemHealthUseCase,
+		repo:               repo,
+		preparationUseCase: preparationUseCase,
+		applyUseCase:       applyUseCase,
 	}
 }
 
@@ -74,70 +53,49 @@ func (useCase *BlueprintSpecChangeUseCase) HandleUntilApplied(givenCtx context.C
 
 	logger.V(1).Info("handle blueprint")
 
-	err = useCase.validation.ValidateBlueprintSpecStatically(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	err = useCase.effectiveBlueprint.CalculateEffectiveBlueprint(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	err = useCase.validation.ValidateBlueprintSpecDynamically(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	err = useCase.stateDiff.DetermineStateDiff(ctx, blueprint)
-	if err != nil {
-		// error could be either a technical error from a repository or an InvalidBlueprintError from the domain
-		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
-		return err
-	}
-	// always check health here, even if we already know here, that we don't need to apply anything
-	// because we need to update the health condition
-	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
+	err = useCase.preparationUseCase.prepareBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}
 
 	if !blueprint.ShouldBeApplied() {
-		// just stop the loop here on dry run or early exit
-		return nil
+		// stop the loop here on stopped-flag or early exit
+		return useCase.handleShouldNotBeApplied(ctx, logger, blueprint)
 	}
 
 	// === Apply from here on ===
-	err = useCase.selfUpgradeUseCase.HandleSelfUpgrade(ctx, blueprint)
-	if err != nil {
-		// could be a domain.AwaitSelfUpgradeError to trigger another reconcile
-		return err
-	}
-	err = useCase.ecosystemConfigUseCase.ApplyConfig(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	err = useCase.applyComponentUseCase.ApplyComponents(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	// check after applying components
-	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	err = useCase.applyDogusUseCase.ApplyDogus(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-	// check after installing or updating dogus
-	_, err = useCase.healthUseCase.CheckEcosystemHealth(ctx, blueprint)
-	if err != nil {
-		return err
-	}
-
-	err = useCase.applyUseCase.CompleteBlueprint(ctx, blueprint)
+	err = useCase.applyUseCase.applyBlueprint(ctx, blueprint)
 	if err != nil {
 		return err
 	}
 
 	logger.Info("blueprint successfully applied")
+	return nil
+}
+
+func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.Context, logger logr.Logger, blueprint *domain.BlueprintSpec) error {
+	// post event and log only if blueprint is stopped, all other cases are just NoOps
+	if blueprint.Config.Stopped {
+		logger.Info("blueprint is currently set as stopped and will not be applied")
+		blueprint.MarkBlueprintStopped()
+		err := useCase.repo.Update(ctx, blueprint)
+		if err != nil {
+			return fmt.Errorf("cannot update status to set stopped event: %w", err)
+		}
+	} else {
+		logger.V(1).Info("no diff detected, no changes required")
+	}
+	return nil
+}
+
+func (useCase *BlueprintSpecChangeUseCase) CheckForMultipleBlueprintResources(ctx context.Context) error {
+	logger := log.FromContext(ctx).WithName("BlueprintSpecChangeUseCase.CheckForMultipleBlueprintResources")
+
+	logger.V(2).Info("check for multiple blueprints")
+	err := useCase.repo.CheckSingleton(ctx)
+	if err != nil {
+		return fmt.Errorf("%s: %w", "check for multiple blueprints not successful", err)
+	}
+
 	return nil
 }

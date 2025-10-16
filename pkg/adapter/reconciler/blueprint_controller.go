@@ -3,10 +3,9 @@ package reconciler
 import (
 	"context"
 	"errors"
-	"strings"
+	"fmt"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -31,9 +30,8 @@ func NewBlueprintReconciler(
 	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
 }
 
-// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;watch;update;patch
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -45,7 +43,13 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
 
-	err := r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
+	err := r.blueprintChangeHandler.CheckForMultipleBlueprintResources(ctx)
+
+	if err != nil {
+		return decideRequeueForError(logger, err)
+	}
+
+	err = r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
 
 	if err != nil {
 		return decideRequeueForError(logger, err)
@@ -63,6 +67,9 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var invalidBlueprintError *domain.InvalidBlueprintError
 	var healthError *domain.UnhealthyEcosystemError
 	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
+	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
+	var multipleBlueprintsError *domain.MultipleBlueprintsError
+	var dogusNotUpToDateError *domain.DogusNotUpToDateError
 	switch {
 	case errors.As(err, &internalError):
 		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
@@ -71,14 +78,14 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
 		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
 	case errors.As(err, &notFoundError):
-		if strings.Contains(err.Error(), application.REFERENCED_CONFIG_NOT_FOUND) {
-			// retry in this case because maybe the user will create the secret in a few seconds.
-			// we want to be declarative, so our API should not care about the order
-			errLogger.Error(err, "Referenced config not found. Retry later")
-			return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+		if notFoundError.DoNotRetry {
+			// do not retry in this case, because if f.e. the blueprint is not found, nothing will bring it back, except the
+			// user, and this would trigger the reconciler by itself.
+			logger.Error(err, "Did not find resource and a retry is not expected to fix this issue. There will be no further automatic evaluation.")
+			return ctrl.Result{}, nil
 		}
-		errLogger.Error(err, "Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-		return ctrl.Result{}, nil
+		logger.Error(err, "Resource was not found, so maybe it was deleted in the meantime. Retry later")
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	case errors.As(err, &invalidBlueprintError):
 		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
 		return ctrl.Result{}, nil
@@ -89,6 +96,18 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	case errors.As(err, &awaitSelfUpgradeError):
 		errLogger.Info("wait for self upgrade")
 		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
+	case errors.As(err, &stateDiffNotEmptyError):
+		errLogger.Info("requeue until state diff is empty")
+		// fast requeue here since state diff has to be determined again
+		return ctrl.Result{RequeueAfter: 1 * time.Second}, nil
+	case errors.As(err, &multipleBlueprintsError):
+		errLogger.Error(err, "Ecosystem contains multiple blueprints - delete all except one. Retry later")
+		// fast requeue here since state diff has to be determined again
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+	case errors.As(err, &dogusNotUpToDateError):
+		// really normal case
+		errLogger.Info(fmt.Sprintf("Dogus are not up to date yet. Retry later: %s", err.Error()))
+		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 	default:
 		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
 		return ctrl.Result{}, err // automatic requeue because of non-nil err

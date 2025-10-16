@@ -41,6 +41,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 
 	//then
 	require.NoError(t, err)
+	assert.Nil(t, blueprint.Conditions, "should not set conditions")
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing.T) {
@@ -63,8 +64,6 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 	err := useCase.ValidateBlueprintSpecStatically(ctx, blueprint)
 
 	//then
-	assert.Nil(t, blueprint.Conditions, "should not set conditions")
-
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError, "error should be an InvalidBlueprintError")
@@ -101,7 +100,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	// given
 	blueprint := &domain.BlueprintSpec{
 		Id:         "testBlueprint1",
-		Conditions: &[]domain.Condition{},
+		Conditions: []domain.Condition{},
 	}
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
@@ -119,7 +118,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 
 	// then
 	require.NoError(t, err)
-	assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionValid))
+	assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionValid))
 }
 
 func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testing.T) {
@@ -134,11 +133,11 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	blueprint := &domain.BlueprintSpec{
 		Id: "testBlueprint1",
 		EffectiveBlueprint: domain.EffectiveBlueprint{Dogus: []domain.Dogu{{
-			Name:        redmineQualifiedDoguName,
-			Version:     version,
-			TargetState: domain.TargetStatePresent,
+			Name:    redmineQualifiedDoguName,
+			Version: &version,
+			Absent:  false,
 		}}},
-		Conditions: &[]domain.Condition{},
+		Conditions: []domain.Condition{},
 	}
 	invalidDependencyError := errors.New("invalid dependencies")
 	invalidMountsError := errors.New("invalid mounts")
@@ -150,7 +149,7 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	err := useCase.ValidateBlueprintSpecDynamically(ctx, blueprint)
 
 	// then
-	assert.True(t, meta.IsStatusConditionFalse(*blueprint.Conditions, domain.ConditionValid))
+	assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionValid))
 
 	require.Error(t, err)
 	var invalidError *domain.InvalidBlueprintError

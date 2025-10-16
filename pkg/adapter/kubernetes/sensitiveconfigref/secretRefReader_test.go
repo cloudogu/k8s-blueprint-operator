@@ -2,6 +2,8 @@ package sensitiveconfigref
 
 import (
 	"context"
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +12,6 @@ import (
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"testing"
 )
 
 var testCtx = context.TODO()
@@ -21,11 +22,11 @@ var (
 		},
 		Data: map[string][]byte{"username": []byte("user1"), "password": []byte("123456")},
 	}
-	redmineCredentialsUsernameKey = common.SensitiveDoguConfigKey{
+	redmineCredentialsUsernameKey = common.DoguConfigKey{
 		DoguName: "redmine",
 		Key:      "credentials/username",
 	}
-	redmineCredentialsPasswordKey = common.SensitiveDoguConfigKey{
+	redmineCredentialsPasswordKey = common.DoguConfigKey{
 		DoguName: "redmine",
 		Key:      "credentials/password",
 	}
@@ -36,11 +37,11 @@ var (
 		},
 		Data: map[string][]byte{"username": []byte("user2"), "password": []byte("789123")},
 	}
-	ldapCredentialsUsernameKey = common.SensitiveDoguConfigKey{
+	ldapCredentialsUsernameKey = common.DoguConfigKey{
 		DoguName: "ldap",
 		Key:      "credentials/username",
 	}
-	ldapCredentialsPasswordKey = common.SensitiveDoguConfigKey{
+	ldapCredentialsPasswordKey = common.DoguConfigKey{
 		DoguName: "ldap",
 		Key:      "credentials/password",
 	}
@@ -51,9 +52,9 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 		secretMock := newMockSecretClient(t)
 		refReader := NewSecretRefReader(secretMock)
 
-		result, err := refReader.GetValues(testCtx, map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{})
+		result, err := refReader.GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{})
 		require.NoError(t, err)
-		assert.Equal(t, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}, result)
+		assert.Equal(t, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, result)
 	})
 	t.Run("nothing to load with nil input", func(t *testing.T) {
 		secretMock := newMockSecretClient(t)
@@ -61,7 +62,7 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 
 		result, err := refReader.GetValues(testCtx, nil)
 		require.NoError(t, err)
-		assert.Equal(t, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{}, result)
+		assert.Equal(t, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, result)
 	})
 	t.Run("load secrets with keys", func(t *testing.T) {
 		secretMock := newMockSecretClient(t)
@@ -75,7 +76,7 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 		refReader := NewSecretRefReader(secretMock)
 
 		result, err := refReader.GetValues(testCtx,
-			map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
+			map[common.DoguConfigKey]domain.SensitiveValueRef{
 				redmineCredentialsUsernameKey: {
 					SecretName: redmineSecret.Name,
 					SecretKey:  "username",
@@ -95,7 +96,7 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		assert.Equal(t, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{
+		assert.Equal(t, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{
 			redmineCredentialsUsernameKey: "user1",
 			redmineCredentialsPasswordKey: "123456",
 			ldapCredentialsUsernameKey:    "user2",
@@ -119,7 +120,7 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 		refReader := NewSecretRefReader(secretMock)
 
 		_, err := refReader.GetValues(testCtx,
-			map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
+			map[common.DoguConfigKey]domain.SensitiveValueRef{
 				redmineCredentialsUsernameKey: {
 					SecretName: redmineSecret.Name,
 					SecretKey:  "username",

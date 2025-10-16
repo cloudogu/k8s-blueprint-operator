@@ -10,6 +10,8 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -19,33 +21,27 @@ type EcosystemConfigUseCase struct {
 	doguConfigRepository          doguConfigRepository
 	sensitiveDoguConfigRepository sensitiveDoguConfigRepository
 	globalConfigRepository        globalConfigRepository
+	doguInstallationRepository    doguInstallationRepository
 }
 
-func NewEcosystemConfigUseCase(
-	blueprintRepository blueprintSpecRepository,
-	doguConfigRepository doguConfigRepository,
-	sensitiveDoguConfigRepository sensitiveDoguConfigRepository,
-	globalConfigRepository globalConfigRepository,
-) *EcosystemConfigUseCase {
+func NewEcosystemConfigUseCase(blueprintRepository blueprintSpecRepository, doguConfigRepository doguConfigRepository, sensitiveDoguConfigRepository sensitiveDoguConfigRepository, globalConfigRepository globalConfigRepository, doguInstallationRepository domainservice.DoguInstallationRepository) *EcosystemConfigUseCase {
 	return &EcosystemConfigUseCase{
 		blueprintRepository:           blueprintRepository,
 		doguConfigRepository:          doguConfigRepository,
 		sensitiveDoguConfigRepository: sensitiveDoguConfigRepository,
 		globalConfigRepository:        globalConfigRepository,
+		doguInstallationRepository:    doguInstallationRepository,
 	}
 }
 
 // ApplyConfig fetches the dogu and global config stateDiff of the blueprint and applies these keys to the repositories.
 func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	if !blueprint.StateDiff.HasConfigChanges() {
-		return useCase.markConfigApplied(ctx, blueprint)
-	}
+	logger := log.FromContext(ctx).WithName("EcosystemConfigUseCase.ApplyConfig")
 
-	err := useCase.markApplyConfigStart(ctx, blueprint)
+	err := useCase.pauseReconciliationForDogus(ctx, blueprint.StateDiff)
 	if err != nil {
-		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, err)
+		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, fmt.Errorf("could not pause reconciliation for some dogus: %w", err))
 	}
-
 	err = applyDoguConfigDiffs(ctx, useCase.doguConfigRepository, blueprint.StateDiff.DoguConfigDiffs)
 	if err != nil {
 		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, fmt.Errorf("could not apply normal dogu config: %w", err))
@@ -59,7 +55,48 @@ func (useCase *EcosystemConfigUseCase) ApplyConfig(ctx context.Context, blueprin
 		return useCase.handleFailedApplyEcosystemConfig(ctx, blueprint, fmt.Errorf("could not apply global config: %w", err))
 	}
 
-	return useCase.markConfigApplied(ctx, blueprint)
+	if blueprint.StateDiff.HasConfigChanges() {
+		blueprint.MarkEcosystemConfigApplied()
+		repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
+
+		if repoErr != nil {
+			repoErr = errors.Join(repoErr, err)
+			logger.Error(repoErr, "cannot update blueprint events")
+			return fmt.Errorf("cannot update blueprint events: %w", repoErr)
+		}
+	}
+	return nil
+}
+
+func (useCase *EcosystemConfigUseCase) pauseReconciliationForDogus(ctx context.Context, diff domain.StateDiff) error {
+	allDogus, err := useCase.doguInstallationRepository.GetAll(ctx)
+	if err != nil {
+		return fmt.Errorf("error while attempting to load dogus: %w", err)
+	}
+	globalConfigChanges := diff.GlobalConfigDiffs.HasChanges()
+	for _, dogu := range allDogus {
+		doguDiff := findDoguDiff(diff, dogu)
+		if slices.Contains(doguDiff.NeededActions, domain.ActionUpgrade) &&
+			(globalConfigChanges ||
+				diff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
+				diff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges()) {
+			dogu.SetReconciliationPaused(true)
+			err = useCase.doguInstallationRepository.Update(ctx, dogu)
+			if err != nil {
+				return fmt.Errorf("could not pause reconciliation for dogu: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+func findDoguDiff(diff domain.StateDiff, dogu *ecosystem.DoguInstallation) domain.DoguDiff {
+	for _, doguDiff := range diff.DoguDiffs {
+		if doguDiff.DoguName == dogu.Name.SimpleName {
+			return doguDiff
+		}
+	}
+	return domain.DoguDiff{}
 }
 
 func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Context, globalConfigDiffsByAction map[domain.ConfigAction][]domain.GlobalConfigEntryDiff) error {
@@ -74,7 +111,11 @@ func (useCase *EcosystemConfigUseCase) applyGlobalConfigDiffs(ctx context.Contex
 	entryDiffsToSet := globalConfigDiffsByAction[domain.ConfigActionSet]
 	for _, diff := range entryDiffsToSet {
 		var err error
-		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(diff.Expected.Value))
+		val := ""
+		if diff.Expected.Value != nil {
+			val = *diff.Expected.Value
+		}
+		updatedEntries, err = updatedEntries.Set(diff.Key, common.GlobalConfigValue(val))
 		errs = append(errs, err)
 	}
 
@@ -139,39 +180,23 @@ func saveDoguConfigs(
 	return nil
 }
 
-func (useCase *EcosystemConfigUseCase) markApplyConfigStart(ctx context.Context, blueprint *domain.BlueprintSpec) error {
-	blueprint.StartApplyEcosystemConfig()
-	err := useCase.blueprintRepository.Update(ctx, blueprint)
-	if err != nil {
-		return fmt.Errorf("cannot mark blueprint as applying config: %w", err)
-	}
-	return nil
-}
-
 func (useCase *EcosystemConfigUseCase) handleFailedApplyEcosystemConfig(ctx context.Context, blueprint *domain.BlueprintSpec, err error) error {
 	logger := log.FromContext(ctx).
 		WithName("EcosystemConfigUseCase.handleFailedApplyEcosystemConfig").
 		WithValues("blueprintId", blueprint.Id)
 
 	// sets condition
-	blueprint.MarkApplyEcosystemConfigFailed(err)
-	repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
+	changed := blueprint.SetLastApplySucceededConditionOnError(domain.ReasonLastApplyErrorAtConfig, err)
+	if changed {
+		repoErr := useCase.blueprintRepository.Update(ctx, blueprint)
 
-	if repoErr != nil {
-		repoErr = errors.Join(repoErr, err)
-		logger.Error(repoErr, "cannot mark blueprint config apply as failed")
-		return fmt.Errorf("cannot mark blueprint config apply as failed: %w", repoErr)
+		if repoErr != nil {
+			repoErr = errors.Join(repoErr, err)
+			logger.Error(repoErr, "cannot mark blueprint config apply as failed")
+			return fmt.Errorf("cannot mark blueprint config apply as failed: %w", repoErr)
+		}
 	}
 	return err
-}
-
-func (useCase *EcosystemConfigUseCase) markConfigApplied(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
-	blueprintSpec.MarkEcosystemConfigApplied()
-	err := useCase.blueprintRepository.Update(ctx, blueprintSpec)
-	if err != nil {
-		return fmt.Errorf("failed to mark ecosystem config applied: %w", err)
-	}
-	return nil
 }
 
 // applyDiff merges the given changes from the doguConfigDiff in the DoguConfig.
@@ -183,7 +208,11 @@ func applyDiff(doguConfig config.DoguConfig, diffs []domain.DoguConfigEntryDiff)
 		var err error
 		switch diff.NeededAction {
 		case domain.ConfigActionSet:
-			updatedEntries, err = updatedEntries.Set(diff.Key.Key, config.Value(diff.Expected.Value))
+			val := ""
+			if diff.Expected.Value != nil {
+				val = *diff.Expected.Value
+			}
+			updatedEntries, err = updatedEntries.Set(diff.Key.Key, config.Value(val))
 		case domain.ConfigActionRemove:
 			updatedEntries = updatedEntries.Delete(diff.Key.Key)
 		}

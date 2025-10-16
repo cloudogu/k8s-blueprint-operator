@@ -22,6 +22,52 @@ func (_m *mockBlueprintSpecRepository) EXPECT() *mockBlueprintSpecRepository_Exp
 	return &mockBlueprintSpecRepository_Expecter{mock: &_m.Mock}
 }
 
+// CheckSingleton provides a mock function with given fields: ctx
+func (_m *mockBlueprintSpecRepository) CheckSingleton(ctx context.Context) error {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckSingleton")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// mockBlueprintSpecRepository_CheckSingleton_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckSingleton'
+type mockBlueprintSpecRepository_CheckSingleton_Call struct {
+	*mock.Call
+}
+
+// CheckSingleton is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *mockBlueprintSpecRepository_Expecter) CheckSingleton(ctx interface{}) *mockBlueprintSpecRepository_CheckSingleton_Call {
+	return &mockBlueprintSpecRepository_CheckSingleton_Call{Call: _e.mock.On("CheckSingleton", ctx)}
+}
+
+func (_c *mockBlueprintSpecRepository_CheckSingleton_Call) Run(run func(ctx context.Context)) *mockBlueprintSpecRepository_CheckSingleton_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *mockBlueprintSpecRepository_CheckSingleton_Call) Return(_a0 error) *mockBlueprintSpecRepository_CheckSingleton_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *mockBlueprintSpecRepository_CheckSingleton_Call) RunAndReturn(run func(context.Context) error) *mockBlueprintSpecRepository_CheckSingleton_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetById provides a mock function with given fields: ctx, blueprintId
 func (_m *mockBlueprintSpecRepository) GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error) {
 	ret := _m.Called(ctx, blueprintId)

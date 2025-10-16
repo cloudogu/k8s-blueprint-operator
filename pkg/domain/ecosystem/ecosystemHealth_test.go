@@ -1,10 +1,11 @@
 package ecosystem
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestHealthResult_String(t *testing.T) {
@@ -23,7 +24,7 @@ func TestHealthResult_String(t *testing.T) {
 				DoguHealth:      DoguHealthResult{},
 				ComponentHealth: ComponentHealthResult{},
 			},
-			want: "ecosystem health:\n  0 dogu(s) are unhealthy: \n  0 component(s) are unhealthy: ",
+			want: "0 dogu(s) are unhealthy: \n  0 component(s) are unhealthy: ",
 		},
 		{
 			name: "should print dogu and component health results with unhealthy",
@@ -31,7 +32,7 @@ func TestHealthResult_String(t *testing.T) {
 				DoguHealth:      DoguHealthResult{DogusByStatus: map[HealthStatus][]cescommons.SimpleName{UnavailableHealthStatus: {"nginx-ingress"}}},
 				ComponentHealth: ComponentHealthResult{ComponentsByStatus: map[HealthStatus][]common.SimpleComponentName{UnavailableHealthStatus: {"k8s-etcd"}}},
 			},
-			want: "ecosystem health:\n  1 dogu(s) are unhealthy: nginx-ingress\n  1 component(s) are unhealthy: k8s-etcd",
+			want: "1 dogu(s) are unhealthy: nginx-ingress\n  1 component(s) are unhealthy: k8s-etcd",
 		},
 	}
 	for _, tt := range tests {

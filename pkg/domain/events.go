@@ -28,48 +28,6 @@ func (b BlueprintSpecInvalidEvent) Message() string {
 	return b.ValidationError.Error()
 }
 
-type GlobalConfigDiffDeterminedEvent struct {
-	GlobalConfigDiffs GlobalConfigDiffs
-}
-
-func (e GlobalConfigDiffDeterminedEvent) Name() string {
-	return "GlobalConfigDiffDetermined"
-}
-
-func (e GlobalConfigDiffDeterminedEvent) Message() string {
-	var stringPerAction []string
-	var actionsCounter int
-	for action, amount := range e.GlobalConfigDiffs.countByAction() {
-		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		if action != ConfigActionNone {
-			actionsCounter += amount
-		}
-	}
-	slices.Sort(stringPerAction)
-	return fmt.Sprintf("global config diff determined: %d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
-}
-
-type DoguConfigDiffDeterminedEvent struct {
-	DoguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs
-}
-
-func NewDoguConfigDiffDeterminedEvent(
-	doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs,
-) DoguConfigDiffDeterminedEvent {
-	return DoguConfigDiffDeterminedEvent{DoguConfigDiffs: doguConfigDiffs}
-}
-
-func (e DoguConfigDiffDeterminedEvent) Name() string {
-	return "DoguConfigDiffDetermined"
-}
-
-func (e DoguConfigDiffDeterminedEvent) Message() string {
-	return fmt.Sprintf(
-		"dogu config diff determined: %s",
-		generateDoguConfigChangeCounter(e.DoguConfigDiffs),
-	)
-}
-
 type MissingConfigReferencesEvent struct {
 	err error
 }
@@ -84,40 +42,6 @@ func (e MissingConfigReferencesEvent) Name() string {
 
 func (e MissingConfigReferencesEvent) Message() string {
 	return e.err.Error()
-}
-
-type SensitiveDoguConfigDiffDeterminedEvent struct {
-	SensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
-}
-
-func NewSensitiveDoguConfigDiffDeterminedEvent(
-	sensitiveDoguConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
-) SensitiveDoguConfigDiffDeterminedEvent {
-	return SensitiveDoguConfigDiffDeterminedEvent{SensitiveDoguConfigDiffs: sensitiveDoguConfigDiffs}
-}
-
-func (e SensitiveDoguConfigDiffDeterminedEvent) Name() string {
-	return "SensitiveDoguConfigDiffDetermined"
-}
-
-func (e SensitiveDoguConfigDiffDeterminedEvent) Message() string {
-	return fmt.Sprintf(
-		"sensitive dogu config diff determined: %s",
-		generateDoguConfigChangeCounter(e.SensitiveDoguConfigDiffs),
-	)
-}
-
-func generateDoguConfigChangeCounter(doguConfigDiffs map[cescommons.SimpleName]DoguConfigDiffs) string {
-	var stringPerAction []string
-	var actionsCounter int
-	for action, amount := range countByAction(doguConfigDiffs) {
-		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
-		if action != ConfigActionNone {
-			actionsCounter += amount
-		}
-	}
-	slices.Sort(stringPerAction)
-	return fmt.Sprintf("%d changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 // StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
@@ -161,40 +85,67 @@ func getActionAmountMessage(amountActions map[Action]int) (message string, total
 	return
 }
 
-// StateDiffDoguDeterminedEvent provides event information over detected changes regarding dogus.
-type StateDiffDoguDeterminedEvent struct {
-	doguDiffs DoguDiffs
+// StateDiffDeterminedEvent provides event information over detected changes regarding dogus.
+type StateDiffDeterminedEvent struct {
+	doguDiffs            DoguDiffs
+	GlobalConfigDiffs    GlobalConfigDiffs
+	DoguConfigDiffs      map[cescommons.SimpleName]DoguConfigDiffs
+	SensitiveConfigDiffs map[cescommons.SimpleName]SensitiveDoguConfigDiffs
 }
 
-func newStateDiffDoguEvent(doguDiffs DoguDiffs) StateDiffDoguDeterminedEvent {
-	return StateDiffDoguDeterminedEvent{
-		doguDiffs: doguDiffs,
+func newStateDiffEvent(stateDiff StateDiff) StateDiffDeterminedEvent {
+	return StateDiffDeterminedEvent{
+		doguDiffs:            stateDiff.DoguDiffs,
+		DoguConfigDiffs:      stateDiff.DoguConfigDiffs,
+		GlobalConfigDiffs:    stateDiff.GlobalConfigDiffs,
+		SensitiveConfigDiffs: stateDiff.SensitiveDoguConfigDiffs,
 	}
 }
 
 // Name contains the StateDiffDoguDeterminedEvent display name.
-func (s StateDiffDoguDeterminedEvent) Name() string {
-	return "StateDiffDoguDetermined"
+func (s StateDiffDeterminedEvent) Name() string {
+	return "StateDiffDetermined"
 }
 
-const groupedDoguProxyAction = "update reverse proxy"
-
 // Message contains the StateDiffDoguDeterminedEvent's statistics message.
-func (s StateDiffDoguDeterminedEvent) Message() string {
+func (s StateDiffDeterminedEvent) Message() string {
 	var amountActions = map[Action]int{}
 	for _, diff := range s.doguDiffs {
 		for _, action := range diff.NeededActions {
-			if action.IsDoguProxyAction() {
-				amountActions[groupedDoguProxyAction]++
-			} else {
-				amountActions[action]++
-			}
+			amountActions[action]++
 		}
 	}
 
-	message, amount := getActionAmountMessage(amountActions)
+	doguMessage, doguAmount := getActionAmountMessage(amountActions)
 
-	return fmt.Sprintf("dogu state diff determined: %d actions (%s)", amount, message)
+	return fmt.Sprintf("state diff determined:\n  %s\n  %d dogu actions (%s)", s.generateConfigChangeCounter(), doguAmount, doguMessage)
+}
+
+func (s StateDiffDeterminedEvent) generateConfigChangeCounter() string {
+	configActions := util.Map(s.GlobalConfigDiffs, func(entryDiff GlobalConfigEntryDiff) ConfigAction {
+		return entryDiff.NeededAction
+	})
+	for _, doguDiff := range s.DoguConfigDiffs {
+		configActions = append(configActions, util.Map(doguDiff, func(entryDiff DoguConfigEntryDiff) ConfigAction {
+			return entryDiff.NeededAction
+		})...)
+	}
+	for _, doguDiff := range s.SensitiveConfigDiffs {
+		configActions = append(configActions, util.Map(doguDiff, func(entryDiff SensitiveDoguConfigEntryDiff) ConfigAction {
+			return entryDiff.NeededAction
+		})...)
+	}
+
+	var stringPerAction []string
+	var actionsCounter int
+	for action, amount := range countByAction(configActions) {
+		stringPerAction = append(stringPerAction, fmt.Sprintf("%q: %d", action, amount))
+		if action != ConfigActionNone {
+			actionsCounter += amount
+		}
+	}
+	slices.Sort(stringPerAction)
+	return fmt.Sprintf("%d config changes (%s)", actionsCounter, strings.Join(stringPerAction, ", "))
 }
 
 type EcosystemHealthyEvent struct {
@@ -219,17 +170,7 @@ func (d EcosystemUnhealthyEvent) Name() string {
 }
 
 func (d EcosystemUnhealthyEvent) Message() string {
-	return d.HealthResult.String()
-}
-
-type BlueprintDryRunEvent struct{}
-
-func (b BlueprintDryRunEvent) Name() string {
-	return "BlueprintDryRun"
-}
-
-func (b BlueprintDryRunEvent) Message() string {
-	return "Executed blueprint in dry run mode. Remove flag to continue"
+	return "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  " + d.HealthResult.String()
 }
 
 type ComponentsAppliedEvent struct {
@@ -278,6 +219,20 @@ func (e DogusAppliedEvent) Message() string {
 	return buffer.String()
 }
 
+type DogusNotUpToDateEvent struct {
+	DogusNotUpToDate []cescommons.SimpleName
+}
+
+func (e DogusNotUpToDateEvent) Name() string {
+	return "DogusNotUpToDate"
+}
+
+func (e DogusNotUpToDateEvent) Message() string {
+	dogusNotUpToDate := util.Map(e.DogusNotUpToDate, func(dogu cescommons.SimpleName) string { return string(dogu) })
+	slices.Sort(dogusNotUpToDate)
+	return fmt.Sprintf("%d dogu(s) not up to date yet: %s", len(dogusNotUpToDate), strings.Join(dogusNotUpToDate, ", "))
+}
+
 type BlueprintAppliedEvent struct{}
 
 func (e BlueprintAppliedEvent) Name() string {
@@ -288,8 +243,22 @@ func (e BlueprintAppliedEvent) Message() string {
 	return "waiting for ecosystem health"
 }
 
+type BlueprintStoppedEvent struct{}
+
+func (e BlueprintStoppedEvent) Name() string {
+	return "BlueprintStopped"
+}
+
+func (e BlueprintStoppedEvent) Message() string {
+	return "Blueprint is set as stopped and will not be applied. Remove flag to continue"
+}
+
 type ExecutionFailedEvent struct {
 	err error
+}
+
+func NewExecutionFailedEvent(err error) ExecutionFailedEvent {
+	return ExecutionFailedEvent{err: err}
 }
 
 func (e ExecutionFailedEvent) Name() string {
@@ -318,18 +287,6 @@ func (e ApplyEcosystemConfigEvent) Name() string {
 
 func (e ApplyEcosystemConfigEvent) Message() string {
 	return "apply ecosystem config"
-}
-
-type ApplyEcosystemConfigFailedEvent struct {
-	err error
-}
-
-func (e ApplyEcosystemConfigFailedEvent) Name() string {
-	return "ApplyEcosystemConfigFailed"
-}
-
-func (e ApplyEcosystemConfigFailedEvent) Message() string {
-	return e.err.Error()
 }
 
 type EcosystemConfigAppliedEvent struct{}

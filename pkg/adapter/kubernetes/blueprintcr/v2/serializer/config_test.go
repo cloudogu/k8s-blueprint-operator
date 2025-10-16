@@ -1,56 +1,69 @@
 package serializer
 
 import (
+	"testing"
+
 	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
-	"testing"
+)
+
+var (
+	val1 = "val1"
 )
 
 func Test_convertToDoguConfigDTO(t *testing.T) {
 	tests := []struct {
 		name   string
-		config domain.DoguConfig
-		want   *v2.DoguConfig
+		config domain.DoguConfigEntries
+		want   []v2.ConfigEntry
 	}{
 		{
 			name:   "nil config",
-			config: domain.DoguConfig{},
+			config: nil,
 			want:   nil,
 		},
 		{
-			name: "empty config",
-			config: domain.DoguConfig{
-				Present: map[common.DoguConfigKey]common.DoguConfigValue{},
-				Absent:  []common.DoguConfigKey{},
-			},
-			want: nil,
+			name:   "empty config",
+			config: domain.DoguConfigEntries{},
+			want:   nil,
 		},
 		{
 			name: "convert present config",
-			config: domain.DoguConfig{
-				Present: map[common.DoguConfigKey]common.DoguConfigValue{
-					testDoguKey1: "val1",
+			config: domain.DoguConfigEntries{
+				{
+					Key:   testDoguKey1.Key,
+					Value: (*config.Value)(&val1),
 				},
 			},
-			want: &v2.DoguConfig{
-				Present: map[string]string{
-					testDoguKey1.Key.String(): "val1",
-				},
+			want: []v2.ConfigEntry{
+				{Key: testDoguKey1.Key.String(), Value: &val1},
 			},
 		},
 		{
 			name: "convert absent config",
-			config: domain.DoguConfig{
-				Absent: []common.DoguConfigKey{
-					testDoguKey1,
+			config: domain.DoguConfigEntries{
+				{
+					Key:    testDoguKey1.Key,
+					Absent: true,
 				},
 			},
-			want: &v2.DoguConfig{
-				Absent: []string{
-					testDoguKey1.Key.String(),
+			want: []v2.ConfigEntry{
+				{Key: testDoguKey1.Key.String(), Absent: &trueVar},
+			},
+		},
+		{
+			name: "censor sensitive config values",
+			config: domain.DoguConfigEntries{
+				{
+					Key:       testDoguKey1.Key,
+					Sensitive: true,
+					Value:     (*config.Value)(&val1),
 				},
+			},
+			want: []v2.ConfigEntry{
+				{Key: testDoguKey1.Key.String(), Sensitive: &trueVar},
 			},
 		},
 	}
@@ -61,67 +74,56 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 	}
 }
 
-func Test_convertToDoguConfigDomain(t *testing.T) {
-	type args struct {
-		doguName string
-		config   *v2.DoguConfig
-	}
+func Test_convertToDoguConfigEntriesDomain(t *testing.T) {
 	tests := []struct {
-		name string
-		args args
-		want domain.DoguConfig
+		name   string
+		config []v2.ConfigEntry
+		want   domain.DoguConfigEntries
 	}{
 		{
-			name: "nil",
-			args: args{
-				doguName: string(testDoguKey1.DoguName),
-			},
-			want: domain.DoguConfig{},
+			name:   "nil",
+			config: nil,
+			want:   nil,
 		},
 		{
-			name: "nil config",
-			args: args{
-				doguName: string(testDoguKey1.DoguName),
-				config:   &v2.DoguConfig{},
-			},
-			want: domain.DoguConfig{},
+			name:   "empty config",
+			config: []v2.ConfigEntry{},
+			want:   nil,
 		},
 		{
 			name: "convert present config",
-			args: args{
-				doguName: string(testDoguKey1.DoguName),
-				config: &v2.DoguConfig{
-					Present: map[string]string{
-						testDoguKey1.Key.String(): "val1",
-					},
+			config: []v2.ConfigEntry{
+				{
+					Key:   testDoguKey1.Key.String(),
+					Value: &val1,
 				},
 			},
-			want: domain.DoguConfig{
-				Present: map[common.DoguConfigKey]common.DoguConfigValue{
-					testDoguKey1: "val1",
+			want: domain.DoguConfigEntries{
+				{
+					Key:   testDoguKey1.Key,
+					Value: (*config.Value)(&val1),
 				},
 			},
 		},
 		{
 			name: "convert absent config",
-			args: args{
-				doguName: string(testDoguKey1.DoguName),
-				config: &v2.DoguConfig{
-					Absent: []string{
-						testDoguKey1.Key.String(),
-					},
+			config: []v2.ConfigEntry{
+				{
+					Key:    testDoguKey1.Key.String(),
+					Absent: &trueVar,
 				},
 			},
-			want: domain.DoguConfig{
-				Absent: []common.DoguConfigKey{
-					testDoguKey1,
+			want: domain.DoguConfigEntries{
+				{
+					Key:    testDoguKey1.Key,
+					Absent: true,
 				},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, convertToDoguConfigDomain(tt.args.doguName, tt.args.config), "convertToDoguConfigDomain(%v, %v)", tt.args.doguName, tt.args.config)
+			assert.Equalf(t, tt.want, convertToDoguConfigEntriesDomain(tt.config), "convertToDoguConfigDomain%v)", tt.config)
 		})
 	}
 }
@@ -129,37 +131,46 @@ func Test_convertToDoguConfigDomain(t *testing.T) {
 func Test_convertToGlobalConfigDTO(t *testing.T) {
 	tests := []struct {
 		name   string
-		config domain.GlobalConfig
-		want   v2.GlobalConfig
+		config domain.GlobalConfigEntries
+		want   []v2.ConfigEntry
 	}{
 		{
+			name:   "nil",
+			config: nil,
+			want:   nil,
+		},
+		{
 			name:   "empty",
-			config: domain.GlobalConfig{},
-			want:   v2.GlobalConfig{},
+			config: domain.GlobalConfigEntries{},
+			want:   nil,
 		},
 		{
 			name: "convert present",
-			config: domain.GlobalConfig{
-				Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-					"test": "val1",
+			config: domain.GlobalConfigEntries{
+				{
+					Key:   "test",
+					Value: (*config.Value)(&val1),
 				},
 			},
-			want: v2.GlobalConfig{
-				Present: map[string]string{
-					"test": "val1",
+			want: []v2.ConfigEntry{
+				{
+					Key:   "test",
+					Value: &val1,
 				},
 			},
 		},
 		{
 			name: "convert absent",
-			config: domain.GlobalConfig{
-				Absent: []common.GlobalConfigKey{
-					"test",
+			config: domain.GlobalConfigEntries{
+				{
+					Key:    "test",
+					Absent: true,
 				},
 			},
-			want: v2.GlobalConfig{
-				Absent: []string{
-					"test",
+			want: []v2.ConfigEntry{
+				{
+					Key:    "test",
+					Absent: &trueVar,
 				},
 			},
 		},
@@ -174,37 +185,41 @@ func Test_convertToGlobalConfigDTO(t *testing.T) {
 func Test_convertToGlobalConfigDomain(t *testing.T) {
 	tests := []struct {
 		name   string
-		config v2.GlobalConfig
-		want   domain.GlobalConfig
+		config []v2.ConfigEntry
+		want   domain.GlobalConfigEntries
 	}{
 		{
-			name:   "empty",
-			config: v2.GlobalConfig{},
-			want:   domain.GlobalConfig{},
+			name:   "nil",
+			config: nil,
+			want:   nil,
 		},
 		{
 			name: "convert present",
-			config: v2.GlobalConfig{
-				Present: map[string]string{
-					"test": "val1",
+			config: []v2.ConfigEntry{
+				{
+					Key:   "test",
+					Value: &val1,
 				},
 			},
-			want: domain.GlobalConfig{
-				Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-					"test": "val1",
+			want: domain.GlobalConfigEntries{
+				{
+					Key:   "test",
+					Value: (*config.Value)(&val1),
 				},
 			},
 		},
 		{
-			name: "convert present",
-			config: v2.GlobalConfig{
-				Absent: []string{
-					"test",
+			name: "convert absent",
+			config: []v2.ConfigEntry{
+				{
+					Key:    "test",
+					Absent: &trueVar,
 				},
 			},
-			want: domain.GlobalConfig{
-				Absent: []common.GlobalConfigKey{
-					"test",
+			want: domain.GlobalConfigEntries{
+				{
+					Key:    "test",
+					Absent: true,
 				},
 			},
 		},

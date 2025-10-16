@@ -10,6 +10,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	bpv2client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
@@ -47,6 +48,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 			return nil, &domainservice.NotFoundError{
 				WrappedError: err,
 				Message:      fmt.Sprintf("cannot load blueprint CR %q as it does not exist", blueprintId),
+				DoNotRetry:   true,
 			}
 		}
 		return nil, &domainservice.InternalError{
@@ -55,34 +57,63 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+	effectiveBlueprint, err := convertBlueprintStatus(blueprintCR)
 	if err != nil {
 		return nil, err
 	}
 
-	stateDiff, err := serializerv2.ConvertToStateDiffDomain(blueprintCR.Status.StateDiff)
-	if err != nil {
-		return nil, err
-	}
-
-	conditions := &blueprintCR.Status.Conditions
-	if conditions == nil {
-		conditions = &[]domain.Condition{}
+	var conditions []domain.Condition
+	if blueprintCR.Status != nil && blueprintCR.Status.Conditions != nil {
+		conditions = blueprintCR.Status.Conditions
 	}
 
 	blueprintSpec := &domain.BlueprintSpec{
 		Id:                 blueprintId,
+		DisplayName:        blueprintCR.Spec.DisplayName,
 		EffectiveBlueprint: effectiveBlueprint,
-		StateDiff:          stateDiff,
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
-			IgnoreDoguHealth:         blueprintCR.Spec.IgnoreDoguHealth,
-			IgnoreComponentHealth:    blueprintCR.Spec.IgnoreComponentHealth,
-			AllowDoguNamespaceSwitch: blueprintCR.Spec.AllowDoguNamespaceSwitch,
-			DryRun:                   blueprintCR.Spec.DryRun,
+			IgnoreDoguHealth:         ptr.Deref(blueprintCR.Spec.IgnoreDoguHealth, false),
+			IgnoreComponentHealth:    ptr.Deref(blueprintCR.Spec.IgnoreComponentHealth, false),
+			AllowDoguNamespaceSwitch: ptr.Deref(blueprintCR.Spec.AllowDoguNamespaceSwitch, false),
+			Stopped:                  ptr.Deref(blueprintCR.Spec.Stopped, false),
 		},
 	}
 
+	err = repo.serializeBlueprintAndMask(blueprintSpec, blueprintCR, blueprintId)
+	if err != nil {
+		return nil, err
+	}
+
+	setPersistenceContext(blueprintCR, blueprintSpec)
+	return blueprintSpec, nil
+}
+
+func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
+	// Ask for just 2 items: enough to detect "more than one"
+	limit := int64(2)
+
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit})
+	if err != nil {
+		return &domainservice.InternalError{
+			WrappedError: err,
+			Message:      "error while listing blueprint resources",
+		}
+	}
+
+	if list == nil {
+		return nil
+	}
+
+	switch len(list.Items) {
+	case 0, 1:
+		return nil
+	default:
+		return &domain.MultipleBlueprintsError{Message: "more than one blueprint CR found"}
+	}
+}
+
+func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *v2.Blueprint, blueprintId string) error {
 	blueprint, blueprintErr := serializerv2.ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
 	if blueprintErr != nil {
 		blueprintErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: blueprintErr}
@@ -97,13 +128,24 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
-		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
+		return fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
 	}
 
-	setPersistenceContext(blueprintCR, blueprintSpec)
 	blueprintSpec.Blueprint = blueprint
 	blueprintSpec.BlueprintMask = blueprintMask
-	return blueprintSpec, nil
+	return nil
+}
+
+func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprint, error) {
+	var effectiveBlueprint domain.EffectiveBlueprint
+	var err error
+	if blueprintCR.Status != nil {
+		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+		if err != nil {
+			return domain.EffectiveBlueprint{}, err
+		}
+	}
+	return effectiveBlueprint, nil
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.
@@ -123,10 +165,10 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
-		Status: v2.BlueprintStatus{
-			EffectiveBlueprint: effectiveBlueprint,
+		Status: &v2.BlueprintStatus{
+			EffectiveBlueprint: &effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
-			Conditions:         *spec.Conditions,
+			Conditions:         spec.Conditions,
 		},
 	}
 

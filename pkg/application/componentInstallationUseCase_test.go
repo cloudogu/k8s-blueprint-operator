@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -216,6 +217,30 @@ func TestComponentInstallationUseCase_applyComponentState(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
+	})
+
+	t.Run("should throw NotFoundError on action uninstall when component not found", func(t *testing.T) {
+		// given
+		blueprintSpecRepoMock := newMockBlueprintSpecRepository(t)
+		componentRepoMock := newMockComponentInstallationRepository(t)
+
+		componentDiff := domain.ComponentDiff{
+			Name:          componentName1,
+			NeededActions: []domain.Action{domain.ActionUninstall},
+		}
+
+		sut := &ComponentInstallationUseCase{
+			blueprintSpecRepo: blueprintSpecRepoMock,
+			componentRepo:     componentRepoMock,
+		}
+
+		// when
+		err := sut.applyComponentState(testCtx, componentDiff, nil)
+
+		// then
+		require.Error(t, err)
+		var targetError *domainservice.NotFoundError
+		assert.ErrorAs(t, err, &targetError)
 	})
 
 	t.Run("should update component on action upgrade", func(t *testing.T) {

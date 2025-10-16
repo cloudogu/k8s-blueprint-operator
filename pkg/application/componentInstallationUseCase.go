@@ -61,7 +61,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates")
 
 	if len(blueprint.StateDiff.ComponentDiffs) == 0 {
-		logger.Info("apply no components because blueprint has no component state differences")
+		logger.V(2).Info("apply no components because blueprint has no component state differences")
 		return nil
 	}
 
@@ -99,6 +99,9 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			}, componentDiff.Expected.Version, componentDiff.Expected.DeployConfig)
 			return useCase.componentRepo.Create(ctx, newComponent)
 		case domain.ActionUninstall:
+			if componentInstallation == nil {
+				return &domainservice.NotFoundError{Message: fmt.Sprintf("component %q not found", componentDiff.Name)}
+			}
 			logger.Info("uninstall component")
 			return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
 		case domain.ActionUpgrade:

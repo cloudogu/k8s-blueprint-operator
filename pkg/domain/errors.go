@@ -2,6 +2,7 @@ package domain
 
 import (
 	"fmt"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
@@ -53,10 +54,37 @@ func NewUnhealthyEcosystemError(
 	return &UnhealthyEcosystemError{WrappedError: wrappedError, Message: message, healthResult: healthResult}
 }
 
+// DogusNotUpToDateError indicates that there are dogus that are not yet up to date.
+type DogusNotUpToDateError struct {
+	Message string
+}
+
+func (e *DogusNotUpToDateError) Error() string {
+	return e.Message
+}
+
+// MultipleBlueprintsError indicates that there are multiple blueprint-resources in this namespace, which the controller cannot handle.
+type MultipleBlueprintsError struct {
+	Message string
+}
+
+// Error marks the struct as an error.
+func (e *MultipleBlueprintsError) Error() string {
+	return e.Message
+}
+
 type AwaitSelfUpgradeError struct {
 	Message string
 }
 
 func (e *AwaitSelfUpgradeError) Error() string {
+	return e.Message
+}
+
+type StateDiffNotEmptyError struct {
+	Message string
+}
+
+func (e *StateDiffNotEmptyError) Error() string {
 	return e.Message
 }

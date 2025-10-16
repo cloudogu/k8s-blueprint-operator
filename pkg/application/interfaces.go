@@ -3,10 +3,15 @@ package application
 import (
 	"context"
 
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
+
+type initialBlueprintStatusUseCase interface {
+	InitateConditions(ctx context.Context, blueprint *domain.BlueprintSpec) error
+}
 
 type blueprintSpecValidationUseCase interface {
 	ValidateBlueprintSpecStatically(ctx context.Context, blueprint *domain.BlueprintSpec) error
@@ -23,15 +28,16 @@ type stateDiffUseCase interface {
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
+	CheckDogusUpToDate(ctx context.Context) ([]cescommons.SimpleName, error)
 	ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type applyDogusUseCase interface {
-	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
 type applyComponentsUseCase interface {
-	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
 type componentInstallationUseCase interface {
@@ -46,6 +52,10 @@ type completeBlueprintUseCase interface {
 
 type ecosystemHealthUseCase interface {
 	CheckEcosystemHealth(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)
+}
+
+type dogusUpToDateUseCase interface {
+	CheckDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type selfUpgradeUseCase interface {

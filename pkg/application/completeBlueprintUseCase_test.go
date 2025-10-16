@@ -20,7 +20,7 @@ func TestNewApplyBlueprintSpecUseCase(t *testing.T) {
 func TestApplyBlueprintSpecUseCase_CompleteBlueprint(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -31,11 +31,11 @@ func TestApplyBlueprintSpecUseCase_CompleteBlueprint(t *testing.T) {
 
 		require.NoError(t, err)
 
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionCompleted))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionCompleted))
 	})
 	t.Run("no change if already completed", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)
@@ -46,11 +46,11 @@ func TestApplyBlueprintSpecUseCase_CompleteBlueprint(t *testing.T) {
 		require.NoError(t, err)
 		err = useCase.CompleteBlueprint(testCtx, blueprint)
 		require.NoError(t, err)
-		assert.True(t, meta.IsStatusConditionTrue(*blueprint.Conditions, domain.ConditionCompleted))
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionCompleted))
 	})
 	t.Run("repo error while saving", func(t *testing.T) {
 		blueprint := &domain.BlueprintSpec{
-			Conditions: &[]domain.Condition{},
+			Conditions: []domain.Condition{},
 		}
 
 		repoMock := newMockBlueprintSpecRepository(t)

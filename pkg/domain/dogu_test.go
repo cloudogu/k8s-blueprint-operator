@@ -1,15 +1,16 @@
 package domain
 
 import (
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
 )
 
 func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) {
-	dogu := Dogu{Name: officialDogu1, TargetState: TargetStatePresent}
+	dogu := Dogu{Name: officialDogu1, Absent: false}
 
 	err := dogu.validate()
 
@@ -18,7 +19,7 @@ func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) 
 }
 
 func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
-	dogu := Dogu{Name: officialDogu1, TargetState: TargetStateAbsent}
+	dogu := Dogu{Name: officialDogu1, Absent: true}
 
 	err := dogu.validate()
 
@@ -26,21 +27,12 @@ func Test_TargetDogu_validate_missingVersionOkayForAbsentDogu(t *testing.T) {
 }
 
 func Test_TargetDogu_validate_defaultToPresentState(t *testing.T) {
-	dogu := Dogu{Name: officialDogu1, Version: version123}
+	dogu := Dogu{Name: officialDogu1, Version: &version123}
 
 	err := dogu.validate()
 
 	require.Nil(t, err)
-	assert.Equal(t, TargetState(TargetStatePresent), dogu.TargetState)
-}
-
-func Test_TargetDogu_validate_errorOnUnknownTargetState(t *testing.T) {
-	dogu := Dogu{Name: officialDogu1, TargetState: -1}
-
-	err := dogu.validate()
-
-	require.Error(t, err)
-	require.ErrorContains(t, err, "dogu target state is invalid: official/dogu1")
+	assert.False(t, dogu.Absent)
 }
 
 func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
@@ -57,7 +49,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 
 	t.Run("no error on empty quantity", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: officialDogu1, Version: version123}
+		dogu := Dogu{Name: officialDogu1, Version: &version123}
 		// when
 		err := dogu.validate()
 		// then
@@ -67,7 +59,7 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 	t.Run("no error on zero size quantity", func(t *testing.T) {
 		// given
 		zeroQuantity := resource.MustParse("0")
-		dogu := Dogu{Name: officialDogu1, Version: version123, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
+		dogu := Dogu{Name: officialDogu1, Version: &version123, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}}
 		// when
 		err := dogu.validate()
 		// then
@@ -79,12 +71,12 @@ func Test_TargetDogu_validate_ProxySizeFormat(t *testing.T) {
 func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 	t.Run("additionalMounts ok", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		dogu := Dogu{Name: officialDogu1, Version: &version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  "test",
+				Subfolder:  subfolder,
 			},
 		}}
 		// when
@@ -95,36 +87,37 @@ func Test_TargetDogu_validate_AdditionalMounts(t *testing.T) {
 
 	t.Run("unknown sourceType", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		dogu := Dogu{Name: officialDogu1, Version: &version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: "unsupportedType",
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  "test",
+				Subfolder:  subfolder,
 			},
 		}}
 		// when
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts sourceType must be one of 'ConfigMap', 'Secret': k8s/nginx-static")
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts sourceType must be one of 'ConfigMap', 'Secret': official/dogu1")
 	})
 
 	t.Run("subfolder is no relative path", func(t *testing.T) {
 		// given
-		dogu := Dogu{Name: nginxStatic, Version: version123, AdditionalMounts: []ecosystem.AdditionalMount{
+		absoluteSubfolder := "/test"
+		dogu := Dogu{Name: officialDogu1, Version: &version123, AdditionalMounts: []ecosystem.AdditionalMount{
 			{
 				SourceType: ecosystem.DataSourceConfigMap,
 				Name:       "html-config",
 				Volume:     "customhtml",
-				Subfolder:  "/test",
+				Subfolder:  absoluteSubfolder,
 			},
 		}}
 		// when
 		err := dogu.validate()
 		// then
 		require.Error(t, err)
-		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts Subfolder must be a relative path : k8s/nginx-static")
+		require.ErrorContains(t, err, "dogu is invalid: dogu additional mounts Subfolder must be a relative path : official/dogu1")
 	})
 
 }

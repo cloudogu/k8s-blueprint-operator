@@ -2,8 +2,9 @@ package serializer
 
 import (
 	"fmt"
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"testing"
+
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 
 	"github.com/stretchr/testify/assert"
 
@@ -19,6 +20,8 @@ func TestConvertComponents(t *testing.T) {
 	type args struct {
 		components []bpv2.Component
 	}
+	wrongVersion1 := "1."
+	version1 := "1.0.0"
 	tests := []struct {
 		name    string
 		args    args
@@ -39,31 +42,31 @@ func TestConvertComponents(t *testing.T) {
 		},
 		{
 			name:    "normal component",
-			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
-			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: &version3211.Raw, Absent: &falseVar, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}}},
+			want:    []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, DeployConfig: map[string]interface{}{"deployNamespace": "longhorn-system", "configOverwrite": map[string]string{"key": "value"}}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "absent component",
-			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Absent: true}}},
-			want:    []domain.Component{{Name: k8sK8sDoguOperator, TargetState: domain.TargetStateAbsent}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Absent: &trueVar}}},
+			want:    []domain.Component{{Name: k8sK8sDoguOperator, Absent: true}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: "1."}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: &wrongVersion1}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "invalid component name",
-			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator/oh/no", Version: "1.0.0"}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s/k8s-dogu-operator/oh/no", Version: &version1}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "does not contain distribution namespace",
-			args:    args{components: []bpv2.Component{{Name: "k8s-dogu-operator", Version: version3211.Raw}}},
+			args:    args{components: []bpv2.Component{{Name: "k8s-dogu-operator", Version: &version3211.Raw}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -100,8 +103,8 @@ func TestConvertToComponentDTOs(t *testing.T) {
 		},
 		{
 			name: "ok",
-			args: args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211, TargetState: domain.TargetStatePresent}}},
-			want: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: version3211.Raw, Absent: false}},
+			args: args{components: []domain.Component{{Name: k8sK8sDoguOperator, Version: compVersion3211}}},
+			want: []bpv2.Component{{Name: "k8s/k8s-dogu-operator", Version: &version3211.Raw, Absent: &falseVar}},
 		},
 	}
 	for _, tt := range tests {

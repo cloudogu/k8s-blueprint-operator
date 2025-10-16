@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -22,6 +23,11 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	}
 	// parse dogu fields
 	version, versionErr := core.ParseVersion(cr.Spec.Version)
+	var installedVersion core.Version
+	var installedVersionErr error
+	if cr.Status.InstalledVersion != "" {
+		installedVersion, installedVersionErr = core.ParseVersion(cr.Status.InstalledVersion)
+	}
 	doguName, nameErr := cescommons.QualifiedNameFromString(cr.Spec.Name)
 
 	// the dogu-operator has a default of 2Gi if this field is 0 or not set
@@ -32,7 +38,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 
 	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
 
-	err := errors.Join(versionErr, nameErr, volumeSizeErr, proxyErr)
+	err := errors.Join(versionErr, nameErr, volumeSizeErr, proxyErr, installedVersionErr)
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
@@ -45,13 +51,16 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	persistenceContext[doguInstallationRepoContextKey] = doguInstallationRepoContext{
 		resourceVersion: cr.GetResourceVersion(),
 	}
+
 	return &ecosystem.DoguInstallation{
 		Name:               doguName,
 		Version:            version,
 		Status:             cr.Status.Status,
 		Health:             ecosystem.HealthStatus(cr.Status.Health),
+		InstalledVersion:   installedVersion,
+		StartedAt:          cr.Status.StartedAt,
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
-		MinVolumeSize:      minVolumeSize,
+		MinVolumeSize:      &minVolumeSize,
 		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
 		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
@@ -74,8 +83,8 @@ func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
 func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
 	reverseProxyConfig := ecosystem.ReverseProxyConfig{}
 
-	reverseProxyBodySize, ok := annotations[ecosystem.NginxIngressAnnotationBodySize]
-	if ok {
+	reverseProxyBodySize, bodySizeOk := annotations[ecosystem.NginxIngressAnnotationBodySize]
+	if bodySizeOk {
 		// Sizes for Nginx can be specified in bytes, kilobytes (suffixes k and K) or megabytes (suffixes m and M), for example, “1024”, “8k”, “1m” in Decimal SI.
 		// Since the actual dogu-operator and service-discovery just use this format we can expect that the values for the volume size in are safe to set in the doguinstallation.
 		// Formats “1024”, “8k”, “1m” can be parsed by resource.Quantity
@@ -94,6 +103,11 @@ func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) 
 }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
+	var minVolumeSize = ecosystem.VolumeSize{}
+	if dogu.MinVolumeSize != nil {
+		minVolumeSize = *dogu.MinVolumeSize
+	}
+
 	return &v2.Dogu{
 		TypeMeta: metav1.TypeMeta{},
 		ObjectMeta: metav1.ObjectMeta{
@@ -116,9 +130,10 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				// always set MinDataVolumeSize instead of the deprecated DataVolumeSize
 				// the dogu-operator has a default of 2GiB if this field is 0 or not set
 				// we just always set this value, if a new dogu CR is created via blueprint
-				MinDataVolumeSize: dogu.MinVolumeSize,
+				MinDataVolumeSize: minVolumeSize,
 			},
-			SupportMode: false,
+			SupportMode:         false,
+			PauseReconciliation: false, // should be always false on installation
 			UpgradeConfig: v2.UpgradeConfig{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
@@ -144,6 +159,10 @@ func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount
 }
 
 func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {
+	if config.IsEmpty() {
+		return nil
+	}
+
 	annotations := v2.IngressAnnotations{}
 	maxBodySize := config.MaxBodySize
 	if maxBodySize != nil {
@@ -178,6 +197,7 @@ type doguSpecPatch struct {
 	Version                      string             `json:"version"`
 	Resources                    doguResourcesPatch `json:"resources"`
 	SupportMode                  bool               `json:"supportMode"`
+	PauseReconciliation          bool               `json:"pauseReconciliation"`
 	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
 	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
 	AdditionalMounts             []v2.DataMount     `json:"additionalMounts"`
@@ -197,6 +217,11 @@ type doguResourcesPatch struct {
 }
 
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
+	var minVolumeSize = ecosystem.VolumeSize{}
+	if dogu.MinVolumeSize != nil {
+		minVolumeSize = *dogu.MinVolumeSize
+	}
+
 	return &doguCRPatch{
 		Spec: doguSpecPatch{
 			Name:    dogu.Name.String(),
@@ -206,11 +231,12 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 				// the dogu-operator has a default of 2Gi if this field is 0 or not set
 				// we just always set this value, if a new dogu CR is created via blueprint
 				DataVolumeSize:    "",
-				MinDataVolumeSize: dogu.MinVolumeSize,
+				MinDataVolumeSize: minVolumeSize,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode
-			SupportMode: false,
+			SupportMode:         false,
+			PauseReconciliation: dogu.PauseReconciliation,
 			UpgradeConfig: upgradeConfigPatch{
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				// this is a useful default as long as blueprints itself have no forceUpgrade flag implemented

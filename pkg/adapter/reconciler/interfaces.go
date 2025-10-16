@@ -2,6 +2,7 @@ package reconciler
 
 import (
 	"context"
+
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -15,4 +16,5 @@ type controllerManager interface {
 
 type BlueprintChangeHandler interface {
 	HandleUntilApplied(ctx context.Context, blueprintId string) error
+	CheckForMultipleBlueprintResources(ctx context.Context) error
 }
