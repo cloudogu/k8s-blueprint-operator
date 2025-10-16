@@ -90,28 +90,22 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	return blueprintSpec, nil
 }
 
-func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
-	// Ask for just 2 items: enough to detect "more than one"
-	limit := int64(2)
+func (repo *blueprintSpecRepo) Count(ctx context.Context, limit int) (int, error) {
+	limit64 := int64(limit)
 
-	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit})
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit64})
 	if err != nil {
-		return &domainservice.InternalError{
+		return 0, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      "error while listing blueprint resources",
 		}
 	}
 
 	if list == nil {
-		return nil
+		return 0, nil
 	}
 
-	switch len(list.Items) {
-	case 0, 1:
-		return nil
-	default:
-		return &domain.MultipleBlueprintsError{Message: "more than one blueprint CR found"}
-	}
+	return len(list.Items), nil
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.

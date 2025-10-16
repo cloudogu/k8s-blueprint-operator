@@ -395,35 +395,23 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 	})
 }
 
-func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
-	t.Run("No error when no blueprints found", func(t *testing.T) {
+func Test_blueprintSpecRepo_Count(t *testing.T) {
+	t.Run("0 when no blueprints found", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, nil)
+		limit := 100
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(nil, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
+		assert.Equal(t, 0, count)
 		require.NoError(t, err)
 	})
 
-	t.Run("No error on empty blueprintList", func(t *testing.T) {
-		restClientMock := newMockBlueprintInterface(t)
-		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(&bpv2.BlueprintList{}, nil)
-
-		// when
-		err := repo.CheckSingleton(ctx)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("No error on single blueprint resource", func(t *testing.T) {
+	t.Run("1 on single blueprint resource", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
@@ -436,16 +424,18 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+		limit := 2
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(list, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
+		assert.Equal(t, 1, count)
 		require.NoError(t, err)
 	})
 
-	t.Run("MultipleBlueprintsError on two blueprint resources", func(t *testing.T) {
+	t.Run("2 on two blueprint resources", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
@@ -463,27 +453,26 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(list, nil)
+		limit := 2
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(list, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
-		require.Error(t, err)
-		var targetErr *domain.MultipleBlueprintsError
-		assert.ErrorAs(t, err, &targetErr)
-		assert.ErrorContains(t, err, "more than one blueprint CR found")
+		assert.Equal(t, 2, count)
+		require.NoError(t, err)
 	})
 
 	t.Run("InternalError on List error", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-
+		limit := 2
 		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, assert.AnError)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		_, err := repo.Count(ctx, limit)
 
 		// then
 		require.Error(t, err)

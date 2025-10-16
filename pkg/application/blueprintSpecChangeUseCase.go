@@ -87,11 +87,21 @@ func (useCase *BlueprintSpecChangeUseCase) handleShouldNotBeApplied(ctx context.
 	return nil
 }
 
+// CheckForMultipleBlueprintResources checks if there is indeed only a single Blueprint-resource
 func (useCase *BlueprintSpecChangeUseCase) CheckForMultipleBlueprintResources(ctx context.Context) error {
 	logger := log.FromContext(ctx).WithName("BlueprintSpecChangeUseCase.CheckForMultipleBlueprintResources")
 
 	logger.V(2).Info("check for multiple blueprints")
-	err := useCase.repo.CheckSingleton(ctx)
+	// Ask for just 2 items: enough to detect "more than one"
+	count, err := useCase.repo.Count(ctx, 2)
+	if err == nil {
+		switch count {
+		case 0, 1:
+		default:
+			err = &domain.MultipleBlueprintsError{Message: "more than one blueprint CR found"}
+		}
+	}
+
 	if err != nil {
 		return fmt.Errorf("%s: %w", "check for multiple blueprints not successful", err)
 	}
