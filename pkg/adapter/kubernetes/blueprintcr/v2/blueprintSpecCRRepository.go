@@ -79,7 +79,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 	}
 
-	err = serializerv2.SerializeBlueprintAndMask(blueprintSpec, blueprintCR, blueprintId)
+	err = serializerv2.SerializeBlueprintAndMask(blueprintSpec, blueprintCR)
 	if err != nil {
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
