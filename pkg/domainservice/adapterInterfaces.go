@@ -45,7 +45,7 @@ type BlueprintSpecRepository interface {
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
 
-	// Count counts the Blueprint-resource in the namespace of the repository up to the given limit and
+	// Count counts the Blueprint-resources in the namespace of the repository up to the given limit and
 	//  - returns the amount of blueprints or
 	//  - returns an InternalError if there is any error, e.g. a connection error.
 	Count(ctx context.Context, limit int) (int, error)
