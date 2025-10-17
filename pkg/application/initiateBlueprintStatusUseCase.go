@@ -11,9 +11,6 @@ import (
 
 // InitiateBlueprintStatusUseCase contains all use cases which are needed to initiate the
 // blueprint status when it has not yet been fully set.
-//
-// Use cases:
-// - InitateConditions
 type InitiateBlueprintStatusUseCase struct {
 	repo blueprintSpecRepository
 }

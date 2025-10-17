@@ -427,7 +427,7 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 	t.Run("should succeed without error", func(t *testing.T) {
 		// given
 		mockRepo := newMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(nil)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(1, nil)
 		useCase := &BlueprintSpecChangeUseCase{
 			repo: mockRepo,
 		}
@@ -439,10 +439,10 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 		require.NoError(t, err)
 	})
 
-	t.Run("should return error on check error", func(t *testing.T) {
+	t.Run("should return error on repo error", func(t *testing.T) {
 		// given
 		mockRepo := newMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(assert.AnError)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(0, assert.AnError)
 		useCase := &BlueprintSpecChangeUseCase{
 			repo: mockRepo,
 		}
@@ -454,5 +454,21 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "check for multiple blueprints not successful")
+	})
+
+	t.Run("should return error on multiple blueprints", func(t *testing.T) {
+		// given
+		mockRepo := newMockBlueprintSpecRepository(t)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(2, nil)
+		useCase := &BlueprintSpecChangeUseCase{
+			repo: mockRepo,
+		}
+
+		//when
+		err := useCase.CheckForMultipleBlueprintResources(t.Context())
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "check for multiple blueprints not successful: more than one blueprint CR found")
 	})
 }

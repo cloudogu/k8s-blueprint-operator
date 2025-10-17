@@ -44,7 +44,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMask{},
@@ -88,7 +88,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMask{},
 				AllowDoguNamespaceSwitch: &trueVar,
@@ -126,7 +126,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		cr := &bpv2.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: &bpv2.BlueprintSpec{
+			Spec: bpv2.BlueprintSpec{
 				Blueprint: bpv2.BlueprintManifest{
 					Dogus: []bpv2.Dogu{
 						{Name: "invalid"},
@@ -140,8 +140,9 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			},
 			Status: &bpv2.BlueprintStatus{},
 		}
-		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
-		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", "cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'")
+		errMsg := "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'\n" +
+			"cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'"
+		eventRecorderMock.EXPECT().Event(cr, "Warning", "BlueprintSpecInvalid", errMsg)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
 		restClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
@@ -394,35 +395,23 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 	})
 }
 
-func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
-	t.Run("No error when no blueprints found", func(t *testing.T) {
+func Test_blueprintSpecRepo_Count(t *testing.T) {
+	t.Run("0 when no blueprints found", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-
-		restClientMock.EXPECT().List(ctx, mock.Anything).Return(nil, nil)
+		limit := 100
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(nil, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
+		assert.Equal(t, 0, count)
 		require.NoError(t, err)
 	})
 
-	t.Run("No error on empty blueprintList", func(t *testing.T) {
-		restClientMock := newMockBlueprintInterface(t)
-		eventRecorderMock := newMockEventRecorder(t)
-		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-		restClientMock.EXPECT().List(ctx, mock.Anything).Return(&bpv2.BlueprintList{}, nil)
-
-		// when
-		err := repo.CheckSingleton(ctx)
-
-		// then
-		require.NoError(t, err)
-	})
-
-	t.Run("No error on single blueprint resource", func(t *testing.T) {
+	t.Run("1 on single blueprint resource", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
@@ -435,16 +424,17 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, mock.Anything).Return(list, nil)
+		limit := 2
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(list, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
 		require.NoError(t, err)
 	})
 
-	t.Run("MultipleBlueprintsError on two blueprint resources", func(t *testing.T) {
+	t.Run("2 on two blueprint resources", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
@@ -462,27 +452,26 @@ func Test_blueprintSpecRepo_CheckSingleton(t *testing.T) {
 				},
 			},
 		}
-		restClientMock.EXPECT().List(ctx, mock.Anything).Return(list, nil)
+		limit := 2
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: int64(limit)}).Return(list, nil)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		count, err := repo.Count(ctx, limit)
 
 		// then
-		require.Error(t, err)
-		var targetErr *domain.MultipleBlueprintsError
-		assert.ErrorAs(t, err, &targetErr)
-		assert.ErrorContains(t, err, "more than one blueprint CR found")
+		assert.Equal(t, 2, count)
+		require.NoError(t, err)
 	})
 
 	t.Run("InternalError on List error", func(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(restClientMock, eventRecorderMock)
-
-		restClientMock.EXPECT().List(ctx, mock.Anything).Return(nil, assert.AnError)
+		limit := 2
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{Limit: 2}).Return(nil, assert.AnError)
 
 		// when
-		err := repo.CheckSingleton(ctx)
+		_, err := repo.Count(ctx, limit)
 
 		// then
 		require.Error(t, err)
