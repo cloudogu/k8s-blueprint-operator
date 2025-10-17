@@ -2,59 +2,68 @@ package application
 
 import (
 	"context"
+
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
+type initialBlueprintStatusUseCase interface {
+	InitateConditions(ctx context.Context, blueprint *domain.BlueprintSpec) error
+}
+
 type blueprintSpecValidationUseCase interface {
-	ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error
-	ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error
+	ValidateBlueprintSpecStatically(ctx context.Context, blueprint *domain.BlueprintSpec) error
+	ValidateBlueprintSpecDynamically(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type effectiveBlueprintUseCase interface {
-	CalculateEffectiveBlueprint(ctx context.Context, blueprintId string) error
+	CalculateEffectiveBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type stateDiffUseCase interface {
-	DetermineStateDiff(ctx context.Context, blueprintId string) error
+	DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type doguInstallationUseCase interface {
 	CheckDoguHealth(ctx context.Context) (ecosystem.DoguHealthResult, error)
-	WaitForHealthyDogus(ctx context.Context) (ecosystem.DoguHealthResult, error)
-	ApplyDoguStates(ctx context.Context, blueprintId string) error
+	CheckDogusUpToDate(ctx context.Context) ([]cescommons.SimpleName, error)
+	ApplyDoguStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
-type doguRestartUseCase interface {
-	TriggerDoguRestarts(ctx context.Context, blueprintid string) error
+type applyDogusUseCase interface {
+	ApplyDogus(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
+}
+
+type applyComponentsUseCase interface {
+	ApplyComponents(ctx context.Context, blueprint *domain.BlueprintSpec) (bool, error)
 }
 
 type componentInstallationUseCase interface {
-	ApplyComponentStates(ctx context.Context, blueprintId string) error
+	ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error
 	CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error)
-	WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error)
 	applyComponentState(context.Context, domain.ComponentDiff, *ecosystem.ComponentInstallation) error
 }
 
-type applyBlueprintSpecUseCase interface {
-	CheckEcosystemHealthUpfront(ctx context.Context, blueprintId string) error
-	CheckEcosystemHealthAfterwards(ctx context.Context, blueprintId string) error
-	PreProcessBlueprintApplication(ctx context.Context, blueprintId string) error
-	PostProcessBlueprintApplication(ctx context.Context, blueprintId string) error
-	ApplyBlueprintSpec(ctx context.Context, blueprintId string) error
+type completeBlueprintUseCase interface {
+	CompleteBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemHealthUseCase interface {
-	CheckEcosystemHealth(ctx context.Context, ignoreDoguHealth bool, ignoreComponentHealth bool) (ecosystem.HealthResult, error)
+	CheckEcosystemHealth(context.Context, *domain.BlueprintSpec) (ecosystem.HealthResult, error)
+}
+
+type dogusUpToDateUseCase interface {
+	CheckDogus(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type selfUpgradeUseCase interface {
-	HandleSelfUpgrade(ctx context.Context, blueprintId string) error
+	HandleSelfUpgrade(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type ecosystemConfigUseCase interface {
-	ApplyConfig(ctx context.Context, blueprintId string) error
+	ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
 type doguInstallationRepository interface {
@@ -108,10 +117,6 @@ type sensitiveDoguConfigRepository interface {
 
 type sensitiveConfigRefReader interface {
 	domainservice.SensitiveConfigRefReader
-}
-
-type doguRestartRepository interface {
-	domainservice.DoguRestartRepository
 }
 
 // validateDependenciesDomainUseCase is an interface for the domain service for better testability

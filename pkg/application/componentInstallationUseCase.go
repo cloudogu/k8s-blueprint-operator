@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -41,7 +41,7 @@ func NewComponentInstallationUseCase(
 
 func (useCase *ComponentInstallationUseCase) CheckComponentHealth(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
 	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.CheckComponentHealth")
-	logger.Info("check component health...")
+	logger.V(2).Info("check component health...")
 	installedComponents, err := useCase.componentRepo.GetAll(ctx)
 	if err != nil {
 		return ecosystem.ComponentHealthResult{}, fmt.Errorf("cannot retrieve installed components: %w", err)
@@ -55,63 +55,13 @@ func (useCase *ComponentInstallationUseCase) CheckComponentHealth(ctx context.Co
 	return ecosystem.CalculateComponentHealthResult(installedComponents, requiredComponents), nil
 }
 
-func (useCase *ComponentInstallationUseCase) WaitForHealthyComponents(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.WaitForHealthyComponents")
-
-	waitConfig, err := useCase.healthConfigProvider.GetWaitConfig(ctx)
-	if err != nil {
-		return ecosystem.ComponentHealthResult{}, fmt.Errorf("failed to get health check interval: %w", err)
-	}
-
-	logger.Info("start waiting for component health")
-	healthResult, err := util.RetryUntilSuccessOrCancellation(
-		ctx,
-		waitConfig.Interval,
-		useCase.checkComponentHealthStatesRetryable,
-	)
-	var result ecosystem.ComponentHealthResult
-	if healthResult == nil {
-		result = ecosystem.ComponentHealthResult{}
-	} else {
-		result = *healthResult
-	}
-
-	if err != nil {
-		err = fmt.Errorf("stop waiting for component health: %w", err)
-		logger.Error(err, "stop waiting for component health because of an error or time out")
-	} else {
-		logger.Info("finished waiting for component health")
-	}
-
-	return result, err
-}
-
-func (useCase *ComponentInstallationUseCase) checkComponentHealthStatesRetryable(ctx context.Context) (result *ecosystem.ComponentHealthResult, err error, shouldRetry bool) {
-	// use named return values to make their meaning clear
-	health, err := useCase.CheckComponentHealth(ctx)
-	if err != nil {
-		// no retry on error while loading components
-		return &ecosystem.ComponentHealthResult{}, err, false
-	}
-	result = &health
-	shouldRetry = !health.AllHealthy()
-	return
-}
-
 // ApplyComponentStates applies the expected component state from the Blueprint to the ecosystem.
 // Fail-fast here, so that the possible damage is as small as possible.
-func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprintId string) error {
-	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates").
-		WithValues("blueprintId", blueprintId)
-	log.IntoContext(ctx, logger)
+func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	logger := log.FromContext(ctx).WithName("ComponentInstallationUseCase.ApplyComponentStates")
 
-	blueprintSpec, err := useCase.blueprintSpecRepo.GetById(ctx, blueprintId)
-	if err != nil {
-		return fmt.Errorf("cannot load blueprint spec %q to apply components: %w", blueprintId, err)
-	}
-
-	if len(blueprintSpec.StateDiff.ComponentDiffs) == 0 {
-		logger.Info("apply no components because blueprint has no component state differences")
+	if len(blueprint.StateDiff.ComponentDiffs) == 0 {
+		logger.V(2).Info("apply no components because blueprint has no component state differences")
 		return nil
 	}
 
@@ -121,7 +71,7 @@ func (useCase *ComponentInstallationUseCase) ApplyComponentStates(ctx context.Co
 		return fmt.Errorf("cannot load component installations to apply component state: %w", err)
 	}
 
-	for _, componentDiff := range blueprintSpec.StateDiff.ComponentDiffs {
+	for _, componentDiff := range blueprint.StateDiff.ComponentDiffs {
 		err = useCase.applyComponentState(ctx, componentDiff, components[componentDiff.Name])
 		if err != nil {
 			return fmt.Errorf("an error occurred while applying component state to the ecosystem: %w", err)
@@ -149,6 +99,9 @@ func (useCase *ComponentInstallationUseCase) applyComponentState(
 			}, componentDiff.Expected.Version, componentDiff.Expected.DeployConfig)
 			return useCase.componentRepo.Create(ctx, newComponent)
 		case domain.ActionUninstall:
+			if componentInstallation == nil {
+				return &domainservice.NotFoundError{Message: fmt.Sprintf("component %q not found", componentDiff.Name)}
+			}
 			logger.Info("uninstall component")
 			return useCase.componentRepo.Delete(ctx, componentInstallation.Name.SimpleName)
 		case domain.ActionUpgrade:

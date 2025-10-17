@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
@@ -72,6 +73,12 @@ type BlueprintSpecRepository interface {
 	// a domain.InvalidBlueprintError together with a BlueprintSpec without blueprint and mask if the BlueprintSpec could not be parsed or
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
+
+	// CheckSingleton checks if there is indeed only a single Blueprint-resource in the namespace of the repository or
+	// a domain.MultipleBlueprintsError if there are at least two Blueprint-resources or
+	// an InternalError if there is any other error.
+	CheckSingleton(ctx context.Context) error
+
 	// Update updates a given BlueprintSpec.
 	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or
 	// returns an InternalError if there is any other error
@@ -93,11 +100,6 @@ type RemoteDoguRegistry interface {
 type DoguToLoad struct {
 	DoguName cescommons.QualifiedName
 	Version  string
-}
-
-type DoguRestartRepository interface {
-	// RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []cescommons.SimpleName) error
 }
 
 // GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
@@ -165,9 +167,9 @@ type SensitiveConfigRefReader interface {
 	//  - InternalError if any other error happens.
 	GetValues(
 		ctx context.Context,
-		refs map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef,
+		refs map[common.DoguConfigKey]domain.SensitiveValueRef,
 	) (
-		map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+		map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 		error,
 	)
 }
@@ -182,6 +184,7 @@ func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFo
 type NotFoundError struct {
 	WrappedError error
 	Message      string
+	DoNotRetry   bool
 }
 
 // Error marks the struct as an error.

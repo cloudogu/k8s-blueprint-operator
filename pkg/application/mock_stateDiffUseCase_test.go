@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockStateDiffUseCase) EXPECT() *mockStateDiffUseCase_Expecter {
 	return &mockStateDiffUseCase_Expecter{mock: &_m.Mock}
 }
 
-// DetermineStateDiff provides a mock function with given fields: ctx, blueprintId
-func (_m *mockStateDiffUseCase) DetermineStateDiff(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// DetermineStateDiff provides a mock function with given fields: ctx, blueprint
+func (_m *mockStateDiffUseCase) DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DetermineStateDiff")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockStateDiffUseCase_DetermineStateDiff_Call struct {
 
 // DetermineStateDiff is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockStateDiffUseCase_Expecter) DetermineStateDiff(ctx interface{}, blueprintId interface{}) *mockStateDiffUseCase_DetermineStateDiff_Call {
-	return &mockStateDiffUseCase_DetermineStateDiff_Call{Call: _e.mock.On("DetermineStateDiff", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockStateDiffUseCase_Expecter) DetermineStateDiff(ctx interface{}, blueprint interface{}) *mockStateDiffUseCase_DetermineStateDiff_Call {
+	return &mockStateDiffUseCase_DetermineStateDiff_Call{Call: _e.mock.On("DetermineStateDiff", ctx, blueprint)}
 }
 
-func (_c *mockStateDiffUseCase_DetermineStateDiff_Call) Run(run func(ctx context.Context, blueprintId string)) *mockStateDiffUseCase_DetermineStateDiff_Call {
+func (_c *mockStateDiffUseCase_DetermineStateDiff_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockStateDiffUseCase_DetermineStateDiff_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,7 +64,7 @@ func (_c *mockStateDiffUseCase_DetermineStateDiff_Call) Return(_a0 error) *mockS
 	return _c
 }
 
-func (_c *mockStateDiffUseCase_DetermineStateDiff_Call) RunAndReturn(run func(context.Context, string) error) *mockStateDiffUseCase_DetermineStateDiff_Call {
+func (_c *mockStateDiffUseCase_DetermineStateDiff_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockStateDiffUseCase_DetermineStateDiff_Call {
 	_c.Call.Return(run)
 	return _c
 }

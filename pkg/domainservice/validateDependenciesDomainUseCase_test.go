@@ -2,13 +2,14 @@ package domainservice
 
 import (
 	"context"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (
@@ -49,14 +50,14 @@ func Test_checkDependencyVersion(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{name: "exact version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: "2.0.0-1"}, wantErr: false},
-		{name: "has lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ">=2.0.0-2"}, wantErr: true},
-		{name: "has higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_3}, expectedVersion: ">=2.0.0-2"}, wantErr: false},
-		{name: "needs lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_3}, expectedVersion: "<=2.0.0-2"}, wantErr: true},
-		{name: "needs higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ">2.0.0-1"}, wantErr: true},
-		{name: "no constraint", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: ""}, wantErr: false},
-		{name: "not parsable expected version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: version2_0_0_1}, expectedVersion: "abc"}, wantErr: true},
-		{name: "not parsable actual version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: core.Version{Raw: "abc"}}, expectedVersion: "2.0.0-1"}, wantErr: true},
+		{name: "exact version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_1}, expectedVersion: "2.0.0-1"}, wantErr: false},
+		{name: "has lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_1}, expectedVersion: ">=2.0.0-2"}, wantErr: true},
+		{name: "has higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_3}, expectedVersion: ">=2.0.0-2"}, wantErr: false},
+		{name: "needs lower version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_3}, expectedVersion: "<=2.0.0-2"}, wantErr: true},
+		{name: "needs higher version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_1}, expectedVersion: ">2.0.0-1"}, wantErr: true},
+		{name: "no constraint", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_1}, expectedVersion: ""}, wantErr: false},
+		{name: "not parsable expected version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &version2_0_0_1}, expectedVersion: "abc"}, wantErr: true},
+		{name: "not parsable actual version", args: args{doguInBlueprint: domain.Dogu{Name: officialNginx, Version: &core.Version{Raw: "abc"}}, expectedVersion: "2.0.0-1"}, wantErr: true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -82,8 +83,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Name: officialRedmine, Version: version1_0_0_1},
-						{Name: officialPostgres, Version: version1_0_0_1},
+						{Name: officialRedmine, Version: &version1_0_0_1},
+						{Name: officialPostgres, Version: &version1_0_0_1},
 					},
 				},
 			},
@@ -94,8 +95,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Name: officialRedmine, Version: version1_0_0_1},
-						{Name: officialPostgres, Version: version1_0_0_1},
+						{Name: officialRedmine, Version: &version1_0_0_1},
+						{Name: officialPostgres, Version: &version1_0_0_1},
 					},
 				},
 			},
@@ -106,7 +107,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Name: officialRedmine, Version: version1_0_0_1},
+						{Name: officialRedmine, Version: &version1_0_0_1},
 					},
 				},
 			},
@@ -118,7 +119,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Name: officialRedmine2, Version: version1_0_0_1},
+						{Name: officialRedmine2, Version: &version1_0_0_1},
 					},
 				},
 			},
@@ -130,7 +131,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			args: args{
 				effectiveBlueprint: domain.EffectiveBlueprint{
 					Dogus: []domain.Dogu{
-						{Name: officialK8sCesControl, Version: version1_0_0_1},
+						{Name: officialK8sCesControl, Version: &version1_0_0_1},
 					},
 				},
 			},
@@ -140,7 +141,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			name: "missing nginx-static and nginx ingress on nginx dependency",
 			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
-					{Name: officialScm, Version: version1_0_0_1},
+					{Name: officialScm, Version: &version1_0_0_1},
 				},
 			}},
 			wantErr: true,
@@ -149,9 +150,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			name: "ok with nginx dependency",
 			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
-					{Name: officialPlantuml, Version: version1_0_0_1},
-					{Name: k8sNginxStatic, Version: version1_0_0_1},
-					{Name: k8sNginxIngress, Version: version1_0_0_1},
+					{Name: officialPlantuml, Version: &version1_0_0_1},
+					{Name: k8sNginxStatic, Version: &version1_0_0_1},
+					{Name: k8sNginxIngress, Version: &version1_0_0_1},
 				},
 			}},
 			wantErr: false,
@@ -160,7 +161,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 			name: "registrator should be ignored",
 			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
-					{Name: ldapMapper, Version: version1_0_0_1},
+					{Name: ldapMapper, Version: &version1_0_0_1},
 				},
 			}},
 			wantErr: false,
@@ -189,7 +190,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFo
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
-			{Name: officialUnknownDogu, Version: version1_0_0_1},
+			{Name: officialUnknownDogu, Version: &version1_0_0_1},
 		},
 	})
 	// then
@@ -218,8 +219,8 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_colle
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{
-			{Name: officialRedmine, Version: version1_0_0_1},
-			{Name: helloworldBluespice, Version: version1_0_0_1},
+			{Name: officialRedmine, Version: &version1_0_0_1},
+			{Name: helloworldBluespice, Version: &version1_0_0_1},
 		},
 	})
 	// then

@@ -1,24 +1,26 @@
 package domain
 
 import (
-	"errors"
 	"fmt"
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
-	"golang.org/x/exp/maps"
-	"testing"
+	"github.com/google/go-cmp/cmp"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 var version3213, _ = core.ParseVersion("3.2.1-3")
+var subfolder = "subfolder"
 
 const (
 	testDistributionNamespace       = "k8s"
@@ -37,45 +39,11 @@ var premiumNexus = cescommons.QualifiedName{
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
-	require.Equal(t, StatusPhaseNew, spec.Status, "Status new should be the default")
 
 	err := spec.ValidateStatically()
 
 	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
-	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, BlueprintSpecStaticallyValidatedEvent{}, spec.Events[0])
-}
-
-func Test_BlueprintSpec_Validate_inStatusValidated(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseStaticallyValidated}
-
-	err := spec.ValidateStatically()
-
-	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseStaticallyValidated, spec.Status)
-	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
-}
-
-func Test_BlueprintSpec_Validate_inStatusInProgress(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInProgress}
-
-	err := spec.ValidateStatically()
-
-	require.Nil(t, err)
-	assert.Equal(t, StatusPhaseInProgress, spec.Status, "should stay in the old status")
-	require.Equal(t, 0, len(spec.Events), "there should be no additional Events generated")
-}
-
-func Test_BlueprintSpec_Validate_inStatusInvalid(t *testing.T) {
-	spec := BlueprintSpec{Id: "29.11.2023", Status: StatusPhaseInvalid}
-
-	err := spec.ValidateStatically()
-
-	require.NotNil(t, err, "should not evaluate again and should stop with an error")
-	var invalidError *InvalidBlueprintError
-	assert.ErrorAs(t, err, &invalidError)
-	assert.ErrorContains(t, err, "blueprint spec was marked invalid before: do not revalidate")
+	require.Equal(t, 0, len(spec.Events))
 }
 
 func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
@@ -83,6 +51,7 @@ func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 
 	err := spec.ValidateStatically()
 
+	assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionValid))
 	require.NotNil(t, err, "No ID definition should lead to an error")
 	var invalidError *InvalidBlueprintError
 	assert.ErrorAs(t, err, &invalidError)
@@ -91,9 +60,10 @@ func Test_BlueprintSpec_Validate_emptyID(t *testing.T) {
 }
 
 func Test_BlueprintSpec_Validate_combineErrors(t *testing.T) {
+	name, _ := cescommons.QualifiedNameFromString("/noNamespace")
 	spec := BlueprintSpec{
-		Blueprint:     Blueprint{Dogus: []Dogu{{Version: core.Version{}, TargetState: TargetStatePresent}}},
-		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{TargetState: 666}}},
+		Blueprint:     Blueprint{Dogus: []Dogu{{Version: &core.Version{}, Absent: false}}},
+		BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Name: name}}},
 	}
 
 	err := spec.ValidateStatically()
@@ -143,8 +113,8 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint(t *testing.T) {
 	})
 	t.Run("absent dogus cannot be present in blueprint mask", func(t *testing.T) {
 		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{{Name: officialNexus, TargetState: TargetStateAbsent}}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Name: officialNexus, TargetState: TargetStatePresent}}},
+			Blueprint:     Blueprint{Dogus: []Dogu{{Name: officialNexus, Absent: true}}},
+			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{{Name: officialNexus, Absent: false}}},
 		}
 
 		err := spec.validateMaskAgainstBlueprint()
@@ -157,185 +127,146 @@ func Test_BlueprintSpec_validateMaskAgainstBlueprint(t *testing.T) {
 func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 	t.Run("no mask", func(t *testing.T) {
 		dogus := []Dogu{
-			{Name: officialDogu1, Version: version3211, TargetState: TargetStatePresent},
-			{Name: officialDogu2, Version: version3212, TargetState: TargetStatePresent},
-			{Name: officialDogu3, Version: version3213, TargetState: TargetStateAbsent},
+			{Name: officialDogu1, Version: &version3211, Absent: false},
+			{Name: officialDogu2, Version: &version3212, Absent: false},
+			{Name: officialDogu3, Version: &version3213, Absent: true},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseValidated,
 		}
 
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 	})
-	t.Run("status new", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseNew,
-		}
 
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.NotNil(t, err)
-		assert.ErrorContains(t, err, "cannot calculate effective blueprint before the blueprint spec is validated")
-	})
-	t.Run("status effective blueprint generated", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseEffectiveBlueprintGenerated,
-		}
-		expectedSpec := spec
-
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.Nil(t, err)
-		assert.Equal(t, expectedSpec, spec)
-	})
-	t.Run("status invalid", func(t *testing.T) {
-		spec := BlueprintSpec{
-			Blueprint:     Blueprint{Dogus: []Dogu{}},
-			BlueprintMask: BlueprintMask{Dogus: []MaskDogu{}},
-			Status:        StatusPhaseInvalid,
-		}
-
-		err := spec.CalculateEffectiveBlueprint()
-
-		require.NotNil(t, err)
-		assert.ErrorContains(t, err, "cannot calculate effective blueprint on invalid blueprint spec")
-	})
 	t.Run("change version", func(t *testing.T) {
 		dogus := []Dogu{
-			{Name: officialDogu1, Version: version3211, TargetState: TargetStatePresent},
-			{Name: officialDogu2, Version: version3212, TargetState: TargetStatePresent},
+			{Name: officialDogu1, Version: &version3211, Absent: false},
+			{Name: officialDogu2, Version: &version3212, Absent: false},
 		}
 
 		maskedDogus := []MaskDogu{
-			{Name: officialDogu1, Version: version3212, TargetState: TargetStatePresent},
-			{Name: officialDogu2, Version: version3211, TargetState: TargetStatePresent},
+			{Name: officialDogu1, Version: version3212, Absent: false},
+			{Name: officialDogu2, Version: version3211, Absent: false},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-		assert.Equal(t, Dogu{Name: officialDogu1, Version: version3212, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
-		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[1])
+		assert.Equal(t, Dogu{Name: officialDogu1, Version: &version3212, Absent: false}, spec.EffectiveBlueprint.Dogus[0])
+		assert.Equal(t, Dogu{Name: officialDogu2, Version: &version3211, Absent: false}, spec.EffectiveBlueprint.Dogus[1])
 	})
+
 	t.Run("make dogu absent", func(t *testing.T) {
 		dogus := []Dogu{
-			{Name: officialDogu1, Version: version3211, TargetState: TargetStatePresent},
-			{Name: officialDogu2, Version: version3212, TargetState: TargetStatePresent},
+			{Name: officialDogu1, Version: &version3211, Absent: false},
+			{Name: officialDogu2, Version: &version3212, Absent: false},
 		}
 
 		maskedDogus := []MaskDogu{
-			{Name: officialDogu1, Version: version3211, TargetState: TargetStateAbsent},
-			{Name: officialDogu2, TargetState: TargetStateAbsent},
+			{Name: officialDogu1, Version: version3211, Absent: true},
+			{Name: officialDogu2, Absent: true},
 		}
 
 		config := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
-				officialDogu1.SimpleName: {},
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				officialDogu1.SimpleName: {ConfigEntry{Key: "test", Value: &val1}},
 			},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus, Config: config},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Nil(t, err)
 		require.Equal(t, 2, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-		assert.Equal(t, Dogu{Name: officialDogu1, Version: version3211, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[0])
-		assert.Equal(t, Dogu{Name: officialDogu2, Version: version3212, TargetState: TargetStateAbsent}, spec.EffectiveBlueprint.Dogus[1])
+		assert.Equal(t, Dogu{Name: officialDogu1, Version: &version3211, Absent: true}, spec.EffectiveBlueprint.Dogus[0])
+		assert.Equal(t, Dogu{Name: officialDogu2, Version: &version3212, Absent: true}, spec.EffectiveBlueprint.Dogus[1])
 		assert.NotContains(t, spec.EffectiveBlueprint.Config.Dogus, officialDogu1.SimpleName)
 	})
+
 	t.Run("change dogu namespace", func(t *testing.T) {
 		dogus := []Dogu{
-			{Name: officialNexus, Version: version3211, TargetState: TargetStatePresent},
+			{Name: officialNexus, Version: &version3211, Absent: false},
 		}
 
 		maskedDogus := []MaskDogu{
-			{Name: premiumNexus, Version: version3211, TargetState: TargetStatePresent},
+			{Name: premiumNexus, Version: version3211, Absent: false},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: false},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.Error(t, err, "without the feature flag, namespace changes are not allowed")
 		require.ErrorContains(t, err, "changing the dogu namespace is forbidden by default and can be allowed by a flag: \"official/nexus\" -> \"premium/nexus\"")
 	})
+
 	t.Run("change dogu namespace with flag", func(t *testing.T) {
 		dogus := []Dogu{
-			{Name: officialNexus, Version: version3211, TargetState: TargetStatePresent},
+			{Name: officialNexus, Version: &version3211, Absent: false},
 		}
 
 		maskedDogus := []MaskDogu{
-			{Name: premiumNexus, Version: version3211, TargetState: TargetStatePresent},
+			{Name: premiumNexus, Version: version3211, Absent: false},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint:     Blueprint{Dogus: dogus},
 			BlueprintMask: BlueprintMask{Dogus: maskedDogus},
 			Config:        BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
-			Status:        StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
 		require.NoError(t, err, "with the feature flag namespace changes should be allowed")
 		require.Equal(t, 1, len(spec.EffectiveBlueprint.Dogus), "effective blueprint should contain the elements from the mask")
-		assert.Equal(t, Dogu{Name: premiumNexus, Version: version3211, TargetState: TargetStatePresent}, spec.EffectiveBlueprint.Dogus[0])
+		assert.Equal(t, Dogu{Name: premiumNexus, Version: &version3211, Absent: false}, spec.EffectiveBlueprint.Dogus[0])
 	})
+
 	t.Run("validate only config for dogus in blueprint", func(t *testing.T) {
 		config := Config{
-			Dogus: map[cescommons.SimpleName]CombinedDoguConfig{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
 				"my-dogu": {},
 			},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Config: config},
-			Status:    StatusPhaseValidated,
 		}
 
 		err := spec.CalculateEffectiveBlueprint()
 
 		assert.ErrorContains(t, err, "setting config for dogu \"my-dogu\" is not allowed as it will not be installed with the blueprint")
-		assert.Equal(t, spec.Status, StatusPhaseInvalid)
-		assert.Equal(t, spec.Events, []Event{BlueprintSpecInvalidEvent{err}})
+		assert.Equal(t, 1, len(spec.Events))
+		assert.Equal(t, "BlueprintSpecInvalid", spec.Events[0].Name())
 	})
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
 			{
-				Name:        k8sNginxStatic,
-				Version:     version3211,
-				TargetState: TargetStatePresent,
+				Name:    k8sNginxStatic,
+				Version: &version3211,
+				Absent:  false,
 				AdditionalMounts: []ecosystem.AdditionalMount{
-					{SourceType: ecosystem.DataSourceConfigMap, Name: "html-config", Volume: "customhtml", Subfolder: "test"},
+					{SourceType: ecosystem.DataSourceConfigMap, Name: "html-config", Volume: "customhtml", Subfolder: subfolder},
 				},
 			},
 		}
 
 		spec := BlueprintSpec{
 			Blueprint: Blueprint{Dogus: dogus},
-			Status:    StatusPhaseValidated,
 		}
 		err := spec.CalculateEffectiveBlueprint()
 
@@ -344,28 +275,28 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 	})
 }
 
-func TestBlueprintSpec_MarkInvalid(t *testing.T) {
-	spec := BlueprintSpec{
-		Config: BlueprintConfiguration{AllowDoguNamespaceSwitch: true},
-		Status: StatusPhaseValidated,
-	}
-	expectedErr := &InvalidBlueprintError{
-		WrappedError: nil,
-		Message:      "test-error",
-	}
-	spec.MarkInvalid(expectedErr)
-
-	assert.Equal(t, StatusPhaseInvalid, spec.Status)
-	require.Equal(t, 1, len(spec.Events))
-	assert.Equal(t, BlueprintSpecInvalidEvent{ValidationError: expectedErr}, spec.Events[0])
-}
-
 func TestBlueprintSpec_MissingConfigReferences(t *testing.T) {
-	blueprint := BlueprintSpec{}
-	blueprint.MissingConfigReferences(assert.AnError)
-	require.Equal(t, 1, len(blueprint.Events))
-	assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
-	assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+	t.Run("first call -> new event", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+		blueprint.MissingConfigReferences(assert.AnError)
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, "MissingConfigReferences", blueprint.Events[0].Name())
+		assert.Equal(t, assert.AnError.Error(), blueprint.Events[0].Message())
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionExecutable))
+	})
+
+	t.Run("repeated call -> no event", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+
+		blueprint.MissingConfigReferences(assert.AnError)
+		blueprint.Events = []Event(nil)
+		blueprint.MissingConfigReferences(assert.AnError)
+
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionExecutable))
+		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
+	})
+
 }
 
 func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
@@ -378,7 +309,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 				Dogus:      []Dogu{},
 				Components: []Component{},
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -387,28 +317,85 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		stateDiff := StateDiff{
-			DoguDiffs:                DoguDiffs{},
-			ComponentDiffs:           ComponentDiffs{},
-			DoguConfigDiffs:          map[cescommons.SimpleName]DoguConfigDiffs{},
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
+			DoguDiffs:      DoguDiffs{},
+			ComponentDiffs: ComponentDiffs{},
 		}
+
+		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 		require.NoError(t, err)
-		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
-		require.Equal(t, 5, len(spec.Events))
-		assert.Equal(t, newStateDiffDoguEvent(stateDiff.DoguDiffs), spec.Events[0])
-		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
-		assert.Equal(t, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: GlobalConfigDiffs(nil)}, spec.Events[2])
-		assert.Equal(t, DoguConfigDiffDeterminedEvent{
-			DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{},
-		}, spec.Events[3])
-		assert.Equal(t, SensitiveDoguConfigDiffDeterminedEvent{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{},
-		}, spec.Events[4])
+		require.Empty(t, spec.Events)
 		assert.Equal(t, stateDiff, spec.StateDiff)
+	})
+
+	t.Run("all ok with filled blueprint", func(t *testing.T) {
+		// given
+		spec := BlueprintSpec{
+			EffectiveBlueprint: EffectiveBlueprint{
+				Dogus:      []Dogu{{Name: officialNexus, Version: &version3211}},
+				Components: []Component{{Name: testComponentName, Version: compVersion3211}},
+				Config:     Config{Global: GlobalConfigEntries{{Key: "test", Value: &val1}}},
+			},
+		}
+
+		clusterState := ecosystem.EcosystemState{
+			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
+			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+		}
+
+		// when
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+
+		// then
+		stateDiff := StateDiff{
+			DoguDiffs: DoguDiffs{
+				{
+					DoguName: "nexus",
+					Actual: DoguDiffState{
+						Absent: true,
+					},
+					Expected: DoguDiffState{
+						Namespace: "official",
+						Version:   &version3211,
+					},
+					NeededActions: []Action{ActionInstall},
+				},
+			},
+			ComponentDiffs: ComponentDiffs{
+				{
+					Name: "my-component",
+					Actual: ComponentDiffState{
+						Absent: true,
+					},
+					Expected: ComponentDiffState{
+						Namespace: "k8s",
+						Version:   compVersion3211,
+					},
+					NeededActions: []Action{ActionInstall},
+				},
+			},
+			GlobalConfigDiffs: GlobalConfigDiffs{
+				{
+					Key:    "test",
+					Actual: GlobalConfigValueState{},
+					Expected: GlobalConfigValueState{
+						Value:  (*string)(&val1),
+						Exists: true,
+					},
+					NeededAction: ConfigActionSet,
+				},
+			},
+		}
+
+		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
+		require.NoError(t, err)
+		require.Equal(t, 2, len(spec.Events))
+		assert.Equal(t, newStateDiffEvent(stateDiff), spec.Events[0])
+		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
+		assert.Empty(t, cmp.Diff(stateDiff, spec.StateDiff))
 	})
 
 	t.Run("ok with allowed dogu namespace switch", func(t *testing.T) {
@@ -427,7 +414,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: true,
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
@@ -441,11 +427,11 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
 		require.NoError(t, err)
-		assert.Equal(t, StatusPhaseStateDiffDetermined, spec.Status)
+		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 	})
 
 	t.Run("invalid blueprint state with not allowed dogu namespace switch", func(t *testing.T) {
@@ -456,7 +442,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					{
 						Name: cescommons.QualifiedName{
 							Namespace:  "namespace-change",
-							SimpleName: "name",
+							SimpleName: "ldap",
 						},
 					},
 				},
@@ -464,66 +450,25 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 			Config: BlueprintConfiguration{
 				AllowDoguNamespaceSwitch: false,
 			},
-			Status: StatusPhaseValidated,
 		}
 
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-				"name": {Name: cescommons.QualifiedName{
+				"ldap": {Name: cescommons.QualifiedName{
 					Namespace:  "namespace",
-					SimpleName: "name",
+					SimpleName: "ldap",
 				}},
 			},
 			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"dogu namespace switch\" is not allowed")
-	})
-
-	notAllowedStatus := []StatusPhase{StatusPhaseNew, StatusPhaseStaticallyValidated, StatusPhaseEffectiveBlueprintGenerated}
-	for _, initialStatus := range notAllowedStatus {
-		t.Run(fmt.Sprintf("cannot determine state diff in status %q", initialStatus), func(t *testing.T) {
-			// given
-			spec := BlueprintSpec{
-				Status: initialStatus,
-			}
-			clusterState := ecosystem.EcosystemState{
-				InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-				InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
-			}
-			// when
-			err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
-
-			// then
-			assert.Error(t, err)
-			assert.Equal(t, spec.Status, initialStatus)
-			require.Equal(t, 0, len(spec.Events))
-			assert.ErrorContains(t, err, fmt.Sprintf("cannot determine state diff in status phase %q", initialStatus))
-		})
-	}
-	t.Run("do not re-determine state diff", func(t *testing.T) {
-		initialStatus := StatusPhaseCompleted
-		// given
-		spec := BlueprintSpec{
-			Status: initialStatus,
-		}
-		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
-		}
-		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
-
-		// then
-		assert.NoError(t, err)
-		assert.Equal(t, spec.Status, initialStatus)
-		require.Equal(t, 0, len(spec.Events))
+		assert.ErrorContains(t, err, "ldap: action \"dogu namespace switch\" is not allowed")
 	})
 
 	t.Run("should return error with not allowed component namespace switch action", func(t *testing.T) {
@@ -540,7 +485,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -553,13 +497,14 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"component namespace switch\" is not allowed")
+		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"component namespace switch\" is not allowed", testComponentName.SimpleName))
 	})
+
 	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
@@ -574,7 +519,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					},
 				},
 			},
-			Status: StatusPhaseValidated,
 		}
 		clusterState := ecosystem.EcosystemState{
 			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
@@ -587,365 +531,174 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
 
 		// then
+		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.Equal(t, StatusPhaseInvalid, spec.Status)
-		assert.ErrorContains(t, err, "action \"downgrade\" is not allowed")
+		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"downgrade\" is not allowed", testComponentName.SimpleName))
 	})
-}
-
-func TestBlueprintSpec_CheckEcosystemHealthUpfront(t *testing.T) {
-	tests := []struct {
-		name               string
-		inputSpec          *BlueprintSpec
-		healthResult       ecosystem.HealthResult
-		expectedStatus     StatusPhase
-		expectedEventNames []string
-		expectedEventMsgs  []string
-	}{
-		{
-			name:               "should return early if health result is empty",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
-		},
-		{
-			name:               "should post ignored dogu health in event",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreDoguHealth: true}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: true; component health ignored: false"},
-		},
-		{
-			name:               "should post ignored component health in event",
-			inputSpec:          &BlueprintSpec{Config: BlueprintConfiguration{IgnoreComponentHealth: true}},
-			healthResult:       ecosystem.HealthResult{},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: true"},
-		},
-		{
-			name:      "should write unhealthy dogus in event",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus:   {"postfix"},
-						ecosystem.UnavailableHealthStatus: {"ldap"},
-						ecosystem.PendingHealthStatus:     {"postgresql"},
-					},
-				},
-			},
-			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
-			expectedEventNames: []string{"EcosystemUnhealthyUpfront"},
-			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
-		},
-		{
-			name:      "all dogus healthy",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
-					},
-				},
-			},
-			expectedStatus:     StatusPhaseEcosystemHealthyUpfront,
-			expectedEventNames: []string{"EcosystemHealthyUpfront"},
-			expectedEventMsgs:  []string{"dogu health ignored: false; component health ignored: false"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckEcosystemHealthUpfront(tt.healthResult)
-			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
-			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
-			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
-			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
-		})
-	}
-}
-
-func TestBlueprintSpec_CheckEcosystemHealthAfterwards(t *testing.T) {
-	tests := []struct {
-		name               string
-		inputSpec          *BlueprintSpec
-		healthResult       ecosystem.HealthResult
-		expectedStatus     StatusPhase
-		expectedEventNames []string
-		expectedEventMsgs  []string
-	}{
-		{
-			name:      "should write unhealthy dogus in event",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus:   {"postfix"},
-						ecosystem.UnavailableHealthStatus: {"ldap"},
-						ecosystem.PendingHealthStatus:     {"postgresql"},
-					},
-				},
-			},
-			expectedStatus:     StatusPhaseEcosystemUnhealthyUpfront,
-			expectedEventNames: []string{"EcosystemUnhealthyAfterwards"},
-			expectedEventMsgs:  []string{"ecosystem health:\n  2 dogu(s) are unhealthy: ldap, postgresql\n  0 component(s) are unhealthy: "},
-		},
-		{
-			name:      "ecosystem healthy",
-			inputSpec: &BlueprintSpec{},
-			healthResult: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{
-					DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-						ecosystem.AvailableHealthStatus: {"postfix", "ldap", "postgresql"},
-					},
-				},
-			},
-			expectedStatus:     StatusPhaseEcosystemHealthyAfterwards,
-			expectedEventNames: []string{"EcosystemHealthyAfterwards"},
-			expectedEventMsgs:  []string{""},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			tt.inputSpec.CheckEcosystemHealthAfterwards(tt.healthResult)
-			eventNames := util.Map(tt.inputSpec.Events, Event.Name)
-			eventMsgs := util.Map(tt.inputSpec.Events, Event.Message)
-			assert.ElementsMatch(t, tt.expectedEventNames, eventNames)
-			assert.ElementsMatch(t, tt.expectedEventMsgs, eventMsgs)
-		})
-	}
-}
-
-func TestBlueprintSpec_CompletePreProcessing(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-		}
-		// when
-		spec.CompletePreProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationPreProcessed,
-			Events: []Event{BlueprintApplicationPreProcessedEvent{}},
-		})
-	})
-	t.Run("dry run", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Config: BlueprintConfiguration{DryRun: true},
-		}
-		// when
-		spec.CompletePreProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyUpfront,
-			Config: BlueprintConfiguration{DryRun: true},
-			Events: []Event{BlueprintDryRunEvent{}},
-		})
-	})
-}
-
-func TestBlueprintSpec_StartApplying(t *testing.T) {
-	t.Run("ok", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{}
-		// when
-		spec.StartApplying()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseInProgress,
-			Events: []Event{InProgressEvent{}},
-		})
-	})
-}
-
-func TestBlueprintSpec_MarkBlueprintApplicationFailed(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	err := fmt.Errorf("test-error")
-	// when
-	spec.MarkBlueprintApplicationFailed(err)
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseBlueprintApplicationFailed,
-		Events: []Event{ExecutionFailedEvent{err: err}},
-	})
-}
-
-func TestBlueprintSpec_MarkBlueprintApplied(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{}
-	// when
-	spec.MarkBlueprintApplied()
-	// then
-	assert.Equal(t, spec, &BlueprintSpec{
-		Status: StatusPhaseBlueprintApplied,
-		Events: []Event{BlueprintAppliedEvent{}},
-	})
-}
-
-func TestBlueprintSpec_CensorSensitiveData(t *testing.T) {
-	// given
-	spec := &BlueprintSpec{
-		StateDiff: StateDiff{
-			SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
-				"ldapDiff": []SensitiveDoguConfigEntryDiff{{
-					Actual:   DoguConfigValueState{Value: "Test1"},
-					Expected: DoguConfigValueState{Value: "Test2"},
-				}},
-			},
-		},
-	}
-	// when
-	spec.CensorSensitiveData()
-
-	// then
-	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs, 1)
-	assert.Contains(t, maps.Keys(spec.StateDiff.SensitiveDoguConfigDiffs), cescommons.SimpleName("ldapDiff"))
-	require.Len(t, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"], 1)
-	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Actual.Value)
-	assert.Equal(t, censorValue, spec.StateDiff.SensitiveDoguConfigDiffs["ldapDiff"][0].Expected.Value)
 }
 
 func TestBlueprintSpec_CompletePostProcessing(t *testing.T) {
-	t.Run("status change on success EcosystemHealthyAfterwards -> Completed", func(t *testing.T) {
+	t.Run("ok with event", func(t *testing.T) {
 		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemHealthyAfterwards,
-		}
+		blueprint := &BlueprintSpec{}
 		// when
-		spec.CompletePostProcessing()
+		changed := blueprint.Complete()
 		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseCompleted,
-			Events: []Event{CompletedEvent{}},
-		})
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Completed", condition.Reason)
+		assert.Empty(t, condition.Message)
+		assert.Equal(t, []Event{CompletedEvent{}}, blueprint.Events)
 	})
-
-	t.Run("status change on failure InProgress -> Failed", func(t *testing.T) {
+	t.Run("no change if executed twice", func(t *testing.T) {
 		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseInProgress,
-		}
+		blueprint := &BlueprintSpec{}
 		// when
-		spec.CompletePostProcessing()
+		changed := blueprint.Complete()
+		assert.True(t, changed)
+		blueprint.Events = nil
+		changed = blueprint.Complete()
 		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New(handleInProgressMsg)}},
-		})
-	})
-
-	t.Run("status change on failure EcosystemUnhealthyAfterwards -> Failed", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseEcosystemUnhealthyAfterwards,
-		}
-		// when
-		spec.CompletePostProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New("ecosystem is unhealthy")}},
-		})
-	})
-
-	t.Run("status change on failure ApplicationFailed -> Failed", func(t *testing.T) {
-		// given
-		spec := &BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationFailed,
-		}
-		// when
-		spec.CompletePostProcessing()
-		// then
-		assert.Equal(t, spec, &BlueprintSpec{
-			Status: StatusPhaseFailed,
-			Events: []Event{ExecutionFailedEvent{errors.New("could not apply blueprint")}},
-		})
+		assert.False(t, changed)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionCompleted)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Completed", condition.Reason)
+		assert.Empty(t, condition.Message)
+		assert.Equal(t, 0, len(blueprint.Events))
 	})
 }
 
 func TestBlueprintSpec_ValidateDynamically(t *testing.T) {
-	type fields struct {
-		Id                 string
-		Blueprint          Blueprint
-		BlueprintMask      BlueprintMask
-		EffectiveBlueprint EffectiveBlueprint
-		StateDiff          StateDiff
-		Config             BlueprintConfiguration
-		Status             StatusPhase
-		PersistenceContext map[string]interface{}
-		Events             []Event
-	}
-	type args struct {
-		possibleInvalidDependenciesError error
-	}
-	tests := []struct {
-		name           string
-		fields         fields
-		args           args
-		expectedPhase  StatusPhase
-		expectedEvents []Event
-	}{
-		{
-			name:          "statusphase invalid on error",
-			fields:        fields{},
-			args:          args{possibleInvalidDependenciesError: assert.AnError},
-			expectedPhase: "invalid",
-			expectedEvents: []Event{BlueprintSpecInvalidEvent{
-				ValidationError: &InvalidBlueprintError{WrappedError: assert.AnError, Message: "blueprint spec is invalid"}},
-			},
-		},
-		{
-			name:           "statusphase valid on nil",
-			fields:         fields{},
-			args:           args{possibleInvalidDependenciesError: nil},
-			expectedPhase:  "validated",
-			expectedEvents: []Event{BlueprintSpecValidatedEvent{}},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			spec := &BlueprintSpec{
-				Id:                 tt.fields.Id,
-				Blueprint:          tt.fields.Blueprint,
-				BlueprintMask:      tt.fields.BlueprintMask,
-				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
-				StateDiff:          tt.fields.StateDiff,
-				Config:             tt.fields.Config,
-				Status:             tt.fields.Status,
-				PersistenceContext: tt.fields.PersistenceContext,
-				Events:             tt.fields.Events,
-			}
-			spec.ValidateDynamically(tt.args.possibleInvalidDependenciesError)
+	t.Run("all ok, no errors", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
 
-			assert.Equal(t, tt.expectedPhase, spec.Status)
-			assert.Equal(t, tt.expectedEvents, spec.Events)
-		})
-	}
+		blueprint.ValidateDynamically(nil)
+
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionValid))
+		require.Equal(t, 0, len(blueprint.Events))
+
+	})
+
+	t.Run("given dependency error", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+		givenErr := assert.AnError
+
+		blueprint.ValidateDynamically(givenErr)
+
+		require.Equal(t, 1, len(blueprint.Events))
+		assert.Equal(t, "BlueprintSpecInvalid", blueprint.Events[0].Name())
+	})
 }
 
 func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
-	t.Run("should be applied", func(t *testing.T) {
+	conditionCompleted := Condition{
+		Type:   ConditionCompleted,
+		Status: metav1.ConditionTrue,
+	}
+	t.Run("should be applied on global config change", func(t *testing.T) {
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: false,
+				Stopped: false,
 			},
+			StateDiff: StateDiff{
+				GlobalConfigDiffs: []GlobalConfigEntryDiff{
+					{
+						Key:          "test",
+						NeededAction: ConfigActionSet,
+					},
+				},
+			},
+			Conditions: []Condition{conditionCompleted},
 		}
 		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
 	})
-	t.Run("should not be applied due to dry run", func(t *testing.T) {
+	t.Run("should be applied on dogu config change", func(t *testing.T) {
+		doguKey := common.DoguConfigKey{
+			DoguName: "testDogu",
+			Key:      "testKey",
+		}
 		spec := &BlueprintSpec{
 			Config: BlueprintConfiguration{
-				DryRun: true,
+				Stopped: false,
+			},
+			StateDiff: StateDiff{
+				DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{
+					cescommons.SimpleName("testDogu"): {
+						{
+							Key:          doguKey,
+							NeededAction: ConfigActionSet,
+						},
+					},
+				},
+			},
+			Conditions: []Condition{conditionCompleted},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on sensitive dogu config change", func(t *testing.T) {
+		doguKey := common.DoguConfigKey{
+			DoguName: "testDogu",
+			Key:      "testKey",
+		}
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				Stopped: false,
+			},
+			StateDiff: StateDiff{
+				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]SensitiveDoguConfigDiffs{
+					cescommons.SimpleName("testDogu"): {
+						{
+							Key:          doguKey,
+							NeededAction: ConfigActionSet,
+						},
+					},
+				},
+			},
+			Conditions: []Condition{conditionCompleted},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed false", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{{
+				Type:   ConditionCompleted,
+				Status: metav1.ConditionFalse,
+			}},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed unknown", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{{
+				Type:   ConditionCompleted,
+				Status: metav1.ConditionUnknown,
+			}},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should be applied on condition completed not set", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Conditions: []Condition{},
+		}
+		assert.Truef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should not be applied without any changes", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				Stopped: false,
+			},
+			Conditions: []Condition{conditionCompleted},
+		}
+		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
+	})
+	t.Run("should not be applied due to being stopped", func(t *testing.T) {
+		spec := &BlueprintSpec{
+			Config: BlueprintConfiguration{
+				Stopped: true,
 			},
 		}
 		assert.Falsef(t, spec.ShouldBeApplied(), "ShouldBeApplied()")
@@ -955,116 +708,197 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Status: StatusPhaseBlueprintApplicationPreProcessed,
-		}
+		blueprint := BlueprintSpec{}
 		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Status: StatusPhaseAwaitSelfUpgrade,
-		}
+		blueprint := BlueprintSpec{}
 
 		blueprint.MarkWaitingForSelfUpgrade()
+		blueprint.Events = []Event(nil)
+		blueprint.MarkWaitingForSelfUpgrade()
 
-		assert.Equal(t, StatusPhaseAwaitSelfUpgrade, blueprint.Status)
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
+		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if condition did not change")
 	})
 }
 
 func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
 	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Status: StatusPhaseAwaitSelfUpgrade,
-		}
+		blueprint := BlueprintSpec{}
 		blueprint.MarkSelfUpgradeCompleted()
 
-		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
 	})
 
 	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{
-			Status: StatusPhaseSelfUpgradeCompleted,
-		}
+		blueprint := BlueprintSpec{}
 
 		blueprint.MarkSelfUpgradeCompleted()
+		blueprint.Events = []Event(nil)
+		blueprint.MarkSelfUpgradeCompleted()
 
-		assert.Equal(t, StatusPhaseSelfUpgradeCompleted, blueprint.Status)
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
 		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
 	})
 }
 
-func TestBlueprintSpec_GetDogusThatNeedARestart(t *testing.T) {
-	testDogu1 := Dogu{Name: cescommons.QualifiedName{Namespace: "testNamespace", SimpleName: "testDogu1"}}
-	testBlueprint1 := Blueprint{Dogus: []Dogu{testDogu1}}
-	testDoguConfigDiffsChanged := []DoguConfigEntryDiff{{
-		Actual:       DoguConfigValueState{},
-		Expected:     DoguConfigValueState{Value: "testValue", Exists: true},
-		NeededAction: ConfigActionSet,
-	}}
-	testDoguConfigDiffsActionNone := []DoguConfigEntryDiff{{
-		NeededAction: ConfigActionNone,
-	}}
+func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
+	t.Run("healthy", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
 
-	testDoguConfigChangeDiffChanged := StateDiff{
-		DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsChanged},
-	}
-	testDoguConfigChangeDiffActionNone := StateDiff{
-		DoguConfigDiffs: map[cescommons.SimpleName]DoguConfigDiffs{testDogu1.Name.SimpleName: testDoguConfigDiffsActionNone},
-	}
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, nil)
 
-	type fields struct {
-		Blueprint          Blueprint
-		EffectiveBlueprint EffectiveBlueprint
-		StateDiff          StateDiff
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   []cescommons.SimpleName
-	}{
-		{
-			name:   "return nothing on empty blueprint",
-			fields: fields{},
-			want:   nil,
-		},
-		{
-			name:   "return nothing on no config change",
-			fields: fields{Blueprint: testBlueprint1},
-			want:   nil,
-		},
-		{
-			name: "return dogu on dogu config change",
-			fields: fields{
-				Blueprint:          testBlueprint1,
-				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
-				StateDiff:          testDoguConfigChangeDiffChanged,
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionTrue, condition.Status)
+		assert.Equal(t, "Healthy", condition.Reason)
+		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
+	})
+
+	t.Run("unhealthy", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+		health := ecosystem.HealthResult{
+			DoguHealth: ecosystem.DoguHealthResult{
+				DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
+					ecosystem.UnavailableHealthStatus: {"ldap"},
+				},
 			},
-			want: []cescommons.SimpleName{testDogu1.Name.SimpleName},
-		},
-		{
-			name: "return nothing on dogu config unchanged",
-			fields: fields{
-				Blueprint:          testBlueprint1,
-				EffectiveBlueprint: EffectiveBlueprint(testBlueprint1),
-				StateDiff:          testDoguConfigChangeDiffActionNone,
+		}
+
+		changed := blueprint.HandleHealthResult(health, nil)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, "Unhealthy", condition.Reason)
+		assert.Contains(t, condition.Message, "ecosystem health:")
+		assert.Contains(t, condition.Message, "1 dogu(s) are unhealthy: ldap")
+		assert.Contains(t, condition.Message, "0 component(s) are unhealthy:")
+	})
+
+	t.Run("error given, condition Unknown", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+
+		assert.True(t, changed)
+		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
+		assert.Equal(t, metav1.ConditionUnknown, condition.Status)
+		assert.Equal(t, "CannotCheckHealth", condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("no condition change", func(t *testing.T) {
+		blueprint := BlueprintSpec{}
+
+		changed := blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+		assert.True(t, changed, "condition should change after the first call")
+		changed = blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
+		assert.False(t, changed, "condition should not change here")
+	})
+}
+
+func TestBlueprintSpec_MarkBlueprintStopped(t *testing.T) {
+	t.Run("should add a blueprint stopped event", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		spec.MarkBlueprintStopped()
+		// then
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, BlueprintStoppedEvent{}, spec.Events[0])
+	})
+}
+
+func TestBlueprintSpec_MarkDogusApplied(t *testing.T) {
+	t.Run("should add event if dogus are applied and no error occurred", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			StateDiff: StateDiff{
+				DoguDiffs: DoguDiffs{{DoguName: "test"}},
 			},
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			spec := &BlueprintSpec{
-				Blueprint:          tt.fields.Blueprint,
-				EffectiveBlueprint: tt.fields.EffectiveBlueprint,
-				StateDiff:          tt.fields.StateDiff,
-			}
-			assert.Equalf(t, tt.want, spec.GetDogusThatNeedARestart(), "GetDogusThatNeedARestart()")
-		})
-	}
+		}
+		// when
+		changed := spec.MarkDogusApplied(true, nil)
+		// then
+		assert.False(t, changed)
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, DogusAppliedEvent{Diffs: DoguDiffs{{DoguName: "test"}}}, spec.Events[0])
+		assert.Nil(t, meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded))
+	})
+
+	t.Run("should not add event if dogus are not applied and no error occurred", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		changed := spec.MarkDogusApplied(false, nil)
+		// then
+		assert.False(t, changed)
+		require.Empty(t, spec.Events)
+		assert.Nil(t, meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded))
+	})
+
+	t.Run("should add event and set condition on error", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			StateDiff: StateDiff{
+				DoguDiffs: DoguDiffs{{DoguName: "test"}},
+			},
+		}
+		// when
+		changed := spec.MarkDogusApplied(true, assert.AnError)
+		// then
+		assert.True(t, changed)
+		require.Len(t, spec.Events, 2)
+		assert.Equal(t, DogusAppliedEvent{Diffs: DoguDiffs{{DoguName: "test"}}}, spec.Events[0])
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, spec.Events[1])
+
+		condition := meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded)
+		require.NotNil(t, condition)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, ReasonLastApplyErrorAtDogus, condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("should not add applied event but set condition on error", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{}
+		// when
+		changed := spec.MarkDogusApplied(false, assert.AnError)
+		// then
+		assert.True(t, changed)
+		require.Len(t, spec.Events, 1)
+		assert.Equal(t, ExecutionFailedEvent{err: assert.AnError}, spec.Events[0])
+
+		condition := meta.FindStatusCondition(spec.Conditions, ConditionLastApplySucceeded)
+		require.NotNil(t, condition)
+		assert.Equal(t, metav1.ConditionFalse, condition.Status)
+		assert.Equal(t, ReasonLastApplyErrorAtDogus, condition.Reason)
+		assert.Equal(t, assert.AnError.Error(), condition.Message)
+	})
+
+	t.Run("should not change condition if already set", func(t *testing.T) {
+		// given
+		spec := &BlueprintSpec{
+			Conditions: []Condition{
+				{
+					Type:    ConditionLastApplySucceeded,
+					Status:  metav1.ConditionFalse,
+					Reason:  ReasonLastApplyErrorAtDogus,
+					Message: assert.AnError.Error(),
+				},
+			},
+		}
+		// when
+		changed := spec.MarkDogusApplied(false, assert.AnError)
+		// then
+		assert.False(t, changed)
+		require.Empty(t, spec.Events)
+	})
 }

@@ -3,6 +3,7 @@ package serializer
 import (
 	"errors"
 	"fmt"
+
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
@@ -26,14 +27,18 @@ func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint
 			Message:      "cannot deserialize blueprint",
 		}
 	}
+	configDomain := ConvertToConfigDomain(blueprint.Config)
 	return domain.Blueprint{
 		Dogus:      convertedDogus,
 		Components: convertedComponents,
-		Config:     ConvertToConfigDomain(blueprint.Config),
+		Config:     configDomain,
 	}, nil
 }
 
-func ConvertToEffectiveBlueprintDomain(blueprint crd.BlueprintManifest) (domain.EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain.EffectiveBlueprint, error) {
+	if blueprint == nil {
+		return domain.EffectiveBlueprint{}, nil
+	}
 	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
 	convertedComponents, compErr := ConvertComponents(blueprint.Components)
 
@@ -48,7 +53,11 @@ func ConvertToEffectiveBlueprintDomain(blueprint crd.BlueprintManifest) (domain.
 	}, nil
 }
 
-func ConvertToBlueprintMaskDomain(mask crd.BlueprintMask) (domain.BlueprintMask, error) {
+func ConvertToBlueprintMaskDomain(mask *crd.BlueprintMask) (domain.BlueprintMask, error) {
+	if mask == nil {
+		return domain.BlueprintMask{}, nil
+	}
+
 	convertedDogus, err := ConvertMaskDogus(mask.Dogus)
 
 	if err != nil {

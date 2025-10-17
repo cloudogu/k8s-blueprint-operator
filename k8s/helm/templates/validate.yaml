@@ -1,0 +1,3 @@
+{{- if not (.Capabilities.APIVersions.Has "k8s.cloudogu.com/v1/Component") -}}
+  {{- fail "CRD k8s.cloudogu.com/v1/Component is not installed." -}}
+{{- end -}}

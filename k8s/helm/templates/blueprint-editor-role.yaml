@@ -1,25 +1,29 @@
+# Issue RBAC permissions to the operator to fulfill CR handling which includes reading and updating customer-created
+# Blueprint CRs. The operator does not create or delete Blueprints by itself, though.
+
 apiVersion: rbac.authorization.k8s.io/v1
+# the blueprint operator should only handle Blueprint CRs within its own namespace, not Blueprints in other namespaces
 kind: Role
 metadata:
   labels:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-blueprint-editor-role
 rules:
+  # issue permissions to read/update fields beyond the status
   - apiGroups:
       - k8s.cloudogu.com
     resources:
       - blueprints
     verbs:
-      - create
-      - delete
       - get
       - list
-      - patch
-      - update
       - watch
+  # issue permissions to update the status which contains blueprint processing data
   - apiGroups:
       - k8s.cloudogu.com
     resources:
       - blueprints/status
     verbs:
       - get
+      - patch
+      - update

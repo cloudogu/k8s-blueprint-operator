@@ -6,7 +6,7 @@ manager:
   image:
     registry: docker.io
     repository: cloudogu/k8s-blueprint-operator
-    tag: 2.7.0
+    tag: 2.8.0
   imagePullPolicy: IfNotPresent
   env:
     logLevel: info
@@ -22,7 +22,6 @@ healthConfig:
   components:
     required:
       - name: k8s-dogu-operator
-      - name: k8s-service-discovery
       - name: k8s-component-operator
   wait:
     timeout: 10m

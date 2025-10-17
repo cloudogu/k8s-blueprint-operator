@@ -8,18 +8,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *Breaking Change ahead!*
 
+### Added
+- [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
+
 ### Changed
 - [#119] *breaking* sensitive dogu config can now only be referenced with secrets
-  - it was not safe to have these values in clear text in the blueprint
+    - it was not safe to have these values in clear text in the blueprint
 - [#119] we now support blueprint v2 CRs
-- [#121] health checks before and after applying the blueprint are now non-blocking
+- [#121] all health checks are now non-blocking
+- [#121] there are in general no steps anymore, which will block the reconciliation loop beyond some HTTP-Requests
+- [#121] *breaking* blueprints will now be executed as a continuous process
+    - the operator will now detect changes and will enforce the content of the blueprint
+- [#121] *breaking* the current state will now be reflected via conditions instead of the `statusPhase` field
+- [#121] *breaking* events were reworked, some events are now more general, some events got removed completely
+    - Note, that events are for humans. You should not compute them for automation as they have no consistency guarantees.
+- [#121] Upgrade to Golang v1.25.1
+- [#121] Upgrade Makefiles to v10.4.0
+- [#121] *breaking* merge proxy config dogu action into one to simplify the status
 - [#133] updated and added docs for the operator
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore
-  - make sure to persist your blueprints before upgrading
-  - you need to transform your blueprints to the new v2 format yourself 
+    - make sure to persist your blueprints before upgrading
+    - you need to transform your blueprints to the new v2 format yourself
 - [#121] remove maintenance mode
+  - remove dependency to k8s-service-discovery (maintenance-mode was the reason for this dependency)
+- [#121] *breaking* dogus will not be restarted by the blueprint operator anymore
+    - this is now the responsibility of the dogu operator
+
+## [v2.8.0] - 2025-09-15
+### Changed
+- [#125] ignore nginx dependencies
+
+### Removed
+- [#125] component-dependency for component-oprator-crd
+  - it is replaced by a helm capabilities-check for the component CRD
 
 ## [v2.7.0] - 2025-07-17
 ### Fixed

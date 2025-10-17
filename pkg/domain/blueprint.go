@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -32,7 +33,7 @@ func (blueprint *Blueprint) Validate() error {
 		blueprint.validateDoguUniqueness(),
 		blueprint.validateComponents(),
 		blueprint.validateComponentUniqueness(),
-		blueprint.Config.validate(),
+		blueprint.validateConfig(),
 	}
 
 	err := errors.Join(errorList...)
@@ -70,4 +71,8 @@ func (blueprint *Blueprint) validateComponentUniqueness() error {
 		return fmt.Errorf("there are duplicate components: %v", duplicates)
 	}
 	return nil
+}
+
+func (blueprint *Blueprint) validateConfig() error {
+	return blueprint.Config.validate()
 }

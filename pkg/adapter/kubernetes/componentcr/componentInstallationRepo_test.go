@@ -2,9 +2,10 @@ package componentcr
 
 import (
 	"context"
+	"testing"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"k8s.io/apimachinery/pkg/types"
-	"testing"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
@@ -333,29 +334,36 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 		sut := componentInstallationRepo{
 			componentClient: componentClientMock,
 		}
-		componentInstallation := &ecosystem.ComponentInstallation{
+		component := &ecosystem.ComponentInstallation{
 			Name:            testComponentName,
 			ExpectedVersion: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: string(componentInstallation.Name.SimpleName),
+				Name: string(component.Name.SimpleName),
 				Labels: map[string]string{
-					ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-					ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
+					ComponentNameLabelKey:          string(component.Name.SimpleName),
+					ComponentVersionLabelKey:       component.ExpectedVersion.String(),
+					"app":                          "ces",
+					"k8s.cloudogu.com/app":         "ces",
+					"component.name":               string(component.Name.SimpleName),
+					"app.kubernetes.io/name":       string(component.Name.SimpleName),
+					"app.kubernetes.io/version":    component.ExpectedVersion.String(),
+					"app.kubernetes.io/part-of":    "ces",
+					"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 				},
 			},
 			Spec: compV1.ComponentSpec{
-				Namespace: string(componentInstallation.Name.Namespace),
-				Name:      string(componentInstallation.Name.SimpleName),
-				Version:   componentInstallation.ExpectedVersion.String(),
+				Namespace: string(component.Name.Namespace),
+				Name:      string(component.Name.SimpleName),
+				Version:   component.ExpectedVersion.String(),
 			},
 		}
 
 		componentClientMock.EXPECT().Create(testCtx, expectedCR, metav1.CreateOptions{}).Return(nil, nil)
 
 		// when
-		err := sut.Create(testCtx, componentInstallation)
+		err := sut.Create(testCtx, component)
 
 		// then
 		require.NoError(t, err)
@@ -390,29 +398,36 @@ func Test_componentInstallationRepo_Create(t *testing.T) {
 		sut := componentInstallationRepo{
 			componentClient: componentClientMock,
 		}
-		componentInstallation := &ecosystem.ComponentInstallation{
+		component := &ecosystem.ComponentInstallation{
 			Name:            testComponentName,
 			ExpectedVersion: testVersion1,
 		}
 		expectedCR := &compV1.Component{
 			ObjectMeta: metav1.ObjectMeta{
-				Name: string(componentInstallation.Name.SimpleName),
+				Name: string(component.Name.SimpleName),
 				Labels: map[string]string{
-					ComponentNameLabelKey:    string(componentInstallation.Name.SimpleName),
-					ComponentVersionLabelKey: componentInstallation.ExpectedVersion.String(),
+					ComponentNameLabelKey:          string(component.Name.SimpleName),
+					ComponentVersionLabelKey:       component.ExpectedVersion.String(),
+					"app":                          "ces",
+					"k8s.cloudogu.com/app":         "ces",
+					"component.name":               string(component.Name.SimpleName),
+					"app.kubernetes.io/name":       string(component.Name.SimpleName),
+					"app.kubernetes.io/version":    component.ExpectedVersion.String(),
+					"app.kubernetes.io/part-of":    "ces",
+					"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 				},
 			},
 			Spec: compV1.ComponentSpec{
-				Namespace: string(componentInstallation.Name.Namespace),
-				Name:      string(componentInstallation.Name.SimpleName),
-				Version:   componentInstallation.ExpectedVersion.String(),
+				Namespace: string(component.Name.Namespace),
+				Name:      string(component.Name.SimpleName),
+				Version:   component.ExpectedVersion.String(),
 			},
 		}
 
 		componentClientMock.EXPECT().Create(testCtx, expectedCR, metav1.CreateOptions{}).Return(nil, assert.AnError)
 
 		// when
-		err := sut.Create(testCtx, componentInstallation)
+		err := sut.Create(testCtx, component)
 
 		// then
 		require.Error(t, err)

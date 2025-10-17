@@ -1,10 +1,11 @@
 package domain
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
@@ -12,7 +13,6 @@ var version3_2_1_0, _ = core.ParseVersion("3.2.1-0")
 var (
 	officialNamespace = cescommons.Namespace("official")
 	k8sNamespace      = cescommons.Namespace("k8s")
-	nginxStatic       = cescommons.QualifiedName{Namespace: k8sNamespace, SimpleName: cescommons.SimpleName("nginx-static")}
 	officialDogu1     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu1")}
 	officialDogu2     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu2")}
 	officialDogu3     = cescommons.QualifiedName{Namespace: officialNamespace, SimpleName: cescommons.SimpleName("dogu3")}
@@ -20,9 +20,9 @@ var (
 
 func Test_Validate(t *testing.T) {
 	dogus := []MaskDogu{
-		{Name: officialDogu1, Version: version3_2_1_0, TargetState: TargetStateAbsent},
-		{Name: officialDogu2, TargetState: TargetStateAbsent},
-		{Name: officialDogu3, Version: version3_2_1_0, TargetState: TargetStatePresent},
+		{Name: officialDogu1, Version: version3_2_1_0, Absent: true},
+		{Name: officialDogu2, Absent: true},
+		{Name: officialDogu3, Version: version3_2_1_0, Absent: false},
 	}
 	blueprintMask := BlueprintMask{
 		Dogus: dogus,
@@ -35,8 +35,8 @@ func Test_Validate(t *testing.T) {
 
 func Test_ValidateWithDuplicatedDoguNames(t *testing.T) {
 	dogus := []MaskDogu{
-		{Name: officialDogu1, TargetState: TargetStatePresent},
-		{Name: officialDogu1, TargetState: TargetStateAbsent},
+		{Name: officialDogu1, Absent: false},
+		{Name: officialDogu1, Absent: true},
 	}
 	blueprintMask := BlueprintMask{Dogus: dogus}
 

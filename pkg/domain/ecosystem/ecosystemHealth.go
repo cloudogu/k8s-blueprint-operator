@@ -20,7 +20,7 @@ type HealthResult struct {
 }
 
 func (result HealthResult) String() string {
-	return fmt.Sprintf("ecosystem health:\n  %s\n  %s", result.DoguHealth, result.ComponentHealth)
+	return fmt.Sprintf("%s\n  %s", result.DoguHealth, result.ComponentHealth)
 }
 
 func (result HealthResult) AllHealthy() bool {

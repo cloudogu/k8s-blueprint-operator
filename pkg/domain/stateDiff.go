@@ -23,15 +23,39 @@ const (
 	ActionUpgrade                         = "upgrade"
 	ActionDowngrade                       = "downgrade"
 	ActionSwitchDoguNamespace             = "dogu namespace switch"
-	ActionUpdateDoguProxyBodySize         = "update proxy body size"
-	ActionUpdateDoguProxyRewriteTarget    = "update proxy rewrite target"
-	ActionUpdateDoguProxyAdditionalConfig = "update proxy additional config"
+	ActionUpdateDoguReverseProxyConfig    = "update reverse proxy"
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"
 	ActionSwitchComponentNamespace        = "component namespace switch"
 	ActionUpdateComponentDeployConfig     = "update component package config"
 	ActionUpdateAdditionalMounts          = "update additional mounts"
 )
 
-func (a Action) IsDoguProxyAction() bool {
-	return a == ActionUpdateDoguProxyBodySize || a == ActionUpdateDoguProxyAdditionalConfig || a == ActionUpdateDoguProxyRewriteTarget
+func (diff StateDiff) HasChanges() bool {
+	return diff.DoguDiffs.HasChanges() ||
+		diff.ComponentDiffs.HasChanges() ||
+		diff.HasConfigChanges()
+}
+
+func (diff StateDiff) HasConfigChanges() bool {
+	return diff.GlobalConfigDiffs.HasChanges() ||
+		diff.HasDoguConfigChanges() ||
+		diff.HasSensitiveDoguConfigChanges()
+}
+
+func (diff StateDiff) HasDoguConfigChanges() bool {
+	for _, configDiff := range diff.DoguConfigDiffs {
+		if configDiff.HasChanges() {
+			return true
+		}
+	}
+	return false
+}
+
+func (diff StateDiff) HasSensitiveDoguConfigChanges() bool {
+	for _, configDiff := range diff.SensitiveDoguConfigDiffs {
+		if configDiff.HasChanges() {
+			return true
+		}
+	}
+	return false
 }

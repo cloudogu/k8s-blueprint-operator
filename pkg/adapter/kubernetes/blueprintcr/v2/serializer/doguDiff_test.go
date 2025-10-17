@@ -1,32 +1,66 @@
 package serializer
 
 import (
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"github.com/stretchr/testify/assert"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"testing"
+
+	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
+	"github.com/google/go-cmp/cmp"
+	"github.com/stretchr/testify/assert"
 )
 
-func Test_convertMinimumVolumeSizeToDTO(t *testing.T) {
-	tests := []struct {
-		name       string
-		minVolSize ecosystem.VolumeSize
-		want       string
-	}{
-		{
-			name:       "empty",
-			minVolSize: ecosystem.VolumeSize{},
-			want:       "",
-		},
-		{
-			name:       "empty",
-			minVolSize: resource.MustParse("1Gi"),
-			want:       "1Gi",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, convertMinimumVolumeSizeToDTO(tt.minVolSize), "convertMinimumVolumeSizeToDTO(%v)", tt.minVolSize)
-		})
-	}
+func Test_convertToDoguDiffStateDTO(t *testing.T) {
+	t.Run("should convert empty reverse proxy config to nil", func(t *testing.T) {
+		// given
+		domainDiffState := domain.DoguDiffState{
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{},
+		}
+		// when
+		result := convertToDoguDiffStateDTO(domainDiffState)
+		// then
+		assert.Nil(t, result.ReverseProxyConfig)
+	})
+
+	t.Run("should convert reverse proxy config", func(t *testing.T) {
+		// given
+		domainDiffState := domain.DoguDiffState{
+			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+				MaxBodySize:      &proxyBodySize,
+				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+			},
+		}
+		// when
+		result := convertToDoguDiffStateDTO(domainDiffState)
+		// then
+		want := crd.DoguDiffState{
+			ReverseProxyConfig: &crd.ReverseProxyConfig{
+				MaxBodySize:      &proxyBodySizeString,
+				RewriteTarget:    &rewriteTarget,
+				AdditionalConfig: &additionalConfig,
+			},
+		}
+
+		assert.NotNil(t, result.ReverseProxyConfig)
+		assert.Empty(t, cmp.Diff(want, result))
+	})
+
+	t.Run("should convert resource config", func(t *testing.T) {
+		// given
+		domainDiffState := domain.DoguDiffState{
+			MinVolumeSize: &volumeSize,
+		}
+		// when
+		result := convertToDoguDiffStateDTO(domainDiffState)
+		// then
+		want := crd.DoguDiffState{
+			ResourceConfig: &crd.ResourceConfig{
+				MinVolumeSize: &volumeSizeString,
+			},
+		}
+
+		assert.NotNil(t, result.ResourceConfig)
+		assert.Empty(t, cmp.Diff(want, result))
+	})
 }

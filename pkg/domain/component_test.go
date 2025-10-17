@@ -1,12 +1,13 @@
 package domain
 
 import (
+	"testing"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 var (
@@ -16,7 +17,7 @@ var (
 
 func TestComponent_Validate(t *testing.T) {
 	t.Run("errorOnMissingComponentVersion", func(t *testing.T) {
-		component := Component{Name: testComponentName, TargetState: TargetStatePresent}
+		component := Component{Name: testComponentName, Absent: false}
 
 		err := component.Validate()
 
@@ -25,7 +26,7 @@ func TestComponent_Validate(t *testing.T) {
 	})
 
 	t.Run("errorOnEmptyComponentVersion", func(t *testing.T) {
-		component := Component{Name: testComponentName, Version: nil, TargetState: TargetStatePresent}
+		component := Component{Name: testComponentName, Version: nil, Absent: false}
 
 		err := component.Validate()
 
@@ -34,7 +35,7 @@ func TestComponent_Validate(t *testing.T) {
 	})
 
 	t.Run("errorOnMissingComponentName", func(t *testing.T) {
-		component := Component{Version: compVersion123, TargetState: TargetStatePresent}
+		component := Component{Version: compVersion123, Absent: false}
 
 		err := component.Validate()
 
@@ -43,7 +44,7 @@ func TestComponent_Validate(t *testing.T) {
 	})
 
 	t.Run("errorOnEmptyComponentNamespace", func(t *testing.T) {
-		component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, TargetState: TargetStatePresent}
+		component := Component{Name: common.QualifiedComponentName{Namespace: "", SimpleName: "test"}, Version: compVersion123, Absent: false}
 		err := component.Validate()
 
 		require.Error(t, err)
@@ -51,7 +52,7 @@ func TestComponent_Validate(t *testing.T) {
 	})
 
 	t.Run("errorOnEmptyComponentName", func(t *testing.T) {
-		component := Component{Name: common.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, TargetState: TargetStatePresent}
+		component := Component{Name: common.QualifiedComponentName{Namespace: "k8s"}, Version: compVersion123, Absent: false}
 
 		err := component.Validate()
 
@@ -65,11 +66,11 @@ func TestComponent_Validate(t *testing.T) {
 		err := component.Validate()
 
 		require.NoError(t, err)
-		assert.Equal(t, TargetState(TargetStatePresent), component.TargetState)
+		assert.False(t, component.Absent)
 	})
 
 	t.Run("missingComponentVersionOkayForAbsent", func(t *testing.T) {
-		component := Component{Name: testComponentName, TargetState: TargetStateAbsent}
+		component := Component{Name: testComponentName, Absent: true}
 
 		err := component.Validate()
 

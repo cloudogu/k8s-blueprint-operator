@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
@@ -16,8 +17,8 @@ type Component struct {
 	// Version defines the version of the package that is to be installed. Must not be empty if the targetState is
 	// "present"; otherwise it is optional and is not going to be interpreted.
 	Version *semver.Version
-	// TargetState defines a state of installation of this package. Optional field, but defaults to "TargetStatePresent"
-	TargetState TargetState
+	// Absent defines if the dogu should be absent in the ecosystem. Defaults to false.
+	Absent bool
 	// DeployConfig defines generic properties for the component. This field is optional.
 	DeployConfig ecosystem.DeployConfig
 }
@@ -27,10 +28,8 @@ func (component *Component) Validate() error {
 	nameError := component.Name.Validate()
 
 	var versionErr error
-	if component.TargetState == TargetStatePresent {
-		if component.Version == nil {
-			versionErr = fmt.Errorf("version of component %q must not be empty", component.Name)
-		}
+	if !component.Absent && component.Version == nil {
+		versionErr = fmt.Errorf("version of component %q must not be empty", component.Name)
 	}
 
 	return errors.Join(versionErr, nameError)

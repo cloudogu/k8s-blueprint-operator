@@ -2,13 +2,14 @@ package domainservice
 
 import (
 	_ "embed"
+	"testing"
+
 	"github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 //go:embed testdata/k8s-nginx-static-1-26-3-2.json
@@ -35,9 +36,9 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		blueprint := domain.EffectiveBlueprint{
 			Dogus: []domain.Dogu{
 				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
+					Name:    k8sNginxStatic,
+					Version: &version1_26_3_2,
+					Absent:  false,
 				},
 			},
 		}
@@ -54,9 +55,9 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		blueprint := domain.EffectiveBlueprint{
 			Dogus: []domain.Dogu{
 				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
+					Name:    k8sNginxStatic,
+					Version: &version1_26_3_2,
+					Absent:  false,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,
@@ -87,9 +88,9 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		blueprint := domain.EffectiveBlueprint{
 			Dogus: []domain.Dogu{
 				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
+					Name:    k8sNginxStatic,
+					Version: &version1_26_3_2,
+					Absent:  false,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,
@@ -123,9 +124,9 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		blueprint := domain.EffectiveBlueprint{
 			Dogus: []domain.Dogu{
 				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
+					Name:    k8sNginxStatic,
+					Version: &version1_26_3_2,
+					Absent:  false,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,
@@ -160,9 +161,9 @@ func TestValidateAdditionalMountsDomainUseCase_ValidateAdditionalMounts(t *testi
 		blueprint := domain.EffectiveBlueprint{
 			Dogus: []domain.Dogu{
 				{
-					Name:        k8sNginxStatic,
-					Version:     version1_26_3_2,
-					TargetState: domain.TargetStatePresent,
+					Name:    k8sNginxStatic,
+					Version: &version1_26_3_2,
+					Absent:  false,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,

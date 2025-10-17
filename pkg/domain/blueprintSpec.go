@@ -3,23 +3,28 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
+	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
-	"maps"
-	"slices"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type BlueprintSpec struct {
 	Id                 string
+	DisplayName        string
 	Blueprint          Blueprint
 	BlueprintMask      BlueprintMask
 	EffectiveBlueprint EffectiveBlueprint
 	StateDiff          StateDiff
 	Config             BlueprintConfiguration
-	Status             StatusPhase
+	Conditions         []Condition
 	// PersistenceContext can hold generic values needed for persistence with repositories, e.g. version counters or transaction contexts.
 	// This field has a generic map type as the values within it highly depend on the used type of repository.
 	// This field should be ignored in the whole domain.
@@ -27,59 +32,28 @@ type BlueprintSpec struct {
 	Events             []Event
 }
 
-type StatusPhase string
+type Condition = metav1.Condition
 
 const (
-	// StatusPhaseNew marks a newly created blueprint-CR.
-	StatusPhaseNew StatusPhase = ""
-	// StatusPhaseStaticallyValidated marks the given blueprint spec as validated.
-	StatusPhaseStaticallyValidated StatusPhase = "staticallyValidated"
-	// StatusPhaseValidated marks the given blueprint spec as validated.
-	StatusPhaseValidated StatusPhase = "validated"
-	// StatusPhaseEffectiveBlueprintGenerated marks that the effective blueprint was generated out of the blueprint and the mask.
-	StatusPhaseEffectiveBlueprintGenerated StatusPhase = "effectiveBlueprintGenerated"
-	// StatusPhaseStateDiffDetermined marks that the diff to the ecosystem state was successfully determined.
-	StatusPhaseStateDiffDetermined StatusPhase = "stateDiffDetermined"
-	// StatusPhaseInvalid marks the given blueprint spec is semantically incorrect.
-	StatusPhaseInvalid StatusPhase = "invalid"
-	// StatusPhaseEcosystemHealthyUpfront marks that all currently installed dogus are healthy.
-	StatusPhaseEcosystemHealthyUpfront StatusPhase = "ecosystemHealthyUpfront"
-	// StatusPhaseEcosystemUnhealthyUpfront marks that some currently installed dogus are unhealthy.
-	StatusPhaseEcosystemUnhealthyUpfront StatusPhase = "ecosystemUnhealthyUpfront"
-	// StatusPhaseBlueprintApplicationPreProcessed shows that all pre-processing steps for the blueprint application
-	// were successful.
-	StatusPhaseBlueprintApplicationPreProcessed StatusPhase = "blueprintApplicationPreProcessed"
-	// StatusPhaseAwaitSelfUpgrade marks that the blueprint operator waits for termination for a self upgrade.
-	StatusPhaseAwaitSelfUpgrade StatusPhase = "awaitSelfUpgrade"
-	// StatusPhaseSelfUpgradeCompleted marks that the blueprint operator itself got successfully upgraded.
-	StatusPhaseSelfUpgradeCompleted StatusPhase = "selfUpgradeCompleted"
-	// StatusPhaseInProgress marks that the blueprint is currently being processed.
-	StatusPhaseInProgress StatusPhase = "inProgress"
-	// StatusPhaseBlueprintApplicationFailed shows that the blueprint application failed.
-	StatusPhaseBlueprintApplicationFailed StatusPhase = "blueprintApplicationFailed"
-	// StatusPhaseBlueprintApplied indicates that the blueprint was applied but the ecosystem is not healthy yet.
-	StatusPhaseBlueprintApplied StatusPhase = "blueprintApplied"
-	// StatusPhaseEcosystemHealthyAfterwards shows that the ecosystem got healthy again after applying the blueprint.
-	StatusPhaseEcosystemHealthyAfterwards StatusPhase = "ecosystemHealthyAfterwards"
-	// StatusPhaseEcosystemUnhealthyAfterwards shows that the ecosystem got not healthy again after applying the blueprint.
-	StatusPhaseEcosystemUnhealthyAfterwards StatusPhase = "ecosystemUnhealthyAfterwards"
-	// StatusPhaseFailed marks that an error occurred during processing of the blueprint.
-	StatusPhaseFailed StatusPhase = "failed"
-	// StatusPhaseCompleted marks the blueprint as successfully applied.
-	StatusPhaseCompleted StatusPhase = "completed"
-	// StatusPhaseApplyEcosystemConfig indicates that the apply ecosystem config phase is active.
-	StatusPhaseApplyEcosystemConfig StatusPhase = "applyEcosystemConfig"
-	// StatusPhaseApplyEcosystemConfigFailed indicates that the phase to apply ecosystem config failed.
-	StatusPhaseApplyEcosystemConfigFailed StatusPhase = "applyEcosystemConfigFailed"
-	// StatusPhaseEcosystemConfigApplied indicates that the phase to apply ecosystem config succeeded.
-	StatusPhaseEcosystemConfigApplied StatusPhase = "ecosystemConfigApplied"
-	// StatusPhaseRestartsTriggered indicates that a restart has been triggered for all Dogus that needed a restart.
-	// Restarts are needed when the Dogu config changes.
-	StatusPhaseRestartsTriggered StatusPhase = "restartsTriggered"
+	ConditionValid                = v2.ConditionValid
+	ConditionExecutable           = v2.ConditionExecutable
+	ConditionEcosystemHealthy     = v2.ConditionEcosystemHealthy
+	ConditionSelfUpgradeCompleted = v2.ConditionSelfUpgradeCompleted
+	ConditionCompleted            = v2.ConditionCompleted
+	ConditionLastApplySucceeded   = v2.ConditionLastApplySucceeded
+
+	ReasonLastApplyErrorAtComponents = "ComponentApplyFailure"
+	ReasonLastApplyErrorAtDogus      = "DoguApplyFailure"
+	ReasonLastApplyErrorAtConfig     = "ConfigApplyFailure"
 )
 
-// censorValue is the value for censoring sensitive blueprint configuration data.
-const censorValue = "*****"
+var (
+	BlueprintConditions = []string{ConditionValid, ConditionExecutable, ConditionEcosystemHealthy, ConditionSelfUpgradeCompleted, ConditionCompleted, ConditionLastApplySucceeded}
+
+	notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
+	// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
+	notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
+)
 
 type BlueprintConfiguration struct {
 	// IgnoreDoguHealth forces blueprint upgrades even if dogus are unhealthy
@@ -88,8 +62,8 @@ type BlueprintConfiguration struct {
 	IgnoreComponentHealth bool
 	// AllowDoguNamespaceSwitch allows the blueprint upgrade to switch a dogus namespace
 	AllowDoguNamespaceSwitch bool
-	// DryRun lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
-	DryRun bool
+	// Stopped lets the user test a blueprint run to check if all attributes of the blueprint are correct and avoid a result with a failure state.
+	Stopped bool
 }
 
 // ValidateStatically checks the blueprintSpec for semantic errors and sets the status to the result.
@@ -97,13 +71,6 @@ type BlueprintConfiguration struct {
 // returns a domain.InvalidBlueprintError if blueprint is invalid
 // or nil otherwise.
 func (spec *BlueprintSpec) ValidateStatically() error {
-	switch spec.Status {
-	case StatusPhaseNew: // continue
-	case StatusPhaseInvalid: // do not validate again
-		return &InvalidBlueprintError{Message: "blueprint spec was marked invalid before: do not revalidate"}
-	default: // do not validate again. for all other status it must be either status validated or a status beyond that
-		return nil
-	}
 	var errorList []error
 
 	if spec.Id == "" {
@@ -118,12 +85,17 @@ func (spec *BlueprintSpec) ValidateStatically() error {
 			WrappedError: err,
 			Message:      "blueprint spec is invalid",
 		}
-		spec.Status = StatusPhaseInvalid
 		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
-	} else {
-		spec.Status = StatusPhaseStaticallyValidated
-		spec.Events = append(spec.Events, BlueprintSpecStaticallyValidatedEvent{})
+		meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Invalid",
+			Message: err.Error(),
+		})
 	}
+	// Do not set condition to true here.
+	// We reuse the condition for the dynamic validation.
+	// If the blueprint is completely consistent and valid can only be decided there
 	return err
 }
 
@@ -134,7 +106,7 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 		if !found {
 			errorList = append(errorList, fmt.Errorf("dogu %q is missing in the blueprint", doguMask.Name))
 		}
-		if doguMask.TargetState == TargetStatePresent && dogu.TargetState == TargetStateAbsent {
+		if !doguMask.Absent && dogu.Absent {
 			errorList = append(errorList, fmt.Errorf("absent dogu %q cannot be present in blueprint mask", dogu.Name.SimpleName))
 		}
 		if !spec.Config.AllowDoguNamespaceSwitch && dogu.Name.Namespace != doguMask.Name.Namespace {
@@ -151,35 +123,34 @@ func (spec *BlueprintSpec) validateMaskAgainstBlueprint() error {
 	return err
 }
 
-// ValidateDynamically sets the Status either to StatusPhaseInvalid or StatusPhaseValidated
+// ValidateDynamically sets the ConditionValid
 // depending on if the dependencies or versions of the elements in the blueprint are invalid.
-// returns a domain.InvalidBlueprintError if blueprint is invalid
-// or nil otherwise.
+// This function decides completely on the given error, therefore no error will be returned explicitly again.
 func (spec *BlueprintSpec) ValidateDynamically(possibleInvalidDependenciesError error) {
 	if possibleInvalidDependenciesError != nil {
 		err := &InvalidBlueprintError{
 			WrappedError: possibleInvalidDependenciesError,
 			Message:      "blueprint spec is invalid",
 		}
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Inconsistent",
+			Message: err.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
+		}
 	} else {
-		spec.Status = StatusPhaseValidated
-		spec.Events = append(spec.Events, BlueprintSpecValidatedEvent{})
+		meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:   ConditionValid,
+			Status: metav1.ConditionTrue,
+			Reason: "Valid",
+		})
 	}
 }
 
 func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
-	switch spec.Status {
-	case StatusPhaseEffectiveBlueprintGenerated:
-		return nil // do not regenerate effective blueprint
-	case StatusPhaseNew: // stop
-		return fmt.Errorf("cannot calculate effective blueprint before the blueprint spec is validated")
-	case StatusPhaseInvalid: // stop
-		return fmt.Errorf("cannot calculate effective blueprint on invalid blueprint spec")
-	default: // continue: StatusPhaseValidated, StatusPhaseInProgress, StatusPhaseFailed, StatusPhaseCompleted
-	}
-
 	effectiveDogus, err := spec.calculateEffectiveDogus()
 	if err != nil {
 		return err
@@ -194,12 +165,17 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	}
 	validationError := spec.EffectiveBlueprint.validateOnlyConfigForDogusInBlueprint()
 	if validationError != nil {
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: validationError})
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionValid,
+			Status:  metav1.ConditionFalse,
+			Reason:  "Inconsistent",
+			Message: validationError.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: validationError})
+		}
 		return validationError
 	}
-	spec.Status = StatusPhaseEffectiveBlueprintGenerated
-	spec.Events = append(spec.Events, EffectiveBlueprintCalculatedEvent{})
 	return nil
 }
 
@@ -219,7 +195,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	effectiveDogu := Dogu{
 		Name:               dogu.Name,
 		Version:            dogu.Version,
-		TargetState:        dogu.TargetState,
+		Absent:             dogu.Absent,
 		MinVolumeSize:      dogu.MinVolumeSize,
 		ReverseProxyConfig: dogu.ReverseProxyConfig,
 		AdditionalMounts:   dogu.AdditionalMounts,
@@ -228,17 +204,17 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	if noMaskDoguErr == nil {
 		emptyVersion := core.Version{}
 		if maskDogu.Version != emptyVersion {
-			effectiveDogu.Version = maskDogu.Version
+			effectiveDogu.Version = &maskDogu.Version
 		}
 		if maskDogu.Name.Namespace != dogu.Name.Namespace {
 			if spec.Config.AllowDoguNamespaceSwitch {
-				effectiveDogu.Name.Namespace = cescommons.Namespace(maskDogu.Name.Namespace)
+				effectiveDogu.Name.Namespace = maskDogu.Name.Namespace
 			} else {
 				return Dogu{}, fmt.Errorf(
 					"changing the dogu namespace is forbidden by default and can be allowed by a flag: %q -> %q", dogu.Name, maskDogu.Name)
 			}
 		}
-		effectiveDogu.TargetState = maskDogu.TargetState
+		effectiveDogu.Absent = maskDogu.Absent
 	}
 
 	return effectiveDogu, nil
@@ -249,7 +225,7 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 	effectiveDoguConfig := maps.Clone(spec.Blueprint.Config.Dogus)
 
 	for _, dogu := range spec.BlueprintMask.Dogus {
-		if dogu.TargetState == TargetStateAbsent {
+		if dogu.Absent {
 			delete(effectiveDoguConfig, dogu.Name.SimpleName)
 		}
 	}
@@ -260,15 +236,17 @@ func (spec *BlueprintSpec) removeConfigForMaskedDogus() Config {
 	}
 }
 
-// MarkInvalid is used to mark the blueprint as invalid after dynamically validating it.
-func (spec *BlueprintSpec) MarkInvalid(err error) {
-	spec.Status = StatusPhaseInvalid
-	spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: err})
-}
-
 // MissingConfigReferences adds a given error, which was caused during preparations for determining the state diff
 func (spec *BlueprintSpec) MissingConfigReferences(error error) {
-	spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:    ConditionExecutable,
+		Status:  metav1.ConditionFalse,
+		Reason:  "MissingConfigReferences",
+		Message: error.Error(),
+	})
+	if conditionChanged {
+		spec.Events = append(spec.Events, NewMissingConfigReferencesEvent(error))
+	}
 }
 
 // DetermineStateDiff creates the StateDiff between the blueprint and the actual state of the ecosystem.
@@ -279,27 +257,10 @@ func (spec *BlueprintSpec) MissingConfigReferences(error error) {
 // returns an error if the BlueprintSpec is not in the necessary state to determine the stateDiff.
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
-	referencedSensitiveConfig map[common.SensitiveDoguConfigKey]common.SensitiveDoguConfigValue,
+	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) error {
-	switch spec.Status {
-	case StatusPhaseNew:
-		fallthrough
-	case StatusPhaseStaticallyValidated:
-		fallthrough
-	case StatusPhaseEffectiveBlueprintGenerated:
-		return fmt.Errorf("cannot determine state diff in status phase %q", spec.Status)
-	case StatusPhaseValidated: // this is the state, the blueprint spec should be
-	default:
-		return nil // do not re-determine the state diff from status StatusPhaseStateDiffDetermined and above
-	}
-
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
-	compDiffs, err := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
-	if err != nil {
-		// FIXME: a proper state and event should be set, so that this error don't lead to an endless retry.
-		// we need to analyze first, what kind of error this is. Why do we need one?
-		return err
-	}
+	compDiffs := determineComponentDiffs(spec.EffectiveBlueprint.Components, ecosystemState.InstalledComponents)
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
 		spec.EffectiveBlueprint.Config,
 		ecosystemState.GlobalConfig,
@@ -316,139 +277,130 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		GlobalConfigDiffs:        globalConfigDiffs,
 	}
 
-	spec.Events = append(spec.Events, newStateDiffDoguEvent(spec.StateDiff.DoguDiffs))
-	spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
-	spec.Events = append(spec.Events, GlobalConfigDiffDeterminedEvent{GlobalConfigDiffs: spec.StateDiff.GlobalConfigDiffs})
-	spec.Events = append(spec.Events, NewDoguConfigDiffDeterminedEvent(spec.StateDiff.DoguConfigDiffs))
-	spec.Events = append(spec.Events, NewSensitiveDoguConfigDiffDeterminedEvent(spec.StateDiff.SensitiveDoguConfigDiffs))
+	spec.resetCompletedConditionAfterStateDiff()
+	if spec.StateDiff.DoguDiffs.HasChanges() {
+		spec.Events = append(spec.Events, newStateDiffEvent(spec.StateDiff))
+	}
+	if spec.StateDiff.ComponentDiffs.HasChanges() {
+		spec.Events = append(spec.Events, newStateDiffComponentEvent(spec.StateDiff.ComponentDiffs))
+	}
 
 	invalidBlueprintError := spec.validateStateDiff()
 	if invalidBlueprintError != nil {
-		spec.Status = StatusPhaseInvalid
-		spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionExecutable,
+			Status:  metav1.ConditionFalse,
+			Reason:  "ForbiddenOperations",
+			Message: invalidBlueprintError.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, BlueprintSpecInvalidEvent{ValidationError: invalidBlueprintError})
+		}
 		return invalidBlueprintError
 	}
 
-	spec.Status = StatusPhaseStateDiffDetermined
-
+	meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionExecutable,
+		Status: metav1.ConditionTrue,
+		Reason: "Executable",
+	})
 	return nil
 }
 
-// CheckEcosystemHealthUpfront checks if the ecosystem is healthy with the given health result and sets the next status phase depending on that.
-func (spec *BlueprintSpec) CheckEcosystemHealthUpfront(healthResult ecosystem.HealthResult) error {
-	// healthResult does not contain dogu info if IgnoreDoguHealth flag is set. (no need to load all doguInstallations then)
-	// Therefore we don't need to exclude dogus while checking with AllHealthy()
+// HandleHealthResult sets the healthCondition accordingly to the healthResult and a possible error.
+// if an error is given, the condition will be set to unknown.
+// The function returns true if the condition changed, otherwise false.
+func (spec *BlueprintSpec) HandleHealthResult(healthResult ecosystem.HealthResult, err error) bool {
+	if err != nil {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionUnknown,
+			Reason:  "CannotCheckHealth",
+			Message: err.Error(),
+		})
+		return conditionChanged
+	}
+
 	if healthResult.AllHealthy() {
-		spec.Status = StatusPhaseEcosystemHealthyUpfront
-		spec.Events = append(spec.Events, EcosystemHealthyUpfrontEvent{doguHealthIgnored: spec.Config.IgnoreDoguHealth,
-			componentHealthIgnored: spec.Config.IgnoreComponentHealth})
-		return nil
-	} else {
-		//TODO: set health condition here in the future
-		spec.Events = append(spec.Events, EcosystemUnhealthyUpfrontEvent{HealthResult: healthResult})
-		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy before applying the blueprint", healthResult)
+		event := EcosystemHealthyEvent{
+			doguHealthIgnored:      spec.Config.IgnoreDoguHealth,
+			componentHealthIgnored: spec.Config.IgnoreComponentHealth,
+		}
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionEcosystemHealthy,
+			Status:  metav1.ConditionTrue,
+			Reason:  "Healthy",
+			Message: event.Message(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, event)
+		}
+		return conditionChanged
 	}
 
+	event := EcosystemUnhealthyEvent{
+		HealthResult: healthResult,
+	}
+	oldHealthyCondition := meta.FindStatusCondition(spec.Conditions, ConditionEcosystemHealthy)
+	// determine here, because the condition is a pointer and will change with the SetStatusCondition call below
+	isConditionStatusChanged := oldHealthyCondition == nil || oldHealthyCondition.Status == metav1.ConditionTrue
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:    ConditionEcosystemHealthy,
+		Status:  metav1.ConditionFalse,
+		Reason:  "Unhealthy",
+		Message: "ecosystem health:\n  " + healthResult.String(),
+	})
+	// only throw an event the first unhealthy time to avoid having too many events
+	if isConditionStatusChanged {
+		spec.Events = append(spec.Events, event)
+	}
+	return conditionChanged
 }
 
-// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while dry run.
+// ShouldBeApplied returns true if the blueprint should be applied or an early-exit should happen, e.g. while being stopped.
 func (spec *BlueprintSpec) ShouldBeApplied() bool {
-	// TODO: also check if an early-exit is possible if no changes need to be applied, see PR #29
-	return !spec.Config.DryRun
-}
-
-// CompletePreProcessing decides if the blueprint is ready to be applied or not by setting the fitting next status phase.
-func (spec *BlueprintSpec) CompletePreProcessing() {
-	if spec.Config.DryRun {
-		spec.Events = append(spec.Events, BlueprintDryRunEvent{})
-	} else {
-		spec.Status = StatusPhaseBlueprintApplicationPreProcessed
-		spec.Events = append(spec.Events, BlueprintApplicationPreProcessedEvent{})
+	if spec.Config.Stopped {
+		return false
 	}
+	// not true does not equal IsStatusConditionFalse here, because not true includes status "unknown"
+	return !meta.IsStatusConditionTrue(spec.Conditions, ConditionCompleted) || spec.StateDiff.HasChanges()
 }
 
 func (spec *BlueprintSpec) MarkWaitingForSelfUpgrade() {
-	if spec.Status != StatusPhaseAwaitSelfUpgrade {
-		spec.Status = StatusPhaseAwaitSelfUpgrade
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionSelfUpgradeCompleted,
+		Status: metav1.ConditionFalse,
+		Reason: "AwaitSelfUpgrade",
+	})
+	if conditionChanged {
 		spec.Events = append(spec.Events, AwaitSelfUpgradeEvent{})
 	}
 }
 
 func (spec *BlueprintSpec) MarkSelfUpgradeCompleted() {
-	if spec.Status != StatusPhaseSelfUpgradeCompleted {
-		spec.Status = StatusPhaseSelfUpgradeCompleted
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionSelfUpgradeCompleted,
+		Status: metav1.ConditionTrue,
+		Reason: "Completed",
+	})
+	if conditionChanged {
 		spec.Events = append(spec.Events, SelfUpgradeCompletedEvent{})
 	}
 }
 
-// CheckEcosystemHealthAfterwards checks with the given health result if the ecosystem is healthy and the blueprint was therefore successful.
-func (spec *BlueprintSpec) CheckEcosystemHealthAfterwards(healthResult ecosystem.HealthResult) error {
-	if healthResult.AllHealthy() {
-		spec.Status = StatusPhaseEcosystemHealthyAfterwards
-		spec.Events = append(spec.Events, EcosystemHealthyAfterwardsEvent{})
-		return nil
-	} else {
-		//TODO write condition here in the future
-		spec.Status = StatusPhaseEcosystemUnhealthyAfterwards
-		spec.Events = append(spec.Events, EcosystemUnhealthyAfterwardsEvent{HealthResult: healthResult})
-		return NewUnhealthyEcosystemError(nil, "ecosystem is unhealthy after applying the blueprint", healthResult)
+func (spec *BlueprintSpec) resetCompletedConditionAfterStateDiff() bool {
+	if spec.StateDiff.HasChanges() {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionCompleted,
+			Status:  metav1.ConditionFalse,
+			Reason:  "StateDiffHasChanges",
+			Message: "Blueprint is being applied.",
+		})
+		return conditionChanged
 	}
+
+	return false
 }
-
-// StartApplying marks the blueprint as in progress, which indicates, that the system started applying the blueprint.
-// This state is used to detect complete failures as this state will only stay persisted if the process failed before setting the state to blueprint applied.
-func (spec *BlueprintSpec) StartApplying() {
-	spec.Status = StatusPhaseInProgress
-	spec.Events = append(spec.Events, InProgressEvent{})
-}
-
-// MarkBlueprintApplicationFailed sets the blueprint state to application failed, which indicates that the blueprint could not be applied completely.
-// In reaction to this, further post-processing will happen.
-func (spec *BlueprintSpec) MarkBlueprintApplicationFailed(err error) {
-	spec.Status = StatusPhaseBlueprintApplicationFailed
-	spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-}
-
-// MarkBlueprintApplied sets the blueprint state to blueprint applied, which indicates that the blueprint was applied successful and further steps can happen then.
-func (spec *BlueprintSpec) MarkBlueprintApplied() {
-	spec.Status = StatusPhaseBlueprintApplied
-	spec.Events = append(spec.Events, BlueprintAppliedEvent{})
-}
-
-// CensorSensitiveData censors all sensitive configuration data of the blueprint, effective blueprint and the statediff,
-// to make the values unrecognisable.
-func (spec *BlueprintSpec) CensorSensitiveData() {
-	spec.StateDiff.SensitiveDoguConfigDiffs = censorValues(spec.StateDiff.SensitiveDoguConfigDiffs)
-
-	spec.Events = append(spec.Events, SensitiveConfigDataCensoredEvent{})
-}
-
-// CompletePostProcessing is used to mark the blueprint as completed or failed , depending on the blueprint application result.
-func (spec *BlueprintSpec) CompletePostProcessing() {
-	switch spec.Status {
-	case StatusPhaseEcosystemHealthyAfterwards:
-		spec.Status = StatusPhaseCompleted
-		spec.Events = append(spec.Events, CompletedEvent{})
-	case StatusPhaseApplyEcosystemConfigFailed:
-		fallthrough
-	case StatusPhaseEcosystemUnhealthyAfterwards:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("ecosystem is unhealthy")})
-	case StatusPhaseInProgress:
-		spec.Status = StatusPhaseFailed
-		err := errors.New(handleInProgressMsg)
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
-
-	case StatusPhaseBlueprintApplicationFailed:
-		spec.Status = StatusPhaseFailed
-		spec.Events = append(spec.Events, ExecutionFailedEvent{err: errors.New("could not apply blueprint")})
-	}
-}
-
-var notAllowedComponentActions = []Action{ActionDowngrade, ActionSwitchComponentNamespace}
-
-// ActionSwitchDoguNamespace is an exception and should be handled with the blueprint config.
-var notAllowedDoguActions = []Action{ActionDowngrade, ActionSwitchDoguNamespace}
 
 func (spec *BlueprintSpec) validateStateDiff() error {
 	var invalidBlueprintErrors []error
@@ -471,7 +423,7 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 				return nil
 			}
 
-			return getActionNotAllowedError(action)
+			return getActionNotAllowedError(action, string(diff.DoguName))
 		}
 
 		return nil
@@ -481,47 +433,69 @@ func (spec *BlueprintSpec) validateDoguDiffActions(diff DoguDiff) []error {
 func (spec *BlueprintSpec) validateComponentDiffActions(diff ComponentDiff) []error {
 	return util.Map(diff.NeededActions, func(action Action) error {
 		if slices.Contains(notAllowedComponentActions, action) {
-			return getActionNotAllowedError(action)
+			return getActionNotAllowedError(action, string(diff.Name))
 		}
 
 		return nil
 	})
 }
 
-func getActionNotAllowedError(action Action) *InvalidBlueprintError {
+func getActionNotAllowedError(action Action, name string) *InvalidBlueprintError {
 	return &InvalidBlueprintError{
-		Message: fmt.Sprintf("action %q is not allowed", action),
+		Message: fmt.Sprintf("%s: action %q is not allowed", name, action),
 	}
 }
 
-func (spec *BlueprintSpec) GetDogusThatNeedARestart() []cescommons.SimpleName {
-	var dogusThatNeedRestart []cescommons.SimpleName
-	dogusInEffectiveBlueprint := spec.EffectiveBlueprint.Dogus
-	for _, dogu := range dogusInEffectiveBlueprint {
-		//TODO: test this
-		if spec.StateDiff.DoguConfigDiffs[dogu.Name.SimpleName].HasChanges() ||
-			spec.StateDiff.SensitiveDoguConfigDiffs[dogu.Name.SimpleName].HasChanges() {
-			dogusThatNeedRestart = append(dogusThatNeedRestart, dogu.Name.SimpleName)
+// Complete is used to mark the blueprint as completed and to inform the user.
+// Returns true if the condition changed, false otherwise.
+func (spec *BlueprintSpec) Complete() bool {
+	conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionCompleted,
+		Status: metav1.ConditionTrue,
+		Reason: "Completed",
+	})
+	meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+		Type:   ConditionLastApplySucceeded,
+		Status: metav1.ConditionTrue,
+		Reason: "ApplySucceeded",
+	})
+
+	if conditionChanged {
+		spec.Events = append(spec.Events, CompletedEvent{})
+	}
+	return conditionChanged
+}
+
+func (spec *BlueprintSpec) SetLastApplySucceededConditionOnError(reason string, err error) bool {
+	if err != nil {
+		conditionChanged := meta.SetStatusCondition(&spec.Conditions, metav1.Condition{
+			Type:    ConditionLastApplySucceeded,
+			Status:  metav1.ConditionFalse,
+			Reason:  reason,
+			Message: err.Error(),
+		})
+		if conditionChanged {
+			spec.Events = append(spec.Events, ExecutionFailedEvent{err: err})
 		}
+
+		return conditionChanged
 	}
-	return dogusThatNeedRestart
-}
 
-func (spec *BlueprintSpec) StartApplyEcosystemConfig() {
-	spec.Status = StatusPhaseApplyEcosystemConfig
-	spec.Events = append(spec.Events, ApplyEcosystemConfigEvent{})
-}
-
-func (spec *BlueprintSpec) MarkApplyEcosystemConfigFailed(err error) {
-	spec.Status = StatusPhaseApplyEcosystemConfigFailed
-	spec.Events = append(spec.Events, ApplyEcosystemConfigFailedEvent{err: err})
+	return false
 }
 
 func (spec *BlueprintSpec) MarkEcosystemConfigApplied() {
-	spec.Status = StatusPhaseEcosystemConfigApplied
 	spec.Events = append(spec.Events, EcosystemConfigAppliedEvent{})
 }
 
-const handleInProgressMsg = "cannot handle blueprint in state " + string(StatusPhaseInProgress) +
-	" as this state shows that the appliance of the blueprint was interrupted before it could update the state " +
-	"to either " + string(StatusPhaseFailed) + " or " + string(StatusPhaseCompleted)
+func (spec *BlueprintSpec) MarkBlueprintStopped() {
+	spec.Events = append(spec.Events, BlueprintStoppedEvent{})
+}
+
+func (spec *BlueprintSpec) MarkDogusApplied(isDogusApplied bool, err error) bool {
+	if isDogusApplied {
+		spec.Events = append(spec.Events, DogusAppliedEvent{Diffs: spec.StateDiff.DoguDiffs})
+	}
+	conditionChanged := spec.SetLastApplySucceededConditionOnError(ReasonLastApplyErrorAtDogus, err)
+	return conditionChanged
+}

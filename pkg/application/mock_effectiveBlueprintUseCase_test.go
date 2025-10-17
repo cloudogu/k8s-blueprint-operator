@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockEffectiveBlueprintUseCase) EXPECT() *mockEffectiveBlueprintUseCase
 	return &mockEffectiveBlueprintUseCase_Expecter{mock: &_m.Mock}
 }
 
-// CalculateEffectiveBlueprint provides a mock function with given fields: ctx, blueprintId
-func (_m *mockEffectiveBlueprintUseCase) CalculateEffectiveBlueprint(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// CalculateEffectiveBlueprint provides a mock function with given fields: ctx, blueprint
+func (_m *mockEffectiveBlueprintUseCase) CalculateEffectiveBlueprint(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CalculateEffectiveBlueprint")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call struct {
 
 // CalculateEffectiveBlueprint is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockEffectiveBlueprintUseCase_Expecter) CalculateEffectiveBlueprint(ctx interface{}, blueprintId interface{}) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
-	return &mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call{Call: _e.mock.On("CalculateEffectiveBlueprint", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockEffectiveBlueprintUseCase_Expecter) CalculateEffectiveBlueprint(ctx interface{}, blueprint interface{}) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
+	return &mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call{Call: _e.mock.On("CalculateEffectiveBlueprint", ctx, blueprint)}
 }
 
-func (_c *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call) Run(run func(ctx context.Context, blueprintId string)) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
+func (_c *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,7 +64,7 @@ func (_c *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call) Return
 	return _c
 }
 
-func (_c *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call) RunAndReturn(run func(context.Context, string) error) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
+func (_c *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockEffectiveBlueprintUseCase_CalculateEffectiveBlueprint_Call {
 	_c.Call.Return(run)
 	return _c
 }

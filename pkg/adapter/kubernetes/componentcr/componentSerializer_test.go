@@ -3,6 +3,8 @@ package componentcr
 import (
 	_ "embed"
 	"fmt"
+	"testing"
+
 	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	compV1 "github.com/cloudogu/k8s-component-operator/pkg/api/v1"
@@ -10,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"testing"
 )
 
 const (
@@ -207,8 +208,15 @@ func Test_toComponentCR(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: testComponentNameRaw,
 					Labels: map[string]string{
-						ComponentNameLabelKey:    testComponentNameRaw,
-						ComponentVersionLabelKey: testVersion1.String(),
+						ComponentNameLabelKey:          testComponentNameRaw,
+						ComponentVersionLabelKey:       testVersion1.String(),
+						"app":                          "ces",
+						"k8s.cloudogu.com/app":         "ces",
+						"component.name":               string(testComponentName.SimpleName),
+						"app.kubernetes.io/name":       string(testComponentName.SimpleName),
+						"app.kubernetes.io/version":    testVersion1.String(),
+						"app.kubernetes.io/part-of":    "ces",
+						"app.kubernetes.io/managed-by": "k8s-blueprint-operator",
 					},
 				},
 				Spec: compV1.ComponentSpec{

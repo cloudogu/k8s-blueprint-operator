@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"slices"
 )
 
 type ValidateAdditionalMountsDomainUseCase struct {
@@ -30,15 +31,15 @@ func (useCase *ValidateAdditionalMountsDomainUseCase) ValidateAdditionalMounts(c
 	logger := log.FromContext(ctx).WithName("ValidateAdditionalMountsDomainUseCase.ValidateAdditionalMounts")
 	dogusWithMounts := filterDogusWithAdditionalMounts(effectiveBlueprint.GetWantedDogus())
 	if len(dogusWithMounts) == 0 {
-		logger.Info("skip additional mounts validation as no dogus have additional mounts")
+		logger.V(2).Info("skip additional mounts validation as no dogus have additional mounts")
 		return nil
 	}
-	logger.Info("load dogu specifications...", "dogusWithMounts", dogusWithMounts)
+	logger.V(2).Info("load dogu specifications...", "dogusWithMounts", dogusWithMounts)
 	doguSpecs, err := loadDoguSpecifications(ctx, useCase.remoteDoguRegistry, dogusWithMounts)
 	if err != nil {
 		return err
 	}
-	logger.Info("dogu specifications loaded", "specs", doguSpecs)
+	logger.V(2).Info("dogu specifications loaded", "specs", doguSpecs)
 
 	var errorList []error
 	for _, wantedDogu := range dogusWithMounts {

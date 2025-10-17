@@ -1,6 +1,8 @@
 package application
 
 import (
+	"testing"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
@@ -10,17 +12,14 @@ import (
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 var (
 	nsOfficial = cescommons.Namespace("official")
-	nsK8s      = cescommons.Namespace("k8s")
 
-	postfix      = cescommons.SimpleName("postfix")
-	ldap         = cescommons.SimpleName("ldap")
-	nginxIngress = cescommons.SimpleName("nginx-ingress")
-	nginxStatic  = cescommons.SimpleName("nginx-static")
+	postfix = cescommons.SimpleName("postfix")
+	ldap    = cescommons.SimpleName("ldap")
 
 	postfixQualifiedDoguName = cescommons.QualifiedName{
 		Namespace:  nsOfficial,
@@ -30,51 +29,25 @@ var (
 		Namespace:  nsOfficial,
 		SimpleName: ldap,
 	}
-	nginxIngressQualifiedDoguName = cescommons.QualifiedName{
-		Namespace:  nsK8s,
-		SimpleName: nginxIngress,
-	}
-	nginxStaticQualifiedDoguName = cescommons.QualifiedName{
-		Namespace:  nsK8s,
-		SimpleName: nginxStatic,
-	}
 
 	nilDoguNameList []cescommons.SimpleName
 )
 
 var (
-	internalTestError                      = domainservice.NewInternalError(assert.AnError, "internal error")
-	nginxStaticConfigKeyNginxKey1          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey1"}
-	nginxStaticConfigKeyNginxKey2          = common.DoguConfigKey{DoguName: "nginx-static", Key: "nginxKey2"}
-	nginxStaticSensitiveConfigKeyNginxKey1 = nginxStaticConfigKeyNginxKey1
-	nginxStaticSensitiveConfigKeyNginxKey2 = nginxStaticConfigKeyNginxKey2
+	internalTestError               = domainservice.NewInternalError(assert.AnError, "internal error")
+	ldapConfigKeyNginxKey1          = common.DoguConfigKey{DoguName: "ldap", Key: "ldapKey1"}
+	ldapConfigKeyNginxKey2          = common.DoguConfigKey{DoguName: "ldap", Key: "ldapKey2"}
+	ldapSensitiveConfigKeyNginxKey1 = ldapConfigKeyNginxKey1
+	ldapSensitiveConfigKeyNginxKey2 = ldapConfigKeyNginxKey2
+	val1                            = "val1"
+	val2                            = "val2"
+	val3                            = "val3"
 )
 
 func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
-	t.Run("should fail to load blueprint spec", func(t *testing.T) {
-		// given
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(nil, assert.AnError)
-
-		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		componentInstallRepoMock := newMockComponentInstallationRepository(t)
-
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, nil, nil, nil, nil)
-
-		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
-
-		// then
-		require.Error(t, err)
-		assert.ErrorIs(t, err, assert.AnError)
-		assert.ErrorContains(t, err, "cannot load blueprint spec \"testBlueprint1\" to determine state diff")
-	})
 	t.Run("should fail to get installed dogus", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, internalTestError)
@@ -94,10 +67,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -109,9 +82,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
 
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -121,7 +91,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
-
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
@@ -131,10 +100,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -146,9 +115,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
 
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -158,7 +124,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, domainservice.NewInternalError(assert.AnError, "internal error"))
-
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
@@ -168,10 +133,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -183,10 +148,12 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should fail to get dogu config", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+		blueprint := &domain.BlueprintSpec{
+			Id: "testBlueprint1",
+			EffectiveBlueprint: domain.EffectiveBlueprint{
+				Config: domain.Config{},
+			},
+		}
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
@@ -199,20 +166,20 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
 
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
+		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, domainservice.NewInternalError(assert.AnError, "internal error"))
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 		sensitiveDoguConfigRepoMock.EXPECT().
 			GetAllExisting(testCtx, nilDoguNameList).
-			Return(map[cescommons.SimpleName]config.DoguConfig{}, domainservice.NewInternalError(assert.AnError, "internal error"))
+			Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		configRefReaderMock := newMockSensitiveConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -224,10 +191,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should fail to get sensitive dogu config", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
+		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", EffectiveBlueprint: domain.EffectiveBlueprint{Config: domain.Config{}}}
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
@@ -250,10 +214,10 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
 
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
+		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -263,47 +227,14 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		assert.ErrorContains(t, err, "could not determine state diff")
 		assert.ErrorContains(t, err, "could not collect ecosystem state")
 	})
-	t.Run("should fail to determine state diff for blueprint", func(t *testing.T) {
-		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1"}
-
-		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
-
-		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
-		componentInstallRepoMock := newMockComponentInstallationRepository(t)
-		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
-
-		globalConfigRepoMock := newMockGlobalConfigRepository(t)
-		entries, _ := config.MapToEntries(map[string]any{})
-		globalConfig := config.CreateGlobalConfig(entries)
-		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
-
-		doguConfigRepoMock := newMockDoguConfigRepository(t)
-		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
-		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
-		sensitiveDoguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
-		configRefReaderMock := newMockSensitiveConfigRefReader(t)
-		configRefReaderMock.EXPECT().
-			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
-			Return(map[common.DoguConfigKey]config.Value{}, nil)
-
-		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
-
-		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
-
-		// then
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "failed to determine state diff for blueprint \"testBlueprint1\"")
-	})
 	t.Run("should fail to update blueprint", func(t *testing.T) {
 		// given
-		blueprint := &domain.BlueprintSpec{Id: "testBlueprint1", Status: domain.StatusPhaseValidated}
+		blueprint := &domain.BlueprintSpec{
+			Id:         "testBlueprint1",
+			Conditions: []domain.Condition{},
+		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
@@ -315,7 +246,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
-
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
@@ -328,7 +258,7 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.Error(t, err)
@@ -337,44 +267,47 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	})
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
+		volumeSize := resource.MustParse("2Gi")
+		bodySize := resource.MustParse("2G")
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Dogus: []domain.Dogu{
 					{
-						Name:        postfixQualifiedDoguName,
-						Version:     mustParseVersion(t, "2.9.0"),
-						TargetState: domain.TargetStatePresent,
+						Name:          postfixQualifiedDoguName,
+						Version:       mustParseVersionToPtr(t, "2.9.0"),
+						Absent:        false,
+						MinVolumeSize: &volumeSize,
+						ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+							MaxBodySize:      &bodySize,
+							RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+							AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+						},
+						AdditionalMounts: []ecosystem.AdditionalMount{
+							{
+								SourceType: ecosystem.DataSourceConfigMap,
+								Name:       "configmap",
+								Volume:     "volume",
+								Subfolder:  subfolder,
+							},
+						},
 					},
 					{
-						Name:        ldapQualifiedDoguName,
-						Version:     mustParseVersion(t, "1.2.3"),
-						TargetState: domain.TargetStatePresent,
-					},
-					{
-						Name:        nginxIngressQualifiedDoguName,
-						Version:     mustParseVersion(t, "1.8.5"),
-						TargetState: domain.TargetStatePresent,
-					},
-					{
-						Name:        nginxStaticQualifiedDoguName,
-						TargetState: domain.TargetStateAbsent,
+						Name:    ldapQualifiedDoguName,
+						Version: mustParseVersionToPtr(t, "1.2.3"),
+						Absent:  false,
 					},
 				},
 			},
-			Status: domain.StatusPhaseValidated,
-			// TODO: add config to test
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"ldap":          {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.1.1")},
-			"nginx-ingress": {Name: nginxIngressQualifiedDoguName, Version: mustParseVersion(t, "1.8.5")},
-			"nginx-static":  {Name: nginxStaticQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
+			"ldap": {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.1.1")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -384,7 +317,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		entries, _ := config.MapToEntries(map[string]any{})
 		globalConfig := config.CreateGlobalConfig(entries)
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConfig, nil)
-
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
 		doguConfigRepoMock.EXPECT().GetAllExisting(testCtx, nilDoguNameList).Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
@@ -397,61 +329,48 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
 		expectedDoguDiffs := []domain.DoguDiff{
 			{
 				DoguName: "postfix",
-				Actual:   domain.DoguDiffState{InstallationState: domain.TargetStateAbsent},
+				Actual:   domain.DoguDiffState{Absent: true},
 				Expected: domain.DoguDiffState{
-					Namespace:         "official",
-					Version:           mustParseVersion(t, "2.9.0"),
-					InstallationState: domain.TargetStatePresent,
+					Namespace:     "official",
+					Version:       mustParseVersionToPtr(t, "2.9.0"),
+					Absent:        false,
+					MinVolumeSize: &volumeSize,
+					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
+						MaxBodySize:      &bodySize,
+						RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
+						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
+					},
+					AdditionalMounts: []ecosystem.AdditionalMount{
+						{
+							SourceType: ecosystem.DataSourceConfigMap,
+							Name:       "configmap",
+							Volume:     "volume",
+							Subfolder:  subfolder,
+						},
+					},
 				},
 				NeededActions: []domain.Action{domain.ActionInstall},
 			},
 			{
 				DoguName: "ldap",
 				Actual: domain.DoguDiffState{
-					Namespace:         "official",
-					Version:           mustParseVersion(t, "1.1.1"),
-					InstallationState: domain.TargetStatePresent,
+					Namespace: "official",
+					Version:   mustParseVersionToPtr(t, "1.1.1"),
+					Absent:    false,
 				},
 				Expected: domain.DoguDiffState{
-					Namespace:         "official",
-					Version:           mustParseVersion(t, "1.2.3"),
-					InstallationState: domain.TargetStatePresent,
+					Namespace: "official",
+					Version:   mustParseVersionToPtr(t, "1.2.3"),
+					Absent:    false,
 				},
 				NeededActions: []domain.Action{domain.ActionUpgrade},
-			},
-			{
-				DoguName: "nginx-ingress",
-				Actual: domain.DoguDiffState{
-					Namespace:         "k8s",
-					Version:           mustParseVersion(t, "1.8.5"),
-					InstallationState: domain.TargetStatePresent,
-				},
-				Expected: domain.DoguDiffState{
-					Namespace:         "k8s",
-					Version:           mustParseVersion(t, "1.8.5"),
-					InstallationState: domain.TargetStatePresent,
-				},
-				NeededActions: nil,
-			},
-			{
-				DoguName: "nginx-static",
-				Actual: domain.DoguDiffState{
-					Namespace:         "k8s",
-					Version:           mustParseVersion(t, "1.8.6"),
-					InstallationState: domain.TargetStatePresent,
-				},
-				Expected: domain.DoguDiffState{
-					Namespace:         "k8s",
-					InstallationState: domain.TargetStateAbsent,
-				},
-				NeededActions: []domain.Action{domain.ActionUninstall},
 			},
 		}
 		assert.ElementsMatch(t, expectedDoguDiffs, blueprint.StateDiff.DoguDiffs)
@@ -459,30 +378,29 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for global config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
-					Global: domain.GlobalConfig{
-						Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-							"globalKey1": "globalValue",
+					Global: domain.GlobalConfigEntries{
+						{
+							Key:   "globalKey1",
+							Value: (*config.Value)(&val1),
 						},
-						Absent: []common.GlobalConfigKey{
-							"globalKey2",
+						{
+							Key:    "globalKey2",
+							Absent: true,
 						},
 					},
 				},
 			},
-			Status: domain.StatusPhaseValidated,
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
-		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"nginx-static": {Name: nginxStaticQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
-		}
+		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
 		componentInstallRepoMock.EXPECT().GetAll(testCtx).Return(nil, nil)
@@ -504,23 +422,18 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
 
+		// only changes are expected
 		expectedConfigDiff := []domain.GlobalConfigEntryDiff{
 			{
 				Key:          "globalKey1",
-				Actual:       domain.GlobalConfigValueState{Value: "", Exists: false},
-				Expected:     domain.GlobalConfigValueState{Value: "globalValue", Exists: true},
+				Actual:       domain.GlobalConfigValueState{Value: nil, Exists: false},
+				Expected:     domain.GlobalConfigValueState{Value: &val1, Exists: true},
 				NeededAction: domain.ConfigActionSet,
-			},
-			{
-				Key:          "globalKey2",
-				Actual:       domain.GlobalConfigValueState{Value: "", Exists: false},
-				Expected:     domain.GlobalConfigValueState{Value: "", Exists: false},
-				NeededAction: domain.ConfigActionNone,
 			},
 		}
 		assert.ElementsMatch(t, expectedConfigDiff, blueprint.StateDiff.GlobalConfigDiffs)
@@ -528,35 +441,32 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for dogu config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
-					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
-						nginxStaticQualifiedDoguName.SimpleName: {
-							DoguName: nginxStaticQualifiedDoguName.SimpleName,
-							Config: domain.DoguConfig{
-								Present: map[common.DoguConfigKey]common.DoguConfigValue{
-									nginxStaticConfigKeyNginxKey1: "nginxVal1",
-								},
-								Absent: []common.DoguConfigKey{
-									nginxStaticConfigKeyNginxKey2,
-								},
+					Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
+						ldapQualifiedDoguName.SimpleName: {
+							{
+								Key:   ldapConfigKeyNginxKey1.Key,
+								Value: (*config.Value)(&val3),
 							},
-							SensitiveConfig: domain.SensitiveDoguConfig{},
+							{
+								Key:    ldapConfigKeyNginxKey2.Key,
+								Absent: true,
+							},
 						},
 					},
 				},
 			},
-			Status: domain.StatusPhaseValidated,
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"nginx-static": {Name: nginxStaticQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
+			"ldap": {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -569,16 +479,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
 		doguConfigEntries, entryErr := config.MapToEntries(map[string]any{
-			"nginxKey1": "val1",
-			"nginxKey2": "val2",
+			"ldapKey1": val1,
+			"ldapKey2": val2,
 		})
 		require.NoError(t, entryErr)
 		doguConfigRepoMock.EXPECT().
 			GetAllExisting(testCtx, []cescommons.SimpleName{
-				nginxStatic,
+				ldap,
 			}).
 			Return(map[cescommons.SimpleName]config.DoguConfig{
-				nginxStatic: config.CreateDoguConfig(nginxStatic, doguConfigEntries),
+				ldap: config.CreateDoguConfig(ldap, doguConfigEntries),
 			}, nil)
 
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
@@ -591,23 +501,23 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
 
 		expectedConfigDiff := map[cescommons.SimpleName]domain.DoguConfigDiffs{
-			nginxStatic: {
+			ldap: {
 				domain.DoguConfigEntryDiff{
-					Key:          nginxStaticConfigKeyNginxKey1,
-					Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
-					Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
+					Key:          ldapConfigKeyNginxKey1,
+					Actual:       domain.DoguConfigValueState{Value: &val1, Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: &val3, Exists: true},
 					NeededAction: domain.ConfigActionSet,
 				},
 				domain.DoguConfigEntryDiff{
-					Key:          nginxStaticConfigKeyNginxKey2,
-					Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
-					Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
+					Key:          ldapConfigKeyNginxKey2,
+					Actual:       domain.DoguConfigValueState{Value: &val2, Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: nil, Exists: false},
 					NeededAction: domain.ConfigActionRemove,
 				},
 			},
@@ -617,37 +527,37 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for sensitive dogu config diff", func(t *testing.T) {
 		// given
 		blueprint := &domain.BlueprintSpec{
-			Id: "testBlueprint1",
+			Id:         "testBlueprint1",
+			Conditions: []domain.Condition{},
 			EffectiveBlueprint: domain.EffectiveBlueprint{
 				Config: domain.Config{
-					Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
-						nginxStatic: {
-							DoguName: nginxStatic,
-							SensitiveConfig: domain.SensitiveDoguConfig{
-								Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-									nginxStaticSensitiveConfigKeyNginxKey1: {
-										SecretName: "nginx-conf",
-										SecretKey:  "nginxKey1",
-									}, //"nginxVal1"
-								},
-								Absent: []common.SensitiveDoguConfigKey{
-									nginxStaticSensitiveConfigKeyNginxKey2,
-								},
+					Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
+						ldap: {
+							{
+								Key:       ldapSensitiveConfigKeyNginxKey1.Key,
+								Sensitive: true,
+								SecretRef: &domain.SensitiveValueRef{
+									SecretName: "ldap-conf",
+									SecretKey:  "ldapKey1",
+								}, // val3
+							},
+							{
+								Key:       ldapSensitiveConfigKeyNginxKey2.Key,
+								Sensitive: true,
+								Absent:    true,
 							},
 						},
 					},
 				},
 			},
-			Status: domain.StatusPhaseValidated,
 		}
 
 		blueprintRepoMock := newMockBlueprintSpecRepository(t)
-		blueprintRepoMock.EXPECT().GetById(testCtx, "testBlueprint1").Return(blueprint, nil)
 		blueprintRepoMock.EXPECT().Update(testCtx, blueprint).Return(nil)
 
 		doguInstallRepoMock := newMockDoguInstallationRepository(t)
 		installedDogus := map[cescommons.SimpleName]*ecosystem.DoguInstallation{
-			"nginx-static": {Name: nginxStaticQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
+			"ldap": {Name: ldapQualifiedDoguName, Version: mustParseVersion(t, "1.8.6")},
 		}
 		doguInstallRepoMock.EXPECT().GetAll(testCtx).Return(installedDogus, nil)
 		componentInstallRepoMock := newMockComponentInstallationRepository(t)
@@ -663,47 +573,47 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 		doguConfigEntries, entryErr := config.MapToEntries(map[string]any{
-			"nginxKey1": "val1",
-			"nginxKey2": "val2",
+			"ldapKey1": val1,
+			"ldapKey2": val2,
 		})
 		require.NoError(t, entryErr)
 		sensitiveDoguConfigRepoMock.EXPECT().
 			GetAllExisting(testCtx, []cescommons.SimpleName{
-				nginxStatic,
+				ldap,
 			}).
 			Return(map[cescommons.SimpleName]config.DoguConfig{
-				nginxStatic: config.CreateDoguConfig(nginxStatic, doguConfigEntries),
+				ldap: config.CreateDoguConfig(ldap, doguConfigEntries),
 			}, nil)
 		configRefReaderMock := newMockSensitiveConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(
 				testCtx,
-				blueprint.EffectiveBlueprint.Config.Dogus[nginxStatic].SensitiveConfig.Present,
+				blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
 			).
 			Return(map[common.DoguConfigKey]config.Value{
-				nginxStaticConfigKeyNginxKey1: "nginxVal1",
+				ldapConfigKeyNginxKey1: config.Value(val3),
 			}, nil)
 
 		sut := NewStateDiffUseCase(blueprintRepoMock, doguInstallRepoMock, componentInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, configRefReaderMock)
 
 		// when
-		err := sut.DetermineStateDiff(testCtx, "testBlueprint1")
+		err := sut.DetermineStateDiff(testCtx, blueprint)
 
 		// then
 		require.NoError(t, err)
 
 		expectedConfigDiff := map[cescommons.SimpleName]domain.DoguConfigDiffs{
-			nginxStatic: {
+			ldap: {
 				{
-					Key:          nginxStaticSensitiveConfigKeyNginxKey1,
-					Actual:       domain.DoguConfigValueState{Value: "val1", Exists: true},
-					Expected:     domain.DoguConfigValueState{Value: "nginxVal1", Exists: true},
+					Key:          ldapSensitiveConfigKeyNginxKey1,
+					Actual:       domain.DoguConfigValueState{Value: &val1, Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: &val3, Exists: true},
 					NeededAction: domain.ConfigActionSet,
 				},
 				{
-					Key:          nginxStaticSensitiveConfigKeyNginxKey2,
-					Actual:       domain.DoguConfigValueState{Value: "val2", Exists: true},
-					Expected:     domain.DoguConfigValueState{Value: "", Exists: false},
+					Key:          ldapSensitiveConfigKeyNginxKey2,
+					Actual:       domain.DoguConfigValueState{Value: &val2, Exists: true},
+					Expected:     domain.DoguConfigValueState{Value: nil, Exists: false},
 					NeededAction: domain.ConfigActionRemove,
 				},
 			},
@@ -718,40 +628,48 @@ func mustParseVersion(t *testing.T, raw string) core.Version {
 	return version
 }
 
+func mustParseVersionToPtr(t *testing.T, raw string) *core.Version {
+	version := mustParseVersion(t, raw)
+	return &version
+}
+
 func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 	t.Run("all ok", func(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
 			Config: domain.Config{
-				Global: domain.GlobalConfig{
-					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-						"globalKey1": "globalValue",
+				Global: domain.GlobalConfigEntries{
+					{
+						Key:   "globalKey1",
+						Value: (*config.Value)(&val1),
 					},
-					Absent: []common.GlobalConfigKey{
-						"globalKey2",
+					{
+						Key:    "globalKey2",
+						Absent: true,
 					},
 				},
-				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
-					nginxStaticQualifiedDoguName.SimpleName: {
-						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: domain.DoguConfig{
-							Present: map[common.DoguConfigKey]common.DoguConfigValue{
-								nginxStaticConfigKeyNginxKey1: "nginxVal1",
-							},
-							Absent: []common.DoguConfigKey{
-								nginxStaticConfigKeyNginxKey2,
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
+					ldapQualifiedDoguName.SimpleName: {
+						{
+							Key:   ldapConfigKeyNginxKey1.Key,
+							Value: (*config.Value)(&val1),
+						},
+						{
+							Key:    ldapConfigKeyNginxKey2.Key,
+							Absent: true,
+						},
+						{
+							Key:       ldapSensitiveConfigKeyNginxKey1.Key,
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "nginx-conf",
+								SecretKey:  "nginxKey1",
 							},
 						},
-						SensitiveConfig: domain.SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-								nginxStaticSensitiveConfigKeyNginxKey1: {
-									SecretName: "nginx-conf",
-									SecretKey:  "nginxKey1",
-								}, //"nginxVal1"
-							},
-							Absent: []common.SensitiveDoguConfigKey{
-								nginxStaticSensitiveConfigKeyNginxKey2,
-							},
+						{
+							Key:       ldapSensitiveConfigKeyNginxKey2.Key,
+							Sensitive: true,
+							Absent:    true,
 						},
 					},
 				},
@@ -774,13 +692,13 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 			Return(map[cescommons.SimpleName]config.DoguConfig{}, nil)
 		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 
-		nginxStaticConfig := config.CreateDoguConfig(nginxStatic, map[config.Key]config.Value{
-			"nginxKey1": "val1",
+		ldapConfig := config.CreateDoguConfig(ldap, map[config.Key]config.Value{
+			"ldapKey1": "val1",
 		})
 		sensitiveDoguConfigRepoMock.EXPECT().
 			GetAllExisting(testCtx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig()).
 			Return(map[cescommons.SimpleName]config.DoguConfig{
-				nginxStatic: nginxStaticConfig,
+				ldap: ldapConfig,
 			}, nil)
 		configRefReaderMock := newMockSensitiveConfigRefReader(t)
 
@@ -796,7 +714,7 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 			GlobalConfig: globalConfig,
 			ConfigByDogu: map[cescommons.SimpleName]config.DoguConfig{},
 			SensitiveConfigByDogu: map[cescommons.SimpleName]config.DoguConfig{
-				nginxStatic: nginxStaticConfig,
+				ldap: ldapConfig,
 			},
 		}, ecosystemState)
 	})
@@ -804,35 +722,38 @@ func TestStateDiffUseCase_collectEcosystemState(t *testing.T) {
 		// given
 		effectiveBlueprint := domain.EffectiveBlueprint{
 			Config: domain.Config{
-				Global: domain.GlobalConfig{
-					Present: map[common.GlobalConfigKey]common.GlobalConfigValue{
-						"globalKey1": "globalValue",
+				Global: domain.GlobalConfigEntries{
+					{
+						Key:   "globalKey1",
+						Value: (*config.Value)(&val1),
 					},
-					Absent: []common.GlobalConfigKey{
-						"globalKey2",
+					{
+						Key:    "globalKey2",
+						Absent: true,
 					},
 				},
-				Dogus: map[cescommons.SimpleName]domain.CombinedDoguConfig{
-					nginxStaticQualifiedDoguName.SimpleName: {
-						DoguName: nginxStaticQualifiedDoguName.SimpleName,
-						Config: domain.DoguConfig{
-							Present: map[common.DoguConfigKey]common.DoguConfigValue{
-								nginxStaticConfigKeyNginxKey1: "nginxVal1",
-							},
-							Absent: []common.DoguConfigKey{
-								nginxStaticConfigKeyNginxKey2,
+				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
+					ldapQualifiedDoguName.SimpleName: {
+						{
+							Key:   ldapConfigKeyNginxKey1.Key,
+							Value: (*config.Value)(&val1),
+						},
+						{
+							Key:    ldapConfigKeyNginxKey2.Key,
+							Absent: true,
+						},
+						{
+							Key:       ldapSensitiveConfigKeyNginxKey1.Key,
+							Sensitive: true,
+							SecretRef: &domain.SensitiveValueRef{
+								SecretName: "nginx-conf",
+								SecretKey:  "nginxKey1",
 							},
 						},
-						SensitiveConfig: domain.SensitiveDoguConfig{
-							Present: map[common.SensitiveDoguConfigKey]domain.SensitiveValueRef{
-								nginxStaticSensitiveConfigKeyNginxKey1: {
-									SecretName: "nginx-conf",
-									SecretKey:  "nginxKey1",
-								}, //"nginxVal1"
-							},
-							Absent: []common.SensitiveDoguConfigKey{
-								nginxStaticSensitiveConfigKeyNginxKey2,
-							},
+						{
+							Key:       ldapSensitiveConfigKeyNginxKey2.Key,
+							Sensitive: true,
+							Absent:    true,
 						},
 					},
 				},
