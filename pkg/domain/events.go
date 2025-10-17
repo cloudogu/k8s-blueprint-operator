@@ -44,36 +44,6 @@ func (e MissingConfigReferencesEvent) Message() string {
 	return e.err.Error()
 }
 
-// StateDiffComponentDeterminedEvent provides event information over detected changes regarding components.
-type StateDiffComponentDeterminedEvent struct {
-	componentDiffs []ComponentDiff
-}
-
-func newStateDiffComponentEvent(componentDiffs ComponentDiffs) StateDiffComponentDeterminedEvent {
-	return StateDiffComponentDeterminedEvent{
-		componentDiffs: componentDiffs,
-	}
-}
-
-// Name contains the StateDiffComponentDeterminedEvent display name.
-func (s StateDiffComponentDeterminedEvent) Name() string {
-	return "StateDiffComponentDetermined"
-}
-
-// Message contains the StateDiffComponentDeterminedEvent's statistics message.
-func (s StateDiffComponentDeterminedEvent) Message() string {
-	var amountActions = map[Action]int{}
-	for _, diff := range s.componentDiffs {
-		for _, action := range diff.NeededActions {
-			amountActions[action]++
-		}
-	}
-
-	message, amount := getActionAmountMessage(amountActions)
-
-	return fmt.Sprintf("component state diff determined: %d actions (%s)", amount, message)
-}
-
 func getActionAmountMessage(amountActions map[Action]int) (message string, totalAmount int) {
 	var messages []string
 	for action, amount := range amountActions {
@@ -149,8 +119,7 @@ func (s StateDiffDeterminedEvent) generateConfigChangeCounter() string {
 }
 
 type EcosystemHealthyEvent struct {
-	doguHealthIgnored      bool
-	componentHealthIgnored bool
+	doguHealthIgnored bool
 }
 
 func (d EcosystemHealthyEvent) Name() string {
@@ -158,7 +127,7 @@ func (d EcosystemHealthyEvent) Name() string {
 }
 
 func (d EcosystemHealthyEvent) Message() string {
-	return fmt.Sprintf("dogu health ignored: %t; component health ignored: %t", d.doguHealthIgnored, d.componentHealthIgnored)
+	return fmt.Sprintf("dogu health ignored: %t", d.doguHealthIgnored)
 }
 
 type EcosystemUnhealthyEvent struct {
@@ -171,29 +140,6 @@ func (d EcosystemUnhealthyEvent) Name() string {
 
 func (d EcosystemUnhealthyEvent) Message() string {
 	return "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  " + d.HealthResult.String()
-}
-
-type ComponentsAppliedEvent struct {
-	Diffs ComponentDiffs
-}
-
-func (e ComponentsAppliedEvent) Name() string {
-	return "ComponentsApplied"
-}
-
-func (e ComponentsAppliedEvent) Message() string {
-	var buffer bytes.Buffer
-	buffer.WriteString("components applied: ")
-	var details []string
-	for _, diff := range e.Diffs {
-		actionsAsStrings := util.Map(diff.NeededActions, func(action Action) string {
-			return string(action)
-		})
-		actions := strings.Join(actionsAsStrings, ", ")
-		details = append(details, fmt.Sprintf("%q: [%v]", diff.Name, actions))
-	}
-	buffer.WriteString(strings.Join(details, ", "))
-	return buffer.String()
 }
 
 type DogusAppliedEvent struct {
@@ -297,24 +243,4 @@ func (e EcosystemConfigAppliedEvent) Name() string {
 
 func (e EcosystemConfigAppliedEvent) Message() string {
 	return "ecosystem config applied"
-}
-
-type AwaitSelfUpgradeEvent struct{}
-
-func (e AwaitSelfUpgradeEvent) Name() string {
-	return "AwaitSelfUpgrade"
-}
-
-func (e AwaitSelfUpgradeEvent) Message() string {
-	return "the operator awaits an upgrade for itself before other changes will be applied"
-}
-
-type SelfUpgradeCompletedEvent struct{}
-
-func (e SelfUpgradeCompletedEvent) Name() string {
-	return "SelfUpgradeCompleted"
-}
-
-func (e SelfUpgradeCompletedEvent) Message() string {
-	return "if a self upgrade was necessary, it was successful"
 }

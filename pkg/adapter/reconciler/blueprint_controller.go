@@ -66,7 +66,6 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 	var notFoundError *domainservice.NotFoundError
 	var invalidBlueprintError *domain.InvalidBlueprintError
 	var healthError *domain.UnhealthyEcosystemError
-	var awaitSelfUpgradeError *domain.AwaitSelfUpgradeError
 	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
 	var multipleBlueprintsError *domain.MultipleBlueprintsError
 	var dogusNotUpToDateError *domain.DogusNotUpToDateError
@@ -93,9 +92,6 @@ func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
 		// really normal case
 		errLogger.Info("Ecosystem is unhealthy. Retry later")
 		return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
-	case errors.As(err, &awaitSelfUpgradeError):
-		errLogger.Info("wait for self upgrade")
-		return ctrl.Result{RequeueAfter: 5 * time.Second}, nil
 	case errors.As(err, &stateDiffNotEmptyError):
 		errLogger.Info("requeue until state diff is empty")
 		// fast requeue here since state diff has to be determined again

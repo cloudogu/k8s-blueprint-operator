@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/google/go-cmp/cmp"
@@ -16,21 +15,12 @@ import (
 
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 )
 
 var (
 	version3211, _ = core.ParseVersion("3.2.1-1")
 	version3212, _ = core.ParseVersion("3.2.1-2")
 	version1233, _ = core.ParseVersion("1.2.3-3")
-)
-
-var (
-	compVersion1233       = semver.MustParse("1.2.3-3")
-	compVersion3211       = semver.MustParse("3.2.1-1")
-	compVersion3212       = semver.MustParse("3.2.1-2")
-	compVersion1233String = semver.MustParse("1.2.3-3").String()
-	compVersion3212String = semver.MustParse("3.2.1-2").String()
 )
 
 var (
@@ -57,33 +47,7 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 			{Name: "premium/dogu3", Version: &version3212.Raw, Absent: &falseVar},
 		}
 		expectedManifest := crd.BlueprintManifest{
-			Dogus:      convertedDogus,
-			Components: []crd.Component{},
-		}
-		assert.Empty(t, cmp.Diff(expectedManifest, blueprintV2))
-	})
-
-	t.Run("convert components", func(t *testing.T) {
-		components := []domain.Component{
-			{Name: common.QualifiedComponentName{SimpleName: "component1", Namespace: "k8s"}, Version: nil, Absent: true},
-			{Name: common.QualifiedComponentName{SimpleName: "component3", Namespace: "k8s-testing"}, Version: compVersion3212, Absent: false},
-		}
-		blueprint := domain.EffectiveBlueprint{
-			Components: components,
-		}
-
-		//when
-		blueprintV2 := ConvertToBlueprintDTO(blueprint)
-
-		//then
-		convertedComponents := []crd.Component{
-			{Name: "k8s/component1", Absent: &trueVar},
-			{Name: "k8s-testing/component3", Version: &compVersion3212String, Absent: &falseVar},
-		}
-
-		expectedManifest := crd.BlueprintManifest{
-			Dogus:      []crd.Dogu{},
-			Components: convertedComponents,
+			Dogus: convertedDogus,
 		}
 		assert.Empty(t, cmp.Diff(expectedManifest, blueprintV2))
 	})
@@ -119,8 +83,7 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 		blueprintV2 := ConvertToBlueprintDTO(blueprint)
 
 		expectedManifest := crd.BlueprintManifest{
-			Dogus:      []crd.Dogu{},
-			Components: []crd.Component{},
+			Dogus: []crd.Dogu{},
 			Config: &crd.Config{
 				Dogus: map[string][]crd.ConfigEntry{
 					"my-dogu": {
@@ -178,17 +141,9 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 			},
 		}
 
-		convertedComponents := []crd.Component{
-			{Name: "k8s/component1", Version: &version3211.Raw, Absent: &trueVar},
-			{Name: "k8s/component2", Absent: &trueVar},
-			{Name: "k8s-testing/component3", Version: &version3212.Raw, Absent: &falseVar},
-			{Name: "k8s-testing/component4", Version: &version1233.Raw, Absent: &falseVar},
-		}
-
 		value42 := "42"
 		dto := crd.BlueprintManifest{
-			Dogus:      convertedDogus,
-			Components: convertedComponents,
+			Dogus: convertedDogus,
 			Config: &crd.Config{
 				Dogus: map[string][]crd.ConfigEntry{
 					"my-dogu": {
@@ -237,15 +192,8 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 			},
 		}
 
-		components := []domain.Component{
-			{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component1"}, Version: compVersion3211, Absent: true},
-			{Name: common.QualifiedComponentName{Namespace: "k8s", SimpleName: "component2"}, Absent: true},
-			{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component3"}, Version: compVersion3212, Absent: false},
-			{Name: common.QualifiedComponentName{Namespace: "k8s-testing", SimpleName: "component4"}, Version: compVersion1233},
-		}
 		expected := domain.EffectiveBlueprint{
-			Dogus:      dogus,
-			Components: components,
+			Dogus: dogus,
 			Config: domain.Config{
 				Dogus: map[cescommons.SimpleName]domain.DoguConfigEntries{
 					"my-dogu": {
@@ -290,23 +238,6 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 		dto := crd.BlueprintManifest{
 			Dogus: []crd.Dogu{
 				{Name: "dogu1", Version: &version3211.Raw}, // name contains no "/"
-			},
-		}
-
-		//when
-		blueprint, err := ConvertToEffectiveBlueprintDomain(&dto)
-
-		//then
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "cannot deserialize effective blueprint")
-		assert.Equal(t, domain.EffectiveBlueprint{}, blueprint)
-	})
-
-	t.Run("when convert component error return empty effective blueprint and error", func(t *testing.T) {
-		//given
-		dto := crd.BlueprintManifest{
-			Components: []crd.Component{
-				{Name: "k8s/k8s-dogu-operator", Version: &wrongVersion}, // name contains no "/"
 			},
 		}
 
@@ -366,33 +297,6 @@ func TestConvertToBlueprintDomain(t *testing.T) {
 			},
 		}, converted)
 	})
-
-	t.Run("convert component", func(t *testing.T) {
-		given := crd.BlueprintManifest{
-			Components: []crd.Component{
-				{
-					Name:    "k8s/loki",
-					Version: &compVersion1233String,
-				},
-			},
-		}
-		converted, err := ConvertToBlueprintDomain(given)
-
-		require.NoError(t, err)
-		assert.Equal(t, domain.Blueprint{
-			Components: []domain.Component{
-				{
-					Name: common.QualifiedComponentName{
-						Namespace:  "k8s",
-						SimpleName: "loki",
-					},
-					Version: compVersion1233,
-					Absent:  false,
-				},
-			},
-		}, converted)
-	})
-
 }
 
 func TestConvertToBlueprintMaskDomain(t *testing.T) {

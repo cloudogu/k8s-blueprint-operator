@@ -14,32 +14,22 @@ import (
 const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced sensitive config"
 
 type StateDiffUseCase struct {
-	blueprintSpecRepo         blueprintSpecRepository
-	doguInstallationRepo      doguInstallationRepository
-	componentInstallationRepo componentInstallationRepository
-	globalConfigRepo          globalConfigRepository
-	doguConfigRepo            doguConfigRepository
-	sensitiveDoguConfigRepo   sensitiveDoguConfigRepository
-	sensitiveConfigRefReader  sensitiveConfigRefReader
+	blueprintSpecRepo        blueprintSpecRepository
+	doguInstallationRepo     doguInstallationRepository
+	globalConfigRepo         globalConfigRepository
+	doguConfigRepo           doguConfigRepository
+	sensitiveDoguConfigRepo  sensitiveDoguConfigRepository
+	sensitiveConfigRefReader sensitiveConfigRefReader
 }
 
-func NewStateDiffUseCase(
-	blueprintSpecRepo domainservice.BlueprintSpecRepository,
-	doguInstallationRepo domainservice.DoguInstallationRepository,
-	componentInstallationRepo domainservice.ComponentInstallationRepository,
-	globalConfigRepo domainservice.GlobalConfigRepository,
-	doguConfigRepo domainservice.DoguConfigRepository,
-	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
-	sensitiveConfigRefReader domainservice.SensitiveConfigRefReader,
-) *StateDiffUseCase {
+func NewStateDiffUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository, doguInstallationRepo domainservice.DoguInstallationRepository, globalConfigRepo domainservice.GlobalConfigRepository, doguConfigRepo domainservice.DoguConfigRepository, sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository, sensitiveConfigRefReader domainservice.SensitiveConfigRefReader) *StateDiffUseCase {
 	return &StateDiffUseCase{
-		blueprintSpecRepo:         blueprintSpecRepo,
-		doguInstallationRepo:      doguInstallationRepo,
-		componentInstallationRepo: componentInstallationRepo,
-		globalConfigRepo:          globalConfigRepo,
-		doguConfigRepo:            doguConfigRepo,
-		sensitiveDoguConfigRepo:   sensitiveDoguConfigRepo,
-		sensitiveConfigRefReader:  sensitiveConfigRefReader,
+		blueprintSpecRepo:        blueprintSpecRepo,
+		doguInstallationRepo:     doguInstallationRepo,
+		globalConfigRepo:         globalConfigRepo,
+		doguConfigRepo:           doguConfigRepo,
+		sensitiveDoguConfigRepo:  sensitiveDoguConfigRepo,
+		sensitiveConfigRefReader: sensitiveConfigRefReader,
 	}
 }
 
@@ -97,11 +87,9 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.collectEcosystemState")
 
 	// TODO: collect ecosystem state in parallel (like for ecosystem health) if we have time
-	// load current dogus and components
+	// load current dogus
 	logger.V(2).Info("collect installed dogus")
 	installedDogus, doguErr := useCase.doguInstallationRepo.GetAll(ctx)
-	logger.V(2).Info("collect installed components")
-	installedComponents, componentErr := useCase.componentInstallationRepo.GetAll(ctx)
 	// load current config
 	logger.V(2).Info("collect needed global config")
 	globalConfig, globalConfigErr := useCase.globalConfigRepo.Get(ctx)
@@ -112,14 +100,13 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 	logger.V(2).Info("collect needed sensitive dogu config")
 	sensitiveConfigByDogu, sensitiveConfigErr := useCase.sensitiveDoguConfigRepo.GetAllExisting(ctx, effectiveBlueprint.Config.GetDogusWithChangedSensitiveConfig())
 
-	joinedError := errors.Join(doguErr, componentErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
+	joinedError := errors.Join(doguErr, globalConfigErr, doguConfigErr, sensitiveConfigErr)
 	if joinedError != nil {
 		return ecosystem.EcosystemState{}, fmt.Errorf("could not collect ecosystem state: %w", joinedError)
 	}
 
 	return ecosystem.EcosystemState{
 		InstalledDogus:        installedDogus,
-		InstalledComponents:   installedComponents,
 		GlobalConfig:          globalConfig,
 		ConfigByDogu:          configByDogu,
 		SensitiveConfigByDogu: sensitiveConfigByDogu,

@@ -38,35 +38,6 @@ type DoguInstallationRepository interface {
 	Delete(ctx context.Context, doguName cescommons.SimpleName) error
 }
 
-type ComponentInstallationRepository interface {
-	// GetByName loads an installed component from the ecosystem and returns
-	//  - the ecosystem.ComponentInstallation or
-	//  - a NotFoundError if the component is not installed or
-	//  - an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
-	// GetAll returns
-	//  - the installation info of all installed components or
-	//  - an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
-	// Delete deletes the component by name from the ecosystem.
-	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName common.SimpleComponentName) error
-	// Create creates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if there is an error.
-	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
-	// Update updates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if anything went wrong.
-	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
-}
-
-type RequiredComponentsProvider interface {
-	GetRequiredComponents(ctx context.Context) ([]ecosystem.RequiredComponent, error)
-}
-
-type HealthWaitConfigProvider interface {
-	GetWaitConfig(ctx context.Context) (ecosystem.WaitConfig, error)
-}
-
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or
@@ -74,10 +45,10 @@ type BlueprintSpecRepository interface {
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
 
-	// CheckSingleton checks if there is indeed only a single Blueprint-resource in the namespace of the repository or
-	// a domain.MultipleBlueprintsError if there are at least two Blueprint-resources or
-	// an InternalError if there is any other error.
-	CheckSingleton(ctx context.Context) error
+	// Count counts the Blueprint-resources in the namespace of the repository up to the given limit and
+	//  - returns the amount of blueprints or
+	//  - returns an InternalError if there is any error, e.g. a connection error.
+	Count(ctx context.Context, limit int) (int, error)
 
 	// Update updates a given BlueprintSpec.
 	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or

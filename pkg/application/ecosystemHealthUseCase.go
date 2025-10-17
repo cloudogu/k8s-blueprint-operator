@@ -11,20 +11,14 @@ import (
 )
 
 type EcosystemHealthUseCase struct {
-	doguUseCase      doguInstallationUseCase
-	componentUseCase componentInstallationUseCase
-	blueprintRepo    blueprintSpecRepository
+	doguUseCase   doguInstallationUseCase
+	blueprintRepo blueprintSpecRepository
 }
 
-func NewEcosystemHealthUseCase(
-	doguUseCase doguInstallationUseCase,
-	componentUseCase componentInstallationUseCase,
-	blueprintRepo blueprintSpecRepository,
-) *EcosystemHealthUseCase {
+func NewEcosystemHealthUseCase(doguUseCase doguInstallationUseCase, blueprintRepo blueprintSpecRepository) *EcosystemHealthUseCase {
 	return &EcosystemHealthUseCase{
-		doguUseCase:      doguUseCase,
-		componentUseCase: componentUseCase,
-		blueprintRepo:    blueprintRepo,
+		doguUseCase:   doguUseCase,
+		blueprintRepo: blueprintRepo,
 	}
 }
 
@@ -40,7 +34,6 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(
 	health, determineHealthError := useCase.getEcosystemHealth(
 		ctx,
 		blueprint.Config.IgnoreDoguHealth,
-		blueprint.Config.IgnoreComponentHealth,
 	)
 	healthChanged := blueprint.HandleHealthResult(health, determineHealthError)
 	if healthChanged {
@@ -65,7 +58,6 @@ func (useCase *EcosystemHealthUseCase) CheckEcosystemHealth(
 func (useCase *EcosystemHealthUseCase) getEcosystemHealth(
 	ctx context.Context,
 	ignoreDoguHealth bool,
-	ignoreComponentHealth bool,
 ) (ecosystem.HealthResult, error) {
 	logger := log.FromContext(ctx).WithName("EcosystemHealthUseCase.getEcosystemHealth")
 	logger.V(1).Info("check ecosystem health...")
@@ -75,14 +67,7 @@ func (useCase *EcosystemHealthUseCase) getEcosystemHealth(
 		doguHealth, doguHealthErr = useCase.doguUseCase.CheckDoguHealth(ctx)
 	}
 
-	var componentHealth ecosystem.ComponentHealthResult
-	var componentHealthErr error
-	if !ignoreComponentHealth {
-		componentHealth, componentHealthErr = useCase.componentUseCase.CheckComponentHealth(ctx)
-	}
-
 	return ecosystem.HealthResult{
-		DoguHealth:      doguHealth,
-		ComponentHealth: componentHealth,
-	}, errors.Join(doguHealthErr, componentHealthErr)
+		DoguHealth: doguHealth,
+	}, doguHealthErr
 }

@@ -49,8 +49,6 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 	applyUseCases := NewBlueprintApplyUseCase(
 		mocks.completeBlueprint,
 		mocks.ecosystemConfig,
-		mocks.selfUpgrade,
-		mocks.applyComponents,
 		mocks.applyDogus,
 		mocks.ecosystemHealth,
 		mocks.dogusUpToDate,
@@ -74,8 +72,6 @@ type allMocks struct {
 	stateDiff          *mockStateDiffUseCase
 	completeBlueprint  *mockCompleteBlueprintUseCase
 	ecosystemConfig    *mockEcosystemConfigUseCase
-	selfUpgrade        *mockSelfUpgradeUseCase
-	applyComponents    *mockApplyComponentsUseCase
 	applyDogus         *mockApplyDogusUseCase
 	ecosystemHealth    *mockEcosystemHealthUseCase
 	dogusUpToDate      *mockDogusUpToDateUseCase
@@ -90,8 +86,6 @@ func createAllMocks(t *testing.T) *allMocks {
 		stateDiff:          newMockStateDiffUseCase(t),
 		completeBlueprint:  newMockCompleteBlueprintUseCase(t),
 		ecosystemConfig:    newMockEcosystemConfigUseCase(t),
-		selfUpgrade:        newMockSelfUpgradeUseCase(t),
-		applyComponents:    newMockApplyComponentsUseCase(t),
 		applyDogus:         newMockApplyDogusUseCase(t),
 		ecosystemHealth:    newMockEcosystemHealthUseCase(t),
 		dogusUpToDate:      newMockDogusUpToDateUseCase(t),
@@ -107,8 +101,6 @@ func assertPreparationUseCases(t *testing.T, useCases BlueprintPreparationUseCas
 
 func assertApplyUseCases(t *testing.T, useCases BlueprintApplyUseCase, mocks *allMocks) {
 	assert.Equal(t, mocks.ecosystemConfig, useCases.ecosystemConfigUseCase)
-	assert.Equal(t, mocks.selfUpgrade, useCases.selfUpgradeUseCase)
-	assert.Equal(t, mocks.applyComponents, useCases.applyComponentUseCase)
 	assert.Equal(t, mocks.applyDogus, useCases.applyDogusUseCase)
 	assert.Equal(t, mocks.completeBlueprint, useCases.completeUseCase)
 	assert.Equal(t, mocks.ecosystemHealth, useCases.healthUseCase)
@@ -273,50 +265,11 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_ApplyPhaseErrors(t *testi
 		wantErrTest func(*testing.T, error)
 	}{
 		{
-			name: "should return error on error handle self upgrade",
-			setupMocks: func(mocks *allMocks) {
-				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-			},
-			wantErrTest: func(t *testing.T, err error) {
-				assert.Error(t, err)
-			},
-		},
-		{
 			name: "should return error on error apply config",
 			setupMocks: func(mocks *allMocks) {
 				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
 				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(assert.AnError)
-			},
-			wantErrTest: func(t *testing.T, err error) {
-				assert.Error(t, err)
-			},
-		},
-		{
-			name: "should return error on error apply components",
-			setupMocks: func(mocks *allMocks) {
-				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
-				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-				mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, assert.AnError)
-			},
-			wantErrTest: func(t *testing.T, err error) {
-				assert.Error(t, err)
-			},
-		},
-		{
-			name: "should return error on error check health after component apply",
-			setupMocks: func(mocks *allMocks) {
-				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
-				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
-				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-				mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(true, nil)
-				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 			},
 			wantErrTest: func(t *testing.T, err error) {
 				assert.Error(t, err)
@@ -327,9 +280,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_ApplyPhaseErrors(t *testi
 			setupMocks: func(mocks *allMocks) {
 				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
 				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-				mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, assert.AnError)
 			},
 			wantErrTest: func(t *testing.T, err error) {
@@ -341,9 +292,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_ApplyPhaseErrors(t *testi
 			setupMocks: func(mocks *allMocks) {
 				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
 				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-				mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(true, nil)
 				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, assert.AnError)
 			},
@@ -356,9 +305,7 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_ApplyPhaseErrors(t *testi
 			setupMocks: func(mocks *allMocks) {
 				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
 				setupSuccessfulPreparationPhase(mocks, testBlueprintSpec)
-				mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
 				mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, testBlueprintSpec).Return(nil)
-				mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, testBlueprintSpec).Return(false, nil)
 				mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, testBlueprintSpec).Return(false, nil)
 				mocks.dogusUpToDate.EXPECT().CheckDogus(mock.Anything, testBlueprintSpec).Return(assert.AnError)
 			},
@@ -448,8 +395,6 @@ func createUseCase(mocks *allMocks) *BlueprintSpecChangeUseCase {
 	applyUseCases := BlueprintApplyUseCase{
 		completeUseCase:        mocks.completeBlueprint,
 		ecosystemConfigUseCase: mocks.ecosystemConfig,
-		selfUpgradeUseCase:     mocks.selfUpgrade,
-		applyComponentUseCase:  mocks.applyComponents,
 		applyDogusUseCase:      mocks.applyDogus,
 		healthUseCase:          mocks.ecosystemHealth,
 		dogusUpToDateUseCase:   mocks.dogusUpToDate,
@@ -472,9 +417,7 @@ func setupSuccessfulPreparationPhase(mocks *allMocks, spec *domain.BlueprintSpec
 }
 
 func setupSuccessfulApplyPhaseExceptComplete(mocks *allMocks, spec *domain.BlueprintSpec) {
-	mocks.selfUpgrade.EXPECT().HandleSelfUpgrade(mock.Anything, mock.Anything).Return(nil)
 	mocks.ecosystemConfig.EXPECT().ApplyConfig(mock.Anything, spec).Return(nil)
-	mocks.applyComponents.EXPECT().ApplyComponents(mock.Anything, spec).Return(false, nil)
 	mocks.applyDogus.EXPECT().ApplyDogus(mock.Anything, spec).Return(false, nil)
 	mocks.dogusUpToDate.EXPECT().CheckDogus(mock.Anything, spec).Return(nil)
 	// Note: no completeBlueprint expectation - this allows the completion steps to be tested
@@ -484,7 +427,7 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 	t.Run("should succeed without error", func(t *testing.T) {
 		// given
 		mockRepo := newMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(nil)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(1, nil)
 		useCase := &BlueprintSpecChangeUseCase{
 			repo: mockRepo,
 		}
@@ -496,10 +439,10 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 		require.NoError(t, err)
 	})
 
-	t.Run("should return error on check error", func(t *testing.T) {
+	t.Run("should return error on repo error", func(t *testing.T) {
 		// given
 		mockRepo := newMockBlueprintSpecRepository(t)
-		mockRepo.EXPECT().CheckSingleton(t.Context()).Return(assert.AnError)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(0, assert.AnError)
 		useCase := &BlueprintSpecChangeUseCase{
 			repo: mockRepo,
 		}
@@ -511,5 +454,21 @@ func TestBlueprintSpecChangeUseCase_CheckForMultipleBlueprintResources(t *testin
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "check for multiple blueprints not successful")
+	})
+
+	t.Run("should return error on multiple blueprints", func(t *testing.T) {
+		// given
+		mockRepo := newMockBlueprintSpecRepository(t)
+		mockRepo.EXPECT().Count(t.Context(), 2).Return(2, nil)
+		useCase := &BlueprintSpecChangeUseCase{
+			repo: mockRepo,
+		}
+
+		//when
+		err := useCase.CheckForMultipleBlueprintResources(t.Context())
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "check for multiple blueprints not successful: more than one blueprint CR found")
 	})
 }

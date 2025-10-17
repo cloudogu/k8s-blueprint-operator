@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - remove dependency to k8s-service-discovery (maintenance-mode was the reason for this dependency)
 - [#121] *breaking* dogus will not be restarted by the blueprint operator anymore
     - this is now the responsibility of the dogu operator
+- [#121] *breaking* remove the ability to apply components (including self upgrade)
+  - Ecosystem-Core-Chart has now the resonsibility of components
+- [#121] *breaking* remove watching the health state of components in the ecosystem
 
 ## [v2.8.0] - 2025-09-15
 ### Changed

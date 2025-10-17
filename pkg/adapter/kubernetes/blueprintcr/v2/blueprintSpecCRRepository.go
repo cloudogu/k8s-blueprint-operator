@@ -57,7 +57,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		}
 	}
 
-	effectiveBlueprint, err := convertBlueprintStatus(blueprintCR)
+	effectiveBlueprint, err := serializerv2.ConvertBlueprintStatus(blueprintCR)
 	if err != nil {
 		return nil, err
 	}
@@ -74,78 +74,38 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		Conditions:         conditions,
 		Config: domain.BlueprintConfiguration{
 			IgnoreDoguHealth:         ptr.Deref(blueprintCR.Spec.IgnoreDoguHealth, false),
-			IgnoreComponentHealth:    ptr.Deref(blueprintCR.Spec.IgnoreComponentHealth, false),
 			AllowDoguNamespaceSwitch: ptr.Deref(blueprintCR.Spec.AllowDoguNamespaceSwitch, false),
 			Stopped:                  ptr.Deref(blueprintCR.Spec.Stopped, false),
 		},
 	}
 
-	err = repo.serializeBlueprintAndMask(blueprintSpec, blueprintCR, blueprintId)
+	err = serializerv2.SerializeBlueprintAndMask(blueprintSpec, blueprintCR)
 	if err != nil {
-		return nil, err
+		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
+		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, err)
 	}
 
 	setPersistenceContext(blueprintCR, blueprintSpec)
 	return blueprintSpec, nil
 }
 
-func (repo *blueprintSpecRepo) CheckSingleton(ctx context.Context) error {
-	// Ask for just 2 items: enough to detect "more than one"
-	limit := int64(2)
+func (repo *blueprintSpecRepo) Count(ctx context.Context, limit int) (int, error) {
+	limit64 := int64(limit)
 
-	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit})
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{Limit: limit64})
 	if err != nil {
-		return &domainservice.InternalError{
+		return 0, &domainservice.InternalError{
 			WrappedError: err,
 			Message:      "error while listing blueprint resources",
 		}
 	}
 
 	if list == nil {
-		return nil
+		return 0, nil
 	}
 
-	switch len(list.Items) {
-	case 0, 1:
-		return nil
-	default:
-		return &domain.MultipleBlueprintsError{Message: "more than one blueprint CR found"}
-	}
-}
-
-func (repo *blueprintSpecRepo) serializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *v2.Blueprint, blueprintId string) error {
-	blueprint, blueprintErr := serializerv2.ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
-	if blueprintErr != nil {
-		blueprintErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: blueprintErr}
-		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintErrorEvent.Name(), blueprintErrorEvent.Message())
-	}
-
-	blueprintMask, maskErr := serializerv2.ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
-	if maskErr != nil {
-		blueprintMaskErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: maskErr}
-		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, blueprintMaskErrorEvent.Name(), blueprintMaskErrorEvent.Message())
-	}
-
-	serializationErr := errors.Join(blueprintErr, maskErr)
-	if serializationErr != nil {
-		return fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, serializationErr)
-	}
-
-	blueprintSpec.Blueprint = blueprint
-	blueprintSpec.BlueprintMask = blueprintMask
-	return nil
-}
-
-func convertBlueprintStatus(blueprintCR *v2.Blueprint) (domain.EffectiveBlueprint, error) {
-	var effectiveBlueprint domain.EffectiveBlueprint
-	var err error
-	if blueprintCR.Status != nil {
-		effectiveBlueprint, err = serializerv2.ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
-		if err != nil {
-			return domain.EffectiveBlueprint{}, err
-		}
-	}
-	return effectiveBlueprint, nil
+	return len(list.Items), nil
 }
 
 // Update persists changes in the blueprint to the corresponding blueprint CR.

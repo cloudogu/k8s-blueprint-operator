@@ -12,27 +12,29 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
+const noDowngradesExplanationTextFmt = "downgrades are not allowed as the data model of the %s could have changed and " +
+	"doing rollbacks to older models is not supported. " +
+	"You can downgrade %s by restoring a backup. " +
+	"If you want an 'allow-downgrades' flag, issue a feature request"
+
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo  blueprintSpecRepository
-	doguRepo           doguInstallationRepository
-	waitConfigProvider healthWaitConfigProvider
-	doguConfigRepo     doguConfigRepository
-	globalConfigRepo   globalConfigRepository
+	blueprintSpecRepo blueprintSpecRepository
+	doguRepo          doguInstallationRepository
+	doguConfigRepo    doguConfigRepository
+	globalConfigRepo  globalConfigRepository
 }
 
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
-	waitConfigProvider domainservice.HealthWaitConfigProvider,
 	doguConfigRepo doguConfigRepository,
 	globalConfigRepo globalConfigRepository,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
-		blueprintSpecRepo:  blueprintSpecRepo,
-		doguRepo:           doguRepo,
-		waitConfigProvider: waitConfigProvider,
-		doguConfigRepo:     doguConfigRepo,
-		globalConfigRepo:   globalConfigRepo,
+		blueprintSpecRepo: blueprintSpecRepo,
+		doguRepo:          doguRepo,
+		doguConfigRepo:    doguConfigRepo,
+		globalConfigRepo:  globalConfigRepo,
 	}
 }
 

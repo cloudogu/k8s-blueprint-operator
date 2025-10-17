@@ -3,10 +3,15 @@ package domain
 import (
 	"testing"
 
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"k8s.io/apimachinery/pkg/api/resource"
+)
+
+var (
+	version123, _ = core.ParseVersion("1.2.3-4")
 )
 
 func Test_TargetDogu_validate_errorOnMissingVersionForPresentDogu(t *testing.T) {

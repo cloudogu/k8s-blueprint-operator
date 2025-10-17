@@ -8,19 +8,40 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
+func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *crd.Blueprint) error {
+	blueprint, blueprintErr := ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
+	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
+	serializationErr := errors.Join(blueprintErr, maskErr)
+	if serializationErr != nil {
+		return serializationErr
+	}
+
+	blueprintSpec.Blueprint = blueprint
+	blueprintSpec.BlueprintMask = blueprintMask
+	return nil
+}
+
+func ConvertBlueprintStatus(blueprintCR *crd.Blueprint) (domain.EffectiveBlueprint, error) {
+	var effectiveBlueprint domain.EffectiveBlueprint
+	var err error
+	if blueprintCR.Status != nil {
+		effectiveBlueprint, err = ConvertToEffectiveBlueprintDomain(blueprintCR.Status.EffectiveBlueprint)
+		if err != nil {
+			return domain.EffectiveBlueprint{}, err
+		}
+	}
+	return effectiveBlueprint, nil
+}
+
 func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) crd.BlueprintManifest {
 	return crd.BlueprintManifest{
-		Dogus:      ConvertToDoguDTOs(blueprint.Dogus),
-		Components: ConvertToComponentDTOs(blueprint.Components),
-		Config:     ConvertToConfigDTO(blueprint.Config),
+		Dogus:  ConvertToDoguDTOs(blueprint.Dogus),
+		Config: ConvertToConfigDTO(blueprint.Config),
 	}
 }
 
 func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint, error) {
-	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
-	convertedComponents, compErr := ConvertComponents(blueprint.Components)
-
-	err := errors.Join(doguErr, compErr)
+	convertedDogus, err := ConvertDogus(blueprint.Dogus)
 	if err != nil {
 		return domain.Blueprint{}, &domain.InvalidBlueprintError{
 			WrappedError: err,
@@ -29,9 +50,8 @@ func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint
 	}
 	configDomain := ConvertToConfigDomain(blueprint.Config)
 	return domain.Blueprint{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
-		Config:     configDomain,
+		Dogus:  convertedDogus,
+		Config: configDomain,
 	}, nil
 }
 
@@ -39,17 +59,13 @@ func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain
 	if blueprint == nil {
 		return domain.EffectiveBlueprint{}, nil
 	}
-	convertedDogus, doguErr := ConvertDogus(blueprint.Dogus)
-	convertedComponents, compErr := ConvertComponents(blueprint.Components)
-
-	err := errors.Join(doguErr, compErr)
+	convertedDogus, err := ConvertDogus(blueprint.Dogus)
 	if err != nil {
 		return domain.EffectiveBlueprint{}, fmt.Errorf("cannot deserialize effective blueprint: %w", err)
 	}
 	return domain.EffectiveBlueprint{
-		Dogus:      convertedDogus,
-		Components: convertedComponents,
-		Config:     ConvertToConfigDomain(blueprint.Config),
+		Dogus:  convertedDogus,
+		Config: ConvertToConfigDomain(blueprint.Config),
 	}, nil
 }
 

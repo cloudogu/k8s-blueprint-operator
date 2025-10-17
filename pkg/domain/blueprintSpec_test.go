@@ -1,7 +1,6 @@
 package domain
 
 import (
-	"fmt"
 	"testing"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -21,11 +20,6 @@ var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 var version3213, _ = core.ParseVersion("3.2.1-3")
 var subfolder = "subfolder"
-
-const (
-	testDistributionNamespace       = "k8s"
-	testChangeDistributionNamespace = "k8s-testing"
-)
 
 var k8sNginxStatic = cescommons.QualifiedName{Namespace: "k8s", SimpleName: "nginx-static"}
 var officialNexus = cescommons.QualifiedName{
@@ -306,14 +300,12 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
-				Dogus:      []Dogu{},
-				Components: []Component{},
+				Dogus: []Dogu{},
 			},
 		}
 
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 		}
 
 		// when
@@ -321,8 +313,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		// then
 		stateDiff := StateDiff{
-			DoguDiffs:      DoguDiffs{},
-			ComponentDiffs: ComponentDiffs{},
+			DoguDiffs: DoguDiffs{},
 		}
 
 		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
@@ -335,15 +326,13 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
-				Dogus:      []Dogu{{Name: officialNexus, Version: &version3211}},
-				Components: []Component{{Name: testComponentName, Version: compVersion3211}},
-				Config:     Config{Global: GlobalConfigEntries{{Key: "test", Value: &val1}}},
+				Dogus:  []Dogu{{Name: officialNexus, Version: &version3211}},
+				Config: Config{Global: GlobalConfigEntries{{Key: "test", Value: &val1}}},
 			},
 		}
 
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus:      map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
 		}
 
 		// when
@@ -364,19 +353,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					NeededActions: []Action{ActionInstall},
 				},
 			},
-			ComponentDiffs: ComponentDiffs{
-				{
-					Name: "my-component",
-					Actual: ComponentDiffState{
-						Absent: true,
-					},
-					Expected: ComponentDiffState{
-						Namespace: "k8s",
-						Version:   compVersion3211,
-					},
-					NeededActions: []Action{ActionInstall},
-				},
-			},
 			GlobalConfigDiffs: GlobalConfigDiffs{
 				{
 					Key:    "test",
@@ -392,9 +368,8 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 
 		assert.True(t, meta.IsStatusConditionTrue(spec.Conditions, ConditionExecutable))
 		require.NoError(t, err)
-		require.Equal(t, 2, len(spec.Events))
+		require.Equal(t, 1, len(spec.Events))
 		assert.Equal(t, newStateDiffEvent(stateDiff), spec.Events[0])
-		assert.Equal(t, newStateDiffComponentEvent(stateDiff.ComponentDiffs), spec.Events[1])
 		assert.Empty(t, cmp.Diff(stateDiff, spec.StateDiff))
 	})
 
@@ -423,7 +398,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					SimpleName: "name",
 				}},
 			},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 
 		// when
@@ -459,7 +433,6 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 					SimpleName: "ldap",
 				}},
 			},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{},
 		}
 
 		// when
@@ -471,27 +444,31 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		assert.ErrorContains(t, err, "ldap: action \"dogu namespace switch\" is not allowed")
 	})
 
-	t.Run("should return error with not allowed component namespace switch action", func(t *testing.T) {
+	t.Run("invalid blueprint state with not allowed dogu downgrade", func(t *testing.T) {
 		// given
 		spec := BlueprintSpec{
 			EffectiveBlueprint: EffectiveBlueprint{
-				Components: []Component{
+				Dogus: []Dogu{
 					{
-						Name: common.QualifiedComponentName{
-							Namespace:  testChangeDistributionNamespace,
-							SimpleName: testComponentName.SimpleName,
+						Name: cescommons.QualifiedName{
+							Namespace:  "namespace",
+							SimpleName: "ldap",
 						},
-						Version: compVersion3211,
+						Version: &version3211,
 					},
 				},
 			},
+			Config: BlueprintConfiguration{},
 		}
+
 		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-				testComponentName.SimpleName: {
-					Name:            testComponentName,
-					ExpectedVersion: compVersion3211,
+			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+				"ldap": {
+					Name: cescommons.QualifiedName{
+						Namespace:  "namespace",
+						SimpleName: "ldap",
+					},
+					Version: version3212,
 				},
 			},
 		}
@@ -502,41 +479,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
 		require.Error(t, err)
-		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"component namespace switch\" is not allowed", testComponentName.SimpleName))
-	})
-
-	t.Run("should return error with not allowed component downgrade action", func(t *testing.T) {
-		// given
-		spec := BlueprintSpec{
-			EffectiveBlueprint: EffectiveBlueprint{
-				Components: []Component{
-					{
-						Name: common.QualifiedComponentName{
-							Namespace:  testComponentName.Namespace,
-							SimpleName: testComponentName.SimpleName,
-						},
-						Version: compVersion3210,
-					},
-				},
-			},
-		}
-		clusterState := ecosystem.EcosystemState{
-			InstalledDogus: map[cescommons.SimpleName]*ecosystem.DoguInstallation{},
-			InstalledComponents: map[common.SimpleComponentName]*ecosystem.ComponentInstallation{
-				testComponentName.SimpleName: {
-					Name:            testComponentName,
-					ExpectedVersion: compVersion3211,
-				},
-			},
-		}
-
-		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
-
-		// then
-		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
-		require.Error(t, err)
-		assert.ErrorContains(t, err, fmt.Sprintf("%s: action \"downgrade\" is not allowed", testComponentName.SimpleName))
+		assert.ErrorContains(t, err, "ldap: action \"downgrade\" is not allowed")
 	})
 }
 
@@ -706,48 +649,6 @@ func TestBlueprintSpec_ShouldBeApplied(t *testing.T) {
 
 }
 
-func TestBlueprintSpec_MarkWaitingForSelfUpgrade(t *testing.T) {
-	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-		blueprint.MarkWaitingForSelfUpgrade()
-
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event{AwaitSelfUpgradeEvent{}}, blueprint.Events)
-	})
-
-	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-
-		blueprint.MarkWaitingForSelfUpgrade()
-		blueprint.Events = []Event(nil)
-		blueprint.MarkWaitingForSelfUpgrade()
-
-		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if condition did not change")
-	})
-}
-
-func TestBlueprintSpec_MarkSelfUpgradeCompleted(t *testing.T) {
-	t.Run("first call -> new event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-		blueprint.MarkSelfUpgradeCompleted()
-
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event{SelfUpgradeCompletedEvent{}}, blueprint.Events)
-	})
-
-	t.Run("repeated call -> no event", func(t *testing.T) {
-		blueprint := BlueprintSpec{}
-
-		blueprint.MarkSelfUpgradeCompleted()
-		blueprint.Events = []Event(nil)
-		blueprint.MarkSelfUpgradeCompleted()
-
-		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, ConditionSelfUpgradeCompleted))
-		assert.Equal(t, []Event(nil), blueprint.Events, "no additional event if status already was AwaitSelfUpgrade")
-	})
-}
-
 func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 	t.Run("healthy", func(t *testing.T) {
 		blueprint := BlueprintSpec{}
@@ -758,7 +659,7 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		condition := meta.FindStatusCondition(blueprint.Conditions, ConditionEcosystemHealthy)
 		assert.Equal(t, metav1.ConditionTrue, condition.Status)
 		assert.Equal(t, "Healthy", condition.Reason)
-		assert.Equal(t, "dogu health ignored: false; component health ignored: false", condition.Message)
+		assert.Equal(t, "dogu health ignored: false", condition.Message)
 	})
 
 	t.Run("unhealthy", func(t *testing.T) {
@@ -779,7 +680,6 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		assert.Equal(t, "Unhealthy", condition.Reason)
 		assert.Contains(t, condition.Message, "ecosystem health:")
 		assert.Contains(t, condition.Message, "1 dogu(s) are unhealthy: ldap")
-		assert.Contains(t, condition.Message, "0 component(s) are unhealthy:")
 	})
 
 	t.Run("error given, condition Unknown", func(t *testing.T) {

@@ -26,19 +26,13 @@ func TestEvents(t *testing.T) {
 			name:            "ecosystem healthy",
 			event:           EcosystemHealthyEvent{},
 			expectedName:    "EcosystemHealthy",
-			expectedMessage: "dogu health ignored: false; component health ignored: false",
+			expectedMessage: "dogu health ignored: false",
 		},
 		{
 			name:            "ignore dogu health",
 			event:           EcosystemHealthyEvent{doguHealthIgnored: true},
 			expectedName:    "EcosystemHealthy",
-			expectedMessage: "dogu health ignored: true; component health ignored: false",
-		},
-		{
-			name:            "ignore component health",
-			event:           EcosystemHealthyEvent{componentHealthIgnored: true},
-			expectedName:    "EcosystemHealthy",
-			expectedMessage: "dogu health ignored: false; component health ignored: true",
+			expectedMessage: "dogu health ignored: true",
 		},
 		{
 			name:            "blueprint stopped",
@@ -60,7 +54,7 @@ func TestEvents(t *testing.T) {
 				},
 			},
 			expectedName:    "EcosystemUnhealthy",
-			expectedMessage: "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  2 dogu(s) are unhealthy: admin, ldap\n  0 component(s) are unhealthy: ",
+			expectedMessage: "Ecosystem became unhealthy (up-to-date list is in the EcosystemHealthy condition):\n  2 dogu(s) are unhealthy: admin, ldap",
 		},
 		{
 			name: "dogu state diff determined",
@@ -76,21 +70,6 @@ func TestEvents(t *testing.T) {
 				}}),
 			expectedName:    "StateDiffDetermined",
 			expectedMessage: "state diff determined:\n  0 config changes ()\n  9 dogu actions (\"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update resource minimum volume size\": 1, \"update reverse proxy\": 1, \"upgrade\": 1)",
-		},
-		{
-			name: "component state diff determined",
-			event: newStateDiffComponentEvent(
-				ComponentDiffs{
-					{NeededActions: []Action{ActionInstall}},
-					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionInstall}},
-					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUninstall}},
-					{NeededActions: []Action{ActionUpgrade, ActionUpdateComponentDeployConfig, ActionSwitchComponentNamespace}},
-					{NeededActions: []Action{ActionDowngrade}},
-				}),
-			expectedName:    "StateDiffComponentDetermined",
-			expectedMessage: "component state diff determined: 9 actions (\"component namespace switch\": 1, \"downgrade\": 1, \"install\": 2, \"uninstall\": 3, \"update component package config\": 1, \"upgrade\": 1)",
 		},
 		{
 			name: "config diff determined",
@@ -143,21 +122,6 @@ func TestEvents(t *testing.T) {
 			expectedMessage: assert.AnError.Error(),
 		},
 		{
-			name: "components applied",
-			event: ComponentsAppliedEvent{
-				Diffs: ComponentDiffs{
-					{
-						Name: "dogu-operator",
-						NeededActions: []Action{
-							ActionUpgrade, ActionSwitchComponentNamespace,
-						},
-					},
-				},
-			},
-			expectedName:    "ComponentsApplied",
-			expectedMessage: "components applied: \"dogu-operator\": [upgrade, component namespace switch]",
-		},
-		{
 			name: "dogus applied",
 			event: DogusAppliedEvent{
 				Diffs: DoguDiffs{
@@ -201,18 +165,6 @@ func TestEvents(t *testing.T) {
 			event:           EcosystemConfigAppliedEvent{},
 			expectedName:    "EcosystemConfigApplied",
 			expectedMessage: "ecosystem config applied",
-		},
-		{
-			name:            "await self upgrade",
-			event:           AwaitSelfUpgradeEvent{},
-			expectedName:    "AwaitSelfUpgrade",
-			expectedMessage: "the operator awaits an upgrade for itself before other changes will be applied",
-		},
-		{
-			name:            "self upgrade completed",
-			event:           SelfUpgradeCompletedEvent{},
-			expectedName:    "SelfUpgradeCompleted",
-			expectedMessage: "if a self upgrade was necessary, it was successful",
 		},
 	}
 

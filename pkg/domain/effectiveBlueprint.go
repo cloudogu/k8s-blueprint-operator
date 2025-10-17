@@ -15,9 +15,6 @@ type EffectiveBlueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []Dogu
-	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. Optional.
-	Components []Component
 	// Config contains all config entries to set via blueprint. Optional.
 	Config Config
 }

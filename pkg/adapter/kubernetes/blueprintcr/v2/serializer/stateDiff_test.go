@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Masterminds/semver/v3"
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
@@ -15,25 +14,19 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const testComponentName = "my-component"
-
 var (
-	testSemverVersionLowRaw  = "1.2.3"
-	testSemverVersionLow     = semver.MustParse(testSemverVersionLowRaw)
-	testSemverVersionHighRaw = "2.3.4"
-	testSemverVersionHigh    = semver.MustParse(testSemverVersionHighRaw)
-	testCoreVersionLow       = mustParseVersion("1.1.1-1")
-	testCoreVersionLowStr    = testCoreVersionLow.String()
-	testCoreVersionHigh      = mustParseVersion("1.2.3-1")
-	testCoreVersionHighStr   = testCoreVersionHigh.String()
-	testDogu                 = cescommons.SimpleName("testDogu")
-	testDogu2                = cescommons.SimpleName("testDogu2")
-	testDoguKey1             = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
-	testDoguKey2             = common.DoguConfigKey{DoguName: testDogu2, Key: "key2"}
-	testFqdn1                = "ces1.example.com"
-	testFqdn2                = "ces2.example.com"
-	testSubfolderStr         = "subfolder"
-	testSubfolderStr2        = "different_subfolder"
+	testCoreVersionLow     = mustParseVersion("1.1.1-1")
+	testCoreVersionLowStr  = testCoreVersionLow.String()
+	testCoreVersionHigh    = mustParseVersion("1.2.3-1")
+	testCoreVersionHighStr = testCoreVersionHigh.String()
+	testDogu               = cescommons.SimpleName("testDogu")
+	testDogu2              = cescommons.SimpleName("testDogu2")
+	testDoguKey1           = common.DoguConfigKey{DoguName: testDogu, Key: "key1"}
+	testDoguKey2           = common.DoguConfigKey{DoguName: testDogu2, Key: "key2"}
+	testFqdn1              = "ces1.example.com"
+	testFqdn2              = "ces2.example.com"
+	testSubfolderStr       = "subfolder"
+	testSubfolderStr2      = "different_subfolder"
 )
 
 func TestConvertToDTO(t *testing.T) {
@@ -72,7 +65,7 @@ func TestConvertToDTO(t *testing.T) {
 					},
 					NeededActions: []crd.DoguAction{"upgrade"},
 				},
-			}, ComponentDiffs: map[string]crd.ComponentDiff{}},
+			}},
 		},
 		{
 			name: "should convert multiple dogu diffs",
@@ -129,40 +122,7 @@ func TestConvertToDTO(t *testing.T) {
 					},
 					NeededActions: []crd.DoguAction{"uninstall"},
 				},
-			}, ComponentDiffs: map[string]crd.ComponentDiff{}},
-		},
-		{
-			name: "should convert multiple component diffs",
-			domainModel: domain.StateDiff{
-				DoguDiffs: domain.DoguDiffs{},
-				ComponentDiffs: []domain.ComponentDiff{
-					{
-						Name:          testComponentName,
-						Actual:        domain.ComponentDiffState{Version: testSemverVersionLow, Absent: false},
-						Expected:      domain.ComponentDiffState{Version: testSemverVersionHigh, Absent: false},
-						NeededActions: []domain.Action{domain.ActionUpgrade, domain.ActionSwitchComponentNamespace},
-					},
-					{
-						Name:          "my-component-2",
-						Actual:        domain.ComponentDiffState{Version: testSemverVersionHigh, Absent: false},
-						Expected:      domain.ComponentDiffState{Absent: true},
-						NeededActions: []domain.Action{domain.ActionUninstall},
-					},
-				}},
-			want: &crd.StateDiff{
-				DoguDiffs: map[string]crd.DoguDiff{},
-				ComponentDiffs: map[string]crd.ComponentDiff{
-					testComponentName: {
-						Actual:        crd.ComponentDiffState{Version: &testSemverVersionLowRaw, Absent: false},
-						Expected:      crd.ComponentDiffState{Version: &testSemverVersionHighRaw, Absent: false},
-						NeededActions: []crd.ComponentAction{"upgrade", "component namespace switch"},
-					},
-					"my-component-2": {
-						Actual:        crd.ComponentDiffState{Version: &testSemverVersionHighRaw, Absent: false},
-						Expected:      crd.ComponentDiffState{Absent: true},
-						NeededActions: []crd.ComponentAction{"uninstall"},
-					},
-				}},
+			}},
 		},
 		{
 			name: "should convert multiple dogu config diffs",
@@ -177,8 +137,7 @@ func TestConvertToDTO(t *testing.T) {
 				},
 			},
 			want: &crd.StateDiff{
-				DoguDiffs:      map[string]crd.DoguDiff{},
-				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguDiffs: map[string]crd.DoguDiff{},
 				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					"ldap":    {},
 					"postfix": {},
@@ -202,8 +161,7 @@ func TestConvertToDTO(t *testing.T) {
 				}},
 			},
 			want: &crd.StateDiff{
-				DoguDiffs:      map[string]crd.DoguDiff{},
-				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguDiffs: map[string]crd.DoguDiff{},
 				GlobalConfigDiff: []crd.ConfigEntryDiff{{
 					Key: "fqdn",
 					Actual: crd.ConfigValueState{
@@ -251,7 +209,6 @@ func TestConvertToDTO(t *testing.T) {
 				NeededActions: []domain.Action{domain.ActionUpgrade},
 			}}},
 			want: &crd.StateDiff{
-				ComponentDiffs: map[string]crd.ComponentDiff{},
 				DoguDiffs: map[string]crd.DoguDiff{
 					"ldap": {
 						Actual: crd.DoguDiffState{
@@ -316,8 +273,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 		{
 			name: "normal dogu config",
 			model: domain.StateDiff{
-				DoguDiffs:      nil,
-				ComponentDiffs: nil,
+				DoguDiffs: nil,
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{
 					testDogu: {
 						{
@@ -351,8 +307,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 				GlobalConfigDiffs: nil,
 			},
 			want: &crd.StateDiff{
-				DoguDiffs:      map[string]crd.DoguDiff{},
-				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguDiffs: map[string]crd.DoguDiff{},
 				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					testDogu.String(): {
 						DoguConfigDiff: crd.DoguConfigDiff{
@@ -394,7 +349,6 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 			name: "censor sensitive config",
 			model: domain.StateDiff{
 				DoguDiffs:       nil,
-				ComponentDiffs:  nil,
 				DoguConfigDiffs: map[cescommons.SimpleName]domain.DoguConfigDiffs{},
 				SensitiveDoguConfigDiffs: map[cescommons.SimpleName]domain.SensitiveDoguConfigDiffs{
 					testDogu: {
@@ -429,8 +383,7 @@ func TestConvertToStateDiffDTO(t *testing.T) {
 				GlobalConfigDiffs: nil,
 			},
 			want: &crd.StateDiff{
-				DoguDiffs:      map[string]crd.DoguDiff{},
-				ComponentDiffs: map[string]crd.ComponentDiff{},
+				DoguDiffs: map[string]crd.DoguDiff{},
 				DoguConfigDiffs: map[string]crd.CombinedDoguConfigDiff{
 					testDogu.String(): {
 						SensitiveDoguConfigDiff: crd.SensitiveDoguConfigDiff{
