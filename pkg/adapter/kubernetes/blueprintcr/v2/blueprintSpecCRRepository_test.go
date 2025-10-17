@@ -431,6 +431,7 @@ func Test_blueprintSpecRepo_Count(t *testing.T) {
 		count, err := repo.Count(ctx, limit)
 
 		// then
+		assert.Equal(t, 1, count)
 		require.NoError(t, err)
 	})
 

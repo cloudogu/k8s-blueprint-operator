@@ -22,48 +22,59 @@ func (_m *MockBlueprintSpecRepository) EXPECT() *MockBlueprintSpecRepository_Exp
 	return &MockBlueprintSpecRepository_Expecter{mock: &_m.Mock}
 }
 
-// CheckSingleton provides a mock function with given fields: ctx
-func (_m *MockBlueprintSpecRepository) CheckSingleton(ctx context.Context) error {
-	ret := _m.Called(ctx)
+// Count provides a mock function with given fields: ctx, limit
+func (_m *MockBlueprintSpecRepository) Count(ctx context.Context, limit int) (int, error) {
+	ret := _m.Called(ctx, limit)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CheckSingleton")
+		panic("no return value specified for Count")
 	}
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context) error); ok {
-		r0 = rf(ctx)
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int) (int, error)); ok {
+		return rf(ctx, limit)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int) int); ok {
+		r0 = rf(ctx, limit)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(int)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(context.Context, int) error); ok {
+		r1 = rf(ctx, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// MockBlueprintSpecRepository_CheckSingleton_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckSingleton'
-type MockBlueprintSpecRepository_CheckSingleton_Call struct {
+// MockBlueprintSpecRepository_Count_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Count'
+type MockBlueprintSpecRepository_Count_Call struct {
 	*mock.Call
 }
 
-// CheckSingleton is a helper method to define mock.On call
+// Count is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *MockBlueprintSpecRepository_Expecter) CheckSingleton(ctx interface{}) *MockBlueprintSpecRepository_CheckSingleton_Call {
-	return &MockBlueprintSpecRepository_CheckSingleton_Call{Call: _e.mock.On("CheckSingleton", ctx)}
+//   - limit int
+func (_e *MockBlueprintSpecRepository_Expecter) Count(ctx interface{}, limit interface{}) *MockBlueprintSpecRepository_Count_Call {
+	return &MockBlueprintSpecRepository_Count_Call{Call: _e.mock.On("Count", ctx, limit)}
 }
 
-func (_c *MockBlueprintSpecRepository_CheckSingleton_Call) Run(run func(ctx context.Context)) *MockBlueprintSpecRepository_CheckSingleton_Call {
+func (_c *MockBlueprintSpecRepository_Count_Call) Run(run func(ctx context.Context, limit int)) *MockBlueprintSpecRepository_Count_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		run(args[0].(context.Context), args[1].(int))
 	})
 	return _c
 }
 
-func (_c *MockBlueprintSpecRepository_CheckSingleton_Call) Return(_a0 error) *MockBlueprintSpecRepository_CheckSingleton_Call {
-	_c.Call.Return(_a0)
+func (_c *MockBlueprintSpecRepository_Count_Call) Return(_a0 int, _a1 error) *MockBlueprintSpecRepository_Count_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockBlueprintSpecRepository_CheckSingleton_Call) RunAndReturn(run func(context.Context) error) *MockBlueprintSpecRepository_CheckSingleton_Call {
+func (_c *MockBlueprintSpecRepository_Count_Call) RunAndReturn(run func(context.Context, int) (int, error)) *MockBlueprintSpecRepository_Count_Call {
 	_c.Call.Return(run)
 	return _c
 }
