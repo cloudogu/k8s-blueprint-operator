@@ -15,7 +15,6 @@ spec:
   # put your blueprint here
   blueprint: 
     dogus: ...
-    components: ...
     config:
       global: ...
       dogus: ...
@@ -29,5 +28,3 @@ You may see examples of Blueprint-CRs in the [sample repository](https://github.
 ```bash
 kubectl apply -n ecosystem -f k8s_v2_blueprint.yaml
 ```
-
-**Note:** Only one blueprint is permitted per namespace. Either change the existing one or apply with the same name to update it.
