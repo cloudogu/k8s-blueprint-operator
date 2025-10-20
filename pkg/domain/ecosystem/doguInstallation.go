@@ -120,8 +120,10 @@ func (dogu *DoguInstallation) IsVersionUpToDate() bool {
 	return dogu.Version.IsEqualTo(dogu.InstalledVersion)
 }
 
-func (dogu *DoguInstallation) IsConfigUpToDate(globalConfigUpdateTime *metav1.Time, doguConfigUpdateTime *metav1.Time) bool {
-	return !dogu.StartedAt.Before(globalConfigUpdateTime) && !dogu.StartedAt.Before(doguConfigUpdateTime)
+func (dogu *DoguInstallation) IsConfigUpToDate(globalConfigUpdateTime *metav1.Time, doguConfigUpdateTime *metav1.Time, sensitiveDoguConfigUpdateTime *metav1.Time) bool {
+	return !dogu.StartedAt.Before(globalConfigUpdateTime) &&
+		!dogu.StartedAt.Before(doguConfigUpdateTime) &&
+		!dogu.StartedAt.Before(sensitiveDoguConfigUpdateTime)
 }
 
 func (dogu *DoguInstallation) Upgrade(newVersion *core.Version) {
