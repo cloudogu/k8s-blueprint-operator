@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
@@ -174,7 +173,7 @@ func Test_startOperator(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry credentials: environment variable DOGU_REGISTRY_PASSWORD must be set")
 	})
-	t.Run("should fail to configure reconciler", func(t *testing.T) {
+	t.Run("should fail to configure blueprint reconciler", func(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
@@ -211,7 +210,57 @@ func Test_startOperator(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "unable to configure manager: unable to configure reconciler")
+		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint reconciler")
+	})
+	t.Run("should fail to configure blueprint mask reconciler", func(t *testing.T) {
+		// given
+		t.Setenv("NAMESPACE", "ecosystem")
+		t.Setenv("STAGE", "development")
+		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
+		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
+		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+
+		oldNewManagerFunc := ctrl.NewManager
+		oldGetConfigFunc := ctrl.GetConfigOrDie
+		defer func() {
+			ctrl.NewManager = oldNewManagerFunc
+			ctrl.GetConfigOrDie = oldGetConfigFunc
+		}()
+
+		logMock := newMockLogSink(t)
+		logMock.EXPECT().Init(mock.Anything).Return()
+		logMock.EXPECT().WithValues(mock.Anything, mock.Anything).Return(logMock)
+		logMock.EXPECT().WithValues(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(logMock)
+
+		restConfig := &rest.Config{}
+		recorderMock := newMockEventRecorder(t)
+		ctrlManMock := newMockControllerManager(t)
+		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
+		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
+		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
+		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
+		ctrlManMock.EXPECT().GetCache().Return(nil)
+		ctrlManMock.EXPECT().GetScheme().Return(func() *runtime.Scheme {
+			scheme := runtime.NewScheme()
+			scheme.AddKnownTypes(bpv2.GroupVersion, &bpv2.Blueprint{})
+			return scheme
+		}())
+
+		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
+			return ctrlManMock, nil
+		}
+		ctrl.GetConfigOrDie = func() *rest.Config {
+			return restConfig
+		}
+
+		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
+
+		// when
+		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
+
+		// then
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint mask reconciler")
 	})
 	t.Run("should fail to add health check to controller manager", func(t *testing.T) {
 		// given
@@ -422,12 +471,8 @@ func Test_startOperator(t *testing.T) {
 
 func createScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
-
 	scheme := runtime.NewScheme()
-	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v2")
-	assert.NoError(t, err)
-
-	scheme.AddKnownTypes(gv, &bpv2.Blueprint{})
+	scheme.AddKnownTypes(bpv2.GroupVersion, &bpv2.Blueprint{}, &bpv2.BlueprintMask{})
 	return scheme
 }
 

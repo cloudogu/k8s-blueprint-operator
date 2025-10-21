@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	"github.com/go-logr/logr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -22,12 +25,14 @@ import (
 // BlueprintReconciler reconciles a Blueprint object
 type BlueprintReconciler struct {
 	blueprintChangeHandler BlueprintChangeHandler
+	externalEvents         <-chan event.TypedGenericEvent[*bpv2.Blueprint]
 }
 
 func NewBlueprintReconciler(
 	blueprintChangeHandler BlueprintChangeHandler,
-) *BlueprintReconciler {
-	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
+) (*BlueprintReconciler, chan<- event.TypedGenericEvent[*bpv2.Blueprint]) {
+	externalEvents := make(chan event.TypedGenericEvent[*bpv2.Blueprint])
+	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}, externalEvents
 }
 
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;watch;update;patch
@@ -126,5 +131,6 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(options).
 		For(&bpv2.Blueprint{}).
+		WatchesRawSource(source.Channel(r.externalEvents, &handler.TypedEnqueueRequestForObject[*bpv2.Blueprint]{})).
 		Complete(r)
 }

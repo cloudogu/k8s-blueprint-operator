@@ -91,10 +91,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		dogusUpToDateUseCase,
 	)
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
-	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
+	blueprintReconciler, blueprintEvents := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
 	blueprintMaskInterface := ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace)
-	blueprintMaskReconciler := reconciler.NewBlueprintMaskReconciler(blueprintInterface, blueprintMaskInterface)
+	blueprintMaskReconciler := reconciler.NewBlueprintMaskReconciler(blueprintInterface, blueprintMaskInterface, blueprintEvents)
 
 	return &ApplicationContext{
 		BlueprintReconciler: blueprintReconciler,

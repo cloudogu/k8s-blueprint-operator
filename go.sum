@@ -24,6 +24,8 @@ github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021104429-ae230f1aaecd h1:m
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021104429-ae230f1aaecd/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021111419-164bec9f0525 h1:MB8p2Vcg3dLWLhIMFuyL4lZU3cdN+XHSedqo8YadCas=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021111419-164bec9f0525/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
+github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4 h1:okTgQpus4rVcCM/VaIpnMD4zqDLEf4vW/t/OoXc28QA=
+github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 h1:3opEauJ733KlUEhsBVDpi4MdYeiEXg63oedX+/F2Btk=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.10.0 h1:flTmcBHzHU6uiwpXnlxLi93sKmYD85pul//8KxkkgGI=

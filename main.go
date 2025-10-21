@@ -84,7 +84,7 @@ func startOperator(
 		return fmt.Errorf("unable to bootstrap application context: %w", err)
 	}
 
-	err = configureManager(k8sManager, bootstrap.BlueprintReconciler)
+	err = configureManager(k8sManager, bootstrap.BlueprintReconciler, bootstrap.MaskReconciler)
 	if err != nil {
 		return fmt.Errorf("unable to configure manager: %w", err)
 	}

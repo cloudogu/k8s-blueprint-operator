@@ -16,7 +16,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
@@ -30,8 +29,9 @@ var testCtx = context.Background()
 const testBlueprint = "test-blueprint"
 
 func TestNewBlueprintReconciler(t *testing.T) {
-	reconciler := NewBlueprintReconciler(nil)
+	reconciler, externalEvents := NewBlueprintReconciler(nil)
 	assert.NotNil(t, reconciler)
+	assert.NotNil(t, externalEvents)
 }
 
 func TestBlueprintReconciler_SetupWithManager(t *testing.T) {
@@ -70,10 +70,7 @@ func createScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
 
 	scheme := runtime.NewScheme()
-	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v1")
-	assert.NoError(t, err)
-
-	scheme.AddKnownTypes(gv, &bpv2.Blueprint{})
+	scheme.AddKnownTypes(bpv2.GroupVersion, &bpv2.Blueprint{}, &bpv2.BlueprintMask{})
 	return scheme
 }
 

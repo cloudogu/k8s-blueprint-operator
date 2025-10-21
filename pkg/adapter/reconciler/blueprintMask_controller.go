@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
@@ -43,7 +44,7 @@ func (r *BlueprintMaskReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	maskList, err := r.blueprintMaskInterface.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to list blueprint masks: %w", err)
 	}
 
 	if len(maskList.Items) == 0 {
@@ -56,13 +57,13 @@ func (r *BlueprintMaskReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	blueprintList, err := r.blueprintInterface.List(ctx, metav1.ListOptions{})
 	if err != nil {
-		return ctrl.Result{}, err
+		return ctrl.Result{}, fmt.Errorf("failed to list blueprints: %w", err)
 	}
 
 	for _, mask := range maskList.Items {
 		for _, blueprint := range blueprintList.Items {
 			ref := blueprint.Spec.BlueprintMaskRef
-			if ref != nil && *ref == mask.Name {
+			if ref != nil && ref.Name == mask.Name {
 				r.blueprintEvents <- event.TypedGenericEvent[*bpv2.Blueprint]{Object: &blueprint}
 			}
 		}
@@ -74,7 +75,7 @@ func (r *BlueprintMaskReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 // SetupWithManager sets up the controller with the Manager.
 func (r *BlueprintMaskReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	if mgr == nil {
-		return errors.New("must provide a non-nil Manager")
+		return errors.New("must provide a non-nil manager")
 	}
 
 	// TODO Is this necessary?

@@ -108,13 +108,13 @@ func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId 
 
 	var maskManifest = blueprintCR.Spec.BlueprintMask
 	if blueprintCR.Spec.BlueprintMaskRef != nil {
-		blueprintMask, err := repo.blueprintMaskClient.Get(ctx, *blueprintCR.Spec.BlueprintMaskRef, metav1.GetOptions{})
+		blueprintMask, err := repo.blueprintMaskClient.Get(ctx, blueprintCR.Spec.BlueprintMaskRef.Name, metav1.GetOptions{})
 		if err != nil {
-			return nil, &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", *blueprintCR.Spec.BlueprintMaskRef, blueprintId)}
+			return nil, &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", blueprintCR.Spec.BlueprintMaskRef.Name, blueprintId)}
 		}
 
 		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
-		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: *blueprintCR.Spec.BlueprintMaskRef}
+		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: blueprintCR.Spec.BlueprintMaskRef.Name}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, maskRefEvent.Name(), maskRefEvent.Message())
 	}
 	return maskManifest, nil

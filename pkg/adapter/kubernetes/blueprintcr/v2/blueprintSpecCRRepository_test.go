@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"testing"
 
+	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -13,11 +16,6 @@ import (
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
-
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 var (
@@ -135,7 +133,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
 				BlueprintMask:            &bpv2.BlueprintMaskManifest{},
-				BlueprintMaskRef:         ptr.To("my-blueprint-mask"),
+				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -172,7 +170,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Spec: bpv2.BlueprintSpec{
 				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMaskRef:         ptr.To("my-blueprint-mask"),
+				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -208,7 +206,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			Spec: bpv2.BlueprintSpec{
 				DisplayName:              "MyBlueprint",
 				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMaskRef:         ptr.To("my-blueprint-mask"),
+				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
