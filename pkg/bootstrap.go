@@ -26,7 +26,8 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	Reconciler *reconciler.BlueprintReconciler
+	BlueprintReconciler *reconciler.BlueprintReconciler
+	MaskReconciler      *reconciler.BlueprintMaskReconciler
 }
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
@@ -40,8 +41,9 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
 	}
+	blueprintInterface := ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace)
 	blueprintRepo := v2.NewBlueprintSpecRepository(
-		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
+		blueprintInterface,
 		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace),
 		eventRecorder,
 	)
@@ -91,8 +93,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintChangeUseCase := application.NewBlueprintSpecChangeUseCase(blueprintRepo, preparationUseCases, applyUseCases)
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase)
 
+	blueprintMaskInterface := ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace)
+	blueprintMaskReconciler := reconciler.NewBlueprintMaskReconciler(blueprintInterface, blueprintMaskInterface)
+
 	return &ApplicationContext{
-		Reconciler: blueprintReconciler,
+		BlueprintReconciler: blueprintReconciler,
+		MaskReconciler:      blueprintMaskReconciler,
 	}, nil
 }
 

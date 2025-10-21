@@ -84,7 +84,7 @@ func startOperator(
 		return fmt.Errorf("unable to bootstrap application context: %w", err)
 	}
 
-	err = configureManager(k8sManager, bootstrap.Reconciler)
+	err = configureManager(k8sManager, bootstrap.BlueprintReconciler)
 	if err != nil {
 		return fmt.Errorf("unable to configure manager: %w", err)
 	}
@@ -105,10 +105,15 @@ func NewK8sManager(
 	return ctrl.NewManager(restConfig, options)
 }
 
-func configureManager(k8sManager controllerManager, blueprintReconciler *reconciler.BlueprintReconciler) error {
+func configureManager(k8sManager controllerManager, blueprintReconciler *reconciler.BlueprintReconciler, blueprintMaskReconciler *reconciler.BlueprintMaskReconciler) error {
 	err := blueprintReconciler.SetupWithManager(k8sManager)
 	if err != nil {
-		return fmt.Errorf("unable to configure reconciler: %w", err)
+		return fmt.Errorf("unable to configure blueprint reconciler: %w", err)
+	}
+
+	err = blueprintMaskReconciler.SetupWithManager(k8sManager)
+	if err != nil {
+		return fmt.Errorf("unable to configure blueprint mask reconciler: %w", err)
 	}
 
 	err = addChecks(k8sManager)
