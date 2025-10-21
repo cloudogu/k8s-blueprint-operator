@@ -8,9 +8,9 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
-func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *crd.Blueprint) error {
-	blueprint, blueprintErr := ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
-	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
+func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, manifest crd.BlueprintManifest, maskManifest *crd.BlueprintMaskManifest) error {
+	blueprint, blueprintErr := ConvertToBlueprintDomain(manifest)
+	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(maskManifest)
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
 		return serializationErr
@@ -69,7 +69,7 @@ func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain
 	}, nil
 }
 
-func ConvertToBlueprintMaskDomain(mask *crd.BlueprintMask) (domain.BlueprintMask, error) {
+func ConvertToBlueprintMaskDomain(mask *crd.BlueprintMaskManifest) (domain.BlueprintMask, error) {
 	if mask == nil {
 		return domain.BlueprintMask{}, nil
 	}

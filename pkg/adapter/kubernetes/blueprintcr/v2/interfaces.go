@@ -12,3 +12,7 @@ type eventRecorder interface {
 type blueprintInterface interface {
 	client.BlueprintInterface
 }
+
+type blueprintMaskInterface interface {
+	client.BlueprintMaskInterface
+}

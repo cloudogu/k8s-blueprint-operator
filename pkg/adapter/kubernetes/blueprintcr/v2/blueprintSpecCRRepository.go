@@ -25,18 +25,21 @@ type blueprintSpecRepoContext struct {
 }
 
 type blueprintSpecRepo struct {
-	blueprintClient blueprintInterface
-	eventRecorder   eventRecorder
+	blueprintClient     blueprintInterface
+	blueprintMaskClient blueprintMaskInterface
+	eventRecorder       eventRecorder
 }
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
 func NewBlueprintSpecRepository(
 	blueprintClient bpv2client.BlueprintInterface,
+	blueprintMaskClient bpv2client.BlueprintMaskInterface,
 	eventRecorder eventRecorder,
 ) domainservice.BlueprintSpecRepository {
 	return &blueprintSpecRepo{
-		blueprintClient: blueprintClient,
-		eventRecorder:   eventRecorder,
+		blueprintClient:     blueprintClient,
+		blueprintMaskClient: blueprintMaskClient,
+		eventRecorder:       eventRecorder,
 	}
 }
 
@@ -79,7 +82,12 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 	}
 
-	err = serializerv2.SerializeBlueprintAndMask(blueprintSpec, blueprintCR)
+	maskManifest, err := repo.getMaskManifest(ctx, blueprintId, blueprintCR, err)
+	if err != nil {
+		return nil, err
+	}
+
+	err = serializerv2.SerializeBlueprintAndMask(blueprintSpec, blueprintCR.Spec.Blueprint, maskManifest)
 	if err != nil {
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
@@ -88,6 +96,28 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 
 	setPersistenceContext(blueprintCR, blueprintSpec)
 	return blueprintSpec, nil
+}
+
+func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *v2.Blueprint, err error) (*v2.BlueprintMaskManifest, error) {
+	if blueprintCR.Spec.BlueprintMask != nil && blueprintCR.Spec.BlueprintMaskRef != nil {
+		err = &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
+		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
+		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, err)
+	}
+
+	var maskManifest = blueprintCR.Spec.BlueprintMask
+	if blueprintCR.Spec.BlueprintMaskRef != nil {
+		blueprintMask, err := repo.blueprintMaskClient.Get(ctx, *blueprintCR.Spec.BlueprintMaskRef, metav1.GetOptions{})
+		if err != nil {
+			return nil, &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", *blueprintCR.Spec.BlueprintMaskRef, blueprintId)}
+		}
+
+		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
+		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: *blueprintCR.Spec.BlueprintMaskRef}
+		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, maskRefEvent.Name(), maskRefEvent.Message())
+	}
+	return maskManifest, nil
 }
 
 func (repo *blueprintSpecRepo) Count(ctx context.Context, limit int) (int, error) {

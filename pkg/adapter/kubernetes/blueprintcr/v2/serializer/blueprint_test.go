@@ -301,7 +301,7 @@ func TestConvertToBlueprintDomain(t *testing.T) {
 
 func TestConvertToBlueprintMaskDomain(t *testing.T) {
 	type args struct {
-		mask *crd.BlueprintMask
+		mask *crd.BlueprintMaskManifest
 	}
 	tests := []struct {
 		name    string
@@ -317,13 +317,13 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		},
 		{
 			name:    "empty",
-			args:    args{mask: &crd.BlueprintMask{}},
+			args:    args{mask: &crd.BlueprintMaskManifest{}},
 			want:    domain.BlueprintMask{},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "will convert a MaskDogu",
-			args: args{mask: &crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMaskManifest{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "official/ldap",
@@ -346,7 +346,7 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		},
 		{
 			name: "error if invalid mask",
-			args: args{mask: &crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMaskManifest{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "invalid name",

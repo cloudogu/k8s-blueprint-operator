@@ -42,6 +42,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}
 	blueprintRepo := v2.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
+		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace),
 		eventRecorder,
 	)
 
