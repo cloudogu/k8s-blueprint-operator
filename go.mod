@@ -24,7 +24,7 @@ require (
 )
 
 replace (
-	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 => github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021083031-6001b29cc9c6
+	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 => github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021111419-164bec9f0525
 )
 
 require (
