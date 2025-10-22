@@ -45,17 +45,14 @@ type BlueprintSpecRepository interface {
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
 
-	// CheckSingleton checks if there is indeed only a single Blueprint-resource in the namespace of the repository or
-	// a domain.MultipleBlueprintsError if there are at least two Blueprint-resources or
-	// an InternalError if there is any other error.
-	CheckSingleton(ctx context.Context) error
+	// Count counts the Blueprint-resources in the namespace of the repository up to the given limit and
+	//  - returns the amount of blueprints or
+	//  - returns an InternalError if there is any error, e.g. a connection error.
+	Count(ctx context.Context, limit int) (int, error)
 
-	// ListIds retrieves all Blueprint-Ids from the Kubernetes cluster.
-	// It returns a list of Ids containing all blueprint Ids found in the cluster, or
-	// an InternalError if the operation fails.
-	//
-	// The function uses empty ListOptions, meaning it will retrieve all blueprint resources
-	// without any filtering or pagination.
+	// ListIds retrieves all Blueprint-Ids.
+	//  - It returns a list of Ids containing all blueprint Ids, or
+	//  - an InternalError if the operation fails.
 	ListIds(ctx context.Context) ([]string, error)
 
 	// Update updates a given BlueprintSpec.

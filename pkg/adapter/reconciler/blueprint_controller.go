@@ -126,7 +126,6 @@ func (r *BlueprintReconciler) getSecretKind(mgr ctrl.Manager) source.TypedSyncin
 		}),
 		predicate.And(
 			makeResourcePredicate[*corev1.Secret](r.hasOperatorNamespace),
-			makeResourcePredicate[*corev1.Secret](hasCesLabel),
 			makeContentPredicate(&r.debounce, r.window, secretContentChanged),
 		),
 	)

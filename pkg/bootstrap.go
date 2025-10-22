@@ -62,7 +62,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	sensitiveDoguConfigRepo := adapterconfigk8s.NewSensitiveDoguConfigRepository(*k8sSensitiveDoguConfigRepo)
 	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(ecosystemClientSet.CoreV1().Secrets(namespace))
 	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
-	globalConfigRepoAdapter := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
+	globalConfigRepo := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
 	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeInterface.DebugMode(namespace))
@@ -72,12 +72,12 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintRepo)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepoAdapter, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, debugModeRepo)
-	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, doguConfigRepo, globalConfigRepoAdapter)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, debugModeRepo)
+	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, blueprintRepo)
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
-	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepoAdapter, doguRepo)
+	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepo, doguRepo)
 	dogusUpToDateUseCase := application.NewDogusUpToDateUseCase(blueprintRepo, doguInstallationUseCase)
 
 	preparationUseCases := application.NewBlueprintPreparationUseCase(

@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#121] Upgrade to Golang v1.25.1
 - [#121] Upgrade Makefiles to v10.4.0
 - [#121] *breaking* merge proxy config dogu action into one to simplify the status
+- [#133] updated and added docs for the operator
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore

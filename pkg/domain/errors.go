@@ -12,7 +12,6 @@ type InvalidBlueprintError struct {
 	Message      string
 }
 
-// Error marks the struct as an error.
 func (e *InvalidBlueprintError) Error() string {
 	if e.WrappedError != nil {
 		return fmt.Errorf("%s: %w", e.Message, e.WrappedError).Error()
@@ -67,7 +66,6 @@ type MultipleBlueprintsError struct {
 	Message string
 }
 
-// Error marks the struct as an error.
 func (e *MultipleBlueprintsError) Error() string {
 	return e.Message
 }
