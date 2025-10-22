@@ -108,9 +108,9 @@ func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId 
 
 	var maskManifest = blueprintCR.Spec.BlueprintMask
 	if blueprintCR.Spec.BlueprintMaskRef != nil {
-		blueprintMask, err := repo.blueprintMaskClient.Get(ctx, blueprintCR.Spec.BlueprintMaskRef.Name, metav1.GetOptions{})
-		if err != nil {
-			return nil, &domainservice.InternalError{WrappedError: err, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", blueprintCR.Spec.BlueprintMaskRef.Name, blueprintId)}
+		blueprintMask, maskErr := repo.blueprintMaskClient.Get(ctx, blueprintCR.Spec.BlueprintMaskRef.Name, metav1.GetOptions{})
+		if maskErr != nil {
+			return nil, &domainservice.InternalError{WrappedError: maskErr, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", blueprintCR.Spec.BlueprintMaskRef.Name, blueprintId)}
 		}
 
 		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
