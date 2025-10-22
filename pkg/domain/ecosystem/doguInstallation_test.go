@@ -318,7 +318,7 @@ func TestDoguInstallation_IsConfigUpToDate(t *testing.T) {
 			dogu := &DoguInstallation{
 				StartedAt: tt.StartedAt,
 			}
-			assert.Equalf(t, tt.want, dogu.IsConfigUpToDate(tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime), "IsConfigUpToDate(%v, %v)", tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime)
+			assert.Equalf(t, tt.want, dogu.IsConfigUpToDate(tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime, nil), "IsConfigUpToDate(%v, %v)", tt.args.globalConfigUpdateTime, tt.args.doguConfigUpdateTime)
 		})
 	}
 }

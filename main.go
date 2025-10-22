@@ -11,6 +11,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
+	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -46,6 +47,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(bpv2.AddToScheme(scheme))
+	utilruntime.Must(v2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
 

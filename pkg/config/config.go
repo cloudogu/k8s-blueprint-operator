@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Masterminds/semver/v3"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -14,11 +15,12 @@ import (
 )
 
 const (
-	StageDevelopment = "development"
-	StageProduction  = "production"
-	StageEnvVar      = "STAGE"
-	namespaceEnvVar  = "NAMESPACE"
-	logLevelEnvVar   = "LOG_LEVEL"
+	StageDevelopment     = "development"
+	StageProduction      = "production"
+	StageEnvVar          = "STAGE"
+	namespaceEnvVar      = "NAMESPACE"
+	logLevelEnvVar       = "LOG_LEVEL"
+	debounceWindowEnvVar = "DEBOUNCE_WINDOW"
 )
 
 const (
@@ -33,7 +35,7 @@ const registryCacheDir = "/tmp/dogu-registry-cache"
 var log = ctrl.Log.WithName("config")
 var Stage = StageProduction
 
-// OperatorConfig contains all configurable values for the dogu operator.
+// OperatorConfig contains all configurable values for the blueprint operator.
 type OperatorConfig struct {
 	// Version contains the current version of the operator
 	Version *semver.Version
@@ -186,4 +188,16 @@ func GetRemoteCredentials() (*core.Credentials, error) {
 		Username: username,
 		Password: password,
 	}, nil
+}
+
+func GetDebounceWindow() (time.Duration, error) {
+	windowSecString, err := getEnvVar(debounceWindowEnvVar)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("failed to get env var [%s]: %w", debounceWindowEnvVar, err)
+	}
+	window, err := time.ParseDuration(windowSecString)
+	if err != nil {
+		return time.Duration(0), fmt.Errorf("failed to parse env var [%s] to duration: %w", debounceWindowEnvVar, err)
+	}
+	return window, nil
 }

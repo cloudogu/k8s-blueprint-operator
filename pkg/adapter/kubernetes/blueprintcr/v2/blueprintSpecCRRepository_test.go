@@ -481,3 +481,52 @@ func Test_blueprintSpecRepo_Count(t *testing.T) {
 		assert.ErrorContains(t, err, "error while listing blueprint resources")
 	})
 }
+
+func Test_blueprintSpecRepo_ListIds(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, nil)
+
+		returnList := bpv2.BlueprintList{Items: []bpv2.Blueprint{
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test1",
+				},
+			},
+			{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test2",
+				},
+			},
+		}}
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(&returnList, nil)
+
+		// when
+		idList, err := repo.ListIds(ctx)
+
+		// then
+		require.NoError(t, err)
+		assert.Len(t, idList, 2)
+		assert.Contains(t, idList, "test1")
+		assert.Contains(t, idList, "test2")
+	})
+
+	t.Run("throw internal error on list error", func(t *testing.T) {
+		restClientMock := newMockBlueprintInterface(t)
+		repo := NewBlueprintSpecRepository(restClientMock, nil)
+
+		restClientMock.EXPECT().List(ctx, metav1.ListOptions{}).Return(nil, assert.AnError)
+
+		// when
+		list, err := repo.ListIds(ctx)
+
+		// then
+		require.Error(t, err)
+		assert.Nil(t, list)
+		var targetErr *domainservice.InternalError
+		assert.ErrorAs(t, err, &targetErr)
+		assert.ErrorContains(t, err, "error while listing blueprint resources")
+	})
+
+}

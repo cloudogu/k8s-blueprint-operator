@@ -138,6 +138,64 @@ func (_c *mockBlueprintSpecRepository_GetById_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// ListIds provides a mock function with given fields: ctx
+func (_m *mockBlueprintSpecRepository) ListIds(ctx context.Context) ([]string, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListIds")
+	}
+
+	var r0 []string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]string, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []string); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockBlueprintSpecRepository_ListIds_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListIds'
+type mockBlueprintSpecRepository_ListIds_Call struct {
+	*mock.Call
+}
+
+// ListIds is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *mockBlueprintSpecRepository_Expecter) ListIds(ctx interface{}) *mockBlueprintSpecRepository_ListIds_Call {
+	return &mockBlueprintSpecRepository_ListIds_Call{Call: _e.mock.On("ListIds", ctx)}
+}
+
+func (_c *mockBlueprintSpecRepository_ListIds_Call) Run(run func(ctx context.Context)) *mockBlueprintSpecRepository_ListIds_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *mockBlueprintSpecRepository_ListIds_Call) Return(_a0 []string, _a1 error) *mockBlueprintSpecRepository_ListIds_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *mockBlueprintSpecRepository_ListIds_Call) RunAndReturn(run func(context.Context) ([]string, error)) *mockBlueprintSpecRepository_ListIds_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, blueprintSpec
 func (_m *mockBlueprintSpecRepository) Update(ctx context.Context, blueprintSpec *domain.BlueprintSpec) error {
 	ret := _m.Called(ctx, blueprintSpec)

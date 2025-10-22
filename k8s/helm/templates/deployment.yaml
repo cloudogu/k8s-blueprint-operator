@@ -68,6 +68,8 @@ spec:
                 name: ces-proxy
                 key: url
                 optional: true
+          - name: DEBOUNCE_WINDOW
+            value: {{ quote .Values.manager.reconciler.debounceWindow | default "10s" }}
           image: "{{ .Values.manager.image.registry }}/{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}"
           livenessProbe:
             httpGet:

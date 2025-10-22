@@ -18,6 +18,8 @@ manager:
     memory: 105M
   networkPolicies:
     enabled: true
+  reconciler:
+    debounceWindow: 10s
 doguRegistry:
   certificate:
     secret: dogu-registry-cert

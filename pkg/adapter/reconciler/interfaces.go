@@ -3,6 +3,7 @@ package reconciler
 import (
 	"context"
 
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
 
@@ -17,4 +18,8 @@ type controllerManager interface {
 type BlueprintChangeHandler interface {
 	HandleUntilApplied(ctx context.Context, blueprintId string) error
 	CheckForMultipleBlueprintResources(ctx context.Context) error
+}
+
+type BlueprintSpecRepository interface {
+	domainservice.BlueprintSpecRepository
 }
