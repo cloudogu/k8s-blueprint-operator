@@ -153,6 +153,21 @@ type SensitiveConfigRefReader interface {
 	)
 }
 
+// ConfigRefReader resolves given domain.ConfigValueRef's and loads the referenced values.
+type ConfigRefReader interface {
+	// GetValues reads all common.DoguConfigValue's from the given domain.ConfigValueRef's by common.DoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs map[common.DoguConfigKey]domain.ConfigValueRef,
+	) (
+		map[common.DoguConfigKey]common.DoguConfigValue,
+		error,
+	)
+}
+
 type DebugModeRepository interface {
 	// GetSingleton returns the ecosystem.DebugMode or
 	//  - a NotFoundError if the debugMode information is not found in the ecosystem or
