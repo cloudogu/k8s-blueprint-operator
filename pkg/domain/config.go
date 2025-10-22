@@ -27,6 +27,8 @@ type ConfigEntry struct {
 	// SecretRef is used for sensitive configuration entries
 	// Mutually exclusive with Value
 	SecretRef *SensitiveValueRef
+	// ConfigRef is used for configuration entries
+	ConfigRef *ConfigValueRef
 }
 
 type DoguConfig map[cescommons.SimpleName]DoguConfigEntries
@@ -41,6 +43,15 @@ type SensitiveValueRef struct {
 	// SecretKey is the name of the key within the secret given by SecretName.
 	// The value is used as the value for the sensitive config key.
 	SecretKey string `json:"secretKey"`
+}
+
+type ConfigValueRef struct {
+	// ConfigMapName is the name of the config map, from which the config key should be loaded.
+	// The config map must be in the same namespace.
+	ConfigMapName string `json:"configMapName"`
+	// ConfigMapKey is the name of the key within the config map given by SecretName.
+	// The value is used as the value for the config key.
+	ConfigMapKey string `json:"configMapKey"`
 }
 
 func (config GlobalConfigEntries) GetGlobalConfigKeys() []common.GlobalConfigKey {
@@ -65,6 +76,22 @@ func (config Config) GetSensitiveConfigReferences() map[common.DoguConfigKey]Sen
 					Key:      entry.Key,
 				}
 				refs[key] = *entry.SecretRef
+			}
+		}
+	}
+	return refs
+}
+
+func (config Config) GetConfigReferences() map[common.DoguConfigKey]ConfigValueRef {
+	refs := map[common.DoguConfigKey]ConfigValueRef{}
+	for doguName, doguConfig := range config.Dogus {
+		for _, entry := range doguConfig {
+			if entry.ConfigRef != nil {
+				key := common.DoguConfigKey{
+					DoguName: doguName,
+					Key:      entry.Key,
+				}
+				refs[key] = *entry.ConfigRef
 			}
 		}
 	}
