@@ -32,6 +32,7 @@ func TestNewBlueprintReconciler(t *testing.T) {
 	reconciler, externalEvents := NewBlueprintReconciler(nil)
 	assert.NotNil(t, reconciler)
 	assert.NotNil(t, externalEvents)
+	assert.NotNil(t, reconciler.externalEvents)
 }
 
 func TestBlueprintReconciler_SetupWithManager(t *testing.T) {

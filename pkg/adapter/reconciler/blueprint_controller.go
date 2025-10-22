@@ -32,7 +32,7 @@ func NewBlueprintReconciler(
 	blueprintChangeHandler BlueprintChangeHandler,
 ) (*BlueprintReconciler, chan<- event.TypedGenericEvent[*bpv2.Blueprint]) {
 	externalEvents := make(chan event.TypedGenericEvent[*bpv2.Blueprint])
-	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}, externalEvents
+	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler, externalEvents: externalEvents}, externalEvents
 }
 
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;watch;update;patch
