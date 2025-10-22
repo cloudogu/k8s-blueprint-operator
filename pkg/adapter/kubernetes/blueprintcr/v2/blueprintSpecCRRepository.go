@@ -82,7 +82,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 	}
 
-	maskManifest, err := repo.getMaskManifest(ctx, blueprintId, blueprintCR, err)
+	maskManifest, err := repo.getMaskManifest(ctx, blueprintId, blueprintCR)
 	if err != nil {
 		return nil, err
 	}
@@ -98,9 +98,9 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	return blueprintSpec, nil
 }
 
-func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *v2.Blueprint, err error) (*v2.BlueprintMaskManifest, error) {
+func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *v2.Blueprint) (*v2.BlueprintMaskManifest, error) {
 	if blueprintCR.Spec.BlueprintMask != nil && blueprintCR.Spec.BlueprintMaskRef != nil {
-		err = &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
+		err := &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
 		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, err)
