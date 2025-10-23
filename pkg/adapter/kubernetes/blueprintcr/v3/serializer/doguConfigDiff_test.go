@@ -3,7 +3,7 @@ package serializer
 import (
 	"testing"
 
-	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	crd "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/stretchr/testify/assert"

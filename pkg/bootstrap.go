@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
-	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
+	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/debugmodecr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/dogu"
@@ -15,7 +15,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v2/client"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v3/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
@@ -28,7 +28,7 @@ import (
 
 // ApplicationContext contains vital application parts for this operator.
 type ApplicationContext struct {
-	Reconciler *reconciler.BlueprintReconciler
+	BlueprintReconciler *reconciler.BlueprintReconciler
 }
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
@@ -42,12 +42,15 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
 	}
+
+	blueprintInterface := ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace)
 	debugModeClientSet, err := debugModeClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create debug mode interface: %w", err)
 	}
 	blueprintRepo := v2.NewBlueprintSpecRepository(
-		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
+		blueprintInterface,
+		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace),
 		eventRecorder,
 	)
 
@@ -102,7 +105,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase, blueprintRepo, namespace, debounceWindow)
 
 	return &ApplicationContext{
-		Reconciler: blueprintReconciler,
+		BlueprintReconciler: blueprintReconciler,
 	}, nil
 }
 

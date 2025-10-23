@@ -11,13 +11,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	config2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 )
 
@@ -173,7 +172,7 @@ func Test_startOperator(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry credentials: environment variable DOGU_REGISTRY_PASSWORD must be set")
 	})
-	t.Run("should fail to configure reconciler", func(t *testing.T) {
+	t.Run("should fail to configure blueprint reconciler", func(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
@@ -212,7 +211,7 @@ func Test_startOperator(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "unable to configure manager: unable to configure reconciler")
+		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint reconciler")
 	})
 	t.Run("should fail to add health check to controller manager", func(t *testing.T) {
 		// given
@@ -427,12 +426,8 @@ func Test_startOperator(t *testing.T) {
 
 func createScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
-
 	scheme := runtime.NewScheme()
-	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v2")
-	assert.NoError(t, err)
-
-	scheme.AddKnownTypes(gv, &bpv2.Blueprint{})
+	scheme.AddKnownTypes(bpv3.GroupVersion, &bpv3.Blueprint{}, &bpv3.BlueprintMask{})
 	return scheme
 }
 

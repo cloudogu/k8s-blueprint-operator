@@ -13,7 +13,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 
-	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	crd "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
@@ -301,7 +301,7 @@ func TestConvertToBlueprintDomain(t *testing.T) {
 
 func TestConvertToBlueprintMaskDomain(t *testing.T) {
 	type args struct {
-		mask *crd.BlueprintMask
+		mask *crd.BlueprintMaskManifest
 	}
 	tests := []struct {
 		name    string
@@ -317,13 +317,13 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		},
 		{
 			name:    "empty",
-			args:    args{mask: &crd.BlueprintMask{}},
+			args:    args{mask: &crd.BlueprintMaskManifest{}},
 			want:    domain.BlueprintMask{},
 			wantErr: assert.NoError,
 		},
 		{
 			name: "will convert a MaskDogu",
-			args: args{mask: &crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMaskManifest{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "official/ldap",
@@ -346,7 +346,7 @@ func TestConvertToBlueprintMaskDomain(t *testing.T) {
 		},
 		{
 			name: "error if invalid mask",
-			args: args{mask: &crd.BlueprintMask{
+			args: args{mask: &crd.BlueprintMaskManifest{
 				Dogus: []crd.MaskDogu{
 					{
 						Name:    "invalid name",

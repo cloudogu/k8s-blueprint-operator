@@ -4,13 +4,13 @@ import (
 	"errors"
 	"fmt"
 
-	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
-func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR *crd.Blueprint) error {
-	blueprint, blueprintErr := ConvertToBlueprintDomain(blueprintCR.Spec.Blueprint)
-	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(blueprintCR.Spec.BlueprintMask)
+func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, manifest bpv3.BlueprintManifest, maskManifest *bpv3.BlueprintMaskManifest) error {
+	blueprint, blueprintErr := ConvertToBlueprintDomain(manifest)
+	blueprintMask, maskErr := ConvertToBlueprintMaskDomain(maskManifest)
 	serializationErr := errors.Join(blueprintErr, maskErr)
 	if serializationErr != nil {
 		return serializationErr
@@ -21,7 +21,7 @@ func SerializeBlueprintAndMask(blueprintSpec *domain.BlueprintSpec, blueprintCR 
 	return nil
 }
 
-func ConvertBlueprintStatus(blueprintCR *crd.Blueprint) (domain.EffectiveBlueprint, error) {
+func ConvertBlueprintStatus(blueprintCR *bpv3.Blueprint) (domain.EffectiveBlueprint, error) {
 	var effectiveBlueprint domain.EffectiveBlueprint
 	var err error
 	if blueprintCR.Status != nil {
@@ -33,14 +33,14 @@ func ConvertBlueprintStatus(blueprintCR *crd.Blueprint) (domain.EffectiveBluepri
 	return effectiveBlueprint, nil
 }
 
-func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) crd.BlueprintManifest {
-	return crd.BlueprintManifest{
+func ConvertToBlueprintDTO(blueprint domain.EffectiveBlueprint) bpv3.BlueprintManifest {
+	return bpv3.BlueprintManifest{
 		Dogus:  ConvertToDoguDTOs(blueprint.Dogus),
 		Config: ConvertToConfigDTO(blueprint.Config),
 	}
 }
 
-func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint, error) {
+func ConvertToBlueprintDomain(blueprint bpv3.BlueprintManifest) (domain.Blueprint, error) {
 	convertedDogus, err := ConvertDogus(blueprint.Dogus)
 	if err != nil {
 		return domain.Blueprint{}, &domain.InvalidBlueprintError{
@@ -55,7 +55,7 @@ func ConvertToBlueprintDomain(blueprint crd.BlueprintManifest) (domain.Blueprint
 	}, nil
 }
 
-func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain.EffectiveBlueprint, error) {
+func ConvertToEffectiveBlueprintDomain(blueprint *bpv3.BlueprintManifest) (domain.EffectiveBlueprint, error) {
 	if blueprint == nil {
 		return domain.EffectiveBlueprint{}, nil
 	}
@@ -69,7 +69,7 @@ func ConvertToEffectiveBlueprintDomain(blueprint *crd.BlueprintManifest) (domain
 	}, nil
 }
 
-func ConvertToBlueprintMaskDomain(mask *crd.BlueprintMask) (domain.BlueprintMask, error) {
+func ConvertToBlueprintMaskDomain(mask *bpv3.BlueprintMaskManifest) (domain.BlueprintMask, error) {
 	if mask == nil {
 		return domain.BlueprintMask{}, nil
 	}
