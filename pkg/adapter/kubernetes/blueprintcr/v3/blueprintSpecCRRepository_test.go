@@ -194,7 +194,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		var expectedErrorType *domainservice.InternalError
+		var expectedErrorType *domainservice.NotFoundError
 		assert.ErrorAs(t, err, &expectedErrorType)
 		assert.ErrorContains(t, err, fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", "my-blueprint-mask", blueprintId))
 	})
