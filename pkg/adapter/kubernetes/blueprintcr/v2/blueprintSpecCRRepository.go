@@ -99,22 +99,22 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *v2.Blueprint) (*v2.BlueprintMaskManifest, error) {
-	if blueprintCR.Spec.BlueprintMask != nil && blueprintCR.Spec.BlueprintMaskRef != nil {
+	if blueprintCR.Spec.MaskSource.Manifest != nil && blueprintCR.Spec.MaskSource.CrRef != nil {
 		err := &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeWarning, invalidErrorEvent.Name(), invalidErrorEvent.Message())
 		return nil, fmt.Errorf("could not deserialize blueprint CR %q: %w", blueprintId, err)
 	}
 
-	var maskManifest = blueprintCR.Spec.BlueprintMask
-	if blueprintCR.Spec.BlueprintMaskRef != nil {
-		blueprintMask, maskErr := repo.blueprintMaskClient.Get(ctx, blueprintCR.Spec.BlueprintMaskRef.Name, metav1.GetOptions{})
+	var maskManifest = blueprintCR.Spec.MaskSource.Manifest
+	if blueprintCR.Spec.MaskSource.CrRef != nil {
+		blueprintMask, maskErr := repo.blueprintMaskClient.Get(ctx, blueprintCR.Spec.MaskSource.CrRef.Name, metav1.GetOptions{})
 		if maskErr != nil {
-			return nil, &domainservice.InternalError{WrappedError: maskErr, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", blueprintCR.Spec.BlueprintMaskRef.Name, blueprintId)}
+			return nil, &domainservice.InternalError{WrappedError: maskErr, Message: fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", blueprintCR.Spec.MaskSource.CrRef.Name, blueprintId)}
 		}
 
 		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
-		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: blueprintCR.Spec.BlueprintMaskRef.Name}
+		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: blueprintCR.Spec.MaskSource.CrRef.Name}
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, maskRefEvent.Name(), maskRefEvent.Message())
 	}
 	return maskManifest, nil

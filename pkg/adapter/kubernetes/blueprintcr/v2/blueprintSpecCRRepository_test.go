@@ -45,9 +45,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				DisplayName:              "MyBlueprint",
-				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMask:            &bpv2.BlueprintMaskManifest{},
+				DisplayName: "MyBlueprint",
+				Blueprint:   bpv2.BlueprintManifest{},
+				MaskSource: &bpv2.MaskSource{
+					Manifest: &bpv2.BlueprintMaskManifest{},
+				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -90,8 +92,10 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMask:            &bpv2.BlueprintMaskManifest{},
+				Blueprint: bpv2.BlueprintManifest{},
+				MaskSource: &bpv2.MaskSource{
+					Manifest: &bpv2.BlueprintMaskManifest{},
+				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -130,10 +134,12 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				DisplayName:              "MyBlueprint",
-				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMask:            &bpv2.BlueprintMaskManifest{},
-				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
+				DisplayName: "MyBlueprint",
+				Blueprint:   bpv2.BlueprintManifest{},
+				MaskSource: &bpv2.MaskSource{
+					CrRef:    &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+					Manifest: &bpv2.BlueprintMaskManifest{},
+				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -168,9 +174,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				DisplayName:              "MyBlueprint",
-				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
+				DisplayName: "MyBlueprint",
+				Blueprint:   bpv2.BlueprintManifest{},
+				MaskSource: &bpv2.MaskSource{
+					CrRef: &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -204,9 +212,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
 			Spec: bpv2.BlueprintSpec{
-				DisplayName:              "MyBlueprint",
-				Blueprint:                bpv2.BlueprintManifest{},
-				BlueprintMaskRef:         &bpv2.BlueprintMaskRef{Name: "my-blueprint-mask"},
+				DisplayName: "MyBlueprint",
+				Blueprint:   bpv2.BlueprintManifest{},
+				MaskSource: &bpv2.MaskSource{
+					CrRef: &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
@@ -255,9 +265,11 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 						{Name: "invalid"},
 					},
 				},
-				BlueprintMask: &bpv2.BlueprintMaskManifest{
-					Dogus: []bpv2.MaskDogu{
-						{Name: "invalid"},
+				MaskSource: &bpv2.MaskSource{
+					Manifest: &bpv2.BlueprintMaskManifest{
+						Dogus: []bpv2.MaskDogu{
+							{Name: "invalid"},
+						},
 					},
 				},
 			},
