@@ -16,16 +16,6 @@ type Event interface {
 	Message() string
 }
 
-type BlueprintMaskFromRefEvent struct {
-	MaskRef string
-}
-
-func (m BlueprintMaskFromRefEvent) Name() string { return "BlueprintMaskFromRef" }
-
-func (m BlueprintMaskFromRefEvent) Message() string {
-	return fmt.Sprintf("Using blueprint mask from ref %q", m.MaskRef)
-}
-
 type BlueprintSpecInvalidEvent struct {
 	ValidationError error
 }

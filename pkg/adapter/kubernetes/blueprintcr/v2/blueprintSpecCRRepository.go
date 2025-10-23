@@ -114,8 +114,6 @@ func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId 
 		}
 
 		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
-		maskRefEvent := domain.BlueprintMaskFromRefEvent{MaskRef: blueprintCR.Spec.MaskSource.CrRef.Name}
-		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, maskRefEvent.Name(), maskRefEvent.Message())
 	}
 	return maskManifest, nil
 }

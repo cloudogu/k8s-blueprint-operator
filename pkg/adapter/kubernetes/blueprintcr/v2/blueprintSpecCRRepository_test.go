@@ -225,7 +225,6 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
-		eventRecorderMock.EXPECT().Event(cr, "Normal", "BlueprintMaskFromRef", "Using blueprint mask from ref \"my-blueprint-mask\"")
 		blueprintClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
 
 		// when
