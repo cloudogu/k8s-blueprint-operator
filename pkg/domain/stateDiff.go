@@ -21,7 +21,6 @@ const (
 	ActionUninstall                       = "uninstall"
 	ActionUpgrade                         = "upgrade"
 	ActionDowngrade                       = "downgrade"
-	ActionResetVersion                    = "reset version"
 	ActionSwitchDoguNamespace             = "dogu namespace switch"
 	ActionUpdateDoguReverseProxyConfig    = "update reverse proxy"
 	ActionUpdateDoguResourceMinVolumeSize = "update resource minimum volume size"

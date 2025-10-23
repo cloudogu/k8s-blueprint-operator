@@ -153,7 +153,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 			}
 			logger.Info("uninstall dogu")
 			return useCase.doguRepo.Delete(ctx, doguInstallation.Name.SimpleName)
-		case domain.ActionUpgrade, domain.ActionResetVersion:
+		case domain.ActionUpgrade:
 			doguInstallation.Upgrade(doguDiff.Expected.Version)
 			continue
 		case domain.ActionDowngrade:

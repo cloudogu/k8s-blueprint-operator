@@ -161,36 +161,6 @@ func Test_determineDoguDiff(t *testing.T) {
 			},
 		},
 		{
-			name: "reset version",
-			args: args{
-				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3211,
-					Absent:  false,
-				},
-				installedDogu: &ecosystem.DoguInstallation{
-					Name:             officialNexus,
-					Version:          version3212,
-					InstalledVersion: version3211,
-				},
-			},
-			want: &DoguDiff{
-				DoguName: "nexus",
-				Actual: DoguDiffState{
-					Namespace:        officialNamespace,
-					Version:          &version3212,
-					InstalledVersion: &version3211,
-					Absent:           false,
-				},
-				Expected: DoguDiffState{
-					Namespace: officialNamespace,
-					Version:   &version3211,
-					Absent:    false,
-				},
-				NeededActions: []Action{ActionResetVersion},
-			},
-		},
-		{
 			name: "update minVolSize if actual < expected",
 			args: args{
 				blueprintDogu: &Dogu{

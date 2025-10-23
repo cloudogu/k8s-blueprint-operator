@@ -211,40 +211,6 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		assert.Equal(t, version3212, dogu.Version)
 	})
 
-	t.Run("action resetVersion", func(t *testing.T) {
-		dogu := &ecosystem.DoguInstallation{
-			Name:             postgresqlQualifiedName,
-			Version:          version3212, // Reset this version to 3.2.1-1, since it is not installed and expected differently
-			InstalledVersion: version3211,
-		}
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().
-			Update(testCtx, dogu).
-			Return(nil)
-
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
-
-		dogu.PauseReconciliation = true // test if it gets reset on update (the dogu in the EXPECT Update call has this to false)
-
-		// when
-		err := sut.applyDoguState(
-			testCtx,
-			domain.DoguDiff{
-				DoguName: "postgresql",
-				Expected: domain.DoguDiffState{
-					Version: &version3211,
-				},
-				NeededActions: []domain.Action{domain.ActionResetVersion},
-			},
-			dogu,
-			domain.BlueprintConfiguration{},
-		)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, version3211, dogu.Version)
-	})
-
 	t.Run("action downgrade", func(t *testing.T) {
 
 		dogu := &ecosystem.DoguInstallation{
