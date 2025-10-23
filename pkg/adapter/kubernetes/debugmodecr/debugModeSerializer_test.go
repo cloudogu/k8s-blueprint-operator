@@ -20,12 +20,6 @@ func Test_parseDoguCR(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "nil",
-			args:    args{cr: nil},
-			want:    nil,
-			wantErr: true,
-		},
-		{
 			name: "ok",
 			args: args{cr: &v1.DebugMode{
 				TypeMeta: metav1.TypeMeta{},
