@@ -5,6 +5,7 @@ import (
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/debugmodecr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
@@ -21,6 +22,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/application"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	debugModeClient "github.com/cloudogu/k8s-debug-mode-cr-lib/pkg/client/v1"
 	doguEcoClient "github.com/cloudogu/k8s-dogu-lib/v2/client"
 )
 
@@ -39,6 +41,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	dogusInterface, err := doguEcoClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
+	}
+	debugModeClientSet, err := debugModeClient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create debug mode interface: %w", err)
 	}
 	blueprintRepo := v2.NewBlueprintSpecRepository(
 		ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace),
@@ -59,13 +65,14 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	globalConfigRepo := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
 	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
+	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeClientSet.DebugMode(namespace))
 
 	initialBlueprintStateUseCase := application.NewInitiateBlueprintStatusUseCase(blueprintRepo)
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintRepo)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, debugModeRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, blueprintRepo)
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
