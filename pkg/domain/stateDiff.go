@@ -15,25 +15,25 @@ type StateDiff struct {
 }
 
 // Action represents a needed Action for a dogu to reach the expected state.
-type Action bpv2.DoguAction
+type Action = bpv2.DoguAction
 
 const (
 	// ActionInstall means the dogu is to be installed
-	ActionInstall = Action(bpv2.DoguActionInstall)
+	ActionInstall = bpv2.DoguActionInstall
 	// ActionUninstall means the dogu is to be uninstalled
-	ActionUninstall = Action(bpv2.DoguActionUninstall)
+	ActionUninstall = bpv2.DoguActionUninstall
 	// ActionUpgrade means an upgrade needs to be performed for the dogu
-	ActionUpgrade = Action(bpv2.DoguActionUpgrade)
+	ActionUpgrade = bpv2.DoguActionUpgrade
 	// ActionDowngrade means a downgrade needs to be performed for the dogu
-	ActionDowngrade = Action(bpv2.DoguActionDowngrade)
+	ActionDowngrade = bpv2.DoguActionDowngrade
 	// ActionSwitchDoguNamespace means the dogu should be pulled from a different dogu registry namespace
-	ActionSwitchDoguNamespace = Action(bpv2.DoguActionSwitchNamespace)
+	ActionSwitchDoguNamespace = bpv2.DoguActionSwitchNamespace
 	// ActionUpdateDoguReverseProxyConfig means the reverse proxy config of the dogu needs to be updated
-	ActionUpdateDoguReverseProxyConfig = Action(bpv2.DoguActionUpdateReverseProxyConfig)
+	ActionUpdateDoguReverseProxyConfig = bpv2.DoguActionUpdateReverseProxyConfig
 	// ActionUpdateDoguResourceMinVolumeSize means the minimum volume size of the dogu needs to be changed
-	ActionUpdateDoguResourceMinVolumeSize = Action(bpv2.DoguActionUpdateResourceMinVolumeSize)
+	ActionUpdateDoguResourceMinVolumeSize = bpv2.DoguActionUpdateResourceMinVolumeSize
 	// ActionUpdateAdditionalMounts means the additional mounts should be updated for the dogu
-	ActionUpdateAdditionalMounts = Action(bpv2.DoguActionUpdateAdditionalMounts)
+	ActionUpdateAdditionalMounts = bpv2.DoguActionUpdateAdditionalMounts
 )
 
 func (diff StateDiff) HasChanges() bool {
