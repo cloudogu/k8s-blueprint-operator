@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -180,6 +179,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -195,6 +195,7 @@ func Test_startOperator(t *testing.T) {
 		//ctrlManMock.EXPECT().GetConfig().Return(restConfig)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(runtime.NewScheme())
+		ctrlManMock.EXPECT().GetCache().Return(nil)
 
 		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
 			return ctrlManMock, nil
@@ -212,56 +213,6 @@ func Test_startOperator(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint reconciler")
 	})
-	t.Run("should fail to configure blueprint mask reconciler", func(t *testing.T) {
-		// given
-		t.Setenv("NAMESPACE", "ecosystem")
-		t.Setenv("STAGE", "development")
-		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
-		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
-		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
-
-		oldNewManagerFunc := ctrl.NewManager
-		oldGetConfigFunc := ctrl.GetConfigOrDie
-		defer func() {
-			ctrl.NewManager = oldNewManagerFunc
-			ctrl.GetConfigOrDie = oldGetConfigFunc
-		}()
-
-		logMock := newMockLogSink(t)
-		logMock.EXPECT().Init(mock.Anything).Return()
-		logMock.EXPECT().WithValues(mock.Anything, mock.Anything).Return(logMock)
-		logMock.EXPECT().WithValues(mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(logMock)
-
-		restConfig := &rest.Config{}
-		recorderMock := newMockEventRecorder(t)
-		ctrlManMock := newMockControllerManager(t)
-		ctrlManMock.EXPECT().GetEventRecorderFor("k8s-blueprint-operator").Return(recorderMock)
-		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
-		ctrlManMock.EXPECT().GetLogger().Return(logr.New(logMock))
-		ctrlManMock.EXPECT().Add(mock.Anything).Return(nil)
-		ctrlManMock.EXPECT().GetCache().Return(nil)
-		ctrlManMock.EXPECT().GetScheme().Return(func() *runtime.Scheme {
-			scheme := runtime.NewScheme()
-			scheme.AddKnownTypes(bpv2.GroupVersion, &bpv2.Blueprint{})
-			return scheme
-		}())
-
-		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
-			return ctrlManMock, nil
-		}
-		ctrl.GetConfigOrDie = func() *rest.Config {
-			return restConfig
-		}
-
-		flags := flag.NewFlagSet("operator", flag.ContinueOnError)
-
-		// when
-		err := startOperator(testCtx, restConfig, testOperatorConfig, flags, []string{})
-
-		// then
-		require.Error(t, err)
-		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint mask reconciler")
-	})
 	t.Run("should fail to add health check to controller manager", func(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
@@ -269,6 +220,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -317,6 +269,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -366,6 +319,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -421,6 +375,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie

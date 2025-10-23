@@ -138,6 +138,22 @@ func (repo *blueprintSpecRepo) Count(ctx context.Context, limit int) (int, error
 	return len(list.Items), nil
 }
 
+func (repo *blueprintSpecRepo) ListIds(ctx context.Context) ([]string, error) {
+	list, err := repo.blueprintClient.List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return nil, &domainservice.InternalError{
+			WrappedError: err,
+			Message:      "error while listing blueprint resources",
+		}
+	}
+
+	result := make([]string, len(list.Items))
+	for index, blueprint := range list.Items {
+		result[index] = blueprint.Name
+	}
+	return result, nil
+}
+
 // Update persists changes in the blueprint to the corresponding blueprint CR.
 func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("blueprintSpecRepo.Update")

@@ -23,9 +23,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.22.3
 )
 
-replace (
-	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 => github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4
-)
+replace github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 => github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4
 
 require (
 	dario.cat/mergo v1.0.2 // indirect

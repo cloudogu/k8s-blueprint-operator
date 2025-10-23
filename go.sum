@@ -18,16 +18,8 @@ github.com/cloudogu/ces-commons-lib v0.2.0 h1:yOEZWFl4W9N3J/6fok4svE3UufK5GQQtyx
 github.com/cloudogu/ces-commons-lib v0.2.0/go.mod h1:4rvR2RTDDaz5a6OZ1fW27G0MOnl5I3ackeiHxt4gn3o=
 github.com/cloudogu/cesapp-lib v0.18.1 h1:LMdGktIefm/PuhdPqpLTPvjY1smO06EEGBbRSAaYi7U=
 github.com/cloudogu/cesapp-lib v0.18.1/go.mod h1:J05eXFxnz4enZblABlmiVTZaUtJ+LIhlJ2UF6l9jpDw=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021083031-6001b29cc9c6 h1:Sx/1hmQFH2JpXRF1bA/GBvKd6RTG4FuyMabD8Ug31x4=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021083031-6001b29cc9c6/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021104429-ae230f1aaecd h1:mRLNEoGq4oX0DTXVCo2+oiwJ+97WmONGDwznojUJxCk=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021104429-ae230f1aaecd/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021111419-164bec9f0525 h1:MB8p2Vcg3dLWLhIMFuyL4lZU3cdN+XHSedqo8YadCas=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021111419-164bec9f0525/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4 h1:okTgQpus4rVcCM/VaIpnMD4zqDLEf4vW/t/OoXc28QA=
 github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251021134726-7b698f7821a4/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 h1:3opEauJ733KlUEhsBVDpi4MdYeiEXg63oedX+/F2Btk=
-github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0/go.mod h1:Qyi8M+HJMHJfhXN6Zotey/tXjFuJDM9RIXn+FjQaJAU=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.10.0 h1:flTmcBHzHU6uiwpXnlxLi93sKmYD85pul//8KxkkgGI=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.10.0/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
 github.com/cloudogu/k8s-registry-lib v0.6.0 h1:+3gQoP2CVLuhTqRen49rvN0a0Jpa1qJ1cSZqu+J64CY=

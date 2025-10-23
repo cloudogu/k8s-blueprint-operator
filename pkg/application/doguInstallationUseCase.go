@@ -9,6 +9,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"golang.org/x/exp/maps"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -18,23 +19,26 @@ const noDowngradesExplanationTextFmt = "downgrades are not allowed as the data m
 	"If you want an 'allow-downgrades' flag, issue a feature request"
 
 type DoguInstallationUseCase struct {
-	blueprintSpecRepo blueprintSpecRepository
-	doguRepo          doguInstallationRepository
-	doguConfigRepo    doguConfigRepository
-	globalConfigRepo  globalConfigRepository
+	blueprintSpecRepo       blueprintSpecRepository
+	doguRepo                doguInstallationRepository
+	globalConfigRepo        globalConfigRepository
+	doguConfigRepo          doguConfigRepository
+	sensitiveDoguConfigRepo sensitiveDoguConfigRepository
 }
 
 func NewDoguInstallationUseCase(
 	blueprintSpecRepo domainservice.BlueprintSpecRepository,
 	doguRepo domainservice.DoguInstallationRepository,
-	doguConfigRepo doguConfigRepository,
 	globalConfigRepo globalConfigRepository,
+	doguConfigRepo doguConfigRepository,
+	sensitiveDoguConfigRepo sensitiveDoguConfigRepository,
 ) *DoguInstallationUseCase {
 	return &DoguInstallationUseCase{
-		blueprintSpecRepo: blueprintSpecRepo,
-		doguRepo:          doguRepo,
-		doguConfigRepo:    doguConfigRepo,
-		globalConfigRepo:  globalConfigRepo,
+		blueprintSpecRepo:       blueprintSpecRepo,
+		doguRepo:                doguRepo,
+		globalConfigRepo:        globalConfigRepo,
+		doguConfigRepo:          doguConfigRepo,
+		sensitiveDoguConfigRepo: sensitiveDoguConfigRepo,
 	}
 }
 
@@ -72,12 +76,12 @@ func (useCase *DoguInstallationUseCase) CheckDogusUpToDate(ctx context.Context) 
 			continue
 		}
 
-		doguConfig, err := useCase.doguConfigRepo.Get(ctx, doguName)
+		doguConfigUpdateTime, sensitiveDoguConfigUpdateTime, err := useCase.getDoguConfigUpdateTimes(ctx, doguName)
 		if err != nil {
 			return nil, err
 		}
-		doguConfigUpdateTime := doguConfig.LastUpdated
-		configUpToDate := dogu.IsConfigUpToDate(globalConfigUpdateTime, doguConfigUpdateTime)
+
+		configUpToDate := dogu.IsConfigUpToDate(globalConfigUpdateTime, doguConfigUpdateTime, sensitiveDoguConfigUpdateTime)
 		if !configUpToDate {
 			dogusNotUpToDate = append(dogusNotUpToDate, doguName)
 			continue
@@ -85,6 +89,21 @@ func (useCase *DoguInstallationUseCase) CheckDogusUpToDate(ctx context.Context) 
 	}
 
 	return dogusNotUpToDate, nil
+}
+
+func (useCase *DoguInstallationUseCase) getDoguConfigUpdateTimes(ctx context.Context, doguName cescommons.SimpleName) (*metav1.Time, *metav1.Time, error) {
+	doguConfig, err := useCase.doguConfigRepo.Get(ctx, doguName)
+	if err != nil {
+		return nil, nil, err
+	}
+	doguConfigUpdateTime := doguConfig.LastUpdated
+
+	sensitveDoguConfig, err := useCase.sensitiveDoguConfigRepo.Get(ctx, doguName)
+	if err != nil {
+		return nil, nil, err
+	}
+	sensitiveDoguConfigUpdateTime := sensitveDoguConfig.LastUpdated
+	return doguConfigUpdateTime, sensitiveDoguConfigUpdateTime, nil
 }
 
 // ApplyDoguStates applies the expected dogu state from the Blueprint to the ecosystem.
