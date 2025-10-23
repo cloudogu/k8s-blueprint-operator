@@ -318,7 +318,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, map[common.DoguConfigKey]common.DoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -345,7 +345,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, map[common.DoguConfigKey]common.DoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -410,7 +410,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, map[common.DoguConfigKey]common.DoguConfigValue{}, false)
 
 		// then
 		require.NoError(t, err)
@@ -445,7 +445,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, map[common.DoguConfigKey]common.DoguConfigValue{}, false)
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
@@ -484,7 +484,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, map[common.DoguConfigKey]common.DoguConfigValue{}, false)
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))

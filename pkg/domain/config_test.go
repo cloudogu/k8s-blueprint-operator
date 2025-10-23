@@ -77,7 +77,6 @@ func TestGlobalConfig_validate(t *testing.T) {
 
 		assert.ErrorContains(t, err, "duplicate dogu config Key found: my/key1")
 	})
-
 	t.Run("combine errors", func(t *testing.T) {
 		config := GlobalConfigEntries{
 			{
