@@ -42,7 +42,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
 	}
-	debugModeInterface, err := debugModeClient.NewForConfig(restConfig)
+	debugModeClientSet, err := debugModeClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create debug mode interface: %w", err)
 	}
@@ -65,7 +65,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	globalConfigRepo := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
 	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
-	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeInterface.DebugMode(namespace))
+	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeClientSet.DebugMode(namespace))
 
 	initialBlueprintStateUseCase := application.NewInitiateBlueprintStatusUseCase(blueprintRepo)
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
