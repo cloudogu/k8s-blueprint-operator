@@ -5,6 +5,7 @@ import (
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
+	libconfig "github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/google/go-cmp/cmp"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,6 +31,13 @@ var premiumNexus = cescommons.QualifiedName{
 	Namespace:  "premium",
 	SimpleName: "nexus",
 }
+
+var (
+	debugValue = libconfig.Value("DEBUG")
+	infoValue  = libconfig.Value("INFO")
+	someValue1 = libconfig.Value("value1")
+	someValue2 = libconfig.Value("value2")
+)
 
 func Test_BlueprintSpec_Validate_allOk(t *testing.T) {
 	spec := BlueprintSpec{Id: "29.11.2023"}
@@ -247,6 +255,7 @@ func Test_BlueprintSpec_CalculateEffectiveBlueprint(t *testing.T) {
 		assert.Equal(t, 1, len(spec.Events))
 		assert.Equal(t, "BlueprintSpecInvalid", spec.Events[0].Name())
 	})
+
 	t.Run("add additionalMounts", func(t *testing.T) {
 		dogus := []Dogu{
 			{
@@ -309,7 +318,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -336,7 +345,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		stateDiff := StateDiff{
@@ -401,7 +410,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		require.NoError(t, err)
@@ -436,7 +445,7 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
@@ -468,13 +477,14 @@ func TestBlueprintSpec_DetermineStateDiff(t *testing.T) {
 						Namespace:  "namespace",
 						SimpleName: "ldap",
 					},
-					Version: version3212,
+					Version:          version3212,
+					InstalledVersion: version3212,
 				},
 			},
 		}
 
 		// when
-		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{})
+		err := spec.DetermineStateDiff(clusterState, map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}, false)
 
 		// then
 		assert.True(t, meta.IsStatusConditionFalse(spec.Conditions, ConditionExecutable))
@@ -701,6 +711,93 @@ func TestBlueprintSpec_HandleHealthResult(t *testing.T) {
 		assert.True(t, changed, "condition should change after the first call")
 		changed = blueprint.HandleHealthResult(ecosystem.HealthResult{}, assert.AnError)
 		assert.False(t, changed, "condition should not change here")
+	})
+}
+
+func Test_removeLogLevelChangesFromConfig(t *testing.T) {
+	t.Run("should remove logging config entries and keep others", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"dogu1": {
+					{Key: "logging/root", Value: &debugValue},
+					{Key: "other/setting", Value: &someValue1},
+					{Key: "another/config", Value: &someValue2},
+				},
+				"dogu2": {
+					{Key: "logging/root", Value: &infoValue},
+					{Key: "database/host", Value: &someValue1},
+				},
+			},
+			Global: GlobalConfigEntries{
+				{Key: "global/setting", Value: &someValue1},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Equal(t, config.Global, result.Global, "Global config should be preserved")
+
+		// Check dogu1 config
+		dogu1Config := result.Dogus["dogu1"]
+		assert.Len(t, dogu1Config, 2, "dogu1 should have 2 config entries after removing logging")
+		assert.Contains(t, dogu1Config, ConfigEntry{Key: "other/setting", Value: &someValue1})
+		assert.Contains(t, dogu1Config, ConfigEntry{Key: "another/config", Value: &someValue2})
+		assert.NotContains(t, dogu1Config, ConfigEntry{Key: "logging/root", Value: &debugValue})
+
+		// Check dogu2 config
+		dogu2Config := result.Dogus["dogu2"]
+		assert.Len(t, dogu2Config, 1, "dogu2 should have 1 config entry after removing logging")
+		assert.Contains(t, dogu2Config, ConfigEntry{Key: "database/host", Value: &someValue1})
+	})
+
+	t.Run("should return empty config entries for dogu with only logging config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"dogu-with-only-logging": {
+					{Key: "logging/root", Value: &debugValue},
+				},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Len(t, result.Dogus["dogu-with-only-logging"], 0, "dogu with only logging should have empty config")
+	})
+
+	t.Run("should handle empty dogu config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus: map[cescommons.SimpleName]DoguConfigEntries{
+				"empty-dogu": {},
+			},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Len(t, result.Dogus["empty-dogu"], 0, "empty dogu config should remain empty")
+	})
+
+	t.Run("should handle empty config", func(t *testing.T) {
+		// given
+		config := Config{
+			Dogus:  map[cescommons.SimpleName]DoguConfigEntries{},
+			Global: GlobalConfigEntries{},
+		}
+
+		// when
+		result := removeLogLevelChangesFromConfig(config)
+
+		// then
+		assert.Empty(t, result.Dogus, "empty dogus map should remain empty")
+		assert.Empty(t, result.Global, "empty global config should remain empty")
 	})
 }
 

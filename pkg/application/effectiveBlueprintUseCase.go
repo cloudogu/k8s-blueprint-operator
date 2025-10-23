@@ -12,8 +12,12 @@ type EffectiveBlueprintUseCase struct {
 	blueprintSpecRepo blueprintSpecRepository
 }
 
-func NewEffectiveBlueprintUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository) *EffectiveBlueprintUseCase {
-	return &EffectiveBlueprintUseCase{blueprintSpecRepo: blueprintSpecRepo}
+func NewEffectiveBlueprintUseCase(
+	blueprintSpecRepo domainservice.BlueprintSpecRepository,
+) *EffectiveBlueprintUseCase {
+	return &EffectiveBlueprintUseCase{
+		blueprintSpecRepo: blueprintSpecRepo,
+	}
 }
 
 // CalculateEffectiveBlueprint loads the blueprintSpec, lets it calculate the effective blueprint and persists it again.

@@ -34,6 +34,7 @@ type DoguDiff struct {
 type DoguDiffState struct {
 	Namespace          cescommons.Namespace
 	Version            *core.Version
+	InstalledVersion   *core.Version
 	Absent             bool
 	MinVolumeSize      *ecosystem.VolumeSize
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
@@ -117,6 +118,7 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 		actualState = DoguDiffState{
 			Namespace:          installedDogu.Name.Namespace,
 			Version:            &installedDogu.Version,
+			InstalledVersion:   &installedDogu.InstalledVersion,
 			MinVolumeSize:      installedDogu.MinVolumeSize,
 			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
 			AdditionalMounts:   installedDogu.AdditionalMounts,

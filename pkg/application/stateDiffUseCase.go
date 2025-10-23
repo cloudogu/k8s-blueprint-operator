@@ -8,6 +8,7 @@ import (
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -20,9 +21,18 @@ type StateDiffUseCase struct {
 	doguConfigRepo           doguConfigRepository
 	sensitiveDoguConfigRepo  sensitiveDoguConfigRepository
 	sensitiveConfigRefReader sensitiveConfigRefReader
+	debugModeRepo            debugModeRepository
 }
 
-func NewStateDiffUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository, doguInstallationRepo domainservice.DoguInstallationRepository, globalConfigRepo domainservice.GlobalConfigRepository, doguConfigRepo domainservice.DoguConfigRepository, sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository, sensitiveConfigRefReader domainservice.SensitiveConfigRefReader) *StateDiffUseCase {
+func NewStateDiffUseCase(
+	blueprintSpecRepo domainservice.BlueprintSpecRepository,
+	doguInstallationRepo domainservice.DoguInstallationRepository,
+	globalConfigRepo domainservice.GlobalConfigRepository,
+	doguConfigRepo domainservice.DoguConfigRepository,
+	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
+	sensitiveConfigRefReader domainservice.SensitiveConfigRefReader,
+	debugModeRepo domainservice.DebugModeRepository,
+) *StateDiffUseCase {
 	return &StateDiffUseCase{
 		blueprintSpecRepo:        blueprintSpecRepo,
 		doguInstallationRepo:     doguInstallationRepo,
@@ -30,6 +40,7 @@ func NewStateDiffUseCase(blueprintSpecRepo domainservice.BlueprintSpecRepository
 		doguConfigRepo:           doguConfigRepo,
 		sensitiveDoguConfigRepo:  sensitiveDoguConfigRepo,
 		sensitiveConfigRefReader: sensitiveConfigRefReader,
+		debugModeRepo:            debugModeRepo,
 	}
 }
 
@@ -65,7 +76,11 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	}
 
 	logger.V(2).Info("determine state diff to the cloudogu ecosystem")
-	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveConfig)
+	isDebugModeActive, err := useCase.determineDebugModeState(ctx, logger)
+	if err != nil {
+		return err
+	}
+	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveConfig, isDebugModeActive)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
@@ -81,6 +96,21 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	// return this error back here to persist the blueprint status and events first.
 	// return it to signal that a repeated call to this function will not result in any progress.
 	return stateDiffError
+}
+
+func (useCase *StateDiffUseCase) determineDebugModeState(ctx context.Context, logger logr.Logger) (bool, error) {
+	debugMode, err := useCase.debugModeRepo.GetSingleton(ctx)
+	if err != nil {
+		// ignore not found error, no debug mode cr means we are not in debug mode
+		if !domainservice.IsNotFoundError(err) {
+			return false, fmt.Errorf("cannot calculate effective blueprint due to an error when loading the debug mode cr: %w", err)
+		}
+	}
+	isDebugModeActive := debugMode != nil && debugMode.IsActive()
+	if isDebugModeActive {
+		logger.Info("debug mode is active, will ignore loglevel changes until deactivated")
+	}
+	return isDebugModeActive, nil
 }
 
 func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) (ecosystem.EcosystemState, error) {

@@ -43,6 +43,8 @@ const (
 
 	ReasonLastApplyErrorAtDogus  = "DoguApplyFailure"
 	ReasonLastApplyErrorAtConfig = "ConfigApplyFailure"
+
+	loggingKey = "logging/root"
 )
 
 var (
@@ -173,6 +175,27 @@ func (spec *BlueprintSpec) CalculateEffectiveBlueprint() error {
 	return nil
 }
 
+// removeLogLevelChangesFromConfig creates a copy of the given config with all
+// logging configuration entries removed from dogu configs. This is used in
+// debug mode to prevent log level changes from being applied.
+func removeLogLevelChangesFromConfig(config Config) Config {
+	configCopy := Config{
+		Dogus:  make(map[cescommons.SimpleName]DoguConfigEntries),
+		Global: config.Global,
+	}
+
+	for doguName, doguConfig := range config.Dogus {
+		newDoguConfig := make(DoguConfigEntries, 0, len(doguConfig))
+		for _, configEntry := range doguConfig {
+			if configEntry.Key != loggingKey {
+				newDoguConfig = append(newDoguConfig, configEntry)
+			}
+		}
+		configCopy.Dogus[doguName] = newDoguConfig
+	}
+	return configCopy
+}
+
 func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 	var effectiveDogus []Dogu
 	for _, dogu := range spec.Blueprint.Dogus {
@@ -252,10 +275,15 @@ func (spec *BlueprintSpec) MissingConfigReferences(error error) {
 func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
+	isDebugModeActive bool,
 ) error {
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
+	config := spec.EffectiveBlueprint.Config
+	if isDebugModeActive {
+		config = removeLogLevelChangesFromConfig(config)
+	}
 	doguConfigDiffs, sensitiveDoguConfigDiffs, globalConfigDiffs := determineConfigDiffs(
-		spec.EffectiveBlueprint.Config,
+		config,
 		ecosystemState.GlobalConfig,
 		ecosystemState.ConfigByDogu,
 		ecosystemState.SensitiveConfigByDogu,
