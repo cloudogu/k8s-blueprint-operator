@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -29,7 +29,7 @@ var (
 
 func TestConvertDogus(t *testing.T) {
 	type args struct {
-		dogus []bpv2.Dogu
+		dogus []bpv3.Dogu
 	}
 
 	wrongBodySize := "1GE"
@@ -49,85 +49,85 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "empty list",
-			args:    args{dogus: []bpv2.Dogu{}},
+			args:    args{dogus: []bpv3.Dogu{}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "normal dogu",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "absent dogu",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Absent: &trueVar}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Absent: &trueVar}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Absent: true}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with max proxy body size",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with proxy rewrite target",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{RewriteTarget: &rewriteTarget}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ReverseProxyConfig: &bpv3.ReverseProxyConfig{RewriteTarget: &rewriteTarget}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, ReverseProxyConfig: ecosystem.ReverseProxyConfig{RewriteTarget: ecosystem.RewriteTarget(rewriteTarget)}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with proxy additional config",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{AdditionalConfig: &additionalConfig}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ReverseProxyConfig: &bpv3.ReverseProxyConfig{AdditionalConfig: &additionalConfig}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, ReverseProxyConfig: ecosystem.ReverseProxyConfig{AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)}}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with invalid proxy body size",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &wrongBodySize}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &wrongBodySize}}}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "dogu with min volume size",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv2.PlatformConfig{ResourceConfig: &bpv2.ResourceConfig{MinVolumeSize: &volumeSizeString}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString}}}}},
 			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, MinVolumeSize: &volumeSize}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "dogu with invalid volume size",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv2.PlatformConfig{ResourceConfig: &bpv2.ResourceConfig{MinVolumeSize: &wrongVolumeSize}}}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &wrongVolumeSize}}}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "no namespace",
-			args:    args{dogus: []bpv2.Dogu{{Name: "postgres", Version: &version3211.Raw}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "postgres", Version: &version3211.Raw}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{dogus: []bpv2.Dogu{{Name: "official/postgres", Version: &wrongVersion}}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &wrongVersion}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name: "should convert additionalMounts",
-			args: args{dogus: []bpv2.Dogu{{
+			args: args{dogus: []bpv3.Dogu{{
 				Name:    "official/postgres",
 				Version: &version3211.Raw,
-				PlatformConfig: &bpv2.PlatformConfig{
-					AdditionalMountsConfig: []bpv2.AdditionalMount{
+				PlatformConfig: &bpv3.PlatformConfig{
+					AdditionalMountsConfig: []bpv3.AdditionalMount{
 						{
-							SourceType: bpv2.DataSourceConfigMap,
+							SourceType: bpv3.DataSourceConfigMap,
 							Name:       "configMap",
 							Volume:     "volume",
 							Subfolder:  &subfolder,
 						},
 						{
-							SourceType: bpv2.DataSourceSecret,
+							SourceType: bpv3.DataSourceSecret,
 							Name:       "sec",
 							Volume:     "secvolume",
 							Subfolder:  &subfolder2,
@@ -157,10 +157,10 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name: "should return nil slice if dogu contains an nil slice",
-			args: args{dogus: []bpv2.Dogu{{
+			args: args{dogus: []bpv3.Dogu{{
 				Name:    "official/postgres",
 				Version: &version3211.Raw,
-				PlatformConfig: &bpv2.PlatformConfig{
+				PlatformConfig: &bpv3.PlatformConfig{
 					AdditionalMountsConfig: nil,
 				},
 			}}},
@@ -186,7 +186,7 @@ func TestConvertDogus(t *testing.T) {
 
 func TestConvertMaskDogus(t *testing.T) {
 	type args struct {
-		dogus []bpv2.MaskDogu
+		dogus []bpv3.MaskDogu
 	}
 	tests := []struct {
 		name    string
@@ -202,31 +202,31 @@ func TestConvertMaskDogus(t *testing.T) {
 		},
 		{
 			name:    "empty list",
-			args:    args{dogus: []bpv2.MaskDogu{}},
+			args:    args{dogus: []bpv3.MaskDogu{}},
 			want:    nil,
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "normal dogu",
-			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar}}},
+			args:    args{dogus: []bpv3.MaskDogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar}}},
 			want:    []domain.MaskDogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: version3211, Absent: false}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "absent dogu",
-			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Absent: &trueVar}}},
+			args:    args{dogus: []bpv3.MaskDogu{{Name: "official/postgres", Absent: &trueVar}}},
 			want:    []domain.MaskDogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Absent: true}},
 			wantErr: assert.NoError,
 		},
 		{
 			name:    "no namespace",
-			args:    args{dogus: []bpv2.MaskDogu{{Name: "postgres", Version: &version3211.Raw}}},
+			args:    args{dogus: []bpv3.MaskDogu{{Name: "postgres", Version: &version3211.Raw}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
 		{
 			name:    "unparsable version",
-			args:    args{dogus: []bpv2.MaskDogu{{Name: "official/postgres", Version: &wrongVersion}}},
+			args:    args{dogus: []bpv3.MaskDogu{{Name: "official/postgres", Version: &wrongVersion}}},
 			want:    nil,
 			wantErr: assert.Error,
 		},
@@ -249,22 +249,22 @@ func TestConvertToDoguDTOs(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want []bpv2.Dogu
+		want []bpv3.Dogu
 	}{
 		{
 			name: "nil",
 			args: args{},
-			want: []bpv2.Dogu{},
+			want: []bpv3.Dogu{},
 		},
 		{
 			name: "empty list",
 			args: args{dogus: []domain.Dogu{}},
-			want: []bpv2.Dogu{},
+			want: []bpv3.Dogu{},
 		},
 		{
 			name: "ok",
 			args: args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, MinVolumeSize: &volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)}}}},
-			want: []bpv2.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv2.PlatformConfig{ResourceConfig: &bpv2.ResourceConfig{MinVolumeSize: &volumeSizeString}, ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig}}}},
+			want: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString}, ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig}}}},
 		},
 		{
 			name: "additionalMountsConfig",
@@ -289,22 +289,22 @@ func TestConvertToDoguDTOs(t *testing.T) {
 					},
 				},
 			}}},
-			want: []bpv2.Dogu{{
+			want: []bpv3.Dogu{{
 				Name:    "official/postgres",
 				Version: &version3211.Raw,
 				Absent:  &falseVar,
-				PlatformConfig: &bpv2.PlatformConfig{
-					ResourceConfig:     &bpv2.ResourceConfig{MinVolumeSize: &volumeSizeString},
-					ReverseProxyConfig: &bpv2.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
-					AdditionalMountsConfig: []bpv2.AdditionalMount{
+				PlatformConfig: &bpv3.PlatformConfig{
+					ResourceConfig:     &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString},
+					ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
+					AdditionalMountsConfig: []bpv3.AdditionalMount{
 						{
-							SourceType: bpv2.DataSourceConfigMap,
+							SourceType: bpv3.DataSourceConfigMap,
 							Name:       "configMap",
 							Volume:     "volume",
 							Subfolder:  &subfolder,
 						},
 						{
-							SourceType: bpv2.DataSourceSecret,
+							SourceType: bpv3.DataSourceSecret,
 							Name:       "sec",
 							Volume:     "secvolume",
 							Subfolder:  &subfolder2,
@@ -322,13 +322,13 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)},
 				AdditionalMounts:   nil,
 			}}},
-			want: []bpv2.Dogu{{
+			want: []bpv3.Dogu{{
 				Name:    "official/postgres",
 				Version: &version3211.Raw,
 				Absent:  &falseVar,
-				PlatformConfig: &bpv2.PlatformConfig{
-					ResourceConfig:         &bpv2.ResourceConfig{MinVolumeSize: &volumeSizeString},
-					ReverseProxyConfig:     &bpv2.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
+				PlatformConfig: &bpv3.PlatformConfig{
+					ResourceConfig:         &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString},
+					ReverseProxyConfig:     &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
 					AdditionalMountsConfig: nil,
 				}}},
 		},

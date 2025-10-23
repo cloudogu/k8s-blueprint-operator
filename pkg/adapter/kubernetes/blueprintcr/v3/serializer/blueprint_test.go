@@ -13,7 +13,7 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 
-	crd "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	crd "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 

@@ -1,7 +1,7 @@
-package v2
+package v3
 
 import (
-	client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
+	bpv3client "github.com/cloudogu/k8s-blueprint-lib/v3/client"
 	"k8s.io/client-go/tools/record"
 )
 
@@ -10,9 +10,9 @@ type eventRecorder interface {
 }
 
 type blueprintInterface interface {
-	client.BlueprintInterface
+	bpv3client.BlueprintInterface
 }
 
 type blueprintMaskInterface interface {
-	client.BlueprintMaskInterface
+	bpv3client.BlueprintMaskInterface
 }

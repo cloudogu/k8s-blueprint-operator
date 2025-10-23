@@ -1,4 +1,4 @@
-package v2
+package v3
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
@@ -41,20 +41,20 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: bpv3.BlueprintSpec{
 				DisplayName: "MyBlueprint",
-				Blueprint:   bpv2.BlueprintManifest{},
-				MaskSource: &bpv2.MaskSource{
-					Manifest: &bpv2.BlueprintMaskManifest{},
+				Blueprint:   bpv3.BlueprintManifest{},
+				MaskSource: &bpv3.MaskSource{
+					Manifest: &bpv3.BlueprintMaskManifest{},
 				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
 			},
-			Status: &bpv2.BlueprintStatus{
+			Status: &bpv3.BlueprintStatus{
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
@@ -88,13 +88,13 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
-				Blueprint: bpv2.BlueprintManifest{},
-				MaskSource: &bpv2.MaskSource{
-					Manifest: &bpv2.BlueprintMaskManifest{},
+			Spec: bpv3.BlueprintSpec{
+				Blueprint: bpv3.BlueprintManifest{},
+				MaskSource: &bpv3.MaskSource{
+					Manifest: &bpv3.BlueprintMaskManifest{},
 				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
@@ -130,21 +130,21 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: bpv3.BlueprintSpec{
 				DisplayName: "MyBlueprint",
-				Blueprint:   bpv2.BlueprintManifest{},
-				MaskSource: &bpv2.MaskSource{
-					CrRef:    &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
-					Manifest: &bpv2.BlueprintMaskManifest{},
+				Blueprint:   bpv3.BlueprintManifest{},
+				MaskSource: &bpv3.MaskSource{
+					CrRef:    &bpv3.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+					Manifest: &bpv3.BlueprintMaskManifest{},
 				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
 			},
-			Status: &bpv2.BlueprintStatus{
+			Status: &bpv3.BlueprintStatus{
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
@@ -170,20 +170,20 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: bpv3.BlueprintSpec{
 				DisplayName: "MyBlueprint",
-				Blueprint:   bpv2.BlueprintManifest{},
-				MaskSource: &bpv2.MaskSource{
-					CrRef: &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+				Blueprint:   bpv3.BlueprintManifest{},
+				MaskSource: &bpv3.MaskSource{
+					CrRef: &bpv3.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
 				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
 			},
-			Status: &bpv2.BlueprintStatus{
+			Status: &bpv3.BlueprintStatus{
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
@@ -203,25 +203,25 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		blueprintClientMock := newMockBlueprintInterface(t)
 		maskClientMock := newMockBlueprintMaskInterface(t)
-		mask := &bpv2.BlueprintMask{Spec: bpv2.BlueprintMaskSpec{BlueprintMaskManifest: &bpv2.BlueprintMaskManifest{}}}
+		mask := &bpv3.BlueprintMask{Spec: bpv3.BlueprintMaskSpec{BlueprintMaskManifest: &bpv3.BlueprintMaskManifest{}}}
 		maskClientMock.EXPECT().Get(ctx, "my-blueprint-mask", metav1.GetOptions{}).Return(mask, nil)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
+			Spec: bpv3.BlueprintSpec{
 				DisplayName: "MyBlueprint",
-				Blueprint:   bpv2.BlueprintManifest{},
-				MaskSource: &bpv2.MaskSource{
-					CrRef: &bpv2.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
+				Blueprint:   bpv3.BlueprintManifest{},
+				MaskSource: &bpv3.MaskSource{
+					CrRef: &bpv3.BlueprintMaskCRRef{Name: "my-blueprint-mask"},
 				},
 				AllowDoguNamespaceSwitch: &trueVar,
 				IgnoreDoguHealth:         &trueVar,
 				Stopped:                  &trueVar,
 			},
-			Status: &bpv2.BlueprintStatus{
+			Status: &bpv3.BlueprintStatus{
 				Conditions: []metav1.Condition{testCondition},
 			},
 		}
@@ -255,24 +255,24 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 
-		cr := &bpv2.Blueprint{
+		cr := &bpv3.Blueprint{
 			TypeMeta:   metav1.TypeMeta{},
 			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
-			Spec: bpv2.BlueprintSpec{
-				Blueprint: bpv2.BlueprintManifest{
-					Dogus: []bpv2.Dogu{
+			Spec: bpv3.BlueprintSpec{
+				Blueprint: bpv3.BlueprintManifest{
+					Dogus: []bpv3.Dogu{
 						{Name: "invalid"},
 					},
 				},
-				MaskSource: &bpv2.MaskSource{
-					Manifest: &bpv2.BlueprintMaskManifest{
-						Dogus: []bpv2.MaskDogu{
+				MaskSource: &bpv3.MaskSource{
+					Manifest: &bpv3.BlueprintMaskManifest{
+						Dogus: []bpv3.MaskDogu{
 							{Name: "invalid"},
 						},
 					},
 				},
 			},
-			Status: &bpv2.BlueprintStatus{},
+			Status: &bpv3.BlueprintStatus{},
 		}
 		errMsg := "cannot deserialize blueprint: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'\n" +
 			"cannot deserialize blueprint mask: cannot convert blueprint dogus: dogu name needs to be in the form 'namespace/dogu' but is 'invalid'"
@@ -342,17 +342,17 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		maskClientMock := newMockBlueprintMaskInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
-		expectedStatus := &bpv2.BlueprintStatus{
-			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:  []bpv2.Dogu{},
+		expectedStatus := &bpv3.BlueprintStatus{
+			EffectiveBlueprint: &bpv3.BlueprintManifest{
+				Dogus:  []bpv3.Dogu{},
 				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
+			StateDiff:  &bpv3.StateDiff{DoguDiffs: map[string]bpv3.DoguDiff{}},
 			Conditions: []metav1.Condition{testCondition},
 		}
 		blueprintClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv3.Blueprint, options metav1.UpdateOptions) (*bpv3.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return blueprint, nil
 			})
@@ -416,12 +416,12 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		maskClientMock := newMockBlueprintMaskInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
-		expectedStatus := &bpv2.BlueprintStatus{
-			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:  []bpv2.Dogu{},
+		expectedStatus := &bpv3.BlueprintStatus{
+			EffectiveBlueprint: &bpv3.BlueprintManifest{
+				Dogus:  []bpv3.Dogu{},
 				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
+			StateDiff:  &bpv3.StateDiff{DoguDiffs: map[string]bpv3.DoguDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := k8sErrors.NewConflict(
@@ -431,7 +431,7 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		)
 		blueprintClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv3.Blueprint, options metav1.UpdateOptions) (*bpv3.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -459,18 +459,18 @@ func Test_blueprintSpecRepo_Update(t *testing.T) {
 		maskClientMock := newMockBlueprintMaskInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
-		expectedStatus := &bpv2.BlueprintStatus{
-			EffectiveBlueprint: &bpv2.BlueprintManifest{
-				Dogus:  []bpv2.Dogu{},
+		expectedStatus := &bpv3.BlueprintStatus{
+			EffectiveBlueprint: &bpv3.BlueprintManifest{
+				Dogus:  []bpv3.Dogu{},
 				Config: nil,
 			},
-			StateDiff:  &bpv2.StateDiff{DoguDiffs: map[string]bpv2.DoguDiff{}},
+			StateDiff:  &bpv3.StateDiff{DoguDiffs: map[string]bpv3.DoguDiff{}},
 			Conditions: []metav1.Condition{},
 		}
 		expectedError := fmt.Errorf("test-error")
 		blueprintClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv3.Blueprint, options metav1.UpdateOptions) (*bpv3.Blueprint, error) {
 				assert.Equal(t, expectedStatus, blueprint.Status)
 				return nil, expectedError
 			})
@@ -503,7 +503,7 @@ func Test_blueprintSpecRepo_Update_publishEvents(t *testing.T) {
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
 		blueprintClientMock.EXPECT().
 			UpdateStatus(ctx, mock.Anything, metav1.UpdateOptions{}).
-			RunAndReturn(func(ctx2 context.Context, blueprint *bpv2.Blueprint, options metav1.UpdateOptions) (*bpv2.Blueprint, error) {
+			RunAndReturn(func(ctx2 context.Context, blueprint *bpv3.Blueprint, options metav1.UpdateOptions) (*bpv3.Blueprint, error) {
 				// assert.Equal(t, &expected, blueprint)
 				blueprint.ResourceVersion = "newVersion"
 				return blueprint, nil
@@ -558,8 +558,8 @@ func Test_blueprintSpecRepo_Count(t *testing.T) {
 		maskClientMock := newMockBlueprintMaskInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
-		list := &bpv2.BlueprintList{
-			Items: []bpv2.Blueprint{
+		list := &bpv3.BlueprintList{
+			Items: []bpv3.Blueprint{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "blueprint-1",
@@ -583,8 +583,8 @@ func Test_blueprintSpecRepo_Count(t *testing.T) {
 		maskClientMock := newMockBlueprintMaskInterface(t)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
-		list := &bpv2.BlueprintList{
-			Items: []bpv2.Blueprint{
+		list := &bpv3.BlueprintList{
+			Items: []bpv3.Blueprint{
 				{
 					ObjectMeta: metav1.ObjectMeta{
 						Name: "blueprint-1",
@@ -632,7 +632,7 @@ func Test_blueprintSpecRepo_ListIds(t *testing.T) {
 		restClientMock := newMockBlueprintInterface(t)
 		repo := NewBlueprintSpecRepository(restClientMock, nil, nil)
 
-		returnList := bpv2.BlueprintList{Items: []bpv2.Blueprint{
+		returnList := bpv3.BlueprintList{Items: []bpv3.Blueprint{
 			{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test1",

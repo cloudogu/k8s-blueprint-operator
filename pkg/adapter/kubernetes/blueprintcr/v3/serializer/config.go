@@ -2,35 +2,35 @@ package serializer
 
 import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	libconfig "github.com/cloudogu/k8s-registry-lib/config"
 	"k8s.io/utils/ptr"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
 
-func ConvertToConfigDTO(config domain.Config) *v2.Config {
+func ConvertToConfigDTO(config domain.Config) *bpv3.Config {
 	if config.IsEmpty() {
 		return nil
 	}
 
-	var dogus map[string][]v2.ConfigEntry
+	var dogus map[string][]bpv3.ConfigEntry
 	// we check for empty values to make good use of default values
 	// this makes testing easier
 	if len(config.Dogus) != 0 {
-		dogus = make(map[string][]v2.ConfigEntry, len(config.Dogus))
+		dogus = make(map[string][]bpv3.ConfigEntry, len(config.Dogus))
 		for doguName, doguConfig := range config.Dogus {
 			dogus[string(doguName)] = convertToDoguConfigDTO(doguConfig)
 		}
 	}
 
-	return &v2.Config{
+	return &bpv3.Config{
 		Dogus:  dogus,
 		Global: convertToGlobalConfigDTO(config.Global),
 	}
 }
 
-func ConvertToConfigDomain(config *v2.Config) domain.Config {
+func ConvertToConfigDomain(config *bpv3.Config) domain.Config {
 	if config == nil {
 		return domain.Config{}
 	}
@@ -50,24 +50,24 @@ func ConvertToConfigDomain(config *v2.Config) domain.Config {
 	}
 }
 
-func convertToDoguConfigDTO(config domain.DoguConfigEntries) []v2.ConfigEntry {
+func convertToDoguConfigDTO(config domain.DoguConfigEntries) []bpv3.ConfigEntry {
 	return convertToConfigEntriesDTO(domain.ConfigEntries(config))
 }
 
-func convertToDoguConfigEntriesDomain(config []v2.ConfigEntry) domain.DoguConfigEntries {
+func convertToDoguConfigEntriesDomain(config []bpv3.ConfigEntry) domain.DoguConfigEntries {
 	return domain.DoguConfigEntries(convertToConfigEntriesDomain(config))
 }
 
-func convertToGlobalConfigDTO(config domain.GlobalConfigEntries) []v2.ConfigEntry {
+func convertToGlobalConfigDTO(config domain.GlobalConfigEntries) []bpv3.ConfigEntry {
 	return convertToConfigEntriesDTO(domain.ConfigEntries(config))
 }
 
-func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
+func convertToConfigEntriesDTO(config domain.ConfigEntries) []bpv3.ConfigEntry {
 	if len(config) == 0 {
 		return nil
 	}
 
-	result := make([]v2.ConfigEntry, len(config))
+	result := make([]bpv3.ConfigEntry, len(config))
 
 	for i, domainEntry := range config {
 		var absent *bool
@@ -84,15 +84,15 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
 			value = (*string)(domainEntry.Value)
 		}
 
-		var secretRef *v2.SecretReference
+		var secretRef *bpv3.SecretReference
 		if domainEntry.SecretRef != nil {
-			secretRef = &v2.SecretReference{
+			secretRef = &bpv3.SecretReference{
 				Name: domainEntry.SecretRef.SecretName,
 				Key:  domainEntry.SecretRef.SecretKey,
 			}
 		}
 
-		result[i] = v2.ConfigEntry{
+		result[i] = bpv3.ConfigEntry{
 			Key:       domainEntry.Key.String(),
 			Absent:    absent,
 			Value:     value,
@@ -104,11 +104,11 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []v2.ConfigEntry {
 	return result
 }
 
-func convertToGlobalConfigDomain(config []v2.ConfigEntry) domain.GlobalConfigEntries {
+func convertToGlobalConfigDomain(config []bpv3.ConfigEntry) domain.GlobalConfigEntries {
 	return domain.GlobalConfigEntries(convertToConfigEntriesDomain(config))
 }
 
-func convertToConfigEntriesDomain(config []v2.ConfigEntry) domain.ConfigEntries {
+func convertToConfigEntriesDomain(config []bpv3.ConfigEntry) domain.ConfigEntries {
 	if len(config) == 0 {
 		return nil
 	}

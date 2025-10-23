@@ -15,7 +15,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	doguv2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 )
@@ -94,7 +94,7 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(options).
-		For(&bpv2.Blueprint{}).
+		For(&bpv3.Blueprint{}).
 		WatchesRawSource(r.getConfigMapKind(mgr)).
 		WatchesRawSource(r.getSecretKind(mgr)).
 		WatchesRawSource(r.getDoguKind(mgr)).
@@ -149,12 +149,12 @@ func (r *BlueprintReconciler) getDoguKind(mgr ctrl.Manager) source.TypedSyncingS
 func (r *BlueprintReconciler) getBlueprintMaskKind(mgr ctrl.Manager) source.TypedSource[reconcile.Request] {
 	return source.TypedKind(
 		mgr.GetCache(),
-		&bpv2.BlueprintMask{},
-		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, mask *bpv2.BlueprintMask) []reconcile.Request {
+		&bpv3.BlueprintMask{},
+		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, mask *bpv3.BlueprintMask) []reconcile.Request {
 			return r.getBlueprintRequest(ctx)
 		}),
 		predicate.And(
-			makeResourcePredicate[*bpv2.BlueprintMask](r.hasOperatorNamespace),
+			makeResourcePredicate[*bpv3.BlueprintMask](r.hasOperatorNamespace),
 			makeContentPredicate(&r.debounce, r.window, blueprintMaskSpecChanged),
 		),
 	)

@@ -3,7 +3,7 @@ package serializer
 import (
 	"testing"
 
-	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-registry-lib/config"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +17,7 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 	tests := []struct {
 		name   string
 		config domain.DoguConfigEntries
-		want   []v2.ConfigEntry
+		want   []bpv3.ConfigEntry
 	}{
 		{
 			name:   "nil config",
@@ -37,7 +37,7 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 					Value: (*config.Value)(&val1),
 				},
 			},
-			want: []v2.ConfigEntry{
+			want: []bpv3.ConfigEntry{
 				{Key: testDoguKey1.Key.String(), Value: &val1},
 			},
 		},
@@ -49,7 +49,7 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 					Absent: true,
 				},
 			},
-			want: []v2.ConfigEntry{
+			want: []bpv3.ConfigEntry{
 				{Key: testDoguKey1.Key.String(), Absent: &trueVar},
 			},
 		},
@@ -62,7 +62,7 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 					Value:     (*config.Value)(&val1),
 				},
 			},
-			want: []v2.ConfigEntry{
+			want: []bpv3.ConfigEntry{
 				{Key: testDoguKey1.Key.String(), Sensitive: &trueVar},
 			},
 		},
@@ -77,7 +77,7 @@ func Test_convertToDoguConfigDTO(t *testing.T) {
 func Test_convertToDoguConfigEntriesDomain(t *testing.T) {
 	tests := []struct {
 		name   string
-		config []v2.ConfigEntry
+		config []bpv3.ConfigEntry
 		want   domain.DoguConfigEntries
 	}{
 		{
@@ -87,12 +87,12 @@ func Test_convertToDoguConfigEntriesDomain(t *testing.T) {
 		},
 		{
 			name:   "empty config",
-			config: []v2.ConfigEntry{},
+			config: []bpv3.ConfigEntry{},
 			want:   nil,
 		},
 		{
 			name: "convert present config",
-			config: []v2.ConfigEntry{
+			config: []bpv3.ConfigEntry{
 				{
 					Key:   testDoguKey1.Key.String(),
 					Value: &val1,
@@ -107,7 +107,7 @@ func Test_convertToDoguConfigEntriesDomain(t *testing.T) {
 		},
 		{
 			name: "convert absent config",
-			config: []v2.ConfigEntry{
+			config: []bpv3.ConfigEntry{
 				{
 					Key:    testDoguKey1.Key.String(),
 					Absent: &trueVar,
@@ -132,7 +132,7 @@ func Test_convertToGlobalConfigDTO(t *testing.T) {
 	tests := []struct {
 		name   string
 		config domain.GlobalConfigEntries
-		want   []v2.ConfigEntry
+		want   []bpv3.ConfigEntry
 	}{
 		{
 			name:   "nil",
@@ -152,7 +152,7 @@ func Test_convertToGlobalConfigDTO(t *testing.T) {
 					Value: (*config.Value)(&val1),
 				},
 			},
-			want: []v2.ConfigEntry{
+			want: []bpv3.ConfigEntry{
 				{
 					Key:   "test",
 					Value: &val1,
@@ -167,7 +167,7 @@ func Test_convertToGlobalConfigDTO(t *testing.T) {
 					Absent: true,
 				},
 			},
-			want: []v2.ConfigEntry{
+			want: []bpv3.ConfigEntry{
 				{
 					Key:    "test",
 					Absent: &trueVar,
@@ -185,7 +185,7 @@ func Test_convertToGlobalConfigDTO(t *testing.T) {
 func Test_convertToGlobalConfigDomain(t *testing.T) {
 	tests := []struct {
 		name   string
-		config []v2.ConfigEntry
+		config []bpv3.ConfigEntry
 		want   domain.GlobalConfigEntries
 	}{
 		{
@@ -195,7 +195,7 @@ func Test_convertToGlobalConfigDomain(t *testing.T) {
 		},
 		{
 			name: "convert present",
-			config: []v2.ConfigEntry{
+			config: []bpv3.ConfigEntry{
 				{
 					Key:   "test",
 					Value: &val1,
@@ -210,7 +210,7 @@ func Test_convertToGlobalConfigDomain(t *testing.T) {
 		},
 		{
 			name: "convert absent",
-			config: []v2.ConfigEntry{
+			config: []bpv3.ConfigEntry{
 				{
 					Key:    "test",
 					Absent: &trueVar,

@@ -3,7 +3,6 @@ package reconciler
 import (
 	"context"
 
-	bpv2client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 )
@@ -23,12 +22,4 @@ type BlueprintChangeHandler interface {
 
 type BlueprintSpecRepository interface {
 	domainservice.BlueprintSpecRepository
-}
-
-type blueprintMaskInterface interface {
-	bpv2client.BlueprintMaskInterface
-}
-
-type blueprintInterface interface {
-	bpv2client.BlueprintInterface
 }

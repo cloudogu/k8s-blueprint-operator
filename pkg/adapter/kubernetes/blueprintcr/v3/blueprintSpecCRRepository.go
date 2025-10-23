@@ -1,19 +1,19 @@
-package v2
+package v3
 
 import (
 	"context"
 	"errors"
 	"fmt"
 
-	v2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
-	serializerv2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2/serializer"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
+	serializerv2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v3/serializer"
 	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	bpv2client "github.com/cloudogu/k8s-blueprint-lib/v2/client"
+	bpv3client "github.com/cloudogu/k8s-blueprint-lib/v3/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
@@ -32,8 +32,8 @@ type blueprintSpecRepo struct {
 
 // NewBlueprintSpecRepository returns a new BlueprintSpecRepository to interact on BlueprintSpecs.
 func NewBlueprintSpecRepository(
-	blueprintClient bpv2client.BlueprintInterface,
-	blueprintMaskClient bpv2client.BlueprintMaskInterface,
+	blueprintClient bpv3client.BlueprintInterface,
+	blueprintMaskClient bpv3client.BlueprintMaskInterface,
 	eventRecorder eventRecorder,
 ) domainservice.BlueprintSpecRepository {
 	return &blueprintSpecRepo{
@@ -98,7 +98,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 	return blueprintSpec, nil
 }
 
-func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *v2.Blueprint) (*v2.BlueprintMaskManifest, error) {
+func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *bpv3.Blueprint) (*bpv3.BlueprintMaskManifest, error) {
 	if blueprintCR.Spec.MaskSource.Manifest != nil && blueprintCR.Spec.MaskSource.CrRef != nil {
 		err := &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
@@ -163,13 +163,13 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 
 	effectiveBlueprint := serializerv2.ConvertToBlueprintDTO(spec.EffectiveBlueprint)
 
-	updatedBlueprint := &v2.Blueprint{
+	updatedBlueprint := &bpv3.Blueprint{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:              spec.Id,
 			ResourceVersion:   persistenceContext.resourceVersion,
 			CreationTimestamp: metav1.Time{},
 		},
-		Status: &v2.BlueprintStatus{
+		Status: &bpv3.BlueprintStatus{
 			EffectiveBlueprint: &effectiveBlueprint,
 			StateDiff:          serializerv2.ConvertToStateDiffDTO(spec.StateDiff),
 			Conditions:         spec.Conditions,
@@ -193,7 +193,7 @@ func (repo *blueprintSpecRepo) Update(ctx context.Context, spec *domain.Blueprin
 	return nil
 }
 
-func setPersistenceContext(blueprintCR *v2.Blueprint, spec *domain.BlueprintSpec) {
+func setPersistenceContext(blueprintCR *bpv3.Blueprint, spec *domain.BlueprintSpec) {
 	if spec.PersistenceContext == nil {
 		spec.PersistenceContext = make(map[string]interface{}, 1)
 	}
@@ -223,7 +223,7 @@ func getPersistenceContext(ctx context.Context, spec *domain.BlueprintSpec) (blu
 	}
 }
 
-func (repo *blueprintSpecRepo) publishEvents(blueprintCR *v2.Blueprint, events []domain.Event) {
+func (repo *blueprintSpecRepo) publishEvents(blueprintCR *bpv3.Blueprint, events []domain.Event) {
 	for _, event := range events {
 		repo.eventRecorder.Event(blueprintCR, corev1.EventTypeNormal, event.Name(), event.Message())
 	}

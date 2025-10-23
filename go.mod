@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.1
-	github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0
+	github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251023115937-48dedab6fb57
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.10.0
 	github.com/cloudogu/k8s-registry-lib v0.6.0
 	github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1
@@ -22,8 +22,6 @@ require (
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 	sigs.k8s.io/controller-runtime v0.22.3
 )
-
-replace github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0 => github.com/cloudogu/k8s-blueprint-lib/v2 v2.0.0-20251023112908-4f3be7a5adb0
 
 require (
 	dario.cat/mergo v1.0.2 // indirect

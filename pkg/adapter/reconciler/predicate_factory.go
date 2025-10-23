@@ -3,7 +3,7 @@ package reconciler
 import (
 	"time"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	v2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/equality"
@@ -53,7 +53,7 @@ func doguSpecChanged(oldObj, newObj *v2.Dogu) bool {
 	return !equality.Semantic.DeepEqual(oldObj.Spec, newObj.Spec)
 }
 
-func blueprintMaskSpecChanged(oldObj, newObj *bpv2.BlueprintMask) bool {
+func blueprintMaskSpecChanged(oldObj, newObj *bpv3.BlueprintMask) bool {
 	return !equality.Semantic.DeepEqual(oldObj.Spec, newObj.Spec)
 }
 

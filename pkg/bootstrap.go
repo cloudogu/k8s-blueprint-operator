@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
-	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v2"
+	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
@@ -14,7 +14,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
-	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v2/client"
+	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v3/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
