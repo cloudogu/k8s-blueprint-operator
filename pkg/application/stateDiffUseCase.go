@@ -13,7 +13,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced sensitive config"
+const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced config"
 
 type StateDiffUseCase struct {
 	blueprintSpecRepo        blueprintSpecRepository
@@ -57,7 +57,7 @@ func NewStateDiffUseCase(
 func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.DetermineStateDiff")
 
-	logger.V(2).Info("load referenced sensitive config")
+	logger.V(2).Info("load referenced config")
 	// load referenced config before collecting ecosystem state
 	// if an error happens here, we save a lot of heavy work
 	referencedSensitiveConfig, referencedConfig, err := useCase.loadReferencedConfig(ctx, blueprint)
@@ -146,17 +146,24 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 }
 
 func (useCase *StateDiffUseCase) loadReferencedConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, map[common.DoguConfigKey]common.DoguConfigValue, error) {
+	logger := log.FromContext(ctx).WithName("StateDiffUseCase.loadReferencedConfig")
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
 		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
+	configRef := blueprint.EffectiveBlueprint.Config.GetConfigReferences(logger)
 	referencedConfig, err := useCase.configRefReader.GetValues(
-		ctx, blueprint.EffectiveBlueprint.Config.GetConfigReferences(),
+		ctx, configRef,
 	)
 	if err != nil {
 		return nil, nil, err
+	}
+	if referencedConfig != nil {
+		logger.Error(err, fmt.Sprintf("Config found for %q: %q", configRef, referencedConfig))
+	} else {
+		logger.Error(err, "Config not found!")
 	}
 	return referencedSensitiveConfig, referencedConfig, nil
 }
