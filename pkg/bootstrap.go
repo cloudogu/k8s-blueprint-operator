@@ -5,9 +5,9 @@ import (
 
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/configref"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/debugmodecr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/configref"
 	"github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
 	remotedogudescriptor "github.com/cloudogu/remote-dogu-descriptor-lib/repository"
@@ -77,7 +77,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase)
 	effectiveBlueprintUseCase := application.NewEffectiveBlueprintUseCase(blueprintRepo)
-	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, debugModeRepo)
+	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, configMapRefReader, debugModeRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, blueprintRepo)
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
