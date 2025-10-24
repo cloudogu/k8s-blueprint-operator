@@ -31,6 +31,7 @@ func (h *ErrorHandler) handleError(logger logr.Logger, err error) (ctrl.Result, 
 	var stateDiffNotEmptyError *domain.StateDiffNotEmptyError
 	var multipleBlueprintsError *domain.MultipleBlueprintsError
 	var dogusNotUpToDateError *domain.DogusNotUpToDateError
+	var restoreInProgressError *domain.RestoreInProgressError
 	switch {
 	case errors.As(err, &internalError):
 		return h.handleInternalError(errLogger, err)
@@ -48,6 +49,8 @@ func (h *ErrorHandler) handleError(logger logr.Logger, err error) (ctrl.Result, 
 		return h.handleMultipleBlueprintsError(errLogger, err)
 	case errors.As(err, &dogusNotUpToDateError):
 		return h.handleDogusNotUpToDateError(errLogger, err)
+	case errors.As(err, &restoreInProgressError):
+		return h.handleRestoreInProgressError(errLogger, err)
 	default:
 		return h.handleUnknownError(errLogger, err)
 	}
@@ -99,6 +102,12 @@ func (h *ErrorHandler) handleMultipleBlueprintsError(logger logr.Logger, err err
 func (h *ErrorHandler) handleDogusNotUpToDateError(logger logr.Logger, err error) (ctrl.Result, error) {
 	// really normal case
 	logger.Info(fmt.Sprintf("Dogus are not up to date yet. Retry later: %s", err.Error()))
+	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
+}
+
+func (h *ErrorHandler) handleRestoreInProgressError(logger logr.Logger, err error) (ctrl.Result, error) {
+	// really normal case
+	logger.Info(fmt.Sprintf("A restore is currently in progress. Retry later: %s", err.Error()))
 	return ctrl.Result{RequeueAfter: 10 * time.Second}, nil
 }
 

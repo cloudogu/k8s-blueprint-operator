@@ -150,6 +150,25 @@ func Test_decideRequeueForError(t *testing.T) {
 		assert.Equal(t, ctrl.Result{RequeueAfter: 1 * time.Second}, actual)
 		assert.Contains(t, logSinkMock.output, "0: requeue until state diff is empty")
 	})
+	t.Run("should catch wrapped RestoreInProgressError, issue a log line and requeue timely", func(t *testing.T) {
+		// given
+		logSinkMock := newTrivialTestLogSink()
+		testLogger := logr.New(logSinkMock)
+
+		intermediateErr := &domain.RestoreInProgressError{
+			Message: "a generic oh-noez",
+		}
+		errorChain := fmt.Errorf("could not do the thing: %w", intermediateErr)
+
+		// when
+		sut := NewErrorHandler()
+		actual, err := sut.handleError(testLogger, errorChain)
+
+		// then
+		require.NoError(t, err)
+		assert.Equal(t, ctrl.Result{RequeueAfter: 10 * time.Second}, actual)
+		assert.Contains(t, logSinkMock.output, "0: A restore is currently in progress. Retry later: could not do the thing: a generic oh-noez")
+	})
 	t.Run("should catch general errors, issue a log line and return requeue with error", func(t *testing.T) {
 		// given
 		logSinkMock := newTrivialTestLogSink()

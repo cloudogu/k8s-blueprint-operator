@@ -52,6 +52,10 @@ type ecosystemConfigUseCase interface {
 	ApplyConfig(ctx context.Context, blueprint *domain.BlueprintSpec) error
 }
 
+type restoreInProgressUseCase interface {
+	CheckRestoreInProgress(context.Context) error
+}
+
 type doguInstallationRepository interface {
 	domainservice.DoguInstallationRepository
 }
@@ -66,6 +70,12 @@ type blueprintSpecRepository interface {
 //goland:noinspection GoUnusedType
 type debugModeRepository interface {
 	domainservice.DebugModeRepository
+}
+
+//nolint:unused
+//goland:noinspection GoUnusedType
+type restoreRepository interface {
+	domainservice.RestoreRepository
 }
 
 // interface duplication for mocks

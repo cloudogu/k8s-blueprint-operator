@@ -6,6 +6,7 @@ import (
 	adapterconfigk8s "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/config/kubernetes"
 	v2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/blueprintcr/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/debugmodecr"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/restorecr"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/sensitiveconfigref"
 	"github.com/cloudogu/k8s-registry-lib/dogu"
 	"github.com/cloudogu/k8s-registry-lib/repository"
@@ -15,6 +16,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/record"
 
+	restoreEcoClient "github.com/cloudogu/k8s-backup-lib/api/ecosystem"
 	adapterk8s "github.com/cloudogu/k8s-blueprint-lib/v3/client"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/doguregistry"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/kubernetes/dogucr"
@@ -48,6 +50,10 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, fmt.Errorf("failed to create debug mode interface: %w", err)
 	}
+	restoreClientSet, err := restoreEcoClient.NewForConfig(restConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create restore interface: %w", err)
+	}
 	blueprintRepo := v2.NewBlueprintSpecRepository(
 		blueprintInterface,
 		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace),
@@ -69,6 +75,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 
 	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
 	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeClientSet.DebugMode(namespace))
+	restoreRepo := restorecr.NewRestoreRepo(restoreClientSet.Restores(namespace))
 
 	initialBlueprintStateUseCase := application.NewInitiateBlueprintStatusUseCase(blueprintRepo)
 	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
@@ -78,6 +85,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	stateDiffUseCase := application.NewStateDiffUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo, sensitiveConfigRefReader, debugModeRepo)
 	doguInstallationUseCase := application.NewDoguInstallationUseCase(blueprintRepo, doguRepo, globalConfigRepo, doguConfigRepo, sensitiveDoguConfigRepo)
 	ecosystemHealthUseCase := application.NewEcosystemHealthUseCase(doguInstallationUseCase, blueprintRepo)
+	restoreInProgressUseCase := application.NewRestoreInProgressUseCase(restoreRepo)
 	completeBlueprintSpecUseCase := application.NewCompleteBlueprintUseCase(blueprintRepo)
 	applyDogusUseCase := application.NewApplyDogusUseCase(blueprintRepo, doguInstallationUseCase)
 	ConfigUseCase := application.NewEcosystemConfigUseCase(blueprintRepo, doguConfigRepo, sensitiveDoguConfigRepo, globalConfigRepo, doguRepo)
@@ -89,6 +97,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		effectiveBlueprintUseCase,
 		stateDiffUseCase,
 		ecosystemHealthUseCase,
+		restoreInProgressUseCase,
 	)
 	applyUseCases := application.NewBlueprintApplyUseCase(
 		completeBlueprintSpecUseCase,

@@ -7,11 +7,12 @@ import (
 )
 
 type BlueprintPreparationUseCase struct {
-	initialStatus      initialBlueprintStatusUseCase
-	validation         blueprintSpecValidationUseCase
-	effectiveBlueprint effectiveBlueprintUseCase
-	stateDiff          stateDiffUseCase
-	healthUseCase      ecosystemHealthUseCase
+	initialStatus            initialBlueprintStatusUseCase
+	validation               blueprintSpecValidationUseCase
+	effectiveBlueprint       effectiveBlueprintUseCase
+	stateDiff                stateDiffUseCase
+	healthUseCase            ecosystemHealthUseCase
+	restoreInProgressUseCase restoreInProgressUseCase
 }
 
 func NewBlueprintPreparationUseCase(
@@ -20,13 +21,15 @@ func NewBlueprintPreparationUseCase(
 	effectiveBlueprint effectiveBlueprintUseCase,
 	stateDiff stateDiffUseCase,
 	ecosystemHealthUseCase ecosystemHealthUseCase,
+	restoreInProgressUseCase restoreInProgressUseCase,
 ) BlueprintPreparationUseCase {
 	return BlueprintPreparationUseCase{
-		initialStatus:      initialStatus,
-		validation:         validation,
-		effectiveBlueprint: effectiveBlueprint,
-		stateDiff:          stateDiff,
-		healthUseCase:      ecosystemHealthUseCase,
+		initialStatus:            initialStatus,
+		validation:               validation,
+		effectiveBlueprint:       effectiveBlueprint,
+		stateDiff:                stateDiff,
+		healthUseCase:            ecosystemHealthUseCase,
+		restoreInProgressUseCase: restoreInProgressUseCase,
 	}
 }
 
@@ -59,5 +62,11 @@ func (useCase *BlueprintPreparationUseCase) prepareBlueprint(ctx context.Context
 		// both cases can be handled the same way as the calling method (reconciler) can handle the error type itself.
 		return err
 	}
+
+	err = useCase.restoreInProgressUseCase.CheckRestoreInProgress(ctx)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
