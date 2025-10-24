@@ -94,7 +94,7 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 						crd.ConfigEntry{
 							Key:       "sensitive-config",
 							Sensitive: &trueVar,
-							SecretRef: &crd.SecretReference{
+							SecretRef: &crd.Reference{
 								Name: "mySecret",
 								Key:  "myKey",
 							},
@@ -154,7 +154,7 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 						crd.ConfigEntry{
 							Key:       "sensitive-config",
 							Sensitive: &trueVar,
-							SecretRef: &crd.SecretReference{
+							SecretRef: &crd.Reference{
 								Name: "mySecret",
 								Key:  "myKey",
 							},
