@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/adapter/reconciler"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
@@ -46,7 +46,7 @@ var (
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
-	utilruntime.Must(bpv2.AddToScheme(scheme))
+	utilruntime.Must(bpv3.AddToScheme(scheme))
 	utilruntime.Must(v2.AddToScheme(scheme))
 	// +kubebuilder:scaffold:scheme
 }
@@ -86,7 +86,7 @@ func startOperator(
 		return fmt.Errorf("unable to bootstrap application context: %w", err)
 	}
 
-	err = configureManager(k8sManager, bootstrap.Reconciler)
+	err = configureManager(k8sManager, bootstrap.BlueprintReconciler)
 	if err != nil {
 		return fmt.Errorf("unable to configure manager: %w", err)
 	}
@@ -110,7 +110,7 @@ func NewK8sManager(
 func configureManager(k8sManager controllerManager, blueprintReconciler *reconciler.BlueprintReconciler) error {
 	err := blueprintReconciler.SetupWithManager(k8sManager)
 	if err != nil {
-		return fmt.Errorf("unable to configure reconciler: %w", err)
+		return fmt.Errorf("unable to configure blueprint reconciler: %w", err)
 	}
 
 	err = addChecks(k8sManager)

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
+- [#135] Support for the blueprint mask custom resource.
 - [#129] Reconciliation of the blueprint on changes of dogu-crs, ces-configMaps and ces-secrets
 - [#131] Ignore loglevel changes while debug-mode is active
 
@@ -27,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#121] Upgrade to Golang v1.25.1
 - [#121] Upgrade Makefiles to v10.4.0
 - [#121] *breaking* merge proxy config dogu action into one to simplify the status
+- [#133] updated and added docs for the operator
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore

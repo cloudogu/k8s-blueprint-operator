@@ -45,7 +45,7 @@ var (
 func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action none", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(testCtx, domain.DoguDiff{
@@ -93,7 +93,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 				ecosystem.InstallDogu(postgresqlQualifiedName, &version3211, &volumeSize, proxyConfig, additionalMounts)).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -136,7 +136,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Delete(testCtx, cescommons.SimpleName("postgresql")).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -159,7 +159,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 	t.Run("action uninstall throws NotFoundError when dogu not found", func(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -188,7 +188,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Update(testCtx, dogu).
 			Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		dogu.PauseReconciliation = true // test if it gets reset on update (the dogu in the EXPECT Update call has this to false)
 
@@ -211,40 +211,6 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		assert.Equal(t, version3212, dogu.Version)
 	})
 
-	t.Run("action resetVersion", func(t *testing.T) {
-		dogu := &ecosystem.DoguInstallation{
-			Name:             postgresqlQualifiedName,
-			Version:          version3212, // Reset this version to 3.2.1-1, since it is not installed and expected differently
-			InstalledVersion: version3211,
-		}
-		doguRepoMock := newMockDoguInstallationRepository(t)
-		doguRepoMock.EXPECT().
-			Update(testCtx, dogu).
-			Return(nil)
-
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
-
-		dogu.PauseReconciliation = true // test if it gets reset on update (the dogu in the EXPECT Update call has this to false)
-
-		// when
-		err := sut.applyDoguState(
-			testCtx,
-			domain.DoguDiff{
-				DoguName: "postgresql",
-				Expected: domain.DoguDiffState{
-					Version: &version3211,
-				},
-				NeededActions: []domain.Action{domain.ActionResetVersion},
-			},
-			dogu,
-			domain.BlueprintConfiguration{},
-		)
-
-		// then
-		require.NoError(t, err)
-		assert.Equal(t, version3211, dogu.Version)
-	})
-
 	t.Run("action downgrade", func(t *testing.T) {
 
 		dogu := &ecosystem.DoguInstallation{
@@ -252,7 +218,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version: version3212,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -289,7 +255,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -329,7 +295,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -368,7 +334,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -407,7 +373,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -490,7 +456,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(testCtx, diff, dogu, domain.BlueprintConfiguration{})
@@ -529,7 +495,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, expectedDogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -565,7 +531,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 			Version: version3212,
 		}
 
-		sut := NewDoguInstallationUseCase(nil, nil, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -595,7 +561,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().Update(testCtx, dogu).Return(nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -620,7 +586,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 	t.Run("unknown action", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -642,7 +608,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 	t.Run("should no fail with no actions", func(t *testing.T) {
 		// given
-		sut := NewDoguInstallationUseCase(nil, nil, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, nil, nil, nil, nil)
 
 		// when
 		err := sut.applyDoguState(
@@ -669,7 +635,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, &domain.BlueprintSpec{})
@@ -697,7 +663,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{}, nil)
 
-		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(blueprintSpecRepoMock, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprint)
@@ -729,7 +695,7 @@ func TestDoguInstallationUseCase_ApplyDoguStates(t *testing.T) {
 			},
 		}, nil)
 
-		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil)
+		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
 
 		// when
 		err := sut.ApplyDoguStates(testCtx, blueprint)
@@ -770,6 +736,7 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		}
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConf, nil)
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		sensitveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 		postgresDoguConf := config.DoguConfig{
 			DoguName: postgresqlQualifiedName.SimpleName,
 			Config: config.Config{
@@ -784,11 +751,14 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		}
 		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(postgresDoguConf, nil)
 		doguConfigRepoMock.EXPECT().Get(testCtx, ldapQualifiedName.SimpleName).Return(ldapDoguConf, nil)
+		sensitveDoguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(postgresDoguConf, nil)
+		sensitveDoguConfigRepoMock.EXPECT().Get(testCtx, ldapQualifiedName.SimpleName).Return(ldapDoguConf, nil)
 
 		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitveDoguConfigRepoMock,
 		}
 
 		// when
@@ -850,6 +820,7 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		}
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConf, nil)
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 		doguConf := config.DoguConfig{
 			DoguName: postgresqlQualifiedName.SimpleName,
 			Config: config.Config{
@@ -857,11 +828,13 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 			},
 		}
 		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(doguConf, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(doguConf, nil)
 
 		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitiveDoguConfigRepoMock,
 		}
 
 		// when
@@ -898,11 +871,70 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 			},
 		}
 		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(doguConf, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
+		sensitivbeDoguConf := config.DoguConfig{
+			DoguName: postgresqlQualifiedName.SimpleName,
+			Config: config.Config{
+				LastUpdated: &timeMay,
+			},
+		}
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(sensitivbeDoguConf, nil)
 
 		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitiveDoguConfigRepoMock,
+		}
+
+		// when
+		dogusNotUpToDate, err := useCase.CheckDogusUpToDate(testCtx)
+		// then
+		require.NoError(t, err)
+		assert.Len(t, dogusNotUpToDate, 1)
+		assert.Equal(t, dogusNotUpToDate[0], postgresqlQualifiedName.SimpleName)
+	})
+	t.Run("sensitive dogu config is not up to date", func(t *testing.T) {
+		// given
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			"postgresql": {
+				Name:             postgresqlQualifiedName,
+				Version:          version3211,
+				InstalledVersion: version3211,
+				StartedAt:        timeJune,
+			},
+		}, nil)
+
+		globalConfigRepoMock := newMockGlobalConfigRepository(t)
+		globalConf := config.GlobalConfig{
+			Config: config.Config{
+				LastUpdated: &timeMay,
+			},
+		}
+		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConf, nil)
+		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		doguConf := config.DoguConfig{
+			DoguName: postgresqlQualifiedName.SimpleName,
+			Config: config.Config{
+				LastUpdated: &timeMay,
+			},
+		}
+		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(doguConf, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
+		sensitivbeDoguConf := config.DoguConfig{
+			DoguName: postgresqlQualifiedName.SimpleName,
+			Config: config.Config{
+				LastUpdated: &timeJuly,
+			},
+		}
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(sensitivbeDoguConf, nil)
+
+		useCase := &DoguInstallationUseCase{
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitiveDoguConfigRepoMock,
 		}
 
 		// when
@@ -944,6 +976,7 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		}
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(globalConf, nil)
 		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
 		ldapDoguConf := config.DoguConfig{
 			DoguName: postgresqlQualifiedName.SimpleName,
 			Config: config.Config{
@@ -958,11 +991,14 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		}
 		doguConfigRepoMock.EXPECT().Get(testCtx, ldapQualifiedName.SimpleName).Return(ldapDoguConf, nil)
 		doguConfigRepoMock.EXPECT().Get(testCtx, casQualifiedName.SimpleName).Return(casDoguConf, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, ldapQualifiedName.SimpleName).Return(ldapDoguConf, nil)
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, casQualifiedName.SimpleName).Return(casDoguConf, nil)
 
 		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitiveDoguConfigRepoMock,
 		}
 
 		// when
@@ -980,13 +1016,8 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().GetAll(testCtx).Return(nil, assert.AnError)
 
-		globalConfigRepoMock := newMockGlobalConfigRepository(t)
-		doguConfigRepoMock := newMockDoguConfigRepository(t)
-
 		useCase := &DoguInstallationUseCase{
-			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
-			globalConfigRepo: globalConfigRepoMock,
+			doguRepo: doguRepoMock,
 		}
 
 		// when
@@ -1002,11 +1033,9 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 
 		globalConfigRepoMock := newMockGlobalConfigRepository(t)
 		globalConfigRepoMock.EXPECT().Get(testCtx).Return(config.GlobalConfig{}, assert.AnError)
-		doguConfigRepoMock := newMockDoguConfigRepository(t)
 
 		useCase := &DoguInstallationUseCase{
 			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
 			globalConfigRepo: globalConfigRepoMock,
 		}
 
@@ -1035,8 +1064,40 @@ func TestDoguInstallationUseCase_CheckDogusUpToDate(t *testing.T) {
 
 		useCase := &DoguInstallationUseCase{
 			doguRepo:         doguRepoMock,
-			doguConfigRepo:   doguConfigRepoMock,
 			globalConfigRepo: globalConfigRepoMock,
+			doguConfigRepo:   doguConfigRepoMock,
+		}
+
+		// when
+		dogusNotUpToDate, err := useCase.CheckDogusUpToDate(testCtx)
+		// then
+		require.Error(t, err)
+		require.Nil(t, dogusNotUpToDate)
+	})
+	t.Run("error on sensitive dogu config Get error", func(t *testing.T) {
+		// given
+		doguRepoMock := newMockDoguInstallationRepository(t)
+		doguRepoMock.EXPECT().GetAll(testCtx).Return(map[cescommons.SimpleName]*ecosystem.DoguInstallation{
+			"postgresql": {
+				Name:             postgresqlQualifiedName,
+				Version:          version3211,
+				InstalledVersion: version3211,
+				StartedAt:        timeJuly,
+			},
+		}, nil)
+
+		globalConfigRepoMock := newMockGlobalConfigRepository(t)
+		globalConfigRepoMock.EXPECT().Get(testCtx).Return(config.GlobalConfig{}, nil)
+		doguConfigRepoMock := newMockDoguConfigRepository(t)
+		doguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(config.DoguConfig{}, nil)
+		sensitiveDoguConfigRepoMock := newMockSensitiveDoguConfigRepository(t)
+		sensitiveDoguConfigRepoMock.EXPECT().Get(testCtx, postgresqlQualifiedName.SimpleName).Return(config.DoguConfig{}, assert.AnError)
+
+		useCase := &DoguInstallationUseCase{
+			doguRepo:                doguRepoMock,
+			globalConfigRepo:        globalConfigRepoMock,
+			doguConfigRepo:          doguConfigRepoMock,
+			sensitiveDoguConfigRepo: sensitiveDoguConfigRepoMock,
 		}
 
 		// when

@@ -181,10 +181,6 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 
 	if expected.Version != nil && actual.Version != nil && expected.Version.IsNewerThan(*actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
-	} else if expected.Version != nil && actual.Version != nil && actual.InstalledVersion != nil &&
-		!expected.Version.IsEqualTo(*actual.Version) && expected.Version.IsNewerOrEqualThan(*actual.InstalledVersion) {
-		// if the dogu spec version is newer than the installed and expected version, reset if it is no downgrade
-		neededActions = append(neededActions, ActionResetVersion)
 	} else if expected.Version != nil && actual.Version.IsNewerThan(*expected.Version) {
 		// if downgrades are allowed is not important here.
 		// Downgrades can be rejected later, so forcing downgrades via a flag can be implemented without changing this code here.

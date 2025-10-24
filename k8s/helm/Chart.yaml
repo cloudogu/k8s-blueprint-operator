@@ -24,6 +24,6 @@ version: 0.0.0-replaceme
 appVersion: "0.0.0-replaceme"
 
 annotations:
-  # TODO: need to update Dogu-CRD and blueprint-CRD dependencies
-  "k8s.cloudogu.com/ces-dependency/k8s-blueprint-operator-crd": ">=1.3.0-0"
-  "k8s.cloudogu.com/ces-dependency/k8s-dogu-operator-crd": ">=2.8.0-0, <3.0.0-0"
+  # we need the -0 as otherwise we cannot depend on (and therefore test) pre-release versions
+  "k8s.cloudogu.com/ces-dependency/k8s-blueprint-operator-crd": ">=3.0.0-0, <4.0.0"
+  "k8s.cloudogu.com/ces-dependency/k8s-dogu-operator-crd": ">=2.10.0-0, <3.0.0"

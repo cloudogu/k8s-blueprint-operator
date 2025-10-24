@@ -2,19 +2,20 @@ package domain
 
 import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-registry-lib/config"
 )
 
-type ConfigAction string
+type ConfigAction = bpv3.ConfigAction
 
 const (
 	// ConfigActionNone means that nothing is to do for this config key
-	ConfigActionNone ConfigAction = "none"
+	ConfigActionNone = bpv3.ConfigActionNone
 	// ConfigActionSet means that the config key needs to be set as given
-	ConfigActionSet ConfigAction = "set"
+	ConfigActionSet = bpv3.ConfigActionSet
 	// ConfigActionRemove means that the config key needs to be deleted
-	ConfigActionRemove ConfigAction = "remove"
+	ConfigActionRemove = bpv3.ConfigActionRemove
 )
 
 func countByAction(configActions []ConfigAction) map[ConfigAction]int {

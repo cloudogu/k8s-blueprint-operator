@@ -6,20 +6,19 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	bpv2 "github.com/cloudogu/k8s-blueprint-lib/v2/api/v2"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 )
 
 var testCtx = context.Background()
@@ -68,10 +67,7 @@ func createScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
 
 	scheme := runtime.NewScheme()
-	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v1")
-	assert.NoError(t, err)
-
-	scheme.AddKnownTypes(gv, &bpv2.Blueprint{})
+	scheme.AddKnownTypes(bpv3.GroupVersion, &bpv3.Blueprint{}, &bpv3.BlueprintMask{})
 	return scheme
 }
 
