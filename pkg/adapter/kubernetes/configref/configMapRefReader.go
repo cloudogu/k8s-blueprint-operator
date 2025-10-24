@@ -63,7 +63,7 @@ func (reader *ConfigMapRefReader) loadKeysFromConfigMaps(
 }
 
 func (reader *ConfigMapRefReader) loadKeyFromConfigMap(configMap *v1.ConfigMap, key string) (common.DoguConfigValue, error) {
-	// do not use the StringData field, it is a write-only field in K8s
+
 	value, exists := configMap.Data[key]
 	if !exists {
 		return "", domainservice.NewNotFoundError(
