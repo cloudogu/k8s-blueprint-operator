@@ -7,7 +7,6 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	libconfig "github.com/cloudogu/k8s-registry-lib/config"
-	"github.com/go-logr/logr"
 )
 
 type Config struct {
@@ -83,11 +82,10 @@ func (config Config) GetSensitiveConfigReferences() map[common.DoguConfigKey]Sen
 	return refs
 }
 
-func (config Config) GetConfigReferences(logger logr.Logger) map[common.DoguConfigKey]ConfigValueRef {
+func (config Config) GetConfigReferences() map[common.DoguConfigKey]ConfigValueRef {
 	refs := map[common.DoguConfigKey]ConfigValueRef{}
 	for doguName, doguConfig := range config.Dogus {
 		for _, entry := range doguConfig {
-			logger.Error(fmt.Errorf(""), fmt.Sprintf("dogu: %s, entry: %q", doguName, entry))
 			if entry.ConfigRef != nil {
 				key := common.DoguConfigKey{
 					DoguName: doguName,

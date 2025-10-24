@@ -146,24 +146,18 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 }
 
 func (useCase *StateDiffUseCase) loadReferencedConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, map[common.DoguConfigKey]common.DoguConfigValue, error) {
-	logger := log.FromContext(ctx).WithName("StateDiffUseCase.loadReferencedConfig")
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
 		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
 	)
 	if err != nil {
 		return nil, nil, err
 	}
-	configRef := blueprint.EffectiveBlueprint.Config.GetConfigReferences(logger)
+	configRef := blueprint.EffectiveBlueprint.Config.GetConfigReferences()
 	referencedConfig, err := useCase.configRefReader.GetValues(
 		ctx, configRef,
 	)
 	if err != nil {
 		return nil, nil, err
-	}
-	if referencedConfig != nil {
-		logger.Error(err, fmt.Sprintf("Config found for %q: %q", configRef, referencedConfig))
-	} else {
-		logger.Error(err, "Config not found!")
 	}
 	return referencedSensitiveConfig, referencedConfig, nil
 }
