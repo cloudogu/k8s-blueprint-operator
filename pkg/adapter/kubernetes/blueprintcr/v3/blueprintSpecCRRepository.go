@@ -82,6 +82,7 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 		},
 	}
 
+	// mask could be nil, if there is non declared
 	maskManifest, err := repo.getMaskManifest(ctx, blueprintId, blueprintCR)
 	if err != nil {
 		return nil, err
@@ -99,6 +100,10 @@ func (repo *blueprintSpecRepo) GetById(ctx context.Context, blueprintId string) 
 }
 
 func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId string, blueprintCR *bpv3.Blueprint) (*bpv3.BlueprintMaskManifest, error) {
+	if blueprintCR.Spec.MaskSource == nil {
+		return nil, nil
+	}
+
 	if blueprintCR.Spec.MaskSource.Manifest != nil && blueprintCR.Spec.MaskSource.CrRef != nil {
 		err := &domain.InvalidBlueprintError{Message: "blueprint mask and mask ref cannot be set at the same time"}
 		invalidErrorEvent := domain.BlueprintSpecInvalidEvent{ValidationError: err}
