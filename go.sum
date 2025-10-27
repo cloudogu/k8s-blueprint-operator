@@ -20,6 +20,8 @@ github.com/cloudogu/cesapp-lib v0.18.1 h1:LMdGktIefm/PuhdPqpLTPvjY1smO06EEGBbRSA
 github.com/cloudogu/cesapp-lib v0.18.1/go.mod h1:J05eXFxnz4enZblABlmiVTZaUtJ+LIhlJ2UF6l9jpDw=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251023135924-ab35c661e8ff h1:bDnFiKscc9ARUJDkOj1I4DqEean/df1VgGYmOdWmh+o=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251023135924-ab35c661e8ff/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
+github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251027130412-81a09b228be0 h1:XyHiEbXC5uFuQ8GhsZllNGvQ/lUycrSEX0DGrvyEfHA=
+github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251027130412-81a09b228be0/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0 h1:XDWrVVmQ1aJ00aisCNQ1nJqOHVK9LB3q92swJFMZEFg=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
 github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0 h1:geZjXwWQY8d8aEWA9l2is/DwlADdOHQveBokPK63XH0=
