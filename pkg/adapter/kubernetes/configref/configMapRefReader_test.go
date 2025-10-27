@@ -31,6 +31,10 @@ var (
 		Key:      "credentials/password",
 	}
 
+	usernameKey = common.GlobalConfigKey("credentials/username")
+	passwordKey = common.GlobalConfigKey("credentials/password")
+	missingKey  = common.GlobalConfigKey("credentials/missing")
+
 	ldapConfigMap = &corev1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ldap_credentials",
@@ -143,5 +147,78 @@ func TestConfigMapRefReader_GetValues(t *testing.T) {
 		assert.ErrorContains(t, err, "could not load config via references")
 		assert.ErrorContains(t, err, "referenced configMap \"ldap_credentials\" does not exist")
 		assert.ErrorContains(t, err, "referenced key \"password\" in configMap \"postgres_credentials\" does not exist")
+	})
+}
+
+func TestConfigMapRefReader_GetGlobalValues(t *testing.T) {
+	t.Run("nothing to load", func(t *testing.T) {
+		configMapMock := newMockConfigMapClient(t)
+		refReader := NewConfigMapRefReader(configMapMock)
+
+		result, err := refReader.GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{})
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.GlobalConfigValue{}, result)
+	})
+	t.Run("nothing to load with nil input", func(t *testing.T) {
+		configMapMock := newMockConfigMapClient(t)
+		refReader := NewConfigMapRefReader(configMapMock)
+
+		result, err := refReader.GetGlobalValues(testCtx, nil)
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.GlobalConfigValue{}, result)
+	})
+	t.Run("load config maps with keys", func(t *testing.T) {
+		configMapMock := newMockConfigMapClient(t)
+		configMapMock.EXPECT().
+			Get(testCtx, "postgres_credentials", metav1.GetOptions{}).
+			Return(redmineConfigMap, nil)
+
+		refReader := NewConfigMapRefReader(configMapMock)
+
+		result, err := refReader.GetGlobalValues(testCtx,
+			map[common.GlobalConfigKey]domain.ConfigValueRef{
+				usernameKey: {
+					ConfigMapName: redmineConfigMap.Name,
+					ConfigMapKey:  "username",
+				},
+				passwordKey: {
+					ConfigMapName: redmineConfigMap.Name,
+					ConfigMapKey:  "password",
+				},
+			},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.SensitiveDoguConfigValue{
+			usernameKey: "user1",
+			passwordKey: "123456",
+		}, result)
+	})
+	t.Run("one key missing", func(t *testing.T) {
+		configMapMock := newMockConfigMapClient(t)
+		configMapMock.EXPECT().
+			Get(testCtx, "postgres_credentials", metav1.GetOptions{}).
+			Return(redmineConfigMap, nil)
+
+		refReader := NewConfigMapRefReader(configMapMock)
+
+		_, err := refReader.GetGlobalValues(testCtx,
+			map[common.GlobalConfigKey]domain.ConfigValueRef{
+				usernameKey: {
+					ConfigMapName: redmineConfigMap.Name,
+					ConfigMapKey:  "username",
+				},
+				passwordKey: {
+					ConfigMapName: redmineConfigMap.Name,
+					ConfigMapKey:  "password",
+				},
+				missingKey: {
+					ConfigMapName: redmineConfigMap.Name,
+					ConfigMapKey:  "missing",
+				},
+			},
+		)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "could not load config via references")
+		assert.ErrorContains(t, err, "referenced key \"missing\" in configMap \"postgres_credentials\" does not exist")
 	})
 }
