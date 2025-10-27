@@ -248,7 +248,7 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		// given
 		blueprintClientMock := newMockBlueprintInterface(t)
 		maskClientMock := newMockBlueprintMaskInterface(t)
-		mask := &bpv3.BlueprintMask{Spec: bpv3.BlueprintMaskSpec{BlueprintMaskManifest: &bpv3.BlueprintMaskManifest{}}}
+		mask := &bpv3.BlueprintMask{Spec: bpv3.BlueprintMaskSpec{BlueprintMaskManifest: bpv3.BlueprintMaskManifest{}}}
 		maskClientMock.EXPECT().Get(ctx, "my-blueprint-mask", metav1.GetOptions{}).Return(mask, nil)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)

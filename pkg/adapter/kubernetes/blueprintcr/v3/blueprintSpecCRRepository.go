@@ -122,7 +122,7 @@ func (repo *blueprintSpecRepo) getMaskManifest(ctx context.Context, blueprintId 
 			}
 		}
 
-		maskManifest = blueprintMask.Spec.BlueprintMaskManifest
+		maskManifest = &blueprintMask.Spec.BlueprintMaskManifest
 	}
 	return maskManifest, nil
 }
