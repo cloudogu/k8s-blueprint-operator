@@ -38,12 +38,50 @@ func (reader *SecretRefReader) GetValues(ctx context.Context, refs map[common.Do
 	return sensitiveConfig, nil
 }
 
+func (reader *SecretRefReader) GetGlobalValues(ctx context.Context, refs map[common.GlobalConfigKey]domain.SensitiveValueRef) (map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
+	secretsByName, secretErrors := reader.loadNeededSecrets(ctx, maps.Values(refs))
+	sensitiveConfig, keyErrors := reader.loadGlobalKeysFromSecrets(refs, secretsByName)
+
+	// combine errors so that the user gets info about not found secrets and missing keys in existing secrets
+	err := errors.Join(secretErrors, keyErrors)
+	if err != nil {
+		err = fmt.Errorf("could not load sensitive config via references: %w", err)
+		return nil, err
+	}
+
+	return sensitiveConfig, nil
+}
+
 func (reader *SecretRefReader) loadKeysFromSecrets(
 	refs map[common.DoguConfigKey]domain.SensitiveValueRef,
 	secretsByName map[string]*v1.Secret,
 ) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, error) {
 	var errs []error
 	loadedConfig := map[common.DoguConfigKey]common.SensitiveDoguConfigValue{}
+
+	for configKey, ref := range refs {
+		secret, found := secretsByName[ref.SecretName]
+		if !found {
+			// no error here, because we already have an error for missing secrets in the loadNeededSecrets function
+			// we want error messages for missing keys too, even if a secret does not exist
+			continue
+		}
+		sensitiveConfigValue, err := reader.loadKeyFromSecret(secret, ref.SecretKey)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		loadedConfig[configKey] = sensitiveConfigValue
+	}
+	return loadedConfig, errors.Join(errs...)
+}
+
+func (reader *SecretRefReader) loadGlobalKeysFromSecrets(
+	refs map[common.GlobalConfigKey]domain.SensitiveValueRef,
+	secretsByName map[string]*v1.Secret,
+) (map[common.GlobalConfigKey]common.SensitiveDoguConfigValue, error) {
+	var errs []error
+	loadedConfig := map[common.GlobalConfigKey]common.SensitiveDoguConfigValue{}
 
 	for configKey, ref := range refs {
 		secret, found := secretsByName[ref.SecretName]

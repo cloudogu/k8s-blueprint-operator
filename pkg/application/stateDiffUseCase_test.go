@@ -65,10 +65,17 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
+
 		debugModeRepoMock := newMockDebugModeRepository(t)
 
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, sensitiveConfigRefReaderMock, configRefReaderMock, debugModeRepoMock)
@@ -101,10 +108,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, sensitiveConfigRefReaderMock, configRefReaderMock, debugModeRepoMock)
@@ -147,10 +160,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, sensitiveConfigRefReaderMock, configRefReaderMock, debugModeRepoMock)
@@ -188,10 +207,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 
 		sut := NewStateDiffUseCase(nil, doguInstallRepoMock, globalConfigRepoMock, doguConfigRepoMock, sensitiveDoguConfigRepoMock, sensitiveConfigRefReaderMock, configRefReaderMock, debugModeRepoMock)
@@ -232,10 +257,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, nil)
 
@@ -307,10 +338,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, nil)
 
@@ -405,10 +442,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, nil)
 
@@ -488,12 +531,18 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{
 				ldapConfigKey1: config.Value(val3),
 			}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, nil)
 
@@ -590,10 +639,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 			Return(map[common.DoguConfigKey]config.Value{
 				ldapConfigKey1: config.Value(val3),
 			}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, nil)
 
@@ -651,10 +706,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, &domainservice.NotFoundError{})
 
@@ -716,12 +777,18 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{
 				ldapConfigKey1: config.Value(val2),
 			}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugMode := ecosystem.DebugMode{Phase: "WaitForRollback"}
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(&debugMode, nil)
@@ -792,6 +859,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
@@ -799,6 +869,9 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 				ldapConfigKeyLogging1: config.Value(val1),
 				ldapConfigKey1:        config.Value(val2),
 			}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugMode := ecosystem.DebugMode{Phase: ecosystem.DebugModeStatusComplete}
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(&debugMode, nil)
@@ -855,10 +928,16 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 		sensitiveConfigRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.SensitiveValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		sensitiveConfigRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		configRefReaderMock := newMockConfigRefReader(t)
 		configRefReaderMock.EXPECT().
 			GetValues(testCtx, map[common.DoguConfigKey]domain.ConfigValueRef{}).
 			Return(map[common.DoguConfigKey]config.Value{}, nil)
+		configRefReaderMock.EXPECT().
+			GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.ConfigValueRef{}).
+			Return(map[common.GlobalConfigKey]config.Value{}, nil)
 		debugModeRepoMock := newMockDebugModeRepository(t)
 		debugModeRepoMock.EXPECT().GetSingleton(testCtx).Return(nil, &domainservice.InternalError{Message: "test-error"})
 

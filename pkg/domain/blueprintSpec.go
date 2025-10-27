@@ -276,6 +276,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 	ecosystemState ecosystem.EcosystemState,
 	referencedSensitiveConfig map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 	referencedConfig map[common.DoguConfigKey]common.DoguConfigValue,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
 	isDebugModeActive bool,
 ) error {
 	doguDiffs := determineDoguDiffs(spec.EffectiveBlueprint.Dogus, ecosystemState.InstalledDogus)
@@ -290,6 +292,8 @@ func (spec *BlueprintSpec) DetermineStateDiff(
 		ecosystemState.SensitiveConfigByDogu,
 		referencedSensitiveConfig,
 		referencedConfig,
+		referencedSensitiveGlobalConfig,
+		referencedGlobalConfig,
 	)
 
 	spec.StateDiff = StateDiff{

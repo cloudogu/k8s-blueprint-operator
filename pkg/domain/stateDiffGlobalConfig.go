@@ -1,6 +1,9 @@
 package domain
 
 import (
+	"encoding/base64"
+	"fmt"
+
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -65,14 +68,21 @@ func newGlobalConfigEntryDiff(
 func determineGlobalConfigDiffs(
 	config GlobalConfigEntries,
 	actualConfig config.GlobalConfig,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
 	for _, expectedConfig := range config {
+		println(fmt.Sprintf("Key: %s", expectedConfig.Key))
 		var actualValue *common.GlobalConfigValue
 		actualEntry, actualExists := actualConfig.Get(expectedConfig.Key)
 		if actualExists {
 			actualValue = &actualEntry
+		}
+		referencedValue := getReferencedGlobalConfigValue(expectedConfig.Key, referencedSensitiveGlobalConfig, referencedGlobalConfig)
+		if referencedValue != nil {
+			expectedConfig.Value = referencedValue
 		}
 		diff := newGlobalConfigEntryDiff(expectedConfig.Key, actualValue, actualExists, expectedConfig.Value, !expectedConfig.Absent)
 		// only add diff if there are changes
@@ -81,4 +91,21 @@ func determineGlobalConfigDiffs(
 		}
 	}
 	return configDiffs
+}
+
+func getReferencedGlobalConfigValue(
+	key common.GlobalConfigKey,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+) *common.GlobalConfigValue {
+	value, exists := referencedSensitiveGlobalConfig[key]
+	if exists {
+		value = common.GlobalConfigValue(base64.StdEncoding.EncodeToString([]byte(value)))
+		return &value
+	}
+	value, exists = referencedGlobalConfig[key]
+	if exists {
+		return &value
+	}
+	return nil
 }

@@ -26,6 +26,65 @@ func (_m *mockConfigRefReader) EXPECT() *mockConfigRefReader_Expecter {
 	return &mockConfigRefReader_Expecter{mock: &_m.Mock}
 }
 
+// GetGlobalValues provides a mock function with given fields: ctx, refs
+func (_m *mockConfigRefReader) GetGlobalValues(ctx context.Context, refs map[config.Key]domain.ConfigValueRef) (map[config.Key]config.Value, error) {
+	ret := _m.Called(ctx, refs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGlobalValues")
+	}
+
+	var r0 map[config.Key]config.Value
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, map[config.Key]domain.ConfigValueRef) (map[config.Key]config.Value, error)); ok {
+		return rf(ctx, refs)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, map[config.Key]domain.ConfigValueRef) map[config.Key]config.Value); ok {
+		r0 = rf(ctx, refs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[config.Key]config.Value)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, map[config.Key]domain.ConfigValueRef) error); ok {
+		r1 = rf(ctx, refs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// mockConfigRefReader_GetGlobalValues_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGlobalValues'
+type mockConfigRefReader_GetGlobalValues_Call struct {
+	*mock.Call
+}
+
+// GetGlobalValues is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refs map[config.Key]domain.ConfigValueRef
+func (_e *mockConfigRefReader_Expecter) GetGlobalValues(ctx interface{}, refs interface{}) *mockConfigRefReader_GetGlobalValues_Call {
+	return &mockConfigRefReader_GetGlobalValues_Call{Call: _e.mock.On("GetGlobalValues", ctx, refs)}
+}
+
+func (_c *mockConfigRefReader_GetGlobalValues_Call) Run(run func(ctx context.Context, refs map[config.Key]domain.ConfigValueRef)) *mockConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(map[config.Key]domain.ConfigValueRef))
+	})
+	return _c
+}
+
+func (_c *mockConfigRefReader_GetGlobalValues_Call) Return(_a0 map[config.Key]config.Value, _a1 error) *mockConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *mockConfigRefReader_GetGlobalValues_Call) RunAndReturn(run func(context.Context, map[config.Key]domain.ConfigValueRef) (map[config.Key]config.Value, error)) *mockConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetValues provides a mock function with given fields: ctx, refs
 func (_m *mockConfigRefReader) GetValues(ctx context.Context, refs map[common.DoguConfigKey]domain.ConfigValueRef) (map[common.DoguConfigKey]config.Value, error) {
 	ret := _m.Called(ctx, refs)

@@ -26,6 +26,65 @@ func (_m *MockSensitiveConfigRefReader) EXPECT() *MockSensitiveConfigRefReader_E
 	return &MockSensitiveConfigRefReader_Expecter{mock: &_m.Mock}
 }
 
+// GetGlobalValues provides a mock function with given fields: ctx, refs
+func (_m *MockSensitiveConfigRefReader) GetGlobalValues(ctx context.Context, refs map[config.Key]domain.SensitiveValueRef) (map[config.Key]config.Value, error) {
+	ret := _m.Called(ctx, refs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetGlobalValues")
+	}
+
+	var r0 map[config.Key]config.Value
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, map[config.Key]domain.SensitiveValueRef) (map[config.Key]config.Value, error)); ok {
+		return rf(ctx, refs)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, map[config.Key]domain.SensitiveValueRef) map[config.Key]config.Value); ok {
+		r0 = rf(ctx, refs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(map[config.Key]config.Value)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, map[config.Key]domain.SensitiveValueRef) error); ok {
+		r1 = rf(ctx, refs)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockSensitiveConfigRefReader_GetGlobalValues_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetGlobalValues'
+type MockSensitiveConfigRefReader_GetGlobalValues_Call struct {
+	*mock.Call
+}
+
+// GetGlobalValues is a helper method to define mock.On call
+//   - ctx context.Context
+//   - refs map[config.Key]domain.SensitiveValueRef
+func (_e *MockSensitiveConfigRefReader_Expecter) GetGlobalValues(ctx interface{}, refs interface{}) *MockSensitiveConfigRefReader_GetGlobalValues_Call {
+	return &MockSensitiveConfigRefReader_GetGlobalValues_Call{Call: _e.mock.On("GetGlobalValues", ctx, refs)}
+}
+
+func (_c *MockSensitiveConfigRefReader_GetGlobalValues_Call) Run(run func(ctx context.Context, refs map[config.Key]domain.SensitiveValueRef)) *MockSensitiveConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(map[config.Key]domain.SensitiveValueRef))
+	})
+	return _c
+}
+
+func (_c *MockSensitiveConfigRefReader_GetGlobalValues_Call) Return(_a0 map[config.Key]config.Value, _a1 error) *MockSensitiveConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockSensitiveConfigRefReader_GetGlobalValues_Call) RunAndReturn(run func(context.Context, map[config.Key]domain.SensitiveValueRef) (map[config.Key]config.Value, error)) *MockSensitiveConfigRefReader_GetGlobalValues_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetValues provides a mock function with given fields: ctx, refs
 func (_m *MockSensitiveConfigRefReader) GetValues(ctx context.Context, refs map[common.DoguConfigKey]domain.SensitiveValueRef) (map[common.DoguConfigKey]config.Value, error) {
 	ret := _m.Called(ctx, refs)

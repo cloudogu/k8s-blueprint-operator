@@ -98,6 +98,26 @@ func (config Config) GetConfigReferences() map[common.DoguConfigKey]ConfigValueR
 	return refs
 }
 
+func (config Config) GetSensitiveGlobalConfigReferences() map[common.GlobalConfigKey]SensitiveValueRef {
+	refs := map[common.GlobalConfigKey]SensitiveValueRef{}
+	for _, entry := range config.Global {
+		if entry.SecretRef != nil {
+			refs[entry.Key] = *entry.SecretRef
+		}
+	}
+	return refs
+}
+
+func (config Config) GetGlobalConfigReferences() map[common.GlobalConfigKey]ConfigValueRef {
+	refs := map[common.GlobalConfigKey]ConfigValueRef{}
+	for _, entry := range config.Global {
+		if entry.ConfigRef != nil {
+			refs[entry.Key] = *entry.ConfigRef
+		}
+	}
+	return refs
+}
+
 func (config Config) GetSensitiveDoguConfigKeys() []common.DoguConfigKey {
 	return config.getDoguKeysBySensitivity(true)
 }
@@ -237,10 +257,6 @@ func (config ConfigEntry) validateGlobal() error {
 
 	if config.Key == "" {
 		errs = append(errs, fmt.Errorf("key for global config should not be empty"))
-	}
-
-	if config.Sensitive || config.SecretRef != nil {
-		errs = append(errs, fmt.Errorf("global entries cannot be sensitive"))
 	}
 
 	if config.Absent {

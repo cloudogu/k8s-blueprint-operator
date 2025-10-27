@@ -38,12 +38,50 @@ func (reader *ConfigMapRefReader) GetValues(ctx context.Context, refs map[common
 	return config, nil
 }
 
+func (reader *ConfigMapRefReader) GetGlobalValues(ctx context.Context, refs map[common.GlobalConfigKey]domain.ConfigValueRef) (map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
+	configMapsByName, configMapErrors := reader.loadNeededConfigMaps(ctx, maps.Values(refs))
+	config, keyErrors := reader.loadGlobalKeysFromConfigMaps(refs, configMapsByName)
+
+	// combine errors so that the user gets info about not found configMaps and missing keys in existing configMaps
+	err := errors.Join(configMapErrors, keyErrors)
+	if err != nil {
+		err = fmt.Errorf("could not load config via references: %w", err)
+		return nil, err
+	}
+
+	return config, nil
+}
+
 func (reader *ConfigMapRefReader) loadKeysFromConfigMaps(
 	refs map[common.DoguConfigKey]domain.ConfigValueRef,
 	configMapsByName map[string]*v1.ConfigMap,
 ) (map[common.DoguConfigKey]common.DoguConfigValue, error) {
 	var errs []error
 	loadedConfig := map[common.DoguConfigKey]common.DoguConfigValue{}
+
+	for configKey, ref := range refs {
+		configMap, found := configMapsByName[ref.ConfigMapName]
+		if !found {
+			// no error here, because we already have an error for missing configMaps in the loadNeededConfigMaps function
+			// we want error messages for missing keys too, even if a configMap does not exist
+			continue
+		}
+		configValue, err := reader.loadKeyFromConfigMap(configMap, ref.ConfigMapKey)
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		loadedConfig[configKey] = configValue
+	}
+	return loadedConfig, errors.Join(errs...)
+}
+
+func (reader *ConfigMapRefReader) loadGlobalKeysFromConfigMaps(
+	refs map[common.GlobalConfigKey]domain.ConfigValueRef,
+	configMapsByName map[string]*v1.ConfigMap,
+) (map[common.GlobalConfigKey]common.DoguConfigValue, error) {
+	var errs []error
+	loadedConfig := map[common.GlobalConfigKey]common.DoguConfigValue{}
 
 	for configKey, ref := range refs {
 		configMap, found := configMapsByName[ref.ConfigMapName]
