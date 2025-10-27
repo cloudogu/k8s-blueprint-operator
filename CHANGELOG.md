@@ -42,6 +42,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Ecosystem-Core-Chart has now the resonsibility of components
 - [#121] *breaking* remove watching the health state of components in the ecosystem
 
+### Fixed
+- [#141] fix nilpointer with missing blueprint mask
+
 ## [v2.8.0] - 2025-09-15
 ### Changed
 - [#125] ignore nginx dependencies
