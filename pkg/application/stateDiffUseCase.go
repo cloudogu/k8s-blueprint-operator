@@ -146,8 +146,9 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 }
 
 func (useCase *StateDiffUseCase) loadReferencedDoguConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, map[common.DoguConfigKey]common.DoguConfigValue, error) {
+	secretRef := blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences()
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
-		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
+		ctx, secretRef,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -163,8 +164,9 @@ func (useCase *StateDiffUseCase) loadReferencedDoguConfig(ctx context.Context, b
 }
 
 func (useCase *StateDiffUseCase) loadReferencedGlobalConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.GlobalConfigKey]common.GlobalConfigValue, map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
+	secretRef := blueprint.EffectiveBlueprint.Config.GetSensitiveGlobalConfigReferences()
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetGlobalValues(
-		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveGlobalConfigReferences(),
+		ctx, secretRef,
 	)
 	if err != nil {
 		return nil, nil, err

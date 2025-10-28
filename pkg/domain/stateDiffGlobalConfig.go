@@ -2,7 +2,6 @@ package domain
 
 import (
 	"encoding/base64"
-	"fmt"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
@@ -74,7 +73,6 @@ func determineGlobalConfigDiffs(
 	var configDiffs []GlobalConfigEntryDiff
 
 	for _, expectedConfig := range config {
-		println(fmt.Sprintf("Key: %s", expectedConfig.Key))
 		var actualValue *common.GlobalConfigValue
 		actualEntry, actualExists := actualConfig.Get(expectedConfig.Key)
 		if actualExists {

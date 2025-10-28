@@ -20,14 +20,15 @@ type ConfigEntry struct {
 	// Absent indicates whether this key should be deleted (true) or set (false)
 	Absent bool
 	// Value is used for regular (non-sensitive) configuration entries
-	// Mutually exclusive with SecretRef
+	// Mutually exclusive with SecretRef and ConfigRef
 	Value *libconfig.Value
 	// Sensitive indicates whether this config is sensitive and should be stored securely (true) or not (false)
 	Sensitive bool
 	// SecretRef is used for sensitive configuration entries
-	// Mutually exclusive with Value
+	// Mutually exclusive with Value and ConfigRef
 	SecretRef *SensitiveValueRef
 	// ConfigRef is used for configuration entries
+	// Mutually exclusive with Value and SecretRef
 	ConfigRef *ConfigValueRef
 }
 
@@ -49,7 +50,7 @@ type ConfigValueRef struct {
 	// ConfigMapName is the name of the config map, from which the config key should be loaded.
 	// The config map must be in the same namespace.
 	ConfigMapName string `json:"configMapName"`
-	// ConfigMapKey is the name of the key within the config map given by SecretName.
+	// ConfigMapKey is the name of the key within the config map given by ConfigMapName.
 	// The value is used as the value for the config key.
 	ConfigMapKey string `json:"configMapKey"`
 }

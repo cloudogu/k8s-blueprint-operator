@@ -267,6 +267,15 @@ func TestDoguConfig_validate(t *testing.T) {
 		err := config.validate("dogu1")
 		assert.NoError(t, err)
 	})
+	t.Run("No secret, no configmap and novalue", func(t *testing.T) {
+		config := DoguConfigEntries{
+			{
+				Key: "my/key1",
+			},
+		}
+		err := config.validate("dogu1")
+		assert.NoError(t, err)
+	})
 }
 
 func TestConfig_validate(t *testing.T) {
