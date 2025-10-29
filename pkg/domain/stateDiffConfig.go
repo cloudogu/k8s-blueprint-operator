@@ -40,7 +40,7 @@ func determineConfigDiffs(
 	map[cescommons.SimpleName]SensitiveDoguConfigDiffs,
 	GlobalConfigDiffs,
 ) {
-	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu, referencedConfig),
+	return determineDogusConfigDiffs(blueprintConfig.Dogus, configByDogu, referencedConfig, referencedSensitiveConfig),
 		determineSensitiveDogusConfigDiffs(blueprintConfig.Dogus, SensitiveConfigByDogu, referencedSensitiveConfig),
 		determineGlobalConfigDiffs(blueprintConfig.Global, globalConfig, referencedSensitiveGlobalConfig, referencedGlobalConfig)
 }
@@ -49,10 +49,11 @@ func determineDogusConfigDiffs(
 	blueprintDoguConfigs map[cescommons.SimpleName]DoguConfigEntries,
 	configByDogu map[cescommons.SimpleName]config.DoguConfig,
 	referencedValues map[common.DoguConfigKey]common.DoguConfigValue,
+	referencedSensitiveValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 ) map[cescommons.SimpleName]DoguConfigDiffs {
 	var diffsPerDogu map[cescommons.SimpleName]DoguConfigDiffs
 	for doguName, blueprintDoguConfig := range blueprintDoguConfigs {
-		setConfigValues(doguName, blueprintDoguConfig, referencedValues)
+		setConfigValues(doguName, blueprintDoguConfig, referencedValues, referencedSensitiveValues)
 		configDiffs := determineDoguConfigDiffs(doguName, blueprintDoguConfig, configByDogu, false)
 		if len(configDiffs) > 0 {
 			if diffsPerDogu == nil {
@@ -96,13 +97,14 @@ func setSensitiveConfigValues(doguName cescommons.SimpleName, configEntries Dogu
 			// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
 			sensitiveValue := referencedValues[key]
 			configEntries[i].Value = &sensitiveValue
+			configEntries[i].SecretRef = nil
 		}
 	}
 }
 
 // setConfigValues maps the referenced values to normal dogu config,
 // so that the stateDiff can handle referenced dogu config the same way as normal dogu config
-func setConfigValues(doguName cescommons.SimpleName, configEntries DoguConfigEntries, referencedValues map[common.DoguConfigKey]common.DoguConfigValue) {
+func setConfigValues(doguName cescommons.SimpleName, configEntries DoguConfigEntries, referencedValues map[common.DoguConfigKey]common.DoguConfigValue, referencedSensitiveValues map[common.DoguConfigKey]common.SensitiveDoguConfigValue) {
 	for i, entry := range configEntries {
 		if !entry.Absent {
 			key := common.DoguConfigKey{
@@ -111,8 +113,16 @@ func setConfigValues(doguName cescommons.SimpleName, configEntries DoguConfigEnt
 			}
 			// we checked previously that all referenced values exist. Therefore, we need no error here.
 			// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
-			value := referencedValues[key]
+			value, exists := referencedValues[key]
+			if !exists {
+				value = referencedSensitiveValues[key]
+			}
 			configEntries[i].Value = &value
+
+			// Only the value is required in the EffectiveBlueprint.
+			// Setting the value and references triggers the validation rules.
+			configEntries[i].SecretRef = nil
+			configEntries[i].ConfigRef = nil
 		}
 	}
 }

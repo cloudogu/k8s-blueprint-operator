@@ -164,13 +164,18 @@ func (useCase *StateDiffUseCase) loadReferencedDoguConfig(ctx context.Context, b
 }
 
 func (useCase *StateDiffUseCase) loadReferencedGlobalConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.GlobalConfigKey]common.GlobalConfigValue, map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
-	secretRef := blueprint.EffectiveBlueprint.Config.GetSensitiveGlobalConfigReferences()
+	secretRef, err := blueprint.EffectiveBlueprint.Config.GetSensitiveGlobalConfigReferences()
+	if err != nil {
+		return nil, nil, err
+	}
+
 	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetGlobalValues(
 		ctx, secretRef,
 	)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	configRef := blueprint.EffectiveBlueprint.Config.GetGlobalConfigReferences()
 	referencedConfig, err := useCase.configRefReader.GetGlobalValues(
 		ctx, configRef,

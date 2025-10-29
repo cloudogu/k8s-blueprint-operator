@@ -99,14 +99,17 @@ func (config Config) GetConfigReferences() map[common.DoguConfigKey]ConfigValueR
 	return refs
 }
 
-func (config Config) GetSensitiveGlobalConfigReferences() map[common.GlobalConfigKey]SensitiveValueRef {
+func (config Config) GetSensitiveGlobalConfigReferences() (map[common.GlobalConfigKey]SensitiveValueRef, error) {
 	refs := map[common.GlobalConfigKey]SensitiveValueRef{}
 	for _, entry := range config.Global {
 		if entry.SecretRef != nil {
 			refs[entry.Key] = *entry.SecretRef
 		}
+		if entry.Sensitive {
+			return map[common.GlobalConfigKey]SensitiveValueRef{}, fmt.Errorf("global config values cannot be sensitive")
+		}
 	}
-	return refs
+	return refs, nil
 }
 
 func (config Config) GetGlobalConfigReferences() map[common.GlobalConfigKey]ConfigValueRef {
@@ -227,10 +230,6 @@ func (config ConfigEntry) validate() error {
 
 	if hasValue && hasSecretRef {
 		errs = append(errs, fmt.Errorf("config entries can have either a value or a secretRef"))
-	}
-
-	if hasSecretRef && !config.Sensitive {
-		errs = append(errs, fmt.Errorf("config entries with secret references have to be sensitive"))
 	}
 
 	if hasValue && config.Sensitive {
