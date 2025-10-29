@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#135] Support for the blueprint mask custom resource.
 - [#129] Reconciliation of the blueprint on changes of dogu-crs, ces-configMaps and ces-secrets
 - [#131] Ignore loglevel changes while debug-mode is active
-- [#136] Support config references with config maps
+- [#136] Support non-sensitive config references with config maps and secrets
 
 ### Changed
 - [#119] *breaking* sensitive dogu config can now only be referenced with secrets
@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#121] Upgrade Makefiles to v10.4.0
 - [#121] *breaking* merge proxy config dogu action into one to simplify the status
 - [#133] updated and added docs for the operator
+- [#136] Prevent sensitive configs in global config
 
 ### Removed
 - [#119] *breaking* no support for v1 blueprint CRs anymore
