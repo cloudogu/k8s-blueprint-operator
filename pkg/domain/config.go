@@ -20,13 +20,16 @@ type ConfigEntry struct {
 	// Absent indicates whether this key should be deleted (true) or set (false)
 	Absent bool
 	// Value is used for regular (non-sensitive) configuration entries
-	// Mutually exclusive with SecretRef
+	// Mutually exclusive with SecretRef and ConfigRef
 	Value *libconfig.Value
 	// Sensitive indicates whether this config is sensitive and should be stored securely (true) or not (false)
 	Sensitive bool
 	// SecretRef is used for sensitive configuration entries
-	// Mutually exclusive with Value
+	// Mutually exclusive with Value and ConfigRef
 	SecretRef *SensitiveValueRef
+	// ConfigRef is used for configuration entries
+	// Mutually exclusive with Value and SecretRef
+	ConfigRef *ConfigValueRef
 }
 
 type DoguConfig map[cescommons.SimpleName]DoguConfigEntries
@@ -41,6 +44,15 @@ type SensitiveValueRef struct {
 	// SecretKey is the name of the key within the secret given by SecretName.
 	// The value is used as the value for the sensitive config key.
 	SecretKey string `json:"secretKey"`
+}
+
+type ConfigValueRef struct {
+	// ConfigMapName is the name of the config map, from which the config key should be loaded.
+	// The config map must be in the same namespace.
+	ConfigMapName string `json:"configMapName"`
+	// ConfigMapKey is the name of the key within the config map given by ConfigMapName.
+	// The value is used as the value for the config key.
+	ConfigMapKey string `json:"configMapKey"`
 }
 
 func (config GlobalConfigEntries) GetGlobalConfigKeys() []common.GlobalConfigKey {
@@ -66,6 +78,45 @@ func (config Config) GetSensitiveConfigReferences() map[common.DoguConfigKey]Sen
 				}
 				refs[key] = *entry.SecretRef
 			}
+		}
+	}
+	return refs
+}
+
+func (config Config) GetConfigReferences() map[common.DoguConfigKey]ConfigValueRef {
+	refs := map[common.DoguConfigKey]ConfigValueRef{}
+	for doguName, doguConfig := range config.Dogus {
+		for _, entry := range doguConfig {
+			if entry.ConfigRef != nil {
+				key := common.DoguConfigKey{
+					DoguName: doguName,
+					Key:      entry.Key,
+				}
+				refs[key] = *entry.ConfigRef
+			}
+		}
+	}
+	return refs
+}
+
+func (config Config) GetSensitiveGlobalConfigReferences() (map[common.GlobalConfigKey]SensitiveValueRef, error) {
+	refs := map[common.GlobalConfigKey]SensitiveValueRef{}
+	for _, entry := range config.Global {
+		if entry.SecretRef != nil {
+			refs[entry.Key] = *entry.SecretRef
+		}
+		if entry.Sensitive {
+			return map[common.GlobalConfigKey]SensitiveValueRef{}, fmt.Errorf("global config values cannot be sensitive")
+		}
+	}
+	return refs, nil
+}
+
+func (config Config) GetGlobalConfigReferences() map[common.GlobalConfigKey]ConfigValueRef {
+	refs := map[common.GlobalConfigKey]ConfigValueRef{}
+	for _, entry := range config.Global {
+		if entry.ConfigRef != nil {
+			refs[entry.Key] = *entry.ConfigRef
 		}
 	}
 	return refs
@@ -181,10 +232,6 @@ func (config ConfigEntry) validate() error {
 		errs = append(errs, fmt.Errorf("config entries can have either a value or a secretRef"))
 	}
 
-	if hasSecretRef && !config.Sensitive {
-		errs = append(errs, fmt.Errorf("config entries with secret references have to be sensitive"))
-	}
-
 	if hasValue && config.Sensitive {
 		errs = append(errs, fmt.Errorf("sensitive config entries are not allowed to have normal values"))
 	}
@@ -210,10 +257,6 @@ func (config ConfigEntry) validateGlobal() error {
 
 	if config.Key == "" {
 		errs = append(errs, fmt.Errorf("key for global config should not be empty"))
-	}
-
-	if config.Sensitive || config.SecretRef != nil {
-		errs = append(errs, fmt.Errorf("global entries cannot be sensitive"))
 	}
 
 	if config.Absent {

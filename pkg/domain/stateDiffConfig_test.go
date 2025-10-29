@@ -33,6 +33,9 @@ func Test_determineConfigDiff(t *testing.T) {
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.DoguConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
 		)
 
 		assert.Nil(t, dogusConfigDiffs)
@@ -68,6 +71,20 @@ func Test_determineConfigDiff(t *testing.T) {
 					Key:    "key4",
 					Absent: true,
 				},
+				{
+					Key: "key5",
+					SecretRef: &SensitiveValueRef{
+						SecretName: "test",
+						SecretKey:  "test",
+					},
+				},
+				{
+					Key: "key6",
+					ConfigRef: &ConfigValueRef{
+						ConfigMapName: "test",
+						ConfigMapKey:  "test",
+					},
+				},
 			},
 		}
 
@@ -78,12 +95,18 @@ func Test_determineConfigDiff(t *testing.T) {
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.DoguConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{
+				"key5": "",
+			},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{
+				"key6": ""},
 		)
 
 		//then
 		assert.Nil(t, dogusConfigDiffs)
 		assert.Nil(t, sensitiveConfigDiffs)
-		assert.Equal(t, 2, len(globalConfigDiff)) // only changes
+		assert.Equal(t, 4, len(globalConfigDiff)) // only changes
 		hitKeys := make(map[string]bool)
 		for _, diff := range globalConfigDiff {
 			if diff.Key == "key2" {
@@ -166,6 +189,11 @@ func Test_determineConfigDiff(t *testing.T) {
 			},
 			map[cescommons.SimpleName]config.DoguConfig{},
 			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{},
+			map[common.DoguConfigKey]common.DoguConfigValue{
+				dogu1Key2: "value1",
+			},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
@@ -205,7 +233,7 @@ func Test_determineConfigDiff(t *testing.T) {
 				hitKeys[dogu1Key3] = true
 			}
 		}
-		assert.Equal(t, 2, len(hitKeys))
+		assert.Equal(t, 1, len(hitKeys))
 	})
 	t.Run("all actions for sensitive dogu config for present dogu", func(t *testing.T) {
 		//given ecosystem config
@@ -261,6 +289,9 @@ func Test_determineConfigDiff(t *testing.T) {
 				dogu1Key1: "value1",
 				dogu1Key2: "value2",
 			},
+			map[common.DoguConfigKey]common.DoguConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
 		)
 		//then
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
@@ -325,6 +356,9 @@ func Test_determineConfigDiff(t *testing.T) {
 			map[common.DoguConfigKey]common.SensitiveDoguConfigValue{
 				dogu1Key1: "value1",
 			},
+			map[common.DoguConfigKey]common.DoguConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
+			map[common.GlobalConfigKey]common.GlobalConfigValue{},
 		)
 		//then
 		assert.Equal(t, DoguConfigDiffs(nil), dogusConfigDiffs["dogu1"])

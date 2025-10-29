@@ -31,6 +31,9 @@ var (
 		Key:      "credentials/password",
 	}
 
+	usernameKey = common.GlobalConfigKey("credentials/username")
+	passwordKey = common.GlobalConfigKey("credentials/password")
+
 	ldapSecret = &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "ldap_credentials",
@@ -142,6 +145,80 @@ func TestSecretRefReader_GetValues(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "could not load sensitive config via references")
 		assert.ErrorContains(t, err, "referenced secret \"ldap_credentials\" does not exist")
+		assert.ErrorContains(t, err, "referenced key \"password\" in secret \"postgres_credentials\" does not exist")
+	})
+}
+
+func TestSecretRefReader_GetGlobalValues(t *testing.T) {
+	t.Run("nothing to load", func(t *testing.T) {
+		secretMock := newMockSecretClient(t)
+		refReader := NewSecretRefReader(secretMock)
+
+		result, err := refReader.GetGlobalValues(testCtx, map[common.GlobalConfigKey]domain.SensitiveValueRef{})
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.GlobalConfigValue{}, result)
+	})
+	t.Run("nothing to load with nil input", func(t *testing.T) {
+		secretMock := newMockSecretClient(t)
+		refReader := NewSecretRefReader(secretMock)
+
+		result, err := refReader.GetGlobalValues(testCtx, nil)
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.GlobalConfigValue{}, result)
+	})
+	t.Run("load secrets with keys", func(t *testing.T) {
+		secretMock := newMockSecretClient(t)
+		secretMock.EXPECT().
+			Get(testCtx, "postgres_credentials", metav1.GetOptions{}).
+			Return(redmineSecret, nil)
+
+		refReader := NewSecretRefReader(secretMock)
+
+		result, err := refReader.GetGlobalValues(testCtx,
+			map[common.GlobalConfigKey]domain.SensitiveValueRef{
+				usernameKey: {
+					SecretName: redmineSecret.Name,
+					SecretKey:  "username",
+				},
+				passwordKey: {
+					SecretName: redmineSecret.Name,
+					SecretKey:  "password",
+				},
+			},
+		)
+		require.NoError(t, err)
+		assert.Equal(t, map[common.GlobalConfigKey]common.GlobalConfigValue{
+			usernameKey: "user1",
+			passwordKey: "123456",
+		}, result)
+	})
+	t.Run("one key missing", func(t *testing.T) {
+		secretMock := newMockSecretClient(t)
+		secretMock.EXPECT().
+			Get(testCtx, "postgres_credentials", metav1.GetOptions{}).
+			Return(&corev1.Secret{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "postgres_credentials",
+				},
+				StringData: map[string]string{"username": "user1"},
+			}, nil)
+
+		refReader := NewSecretRefReader(secretMock)
+
+		_, err := refReader.GetGlobalValues(testCtx,
+			map[common.GlobalConfigKey]domain.SensitiveValueRef{
+				usernameKey: {
+					SecretName: redmineSecret.Name,
+					SecretKey:  "username",
+				},
+				passwordKey: {
+					SecretName: redmineSecret.Name,
+					SecretKey:  "password",
+				},
+			},
+		)
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "could not load sensitive config via references")
 		assert.ErrorContains(t, err, "referenced key \"password\" in secret \"postgres_credentials\" does not exist")
 	})
 }

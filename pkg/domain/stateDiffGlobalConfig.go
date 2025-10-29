@@ -65,6 +65,8 @@ func newGlobalConfigEntryDiff(
 func determineGlobalConfigDiffs(
 	config GlobalConfigEntries,
 	actualConfig config.GlobalConfig,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
@@ -74,6 +76,10 @@ func determineGlobalConfigDiffs(
 		if actualExists {
 			actualValue = &actualEntry
 		}
+		referencedValue := getReferencedGlobalConfigValue(expectedConfig.Key, referencedSensitiveGlobalConfig, referencedGlobalConfig)
+		if referencedValue != nil {
+			expectedConfig.Value = referencedValue
+		}
 		diff := newGlobalConfigEntryDiff(expectedConfig.Key, actualValue, actualExists, expectedConfig.Value, !expectedConfig.Absent)
 		// only add diff if there are changes
 		if diff.NeededAction != ConfigActionNone {
@@ -81,4 +87,20 @@ func determineGlobalConfigDiffs(
 		}
 	}
 	return configDiffs
+}
+
+func getReferencedGlobalConfigValue(
+	key common.GlobalConfigKey,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+) *common.GlobalConfigValue {
+	value, exists := referencedSensitiveGlobalConfig[key]
+	if exists {
+		return &value
+	}
+	value, exists = referencedGlobalConfig[key]
+	if exists {
+		return &value
+	}
+	return nil
 }

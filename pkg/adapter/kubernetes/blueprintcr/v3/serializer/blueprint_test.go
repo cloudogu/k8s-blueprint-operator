@@ -70,6 +70,13 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 								SecretKey:  "myKey",
 							},
 						},
+						{
+							Key: "configmap-config",
+							ConfigRef: &domain.ConfigValueRef{
+								ConfigMapName: "myConfigMap",
+								ConfigMapKey:  "myKey",
+							},
+						},
 					},
 				},
 				Global: domain.GlobalConfigEntries{
@@ -94,8 +101,15 @@ func TestConvertToBlueprintDTO(t *testing.T) {
 						crd.ConfigEntry{
 							Key:       "sensitive-config",
 							Sensitive: &trueVar,
-							SecretRef: &crd.SecretReference{
+							SecretRef: &crd.Reference{
 								Name: "mySecret",
+								Key:  "myKey",
+							},
+						},
+						crd.ConfigEntry{
+							Key: "configmap-config",
+							ConfigRef: &crd.Reference{
+								Name: "myConfigMap",
 								Key:  "myKey",
 							},
 						},
@@ -154,7 +168,7 @@ func TestConvertToEffectiveBlueprintDomain(t *testing.T) {
 						crd.ConfigEntry{
 							Key:       "sensitive-config",
 							Sensitive: &trueVar,
-							SecretRef: &crd.SecretReference{
+							SecretRef: &crd.Reference{
 								Name: "mySecret",
 								Key:  "myKey",
 							},
