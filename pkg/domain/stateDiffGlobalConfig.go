@@ -1,8 +1,6 @@
 package domain
 
 import (
-	"encoding/base64"
-
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 	"github.com/cloudogu/k8s-registry-lib/config"
@@ -98,7 +96,6 @@ func getReferencedGlobalConfigValue(
 ) *common.GlobalConfigValue {
 	value, exists := referencedSensitiveGlobalConfig[key]
 	if exists {
-		value = common.GlobalConfigValue(base64.StdEncoding.EncodeToString([]byte(value)))
 		return &value
 	}
 	value, exists = referencedGlobalConfig[key]
