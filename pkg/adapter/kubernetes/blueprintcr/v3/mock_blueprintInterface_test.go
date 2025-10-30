@@ -5,12 +5,13 @@ package v3
 import (
 	context "context"
 
+	apiv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
+
 	mock "github.com/stretchr/testify/mock"
+
 	types "k8s.io/apimachinery/pkg/types"
 
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	v3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 
 	watch "k8s.io/apimachinery/pkg/watch"
 )
@@ -29,27 +30,27 @@ func (_m *mockBlueprintInterface) EXPECT() *mockBlueprintInterface_Expecter {
 }
 
 // Create provides a mock function with given fields: ctx, blueprint, opts
-func (_m *mockBlueprintInterface) Create(ctx context.Context, blueprint *v3.Blueprint, opts v1.CreateOptions) (*v3.Blueprint, error) {
+func (_m *mockBlueprintInterface) Create(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.CreateOptions) (*apiv3.Blueprint, error) {
 	ret := _m.Called(ctx, blueprint, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *v3.Blueprint
+	var r0 *apiv3.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.CreateOptions) (*v3.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.CreateOptions) (*apiv3.Blueprint, error)); ok {
 		return rf(ctx, blueprint, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.CreateOptions) *v3.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.CreateOptions) *apiv3.Blueprint); ok {
 		r0 = rf(ctx, blueprint, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.Blueprint)
+			r0 = ret.Get(0).(*apiv3.Blueprint)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v3.Blueprint, v1.CreateOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *apiv3.Blueprint, v1.CreateOptions) error); ok {
 		r1 = rf(ctx, blueprint, opts)
 	} else {
 		r1 = ret.Error(1)
@@ -65,25 +66,25 @@ type mockBlueprintInterface_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprint *v3.Blueprint
+//   - blueprint *apiv3.Blueprint
 //   - opts v1.CreateOptions
 func (_e *mockBlueprintInterface_Expecter) Create(ctx interface{}, blueprint interface{}, opts interface{}) *mockBlueprintInterface_Create_Call {
 	return &mockBlueprintInterface_Create_Call{Call: _e.mock.On("Create", ctx, blueprint, opts)}
 }
 
-func (_c *mockBlueprintInterface_Create_Call) Run(run func(ctx context.Context, blueprint *v3.Blueprint, opts v1.CreateOptions)) *mockBlueprintInterface_Create_Call {
+func (_c *mockBlueprintInterface_Create_Call) Run(run func(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.CreateOptions)) *mockBlueprintInterface_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v3.Blueprint), args[2].(v1.CreateOptions))
+		run(args[0].(context.Context), args[1].(*apiv3.Blueprint), args[2].(v1.CreateOptions))
 	})
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Create_Call) Return(_a0 *v3.Blueprint, _a1 error) *mockBlueprintInterface_Create_Call {
+func (_c *mockBlueprintInterface_Create_Call) Return(_a0 *apiv3.Blueprint, _a1 error) *mockBlueprintInterface_Create_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Create_Call) RunAndReturn(run func(context.Context, *v3.Blueprint, v1.CreateOptions) (*v3.Blueprint, error)) *mockBlueprintInterface_Create_Call {
+func (_c *mockBlueprintInterface_Create_Call) RunAndReturn(run func(context.Context, *apiv3.Blueprint, v1.CreateOptions) (*apiv3.Blueprint, error)) *mockBlueprintInterface_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -185,23 +186,23 @@ func (_c *mockBlueprintInterface_DeleteCollection_Call) RunAndReturn(run func(co
 }
 
 // Get provides a mock function with given fields: ctx, name, opts
-func (_m *mockBlueprintInterface) Get(ctx context.Context, name string, opts v1.GetOptions) (*v3.Blueprint, error) {
+func (_m *mockBlueprintInterface) Get(ctx context.Context, name string, opts v1.GetOptions) (*apiv3.Blueprint, error) {
 	ret := _m.Called(ctx, name, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
 	}
 
-	var r0 *v3.Blueprint
+	var r0 *apiv3.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.GetOptions) (*v3.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, v1.GetOptions) (*apiv3.Blueprint, error)); ok {
 		return rf(ctx, name, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, v1.GetOptions) *v3.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, v1.GetOptions) *apiv3.Blueprint); ok {
 		r0 = rf(ctx, name, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.Blueprint)
+			r0 = ret.Get(0).(*apiv3.Blueprint)
 		}
 	}
 
@@ -234,34 +235,34 @@ func (_c *mockBlueprintInterface_Get_Call) Run(run func(ctx context.Context, nam
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Get_Call) Return(_a0 *v3.Blueprint, _a1 error) *mockBlueprintInterface_Get_Call {
+func (_c *mockBlueprintInterface_Get_Call) Return(_a0 *apiv3.Blueprint, _a1 error) *mockBlueprintInterface_Get_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Get_Call) RunAndReturn(run func(context.Context, string, v1.GetOptions) (*v3.Blueprint, error)) *mockBlueprintInterface_Get_Call {
+func (_c *mockBlueprintInterface_Get_Call) RunAndReturn(run func(context.Context, string, v1.GetOptions) (*apiv3.Blueprint, error)) *mockBlueprintInterface_Get_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function with given fields: ctx, opts
-func (_m *mockBlueprintInterface) List(ctx context.Context, opts v1.ListOptions) (*v3.BlueprintList, error) {
+func (_m *mockBlueprintInterface) List(ctx context.Context, opts v1.ListOptions) (*apiv3.BlueprintList, error) {
 	ret := _m.Called(ctx, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *v3.BlueprintList
+	var r0 *apiv3.BlueprintList
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*v3.BlueprintList, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) (*apiv3.BlueprintList, error)); ok {
 		return rf(ctx, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *v3.BlueprintList); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, v1.ListOptions) *apiv3.BlueprintList); ok {
 		r0 = rf(ctx, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.BlueprintList)
+			r0 = ret.Get(0).(*apiv3.BlueprintList)
 		}
 	}
 
@@ -293,18 +294,18 @@ func (_c *mockBlueprintInterface_List_Call) Run(run func(ctx context.Context, op
 	return _c
 }
 
-func (_c *mockBlueprintInterface_List_Call) Return(_a0 *v3.BlueprintList, _a1 error) *mockBlueprintInterface_List_Call {
+func (_c *mockBlueprintInterface_List_Call) Return(_a0 *apiv3.BlueprintList, _a1 error) *mockBlueprintInterface_List_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_List_Call) RunAndReturn(run func(context.Context, v1.ListOptions) (*v3.BlueprintList, error)) *mockBlueprintInterface_List_Call {
+func (_c *mockBlueprintInterface_List_Call) RunAndReturn(run func(context.Context, v1.ListOptions) (*apiv3.BlueprintList, error)) *mockBlueprintInterface_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Patch provides a mock function with given fields: ctx, name, pt, data, opts, subresources
-func (_m *mockBlueprintInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*v3.Blueprint, error) {
+func (_m *mockBlueprintInterface) Patch(ctx context.Context, name string, pt types.PatchType, data []byte, opts v1.PatchOptions, subresources ...string) (*apiv3.Blueprint, error) {
 	_va := make([]interface{}, len(subresources))
 	for _i := range subresources {
 		_va[_i] = subresources[_i]
@@ -318,16 +319,16 @@ func (_m *mockBlueprintInterface) Patch(ctx context.Context, name string, pt typ
 		panic("no return value specified for Patch")
 	}
 
-	var r0 *v3.Blueprint
+	var r0 *apiv3.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) (*v3.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) (*apiv3.Blueprint, error)); ok {
 		return rf(ctx, name, pt, data, opts, subresources...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) *v3.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) *apiv3.Blueprint); ok {
 		r0 = rf(ctx, name, pt, data, opts, subresources...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.Blueprint)
+			r0 = ret.Get(0).(*apiv3.Blueprint)
 		}
 	}
 
@@ -370,38 +371,38 @@ func (_c *mockBlueprintInterface_Patch_Call) Run(run func(ctx context.Context, n
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Patch_Call) Return(result *v3.Blueprint, err error) *mockBlueprintInterface_Patch_Call {
+func (_c *mockBlueprintInterface_Patch_Call) Return(result *apiv3.Blueprint, err error) *mockBlueprintInterface_Patch_Call {
 	_c.Call.Return(result, err)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Patch_Call) RunAndReturn(run func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) (*v3.Blueprint, error)) *mockBlueprintInterface_Patch_Call {
+func (_c *mockBlueprintInterface_Patch_Call) RunAndReturn(run func(context.Context, string, types.PatchType, []byte, v1.PatchOptions, ...string) (*apiv3.Blueprint, error)) *mockBlueprintInterface_Patch_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function with given fields: ctx, blueprint, opts
-func (_m *mockBlueprintInterface) Update(ctx context.Context, blueprint *v3.Blueprint, opts v1.UpdateOptions) (*v3.Blueprint, error) {
+func (_m *mockBlueprintInterface) Update(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.UpdateOptions) (*apiv3.Blueprint, error) {
 	ret := _m.Called(ctx, blueprint, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *v3.Blueprint
+	var r0 *apiv3.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) (*v3.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) (*apiv3.Blueprint, error)); ok {
 		return rf(ctx, blueprint, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) *v3.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) *apiv3.Blueprint); ok {
 		r0 = rf(ctx, blueprint, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.Blueprint)
+			r0 = ret.Get(0).(*apiv3.Blueprint)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) error); ok {
 		r1 = rf(ctx, blueprint, opts)
 	} else {
 		r1 = ret.Error(1)
@@ -417,51 +418,51 @@ type mockBlueprintInterface_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprint *v3.Blueprint
+//   - blueprint *apiv3.Blueprint
 //   - opts v1.UpdateOptions
 func (_e *mockBlueprintInterface_Expecter) Update(ctx interface{}, blueprint interface{}, opts interface{}) *mockBlueprintInterface_Update_Call {
 	return &mockBlueprintInterface_Update_Call{Call: _e.mock.On("Update", ctx, blueprint, opts)}
 }
 
-func (_c *mockBlueprintInterface_Update_Call) Run(run func(ctx context.Context, blueprint *v3.Blueprint, opts v1.UpdateOptions)) *mockBlueprintInterface_Update_Call {
+func (_c *mockBlueprintInterface_Update_Call) Run(run func(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.UpdateOptions)) *mockBlueprintInterface_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v3.Blueprint), args[2].(v1.UpdateOptions))
+		run(args[0].(context.Context), args[1].(*apiv3.Blueprint), args[2].(v1.UpdateOptions))
 	})
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Update_Call) Return(_a0 *v3.Blueprint, _a1 error) *mockBlueprintInterface_Update_Call {
+func (_c *mockBlueprintInterface_Update_Call) Return(_a0 *apiv3.Blueprint, _a1 error) *mockBlueprintInterface_Update_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_Update_Call) RunAndReturn(run func(context.Context, *v3.Blueprint, v1.UpdateOptions) (*v3.Blueprint, error)) *mockBlueprintInterface_Update_Call {
+func (_c *mockBlueprintInterface_Update_Call) RunAndReturn(run func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) (*apiv3.Blueprint, error)) *mockBlueprintInterface_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateStatus provides a mock function with given fields: ctx, blueprint, opts
-func (_m *mockBlueprintInterface) UpdateStatus(ctx context.Context, blueprint *v3.Blueprint, opts v1.UpdateOptions) (*v3.Blueprint, error) {
+func (_m *mockBlueprintInterface) UpdateStatus(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.UpdateOptions) (*apiv3.Blueprint, error) {
 	ret := _m.Called(ctx, blueprint, opts)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateStatus")
 	}
 
-	var r0 *v3.Blueprint
+	var r0 *apiv3.Blueprint
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) (*v3.Blueprint, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) (*apiv3.Blueprint, error)); ok {
 		return rf(ctx, blueprint, opts)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) *v3.Blueprint); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) *apiv3.Blueprint); ok {
 		r0 = rf(ctx, blueprint, opts)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*v3.Blueprint)
+			r0 = ret.Get(0).(*apiv3.Blueprint)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *v3.Blueprint, v1.UpdateOptions) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) error); ok {
 		r1 = rf(ctx, blueprint, opts)
 	} else {
 		r1 = ret.Error(1)
@@ -477,25 +478,25 @@ type mockBlueprintInterface_UpdateStatus_Call struct {
 
 // UpdateStatus is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprint *v3.Blueprint
+//   - blueprint *apiv3.Blueprint
 //   - opts v1.UpdateOptions
 func (_e *mockBlueprintInterface_Expecter) UpdateStatus(ctx interface{}, blueprint interface{}, opts interface{}) *mockBlueprintInterface_UpdateStatus_Call {
 	return &mockBlueprintInterface_UpdateStatus_Call{Call: _e.mock.On("UpdateStatus", ctx, blueprint, opts)}
 }
 
-func (_c *mockBlueprintInterface_UpdateStatus_Call) Run(run func(ctx context.Context, blueprint *v3.Blueprint, opts v1.UpdateOptions)) *mockBlueprintInterface_UpdateStatus_Call {
+func (_c *mockBlueprintInterface_UpdateStatus_Call) Run(run func(ctx context.Context, blueprint *apiv3.Blueprint, opts v1.UpdateOptions)) *mockBlueprintInterface_UpdateStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*v3.Blueprint), args[2].(v1.UpdateOptions))
+		run(args[0].(context.Context), args[1].(*apiv3.Blueprint), args[2].(v1.UpdateOptions))
 	})
 	return _c
 }
 
-func (_c *mockBlueprintInterface_UpdateStatus_Call) Return(_a0 *v3.Blueprint, _a1 error) *mockBlueprintInterface_UpdateStatus_Call {
+func (_c *mockBlueprintInterface_UpdateStatus_Call) Return(_a0 *apiv3.Blueprint, _a1 error) *mockBlueprintInterface_UpdateStatus_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *mockBlueprintInterface_UpdateStatus_Call) RunAndReturn(run func(context.Context, *v3.Blueprint, v1.UpdateOptions) (*v3.Blueprint, error)) *mockBlueprintInterface_UpdateStatus_Call {
+func (_c *mockBlueprintInterface_UpdateStatus_Call) RunAndReturn(run func(context.Context, *apiv3.Blueprint, v1.UpdateOptions) (*apiv3.Blueprint, error)) *mockBlueprintInterface_UpdateStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

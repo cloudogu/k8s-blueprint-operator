@@ -199,11 +199,56 @@ func Test_blueprintSpecRepo_GetById(t *testing.T) {
 		assert.ErrorContains(t, err, fmt.Sprintf("could not get blueprint mask from ref %q in blueprint %q", "my-blueprint-mask", blueprintId))
 	})
 
+	t.Run("all ok if no mask is given", func(t *testing.T) {
+		// given
+		blueprintClientMock := newMockBlueprintInterface(t)
+		maskClientMock := newMockBlueprintMaskInterface(t)
+		eventRecorderMock := newMockEventRecorder(t)
+		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)
+
+		cr := &bpv3.Blueprint{
+			TypeMeta:   metav1.TypeMeta{},
+			ObjectMeta: metav1.ObjectMeta{ResourceVersion: "abc"},
+			Spec: bpv3.BlueprintSpec{
+				DisplayName:              "MyBlueprint",
+				Blueprint:                bpv3.BlueprintManifest{},
+				AllowDoguNamespaceSwitch: &trueVar,
+				IgnoreDoguHealth:         &trueVar,
+				Stopped:                  &trueVar,
+			},
+			Status: &bpv3.BlueprintStatus{
+				Conditions: []metav1.Condition{testCondition},
+			},
+		}
+		blueprintClientMock.EXPECT().Get(ctx, blueprintId, metav1.GetOptions{}).Return(cr, nil)
+
+		// when
+		spec, err := repo.GetById(ctx, blueprintId)
+
+		// then
+		require.NoError(t, err)
+		persistenceContext := make(map[string]interface{})
+		persistenceContext[blueprintSpecRepoContextKey] = blueprintSpecRepoContext{"abc"}
+		assert.Equal(t, &domain.BlueprintSpec{
+			Id:          blueprintId,
+			DisplayName: "MyBlueprint",
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth:         true,
+				AllowDoguNamespaceSwitch: true,
+				Stopped:                  true,
+			},
+			StateDiff:          domain.StateDiff{},
+			PersistenceContext: persistenceContext,
+			Conditions:         []domain.Condition{testCondition},
+			BlueprintMask:      domain.BlueprintMask{},
+		}, spec)
+	})
+
 	t.Run("all ok when getting mask from CR", func(t *testing.T) {
 		// given
 		blueprintClientMock := newMockBlueprintInterface(t)
 		maskClientMock := newMockBlueprintMaskInterface(t)
-		mask := &bpv3.BlueprintMask{Spec: bpv3.BlueprintMaskSpec{BlueprintMaskManifest: &bpv3.BlueprintMaskManifest{}}}
+		mask := &bpv3.BlueprintMask{Spec: bpv3.BlueprintMaskSpec{BlueprintMaskManifest: bpv3.BlueprintMaskManifest{}}}
 		maskClientMock.EXPECT().Get(ctx, "my-blueprint-mask", metav1.GetOptions{}).Return(mask, nil)
 		eventRecorderMock := newMockEventRecorder(t)
 		repo := NewBlueprintSpecRepository(blueprintClientMock, maskClientMock, eventRecorderMock)

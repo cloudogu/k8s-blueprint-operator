@@ -148,6 +148,35 @@ type SensitiveConfigRefReader interface {
 		map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
 		error,
 	)
+	GetGlobalValues(
+		ctx context.Context,
+		refs map[common.GlobalConfigKey]domain.SensitiveValueRef,
+	) (
+		map[common.GlobalConfigKey]common.GlobalConfigValue,
+		error,
+	)
+}
+
+// ConfigRefReader resolves given domain.ConfigValueRef's and loads the referenced values.
+type ConfigRefReader interface {
+	// GetValues reads all common.DoguConfigValue's from the given domain.ConfigValueRef's by common.DoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs map[common.DoguConfigKey]domain.ConfigValueRef,
+	) (
+		map[common.DoguConfigKey]common.DoguConfigValue,
+		error,
+	)
+	GetGlobalValues(
+		ctx context.Context,
+		refs map[common.GlobalConfigKey]domain.ConfigValueRef,
+	) (
+		map[common.GlobalConfigKey]common.GlobalConfigValue,
+		error,
+	)
 }
 
 type DebugModeRepository interface {

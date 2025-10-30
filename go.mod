@@ -7,7 +7,7 @@ require (
 	github.com/cloudogu/ces-commons-lib v0.2.0
 	github.com/cloudogu/cesapp-lib v0.18.1
 	github.com/cloudogu/k8s-backup-lib v1.7.0
-	github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0
+	github.com/cloudogu/k8s-blueprint-lib/v3 v3.1.0
 	github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0
 	github.com/cloudogu/k8s-dogu-lib/v2 v2.10.0
 	github.com/cloudogu/k8s-registry-lib v0.6.0

@@ -102,6 +102,10 @@ type sensitiveConfigRefReader interface {
 	domainservice.SensitiveConfigRefReader
 }
 
+type configRefReader interface {
+	domainservice.ConfigRefReader
+}
+
 // validateDependenciesDomainUseCase is an interface for the domain service for better testability
 type validateDependenciesDomainUseCase interface {
 	ValidateDependenciesForAllDogus(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error

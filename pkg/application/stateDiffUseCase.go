@@ -6,13 +6,14 @@ import (
 	"fmt"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
 	"github.com/go-logr/logr"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced sensitive config"
+const REFERENCED_CONFIG_NOT_FOUND = "could not load referenced config"
 
 type StateDiffUseCase struct {
 	blueprintSpecRepo        blueprintSpecRepository
@@ -21,6 +22,7 @@ type StateDiffUseCase struct {
 	doguConfigRepo           doguConfigRepository
 	sensitiveDoguConfigRepo  sensitiveDoguConfigRepository
 	sensitiveConfigRefReader sensitiveConfigRefReader
+	configRefReader          configRefReader
 	debugModeRepo            debugModeRepository
 }
 
@@ -31,6 +33,7 @@ func NewStateDiffUseCase(
 	doguConfigRepo domainservice.DoguConfigRepository,
 	sensitiveDoguConfigRepo domainservice.SensitiveDoguConfigRepository,
 	sensitiveConfigRefReader domainservice.SensitiveConfigRefReader,
+	configRefReader domainservice.ConfigRefReader,
 	debugModeRepo domainservice.DebugModeRepository,
 ) *StateDiffUseCase {
 	return &StateDiffUseCase{
@@ -40,6 +43,7 @@ func NewStateDiffUseCase(
 		doguConfigRepo:           doguConfigRepo,
 		sensitiveDoguConfigRepo:  sensitiveDoguConfigRepo,
 		sensitiveConfigRefReader: sensitiveConfigRefReader,
+		configRefReader:          configRefReader,
 		debugModeRepo:            debugModeRepo,
 	}
 }
@@ -53,12 +57,10 @@ func NewStateDiffUseCase(
 func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, blueprint *domain.BlueprintSpec) error {
 	logger := log.FromContext(ctx).WithName("StateDiffUseCase.DetermineStateDiff")
 
-	logger.V(2).Info("load referenced sensitive config")
+	logger.V(2).Info("load referenced config")
 	// load referenced config before collecting ecosystem state
 	// if an error happens here, we save a lot of heavy work
-	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
-		ctx, blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences(),
-	)
+	referencedSensitiveDoguConfig, referencedDoguConfig, referencedSensitiveGlobalConfig, referencedGlobalConfig, err := useCase.loadReferencedConfig(ctx, blueprint)
 	if err != nil {
 		err = fmt.Errorf("%s: %w", REFERENCED_CONFIG_NOT_FOUND, err)
 		blueprint.MissingConfigReferences(err)
@@ -80,7 +82,7 @@ func (useCase *StateDiffUseCase) DetermineStateDiff(ctx context.Context, bluepri
 	if err != nil {
 		return err
 	}
-	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveConfig, isDebugModeActive)
+	stateDiffError := blueprint.DetermineStateDiff(ecosystemState, referencedSensitiveDoguConfig, referencedDoguConfig, referencedSensitiveGlobalConfig, referencedGlobalConfig, isDebugModeActive)
 	var invalidError *domain.InvalidBlueprintError
 	if errors.As(stateDiffError, &invalidError) {
 		// do not return here as with this error the blueprint status and events should be persisted as normal.
@@ -141,4 +143,59 @@ func (useCase *StateDiffUseCase) collectEcosystemState(ctx context.Context, effe
 		ConfigByDogu:          configByDogu,
 		SensitiveConfigByDogu: sensitiveConfigByDogu,
 	}, nil
+}
+
+func (useCase *StateDiffUseCase) loadReferencedDoguConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, map[common.DoguConfigKey]common.DoguConfigValue, error) {
+	secretRef := blueprint.EffectiveBlueprint.Config.GetSensitiveConfigReferences()
+	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetValues(
+		ctx, secretRef,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	configRef := blueprint.EffectiveBlueprint.Config.GetConfigReferences()
+	referencedConfig, err := useCase.configRefReader.GetValues(
+		ctx, configRef,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return referencedSensitiveConfig, referencedConfig, nil
+}
+
+func (useCase *StateDiffUseCase) loadReferencedGlobalConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.GlobalConfigKey]common.GlobalConfigValue, map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
+	secretRef, err := blueprint.EffectiveBlueprint.Config.GetSensitiveGlobalConfigReferences()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	referencedSensitiveConfig, err := useCase.sensitiveConfigRefReader.GetGlobalValues(
+		ctx, secretRef,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	configRef := blueprint.EffectiveBlueprint.Config.GetGlobalConfigReferences()
+	referencedConfig, err := useCase.configRefReader.GetGlobalValues(
+		ctx, configRef,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	return referencedSensitiveConfig, referencedConfig, nil
+}
+
+func (useCase *StateDiffUseCase) loadReferencedConfig(ctx context.Context, blueprint *domain.BlueprintSpec) (map[common.DoguConfigKey]common.SensitiveDoguConfigValue, map[common.DoguConfigKey]common.DoguConfigValue, map[common.GlobalConfigKey]common.GlobalConfigValue, map[common.GlobalConfigKey]common.GlobalConfigValue, error) {
+	referencedSensitiveDoguConfig, referencedDoguConfig, err := useCase.loadReferencedDoguConfig(ctx, blueprint)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	referencedSensitiveGlobalConfig, referencedGlobalConfig, err := useCase.loadReferencedGlobalConfig(ctx, blueprint)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
+
+	return referencedSensitiveDoguConfig, referencedDoguConfig, referencedSensitiveGlobalConfig, referencedGlobalConfig, nil
 }

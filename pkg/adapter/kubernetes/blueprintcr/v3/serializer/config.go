@@ -84,11 +84,18 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []bpv3.ConfigEntry {
 			value = (*string)(domainEntry.Value)
 		}
 
-		var secretRef *bpv3.SecretReference
+		var secretRef *bpv3.Reference
 		if domainEntry.SecretRef != nil {
-			secretRef = &bpv3.SecretReference{
+			secretRef = &bpv3.Reference{
 				Name: domainEntry.SecretRef.SecretName,
 				Key:  domainEntry.SecretRef.SecretKey,
+			}
+		}
+		var configRef *bpv3.Reference
+		if domainEntry.ConfigRef != nil {
+			configRef = &bpv3.Reference{
+				Name: domainEntry.ConfigRef.ConfigMapName,
+				Key:  domainEntry.ConfigRef.ConfigMapKey,
 			}
 		}
 
@@ -98,6 +105,7 @@ func convertToConfigEntriesDTO(config domain.ConfigEntries) []bpv3.ConfigEntry {
 			Value:     value,
 			Sensitive: sensitive,
 			SecretRef: secretRef,
+			ConfigRef: configRef,
 		}
 	}
 
@@ -124,12 +132,21 @@ func convertToConfigEntriesDomain(config []bpv3.ConfigEntry) domain.ConfigEntrie
 			}
 		}
 
+		var configRef *domain.ConfigValueRef
+		if v2Entry.ConfigRef != nil {
+			configRef = &domain.ConfigValueRef{
+				ConfigMapName: v2Entry.ConfigRef.Name,
+				ConfigMapKey:  v2Entry.ConfigRef.Key,
+			}
+		}
+
 		result[i] = domain.ConfigEntry{
 			Key:       libconfig.Key(v2Entry.Key),
 			Absent:    ptr.Deref(v2Entry.Absent, false),
 			Value:     (*libconfig.Value)(v2Entry.Value),
 			Sensitive: ptr.Deref(v2Entry.Sensitive, false),
 			SecretRef: secretRef,
+			ConfigRef: configRef,
 		}
 	}
 

@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"fmt"
 	"testing"
 
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
@@ -77,7 +78,6 @@ func TestGlobalConfig_validate(t *testing.T) {
 
 		assert.ErrorContains(t, err, "duplicate dogu config Key found: my/key1")
 	})
-
 	t.Run("combine errors", func(t *testing.T) {
 		config := GlobalConfigEntries{
 			{
@@ -236,16 +236,6 @@ func TestDoguConfig_validate(t *testing.T) {
 		err := config.validate("dogu1")
 		assert.ErrorContains(t, err, "config entries can have either a value or a secretRef")
 	})
-	t.Run("No secret without sensitive", func(t *testing.T) {
-		config := DoguConfigEntries{
-			{
-				Key:       "my/key1",
-				SecretRef: &SensitiveValueRef{},
-			},
-		}
-		err := config.validate("dogu1")
-		assert.ErrorContains(t, err, "config entries with secret references have to be sensitive")
-	})
 	t.Run("No sensitive with normal value", func(t *testing.T) {
 		config := DoguConfigEntries{
 			{
@@ -263,6 +253,15 @@ func TestDoguConfig_validate(t *testing.T) {
 				Key:       "my/key1",
 				SecretRef: &SensitiveValueRef{},
 				Sensitive: true,
+			},
+		}
+		err := config.validate("dogu1")
+		assert.NoError(t, err)
+	})
+	t.Run("No secret, no configmap and novalue", func(t *testing.T) {
+		config := DoguConfigEntries{
+			{
+				Key: "my/key1",
 			},
 		}
 		err := config.validate("dogu1")
@@ -597,6 +596,267 @@ func TestConfig_GetDogusWithChangedSensitiveConfig(t *testing.T) {
 			for _, doguName := range tt.want {
 				assert.Contains(t, changedDogus, doguName)
 			}
+		})
+	}
+}
+
+func TestConfig_GetGlobalConfigReferences(t *testing.T) {
+	type fields struct {
+		Dogus  DoguConfig
+		Global GlobalConfigEntries
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   map[common.GlobalConfigKey]ConfigValueRef
+	}{
+		{
+			name:   "no global config entries",
+			fields: fields{Global: GlobalConfigEntries{}},
+			want:   map[common.GlobalConfigKey]ConfigValueRef{},
+		},
+		{
+			name: "no existing config references",
+			fields: fields{Global: GlobalConfigEntries{
+				ConfigEntry{
+					Key: "test",
+				},
+			}},
+			want: map[common.GlobalConfigKey]ConfigValueRef{},
+		},
+		{
+			name: "get existing config references",
+			fields: fields{Global: GlobalConfigEntries{
+				ConfigEntry{
+					Key: "test",
+					ConfigRef: &ConfigValueRef{
+						ConfigMapName: "test-config-map",
+						ConfigMapKey:  "test",
+					},
+				},
+			}},
+			want: map[common.GlobalConfigKey]ConfigValueRef{
+				"test": {
+					ConfigMapName: "test-config-map",
+					ConfigMapKey:  "test",
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Dogus:  tt.fields.Dogus,
+				Global: tt.fields.Global,
+			}
+			assert.Equalf(t, tt.want, config.GetGlobalConfigReferences(), "GetGlobalConfigReferences()")
+		})
+	}
+}
+
+func TestConfig_GetConfigReferences(t *testing.T) {
+	type fields struct {
+		Dogus  DoguConfig
+		Global GlobalConfigEntries
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   map[common.DoguConfigKey]ConfigValueRef
+	}{
+		{
+			name:   "no dogus in config",
+			fields: fields{Dogus: DoguConfig{}},
+			want:   map[common.DoguConfigKey]ConfigValueRef{},
+		},
+		{
+			name: "no config for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{},
+				dogu2: DoguConfigEntries{},
+			}},
+			want: map[common.DoguConfigKey]ConfigValueRef{},
+		},
+		{
+			name: "no config reference for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{
+					ConfigEntry{Key: "test"},
+				},
+				dogu2: DoguConfigEntries{
+					ConfigEntry{Key: "test2", SecretRef: &SensitiveValueRef{SecretName: "test", SecretKey: "test"}},
+				},
+			}},
+			want: map[common.DoguConfigKey]ConfigValueRef{},
+		},
+		{
+			name: "get existing config reference for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{
+					ConfigEntry{Key: "test"},
+					ConfigEntry{Key: "key1", ConfigRef: &ConfigValueRef{ConfigMapName: "test", ConfigMapKey: "test"}},
+				},
+				dogu2: DoguConfigEntries{
+					ConfigEntry{Key: "test2", SecretRef: &SensitiveValueRef{SecretName: "test", SecretKey: "test"}},
+				},
+			}},
+			want: map[common.DoguConfigKey]ConfigValueRef{
+				common.DoguConfigKey{
+					DoguName: dogu1,
+					Key:      "key1",
+				}: {ConfigMapName: "test", ConfigMapKey: "test"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Dogus:  tt.fields.Dogus,
+				Global: tt.fields.Global,
+			}
+			assert.Equalf(t, tt.want, config.GetConfigReferences(), "GetConfigReferences()")
+		})
+	}
+}
+
+func TestConfig_GetSensitiveConfigReferences(t *testing.T) {
+	type fields struct {
+		Dogus  DoguConfig
+		Global GlobalConfigEntries
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   map[common.DoguConfigKey]SensitiveValueRef
+	}{
+		{
+			name:   "no dogus in config",
+			fields: fields{Dogus: DoguConfig{}},
+			want:   map[common.DoguConfigKey]SensitiveValueRef{},
+		},
+		{
+			name: "no config for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{},
+				dogu2: DoguConfigEntries{},
+			}},
+			want: map[common.DoguConfigKey]SensitiveValueRef{},
+		},
+		{
+			name: "no config reference for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{
+					ConfigEntry{Key: "test"},
+				},
+				dogu2: DoguConfigEntries{
+					ConfigEntry{Key: "key1", ConfigRef: &ConfigValueRef{ConfigMapName: "test", ConfigMapKey: "test"}},
+				},
+			}},
+			want: map[common.DoguConfigKey]SensitiveValueRef{},
+		},
+		{
+			name: "get existing config reference for dogus",
+			fields: fields{Dogus: DoguConfig{
+				dogu1: DoguConfigEntries{
+					ConfigEntry{Key: "test"},
+					ConfigEntry{Key: "key1", ConfigRef: &ConfigValueRef{ConfigMapName: "test", ConfigMapKey: "test"}},
+				},
+				dogu2: DoguConfigEntries{
+					ConfigEntry{Key: "test2", SecretRef: &SensitiveValueRef{SecretName: "test", SecretKey: "test"}},
+				},
+			}},
+			want: map[common.DoguConfigKey]SensitiveValueRef{
+				common.DoguConfigKey{
+					DoguName: dogu2,
+					Key:      "test2",
+				}: {SecretName: "test", SecretKey: "test"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Dogus:  tt.fields.Dogus,
+				Global: tt.fields.Global,
+			}
+			assert.Equalf(t, tt.want, config.GetSensitiveConfigReferences(), "GetSensitiveConfigReferences()")
+		})
+	}
+}
+
+func TestConfig_GetSensitiveGlobalConfigReferences(t *testing.T) {
+	type fields struct {
+		Dogus  DoguConfig
+		Global GlobalConfigEntries
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    map[common.GlobalConfigKey]SensitiveValueRef
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name:    "no global config entries",
+			fields:  fields{Global: GlobalConfigEntries{}},
+			want:    map[common.GlobalConfigKey]SensitiveValueRef{},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "no existing config references",
+			fields: fields{Global: GlobalConfigEntries{
+				ConfigEntry{
+					Key: "test",
+				},
+			}},
+			want:    map[common.GlobalConfigKey]SensitiveValueRef{},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "get existing secret references",
+			fields: fields{Global: GlobalConfigEntries{
+				ConfigEntry{
+					Key: "test",
+					SecretRef: &SensitiveValueRef{
+						SecretName: "test-config-map",
+						SecretKey:  "test",
+					},
+				},
+			}},
+			want: map[common.GlobalConfigKey]SensitiveValueRef{
+				"test": {
+					SecretName: "test-config-map",
+					SecretKey:  "test",
+				},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "should fail if entry is sensitive",
+			fields: fields{Global: GlobalConfigEntries{
+				ConfigEntry{
+					Key: "test",
+					SecretRef: &SensitiveValueRef{
+						SecretName: "test-config-map",
+						SecretKey:  "test",
+					},
+					Sensitive: true,
+				},
+			}},
+			want:    map[common.GlobalConfigKey]SensitiveValueRef{},
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			config := Config{
+				Dogus:  tt.fields.Dogus,
+				Global: tt.fields.Global,
+			}
+			got, err := config.GetSensitiveGlobalConfigReferences()
+			if !tt.wantErr(t, err, fmt.Sprintf("GetSensitiveGlobalConfigReferences()")) {
+				return
+			}
+			assert.Equalf(t, tt.want, got, "GetSensitiveGlobalConfigReferences()")
 		})
 	}
 }
