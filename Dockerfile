@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.24.3 AS builder
+FROM golang:1.25.1 AS builder
 
 WORKDIR /workspace
 
@@ -34,7 +34,7 @@ RUN make compile-generic
 FROM gcr.io/distroless/static:nonroot
 LABEL maintainer="hello@cloudogu.com" \
       NAME="k8s-blueprint-operator" \
-      VERSION="2.8.0"
+      VERSION="3.0.0-CR1"
 
 WORKDIR /
 COPY --from=builder /workspace/target/k8s-blueprint-operator .

@@ -2,9 +2,10 @@ package ecosystem
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
-	"testing"
 )
 
 func TestGetQuantityReference(t *testing.T) {
@@ -44,23 +45,24 @@ func TestGetQuantityReference(t *testing.T) {
 
 func TestGetQuantityString(t *testing.T) {
 	twoGigaByte := resource.MustParse("2G")
+	twoGigaByteString := twoGigaByte.String()
 	type args struct {
 		quantity *resource.Quantity
 	}
 	tests := []struct {
 		name string
 		args args
-		want string
+		want *string
 	}{
 		{
 			name: "should return string if reference is not nil",
 			args: args{quantity: &twoGigaByte},
-			want: "2G",
+			want: &twoGigaByteString,
 		},
 		{
 			name: "should return empty string if reference is nil",
 			args: args{quantity: nil},
-			want: "",
+			want: nil,
 		},
 	}
 	for _, tt := range tests {

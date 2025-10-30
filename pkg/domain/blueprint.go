@@ -3,8 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/util"
 )
 
@@ -18,9 +18,6 @@ type Blueprint struct {
 	// Dogus contains a set of exact dogu versions which should be present or absent in the CES instance after which this
 	// blueprint was applied. Optional.
 	Dogus []Dogu
-	// Components contains a set of exact components versions which should be present or absent in the CES instance after which
-	// this blueprint was applied. Optional.
-	Components []Component
 	// Config contains all config entries to set via blueprint.
 	Config Config
 }
@@ -30,9 +27,7 @@ func (blueprint *Blueprint) Validate() error {
 	errorList := []error{
 		blueprint.validateDogus(),
 		blueprint.validateDoguUniqueness(),
-		blueprint.validateComponents(),
-		blueprint.validateComponentUniqueness(),
-		blueprint.Config.validate(),
+		blueprint.validateConfig(),
 	}
 
 	err := errors.Join(errorList...)
@@ -57,17 +52,6 @@ func (blueprint *Blueprint) validateDoguUniqueness() error {
 	return nil
 }
 
-func (blueprint *Blueprint) validateComponents() error {
-	errorList := util.Map(blueprint.Components, func(component Component) error { return component.Validate() })
-	return errors.Join(errorList...)
-}
-
-// validateComponentUniqueness checks if components exist twice in the blueprint and returns an error if it's so.
-func (blueprint *Blueprint) validateComponentUniqueness() error {
-	componentNames := util.Map(blueprint.Components, func(component Component) common.SimpleComponentName { return component.Name.SimpleName })
-	duplicates := util.GetDuplicates(componentNames)
-	if len(duplicates) != 0 {
-		return fmt.Errorf("there are duplicate components: %v", duplicates)
-	}
-	return nil
+func (blueprint *Blueprint) validateConfig() error {
+	return blueprint.Config.validate()
 }

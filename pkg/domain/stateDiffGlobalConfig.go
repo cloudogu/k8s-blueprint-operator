@@ -41,17 +41,17 @@ func (diffs GlobalConfigDiffs) countByAction() map[ConfigAction]int {
 
 func newGlobalConfigEntryDiff(
 	key common.GlobalConfigKey,
-	actualValue common.GlobalConfigValue,
+	actualValue *common.GlobalConfigValue,
 	actualExists bool,
-	expectedValue common.GlobalConfigValue,
+	expectedValue *common.GlobalConfigValue,
 	expectedExists bool,
 ) GlobalConfigEntryDiff {
 	actual := GlobalConfigValueState{
-		Value:  string(actualValue),
+		Value:  (*string)(actualValue),
 		Exists: actualExists,
 	}
 	expected := GlobalConfigValueState{
-		Value:  string(expectedValue),
+		Value:  (*string)(expectedValue),
 		Exists: expectedExists,
 	}
 	return GlobalConfigEntryDiff{
@@ -63,20 +63,44 @@ func newGlobalConfigEntryDiff(
 }
 
 func determineGlobalConfigDiffs(
-	config GlobalConfig,
+	config GlobalConfigEntries,
 	actualConfig config.GlobalConfig,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
 ) GlobalConfigDiffs {
 	var configDiffs []GlobalConfigEntryDiff
 
-	// present entries
-	for key, expectedValue := range config.Present {
-		actualEntry, actualExists := actualConfig.Get(key)
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, expectedValue, true))
-	}
-	// absent entries
-	for _, key := range config.Absent {
-		actualEntry, actualExists := actualConfig.Get(key)
-		configDiffs = append(configDiffs, newGlobalConfigEntryDiff(key, actualEntry, actualExists, "", false))
+	for _, expectedConfig := range config {
+		var actualValue *common.GlobalConfigValue
+		actualEntry, actualExists := actualConfig.Get(expectedConfig.Key)
+		if actualExists {
+			actualValue = &actualEntry
+		}
+		referencedValue := getReferencedGlobalConfigValue(expectedConfig.Key, referencedSensitiveGlobalConfig, referencedGlobalConfig)
+		if referencedValue != nil {
+			expectedConfig.Value = referencedValue
+		}
+		diff := newGlobalConfigEntryDiff(expectedConfig.Key, actualValue, actualExists, expectedConfig.Value, !expectedConfig.Absent)
+		// only add diff if there are changes
+		if diff.NeededAction != ConfigActionNone {
+			configDiffs = append(configDiffs, diff)
+		}
 	}
 	return configDiffs
+}
+
+func getReferencedGlobalConfigValue(
+	key common.GlobalConfigKey,
+	referencedSensitiveGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+	referencedGlobalConfig map[common.GlobalConfigKey]common.GlobalConfigValue,
+) *common.GlobalConfigValue {
+	value, exists := referencedSensitiveGlobalConfig[key]
+	if exists {
+		return &value
+	}
+	value, exists = referencedGlobalConfig[key]
+	if exists {
+		return &value
+	}
+	return nil
 }

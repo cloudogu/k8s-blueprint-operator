@@ -6,6 +6,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+*Breaking Change ahead!*
+
+> This version requires the component `k8s-ces-gateway` to be installed.
+
+### Added
+- [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
+- [#135] Support for the blueprint mask custom resource.
+- [#129] Reconciliation of the blueprint on changes of dogu-crs, ces-configMaps and ces-secrets
+- [#131] Ignore loglevel changes while debug-mode is active
+- [#131] Do not reconcile blueprint if a restore is in progress
+- [#136] Support non-sensitive config references with config maps and secrets
+
+### Changed
+- [#119] *breaking* sensitive dogu config can now only be referenced with secrets
+    - it was not safe to have these values in clear text in the blueprint
+- [#119] we now support blueprint v2 CRs
+- [#121] all health checks are now non-blocking
+- [#121] there are in general no steps anymore, which will block the reconciliation loop beyond some HTTP-Requests
+- [#121] *breaking* blueprints will now be executed as a continuous process
+    - the operator will now detect changes and will enforce the content of the blueprint
+- [#121] *breaking* the current state will now be reflected via conditions instead of the `statusPhase` field
+- [#121] *breaking* events were reworked, some events are now more general, some events got removed completely
+    - Note, that events are for humans. You should not compute them for automation as they have no consistency guarantees.
+- [#121] Upgrade to Golang v1.25.1
+- [#121] Upgrade Makefiles to v10.4.0
+- [#121] *breaking* merge proxy config dogu action into one to simplify the status
+- [#133] updated and added docs for the operator
+- [#136] Prevent sensitive configs in global config
+
+### Removed
+- [#119] *breaking* no support for v1 blueprint CRs anymore
+    - make sure to persist your blueprints before upgrading
+    - you need to transform your blueprints to the new v2 format yourself
+- [#121] remove maintenance mode
+  - remove dependency to k8s-service-discovery (maintenance-mode was the reason for this dependency)
+- [#121] *breaking* dogus will not be restarted by the blueprint operator anymore
+    - this is now the responsibility of the dogu operator
+- [#121] *breaking* remove the ability to apply components (including self upgrade)
+  - Ecosystem-Core-Chart has now the resonsibility of components
+- [#121] *breaking* remove watching the health state of components in the ecosystem
+
+### Fixed
+- [#141] fix nilpointer with missing blueprint mask
+
 ## [v2.8.0] - 2025-09-15
 ### Changed
 - [#125] ignore nginx dependencies
