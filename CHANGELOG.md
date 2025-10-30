@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 *Breaking Change ahead!*
 
+> This version requires the component `k8s-ces-gateway` to be installed.
+
 ### Added
 - [#121] Added use case to check if dogus actually use the desired version and config before completing the blueprint
 - [#135] Support for the blueprint mask custom resource.
