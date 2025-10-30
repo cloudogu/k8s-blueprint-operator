@@ -3,34 +3,51 @@ package reconciler
 import (
 	"context"
 	"errors"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"time"
 
-	"github.com/go-logr/logr"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	k8sv1 "github.com/cloudogu/k8s-blueprint-lib/api/v1"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	doguv2 "github.com/cloudogu/k8s-dogu-lib/v2/api/v2"
 )
 
 // BlueprintReconciler reconciles a Blueprint object
 type BlueprintReconciler struct {
 	blueprintChangeHandler BlueprintChangeHandler
+	blueprintRepo          BlueprintSpecRepository
+	namespace              string
+	debounce               SingletonDebounce
+	window                 time.Duration
+	errorHandler           *ErrorHandler
 }
 
 func NewBlueprintReconciler(
 	blueprintChangeHandler BlueprintChangeHandler,
+	repo domainservice.BlueprintSpecRepository,
+	namespace string,
+	window time.Duration,
 ) *BlueprintReconciler {
-	return &BlueprintReconciler{blueprintChangeHandler: blueprintChangeHandler}
+	return &BlueprintReconciler{
+		blueprintChangeHandler: blueprintChangeHandler,
+		blueprintRepo:          repo,
+		namespace:              namespace,
+		debounce:               SingletonDebounce{},
+		window:                 window,
+		errorHandler:           NewErrorHandler(),
+	}
 }
 
-// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;list;watch;update;patch
+// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints,verbs=get;watch;update;patch
 // +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=k8s.cloudogu.com,resources=blueprints/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -42,39 +59,23 @@ func (r *BlueprintReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		WithName("BlueprintReconciler.Reconcile").
 		WithValues("resourceName", req.Name)
 
-	err := r.blueprintChangeHandler.HandleChange(ctx, req.Name)
+	err := r.blueprintChangeHandler.CheckForMultipleBlueprintResources(ctx)
 
 	if err != nil {
-		return decideRequeueForError(logger, err)
+		return r.errorHandler.handleError(logger, err)
 	}
 
+	err = r.blueprintChangeHandler.HandleUntilApplied(ctx, req.Name)
+
+	if err != nil {
+		return r.errorHandler.handleError(logger, err)
+	}
+
+	// Schedule a reconciliation after the cooldown period if there is one pending.
+	if requeue, after := r.debounce.ShouldRequeue(); requeue {
+		return ctrl.Result{RequeueAfter: after}, nil
+	}
 	return ctrl.Result{}, nil
-}
-
-func decideRequeueForError(logger logr.Logger, err error) (ctrl.Result, error) {
-	errLogger := logger.WithValues("error", err)
-
-	var internalError *domainservice.InternalError
-	var conflictError *domainservice.ConflictError
-	var notFoundError *domainservice.NotFoundError
-	var invalidBlueprintError *domain.InvalidBlueprintError
-	switch {
-	case errors.As(err, &internalError):
-		errLogger.Error(err, "An internal error occurred and can maybe be fixed by retrying it later")
-		return ctrl.Result{}, err // automatic requeue because of non-nil err
-	case errors.As(err, &conflictError):
-		errLogger.Info("A concurrent update happened in conflict to the processing of the blueprint spec. A retry could fix this issue")
-		return ctrl.Result{Requeue: true, RequeueAfter: 1 * time.Second}, nil // no error as this would lead to the ignorance of our own retry params
-	case errors.As(err, &notFoundError):
-		errLogger.Info("Blueprint was not found, so maybe it was deleted in the meantime. No further evaluation will happen")
-		return ctrl.Result{Requeue: false}, nil
-	case errors.As(err, &invalidBlueprintError):
-		errLogger.Info("Blueprint is invalid, therefore there will be no further evaluation.")
-		return ctrl.Result{Requeue: false}, nil
-	default:
-		errLogger.Error(err, "An unknown error type occurred. Retry with default backoff")
-		return ctrl.Result{}, err // automatic requeue because of non-nil err
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -89,9 +90,87 @@ func (r *BlueprintReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		RecoverPanic:       controllerOptions.RecoverPanic,
 		NeedLeaderElection: controllerOptions.NeedLeaderElection,
 	}
+
 	return ctrl.NewControllerManagedBy(mgr).
 		WithEventFilter(predicate.GenerationChangedPredicate{}).
 		WithOptions(options).
-		For(&k8sv1.Blueprint{}).
+		For(&bpv3.Blueprint{}).
+		WatchesRawSource(r.getConfigMapKind(mgr)).
+		WatchesRawSource(r.getSecretKind(mgr)).
+		WatchesRawSource(r.getDoguKind(mgr)).
+		WatchesRawSource(r.getBlueprintMaskKind(mgr)).
 		Complete(r)
+}
+
+func (r *BlueprintReconciler) getConfigMapKind(mgr ctrl.Manager) source.TypedSyncingSource[reconcile.Request] {
+	return source.TypedKind(
+		mgr.GetCache(),
+		&corev1.ConfigMap{},
+		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, cm *corev1.ConfigMap) []reconcile.Request {
+			return r.getBlueprintRequest(ctx)
+		}),
+		predicate.And(
+			makeResourcePredicate[*corev1.ConfigMap](r.hasOperatorNamespace),
+			makeResourcePredicate[*corev1.ConfigMap](hasCesLabel),
+			makeResourcePredicate[*corev1.ConfigMap](hasNotDoguDescriptorLabel),
+			makeContentPredicate(&r.debounce, r.window, configMapContentChanged),
+		),
+	)
+}
+
+func (r *BlueprintReconciler) getSecretKind(mgr ctrl.Manager) source.TypedSyncingSource[reconcile.Request] {
+	return source.TypedKind(
+		mgr.GetCache(),
+		&corev1.Secret{},
+		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, s *corev1.Secret) []reconcile.Request {
+			return r.getBlueprintRequest(ctx)
+		}),
+		predicate.And(
+			makeResourcePredicate[*corev1.Secret](r.hasOperatorNamespace),
+			makeContentPredicate(&r.debounce, r.window, secretContentChanged),
+		),
+	)
+}
+
+func (r *BlueprintReconciler) getDoguKind(mgr ctrl.Manager) source.TypedSyncingSource[reconcile.Request] {
+	return source.TypedKind(
+		mgr.GetCache(),
+		&doguv2.Dogu{},
+		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, d *doguv2.Dogu) []reconcile.Request {
+			return r.getBlueprintRequest(ctx)
+		}),
+		predicate.And(
+			makeResourcePredicate[*doguv2.Dogu](r.hasOperatorNamespace),
+			makeContentPredicate(&r.debounce, r.window, doguSpecChanged),
+		),
+	)
+}
+
+func (r *BlueprintReconciler) getBlueprintMaskKind(mgr ctrl.Manager) source.TypedSource[reconcile.Request] {
+	return source.TypedKind(
+		mgr.GetCache(),
+		&bpv3.BlueprintMask{},
+		handler.TypedEnqueueRequestsFromMapFunc(func(ctx context.Context, mask *bpv3.BlueprintMask) []reconcile.Request {
+			return r.getBlueprintRequest(ctx)
+		}),
+		predicate.And(
+			makeResourcePredicate[*bpv3.BlueprintMask](r.hasOperatorNamespace),
+			makeContentPredicate(&r.debounce, r.window, blueprintMaskSpecChanged),
+		),
+	)
+}
+
+func (r *BlueprintReconciler) getBlueprintRequest(ctx context.Context) []reconcile.Request {
+	idList, err := r.blueprintRepo.ListIds(ctx)
+	if err != nil || len(idList) != 1 {
+		return nil
+	}
+
+	blueprintRequest := []reconcile.Request{{
+		NamespacedName: types.NamespacedName{
+			Name:      idList[0],
+			Namespace: r.namespace,
+		},
+	}}
+	return blueprintRequest
 }

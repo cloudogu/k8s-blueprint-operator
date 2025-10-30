@@ -5,6 +5,7 @@ package application
 import (
 	context "context"
 
+	domain "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -21,17 +22,17 @@ func (_m *mockBlueprintSpecValidationUseCase) EXPECT() *mockBlueprintSpecValidat
 	return &mockBlueprintSpecValidationUseCase_Expecter{mock: &_m.Mock}
 }
 
-// ValidateBlueprintSpecDynamically provides a mock function with given fields: ctx, blueprintId
-func (_m *mockBlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// ValidateBlueprintSpecDynamically provides a mock function with given fields: ctx, blueprint
+func (_m *mockBlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateBlueprintSpecDynamically")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,14 +47,14 @@ type mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call st
 
 // ValidateBlueprintSpecDynamically is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockBlueprintSpecValidationUseCase_Expecter) ValidateBlueprintSpecDynamically(ctx interface{}, blueprintId interface{}) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
-	return &mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call{Call: _e.mock.On("ValidateBlueprintSpecDynamically", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockBlueprintSpecValidationUseCase_Expecter) ValidateBlueprintSpecDynamically(ctx interface{}, blueprint interface{}) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
+	return &mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call{Call: _e.mock.On("ValidateBlueprintSpecDynamically", ctx, blueprint)}
 }
 
-func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call) Run(run func(ctx context.Context, blueprintId string)) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
+func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -63,22 +64,22 @@ func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Ca
 	return _c
 }
 
-func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call) RunAndReturn(run func(context.Context, string) error) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
+func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecDynamically_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ValidateBlueprintSpecStatically provides a mock function with given fields: ctx, blueprintId
-func (_m *mockBlueprintSpecValidationUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprintId string) error {
-	ret := _m.Called(ctx, blueprintId)
+// ValidateBlueprintSpecStatically provides a mock function with given fields: ctx, blueprint
+func (_m *mockBlueprintSpecValidationUseCase) ValidateBlueprintSpecStatically(ctx context.Context, blueprint *domain.BlueprintSpec) error {
+	ret := _m.Called(ctx, blueprint)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ValidateBlueprintSpecStatically")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = rf(ctx, blueprintId)
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.BlueprintSpec) error); ok {
+		r0 = rf(ctx, blueprint)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -93,14 +94,14 @@ type mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call str
 
 // ValidateBlueprintSpecStatically is a helper method to define mock.On call
 //   - ctx context.Context
-//   - blueprintId string
-func (_e *mockBlueprintSpecValidationUseCase_Expecter) ValidateBlueprintSpecStatically(ctx interface{}, blueprintId interface{}) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
-	return &mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call{Call: _e.mock.On("ValidateBlueprintSpecStatically", ctx, blueprintId)}
+//   - blueprint *domain.BlueprintSpec
+func (_e *mockBlueprintSpecValidationUseCase_Expecter) ValidateBlueprintSpecStatically(ctx interface{}, blueprint interface{}) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
+	return &mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call{Call: _e.mock.On("ValidateBlueprintSpecStatically", ctx, blueprint)}
 }
 
-func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call) Run(run func(ctx context.Context, blueprintId string)) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
+func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call) Run(run func(ctx context.Context, blueprint *domain.BlueprintSpec)) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		run(args[0].(context.Context), args[1].(*domain.BlueprintSpec))
 	})
 	return _c
 }
@@ -110,7 +111,7 @@ func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Cal
 	return _c
 }
 
-func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call) RunAndReturn(run func(context.Context, string) error) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
+func (_c *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call) RunAndReturn(run func(context.Context, *domain.BlueprintSpec) error) *mockBlueprintSpecValidationUseCase_ValidateBlueprintSpecStatically_Call {
 	_c.Call.Return(run)
 	return _c
 }

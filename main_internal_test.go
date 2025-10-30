@@ -6,19 +6,17 @@ import (
 	"testing"
 
 	"github.com/go-logr/logr"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
-	"github.com/cloudogu/k8s-blueprint-lib/api/v1"
+	bpv3 "github.com/cloudogu/k8s-blueprint-lib/v3/api/v3"
 	config2 "github.com/cloudogu/k8s-blueprint-operator/v2/pkg/config"
 )
 
@@ -174,13 +172,14 @@ func Test_startOperator(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "unable to bootstrap application context: failed to get remote dogu registry credentials: environment variable DOGU_REGISTRY_PASSWORD must be set")
 	})
-	t.Run("should fail to configure reconciler", func(t *testing.T) {
+	t.Run("should fail to configure blueprint reconciler", func(t *testing.T) {
 		// given
 		t.Setenv("NAMESPACE", "ecosystem")
 		t.Setenv("STAGE", "development")
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -196,6 +195,7 @@ func Test_startOperator(t *testing.T) {
 		//ctrlManMock.EXPECT().GetConfig().Return(restConfig)
 		ctrlManMock.EXPECT().GetControllerOptions().Return(config.Controller{})
 		ctrlManMock.EXPECT().GetScheme().Return(runtime.NewScheme())
+		ctrlManMock.EXPECT().GetCache().Return(nil)
 
 		ctrl.NewManager = func(config *rest.Config, options manager.Options) (manager.Manager, error) {
 			return ctrlManMock, nil
@@ -211,7 +211,7 @@ func Test_startOperator(t *testing.T) {
 
 		// then
 		require.Error(t, err)
-		assert.ErrorContains(t, err, "unable to configure manager: unable to configure reconciler")
+		assert.ErrorContains(t, err, "unable to configure manager: unable to configure blueprint reconciler")
 	})
 	t.Run("should fail to add health check to controller manager", func(t *testing.T) {
 		// given
@@ -220,6 +220,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -268,6 +269,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -317,6 +319,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -372,6 +375,7 @@ func Test_startOperator(t *testing.T) {
 		t.Setenv("DOGU_REGISTRY_ENDPOINT", "dogu.example.com")
 		t.Setenv("DOGU_REGISTRY_USERNAME", "user")
 		t.Setenv("DOGU_REGISTRY_PASSWORD", "password")
+		t.Setenv("DEBOUNCE_WINDOW", "10s")
 
 		oldNewManagerFunc := ctrl.NewManager
 		oldGetConfigFunc := ctrl.GetConfigOrDie
@@ -422,12 +426,8 @@ func Test_startOperator(t *testing.T) {
 
 func createScheme(t *testing.T) *runtime.Scheme {
 	t.Helper()
-
 	scheme := runtime.NewScheme()
-	gv, err := schema.ParseGroupVersion("k8s.cloudogu.com/v1")
-	assert.NoError(t, err)
-
-	scheme.AddKnownTypes(gv, &v1.Blueprint{})
+	scheme.AddKnownTypes(bpv3.GroupVersion, &bpv3.Blueprint{}, &bpv3.BlueprintMask{})
 	return scheme
 }
 

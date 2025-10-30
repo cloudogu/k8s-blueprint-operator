@@ -1,393 +1,197 @@
 package application
 
 import (
-	"context"
-	"fmt"
-	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
-	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"testing"
-	"time"
 
+	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"k8s.io/apimachinery/pkg/api/meta"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 )
 
+var (
+	healthyDogu = map[ecosystem.HealthStatus][]cescommons.SimpleName{
+		ecosystem.AvailableHealthStatus: {"postgresql"},
+	}
+	mixedDoguHealth = map[ecosystem.HealthStatus][]cescommons.SimpleName{
+		ecosystem.AvailableHealthStatus:   {"postgresql"},
+		ecosystem.UnavailableHealthStatus: {"postfix"},
+		ecosystem.PendingHealthStatus:     {"scm"},
+	}
+)
+
 func TestNewEcosystemHealthUseCase(t *testing.T) {
 	doguUseCase := newMockDoguInstallationUseCase(t)
-	componentUseCase := newMockComponentInstallationUseCase(t)
-	waitConfigMock := newMockHealthWaitConfigProvider(t)
-	useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, waitConfigMock)
+	blueprintRepo := newMockBlueprintSpecRepository(t)
+	useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
 
 	assert.Same(t, doguUseCase, useCase.doguUseCase)
-	assert.Same(t, componentUseCase, useCase.componentUseCase)
-	assert.Same(t, waitConfigMock, useCase.waitConfigProvider)
 }
 
 func TestEcosystemHealthUseCase_CheckEcosystemHealth(t *testing.T) {
+	t.Run("all healthy", func(t *testing.T) {
+		blueprint := &domain.BlueprintSpec{
+			Conditions: []domain.Condition{},
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth: false,
+			},
+		}
+
+		doguHealth := ecosystem.DoguHealthResult{
+			DogusByStatus: healthyDogu,
+		}
+		doguUseCase := newMockDoguInstallationUseCase(t)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(nil)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
+
+		health, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
+
+		require.NoError(t, err)
+		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth}, health)
+		assert.True(t, meta.IsStatusConditionTrue(blueprint.Conditions, domain.ConditionEcosystemHealthy))
+	})
+
+	t.Run("unhealthy", func(t *testing.T) {
+		blueprint := &domain.BlueprintSpec{
+			Conditions: []domain.Condition{},
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth: false,
+			},
+		}
+
+		doguHealth := ecosystem.DoguHealthResult{
+			DogusByStatus: mixedDoguHealth,
+		}
+		doguUseCase := newMockDoguInstallationUseCase(t)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(nil)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
+
+		health, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, "ecosystem is unhealthy")
+		assert.ErrorContains(t, err, "2 dogu(s) are unhealthy: postfix, scm")
+		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth}, health)
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
+	})
+
+	t.Run("error updating blueprint", func(t *testing.T) {
+		blueprint := &domain.BlueprintSpec{
+			Conditions: []domain.Condition{},
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth: false,
+			},
+		}
+
+		doguHealth := ecosystem.DoguHealthResult{
+			DogusByStatus: mixedDoguHealth,
+		}
+		doguUseCase := newMockDoguInstallationUseCase(t)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(assert.AnError)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
+
+		health, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
+
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.ErrorContains(t, err, "could not update health condition after health check")
+		assert.Equal(t, ecosystem.HealthResult{}, health)
+	})
+
+	t.Run("error getting health", func(t *testing.T) {
+		blueprint := &domain.BlueprintSpec{
+			Conditions: []domain.Condition{},
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth: false,
+			},
+		}
+
+		doguHealth := ecosystem.DoguHealthResult{}
+
+		doguUseCase := newMockDoguInstallationUseCase(t)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, assert.AnError)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(nil)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
+
+		_, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
+
+		assert.ErrorIs(t, err, assert.AnError)
+		assert.True(t, meta.IsStatusConditionPresentAndEqual(
+			blueprint.Conditions, domain.ConditionEcosystemHealthy, metav1.ConditionUnknown,
+		))
+	})
+
+	t.Run("no update without health change", func(t *testing.T) {
+		blueprint := &domain.BlueprintSpec{
+			Conditions: []domain.Condition{},
+			Config: domain.BlueprintConfiguration{
+				IgnoreDoguHealth: false,
+			},
+		}
+
+		doguHealth := ecosystem.DoguHealthResult{
+			DogusByStatus: mixedDoguHealth,
+		}
+		doguUseCase := newMockDoguInstallationUseCase(t)
+		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil).Twice()
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		blueprintRepo.EXPECT().Update(testCtx, blueprint).Return(nil).Once()
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
+
+		_, err := useCase.CheckEcosystemHealth(testCtx, blueprint)
+		assert.ErrorContains(t, err, "ecosystem is unhealthy")
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
+		_, err = useCase.CheckEcosystemHealth(testCtx, blueprint) //no repo.Update called again
+		assert.ErrorContains(t, err, "ecosystem is unhealthy")
+		assert.True(t, meta.IsStatusConditionFalse(blueprint.Conditions, domain.ConditionEcosystemHealthy))
+	})
+}
+
+func TestEcosystemHealthUseCase_getEcosystemHealth(t *testing.T) {
 	t.Run("ok", func(t *testing.T) {
 		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-				ecosystem.AvailableHealthStatus:   {"postgresql"},
-				ecosystem.UnavailableHealthStatus: {"postfix"},
-				ecosystem.PendingHealthStatus:     {"scm"},
-			},
-		}
-		componentHealth := ecosystem.ComponentHealthResult{
-			ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-				ecosystem.NotInstalledHealthStatus: {"k8s-dogu-operator"},
-				ecosystem.UnavailableHealthStatus:  {"k8s-etcd"},
-				ecosystem.PendingHealthStatus:      {"k8s-service-discovery"},
-				ecosystem.AvailableHealthStatus:    {"k8s-component-operator"},
-			},
+			DogusByStatus: mixedDoguHealth,
 		}
 		doguUseCase := newMockDoguInstallationUseCase(t)
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
 
-		health, err := useCase.CheckEcosystemHealth(testCtx, false, false)
-
-		require.NoError(t, err)
-		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth, ComponentHealth: componentHealth}, health)
-	})
-
-	t.Run("ok, ignore dogu health", func(t *testing.T) {
-		componentHealth := ecosystem.ComponentHealthResult{
-			ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-				ecosystem.NotInstalledHealthStatus: {"k8s-dogu-operator"},
-				ecosystem.UnavailableHealthStatus:  {"k8s-etcd"},
-				ecosystem.PendingHealthStatus:      {"k8s-service-discovery"},
-				ecosystem.AvailableHealthStatus:    {"k8s-component-operator"},
-			},
-		}
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
-		useCase := NewEcosystemHealthUseCase(nil, componentUseCase, nil)
-
-		health, err := useCase.CheckEcosystemHealth(testCtx, true, false)
-
-		require.NoError(t, err)
-		assert.Equal(t, ecosystem.HealthResult{ComponentHealth: componentHealth}, health)
-	})
-
-	t.Run("ok, ignore component health", func(t *testing.T) {
-		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-				ecosystem.AvailableHealthStatus:   {"postgresql"},
-				ecosystem.UnavailableHealthStatus: {"postfix"},
-				ecosystem.PendingHealthStatus:     {"scm"},
-			},
-		}
-		doguUseCase := newMockDoguInstallationUseCase(t)
-		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, nil, nil)
-
-		health, err := useCase.CheckEcosystemHealth(testCtx, false, true)
+		health, err := useCase.getEcosystemHealth(testCtx, false)
 
 		require.NoError(t, err)
 		assert.Equal(t, ecosystem.HealthResult{DoguHealth: doguHealth}, health)
 	})
 
+	t.Run("ok, ignore dogu health", func(t *testing.T) {
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		useCase := NewEcosystemHealthUseCase(nil, blueprintRepo)
+
+		health, err := useCase.getEcosystemHealth(testCtx, true)
+
+		require.NoError(t, err)
+		assert.Equal(t, ecosystem.HealthResult{}, health)
+	})
+
 	t.Run("error checking dogu health", func(t *testing.T) {
-		componentHealth := ecosystem.ComponentHealthResult{
-			ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-				ecosystem.NotInstalledHealthStatus: {"k8s-dogu-operator"},
-				ecosystem.UnavailableHealthStatus:  {"k8s-etcd"},
-				ecosystem.PendingHealthStatus:      {"k8s-service-discovery"},
-				ecosystem.AvailableHealthStatus:    {"k8s-component-operator"},
-			},
-		}
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(componentHealth, nil)
 		doguUseCase := newMockDoguInstallationUseCase(t)
 		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(ecosystem.DoguHealthResult{}, assert.AnError)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
+		blueprintRepo := newMockBlueprintSpecRepository(t)
+		useCase := NewEcosystemHealthUseCase(doguUseCase, blueprintRepo)
 
-		_, err := useCase.CheckEcosystemHealth(testCtx, false, false)
-
-		require.ErrorIs(t, err, assert.AnError)
-	})
-
-	t.Run("error checking component health", func(t *testing.T) {
-		doguHealth := ecosystem.DoguHealthResult{
-			DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-				ecosystem.AvailableHealthStatus:   {"postgresql"},
-				ecosystem.UnavailableHealthStatus: {"postfix"},
-				ecosystem.PendingHealthStatus:     {"scm"},
-			},
-		}
-		doguUseCase := newMockDoguInstallationUseCase(t)
-		doguUseCase.EXPECT().CheckDoguHealth(mock.Anything).Return(doguHealth, nil)
-		componentUseCase := newMockComponentInstallationUseCase(t)
-		componentUseCase.EXPECT().CheckComponentHealth(testCtx).Return(ecosystem.ComponentHealthResult{}, assert.AnError)
-		useCase := NewEcosystemHealthUseCase(doguUseCase, componentUseCase, nil)
-
-		_, err := useCase.CheckEcosystemHealth(testCtx, false, false)
+		_, err := useCase.getEcosystemHealth(testCtx, false)
 
 		require.ErrorIs(t, err, assert.AnError)
 	})
-}
-
-func TestEcosystemHealthUseCase_WaitForHealthyEcosystem(t *testing.T) {
-	type fields struct {
-		doguUseCaseFn         func(t *testing.T) doguInstallationUseCase
-		componentUseCaseFn    func(t *testing.T) componentInstallationUseCase
-		waitConfigProviderFn  func(t *testing.T) healthWaitConfigProvider
-		ignoreDoguHealth      bool
-		ignoreComponentHealth bool
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		want    ecosystem.HealthResult
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "should fail to get health check timeout",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					return newMockDoguInstallationUseCase(t)
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					return newMockComponentInstallationUseCase(t)
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{}, assert.AnError)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i) &&
-					assert.ErrorContains(t, err, "failed to get health check timeout", i)
-			},
-		},
-		{
-			name: "dogu and component health check should fail with error",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					doguMock := newMockDoguInstallationUseCase(t)
-					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{}, assert.AnError
-						})
-					return doguMock
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					componentMock := newMockComponentInstallationUseCase(t)
-					componentMock.EXPECT().WaitForHealthyComponents(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-							return ecosystem.ComponentHealthResult{}, assert.AnError
-						})
-					return componentMock
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i) &&
-					assert.ErrorContains(t, err, "failed to wait for healthy components", i) &&
-					assert.ErrorContains(t, err, "failed to wait for healthy dogus", i)
-			},
-		},
-		{
-			name: "context should time out for dogu and component health check",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					doguMock := newMockDoguInstallationUseCase(t)
-					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							select {
-							case <-ctx.Done():
-								return ecosystem.DoguHealthResult{}, assert.AnError
-							case <-time.After(1 * time.Second):
-								return ecosystem.DoguHealthResult{}, fmt.Errorf("test failed with timeout in dogu use case")
-							}
-						})
-					return doguMock
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					componentMock := newMockComponentInstallationUseCase(t)
-					componentMock.EXPECT().WaitForHealthyComponents(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-							select {
-							case <-ctx.Done():
-								return ecosystem.ComponentHealthResult{}, assert.AnError
-							case <-time.After(1 * time.Second):
-								return ecosystem.ComponentHealthResult{}, fmt.Errorf("test failed with timeout in component use case")
-							}
-						})
-					return componentMock
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: 0}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i)
-			},
-		},
-		{
-			name: "waiting for healthy dogus should fail",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					doguMock := newMockDoguInstallationUseCase(t)
-					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{}, assert.AnError
-						})
-					return doguMock
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					componentMock := newMockComponentInstallationUseCase(t)
-					componentMock.EXPECT().WaitForHealthyComponents(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-							return ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-								ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
-							}}, nil
-						})
-					return componentMock
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{},
-				ComponentHealth: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-					ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
-				}},
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i)
-			},
-		},
-		{
-			name: "waiting for healthy components should fail",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					doguMock := newMockDoguInstallationUseCase(t)
-					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-								ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
-							}}, nil
-						})
-					return doguMock
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					componentMock := newMockComponentInstallationUseCase(t)
-					componentMock.EXPECT().WaitForHealthyComponents(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-							return ecosystem.ComponentHealthResult{}, assert.AnError
-						})
-					return componentMock
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
-				}},
-				ComponentHealth: ecosystem.ComponentHealthResult{},
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.ErrorIs(t, err, assert.AnError, i)
-			},
-		},
-		{
-			name: "should succeed",
-			fields: fields{
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					doguMock := newMockDoguInstallationUseCase(t)
-					doguMock.EXPECT().WaitForHealthyDogus(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.DoguHealthResult, error) {
-							return ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-								ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
-							}}, nil
-						})
-					return doguMock
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					componentMock := newMockComponentInstallationUseCase(t)
-					componentMock.EXPECT().WaitForHealthyComponents(mock.Anything).
-						RunAndReturn(func(ctx context.Context) (ecosystem.ComponentHealthResult, error) {
-							return ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-								ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
-							}}, nil
-						})
-					return componentMock
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{
-				DoguHealth: ecosystem.DoguHealthResult{DogusByStatus: map[ecosystem.HealthStatus][]cescommons.SimpleName{
-					ecosystem.UnavailableHealthStatus: {"nginx-ingress"},
-				}},
-				ComponentHealth: ecosystem.ComponentHealthResult{ComponentsByStatus: map[ecosystem.HealthStatus][]common.SimpleComponentName{
-					ecosystem.AvailableHealthStatus: {"k8s-dogu-operator"},
-				}},
-			},
-			wantErr: assert.NoError,
-		},
-		{
-			name: "should succeed while ignoring dogu and component health",
-			fields: fields{
-				ignoreComponentHealth: true,
-				ignoreDoguHealth:      true,
-				doguUseCaseFn: func(t *testing.T) doguInstallationUseCase {
-					// nothing to mock, should not be called with ignore flag
-					return newMockDoguInstallationUseCase(t)
-				},
-				componentUseCaseFn: func(t *testing.T) componentInstallationUseCase {
-					// nothing to mock, should not be called with ignore flag
-					return newMockComponentInstallationUseCase(t)
-				},
-				waitConfigProviderFn: func(t *testing.T) healthWaitConfigProvider {
-					waitConfigMock := newMockHealthWaitConfigProvider(t)
-					waitConfigMock.EXPECT().GetWaitConfig(testCtx).Return(ecosystem.WaitConfig{Timeout: time.Second}, nil)
-					return waitConfigMock
-				},
-			},
-			want: ecosystem.HealthResult{
-				DoguHealth:      ecosystem.DoguHealthResult{},
-				ComponentHealth: ecosystem.ComponentHealthResult{},
-			},
-			wantErr: assert.NoError,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			useCase := &EcosystemHealthUseCase{
-				doguUseCase:        tt.fields.doguUseCaseFn(t),
-				componentUseCase:   tt.fields.componentUseCaseFn(t),
-				waitConfigProvider: tt.fields.waitConfigProviderFn(t),
-			}
-			got, err := useCase.WaitForHealthyEcosystem(testCtx, tt.fields.ignoreDoguHealth, tt.fields.ignoreComponentHealth)
-			tt.wantErr(t, err)
-			assert.Equal(t, tt.want, got)
-		})
-	}
 }

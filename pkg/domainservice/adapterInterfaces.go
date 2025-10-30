@@ -4,12 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
+	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/common"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
 	"github.com/cloudogu/k8s-registry-lib/config"
-
-	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain"
 )
@@ -38,41 +38,23 @@ type DoguInstallationRepository interface {
 	Delete(ctx context.Context, doguName cescommons.SimpleName) error
 }
 
-type ComponentInstallationRepository interface {
-	// GetByName loads an installed component from the ecosystem and returns
-	//  - the ecosystem.ComponentInstallation or
-	//  - a NotFoundError if the component is not installed or
-	//  - an InternalError if there is any other error.
-	GetByName(ctx context.Context, componentName common.SimpleComponentName) (*ecosystem.ComponentInstallation, error)
-	// GetAll returns
-	//  - the installation info of all installed components or
-	//  - an InternalError if there is any other error.
-	GetAll(ctx context.Context) (map[common.SimpleComponentName]*ecosystem.ComponentInstallation, error)
-	// Delete deletes the component by name from the ecosystem.
-	// returns an InternalError if there is an error.
-	Delete(ctx context.Context, componentName common.SimpleComponentName) error
-	// Create creates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if there is an error.
-	Create(ctx context.Context, component *ecosystem.ComponentInstallation) error
-	// Update updates the ecosystem.ComponentInstallation in the ecosystem.
-	// returns an InternalError if anything went wrong.
-	Update(ctx context.Context, component *ecosystem.ComponentInstallation) error
-}
-
-type RequiredComponentsProvider interface {
-	GetRequiredComponents(ctx context.Context) ([]ecosystem.RequiredComponent, error)
-}
-
-type HealthWaitConfigProvider interface {
-	GetWaitConfig(ctx context.Context) (ecosystem.WaitConfig, error)
-}
-
 type BlueprintSpecRepository interface {
 	// GetById returns a BlueprintSpec identified by its ID or
 	// a NotFoundError if the BlueprintSpec was not found or
 	// a domain.InvalidBlueprintError together with a BlueprintSpec without blueprint and mask if the BlueprintSpec could not be parsed or
 	// an InternalError if there is any other error.
 	GetById(ctx context.Context, blueprintId string) (*domain.BlueprintSpec, error)
+
+	// Count counts the Blueprint-resources in the namespace of the repository up to the given limit and
+	//  - returns the amount of blueprints or
+	//  - returns an InternalError if there is any error, e.g. a connection error.
+	Count(ctx context.Context, limit int) (int, error)
+
+	// ListIds retrieves all Blueprint-Ids.
+	//  - It returns a list of Ids containing all blueprint Ids, or
+	//  - an InternalError if the operation fails.
+	ListIds(ctx context.Context) ([]string, error)
+
 	// Update updates a given BlueprintSpec.
 	// returns a ConflictError if there were changes on the BlueprintSpec in the meantime or
 	// returns an InternalError if there is any other error
@@ -94,24 +76,6 @@ type RemoteDoguRegistry interface {
 type DoguToLoad struct {
 	DoguName cescommons.QualifiedName
 	Version  string
-}
-
-type MaintenanceMode interface {
-	// Activate enables the maintenance mode with the given title and text.
-	// May throw
-	//  - a ConflictError if another party activated the maintenance mode or
-	//  - a generic InternalError due to a connection error or an unknown error.
-	Activate(ctx context.Context, title, text string) error
-	// Deactivate disables the maintenance mode if it is active.
-	// May throw
-	//  - a ConflictError if another party initially activated the maintenance mode or
-	//  - a generic InternalError due to a connection error or an unknown error.
-	Deactivate(ctx context.Context) error
-}
-
-type DoguRestartRepository interface {
-	// RestartAll restarts all provided Dogus
-	RestartAll(context.Context, []cescommons.SimpleName) error
 }
 
 // GlobalConfigRepository is used to get the whole global config of the ecosystem to make changes and persist it as a whole.
@@ -169,6 +133,65 @@ type SensitiveDoguConfigRepository interface {
 	DoguConfigRepository //interfaces are the same yet. Don't hesitate to split them if they diverge
 }
 
+// SensitiveConfigRefReader resolves given domain.SensitiveValueRef's and loads the referenced values.
+// As sensitive config should not be written directly into the blueprint, only references are used.
+// This way, the blueprint e.g. can securely get committed to git.
+type SensitiveConfigRefReader interface {
+	// GetValues reads all common.SensitiveDoguConfigValue's from the given domain.SensitiveValueRef's by common.SensitiveDoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs map[common.DoguConfigKey]domain.SensitiveValueRef,
+	) (
+		map[common.DoguConfigKey]common.SensitiveDoguConfigValue,
+		error,
+	)
+	GetGlobalValues(
+		ctx context.Context,
+		refs map[common.GlobalConfigKey]domain.SensitiveValueRef,
+	) (
+		map[common.GlobalConfigKey]common.GlobalConfigValue,
+		error,
+	)
+}
+
+// ConfigRefReader resolves given domain.ConfigValueRef's and loads the referenced values.
+type ConfigRefReader interface {
+	// GetValues reads all common.DoguConfigValue's from the given domain.ConfigValueRef's by common.DoguConfigKey.
+	// It can throw the following errors:
+	//  - NotFoundError if any reference cannot be resolved.
+	//  - InternalError if any other error happens.
+	GetValues(
+		ctx context.Context,
+		refs map[common.DoguConfigKey]domain.ConfigValueRef,
+	) (
+		map[common.DoguConfigKey]common.DoguConfigValue,
+		error,
+	)
+	GetGlobalValues(
+		ctx context.Context,
+		refs map[common.GlobalConfigKey]domain.ConfigValueRef,
+	) (
+		map[common.GlobalConfigKey]common.GlobalConfigValue,
+		error,
+	)
+}
+
+type DebugModeRepository interface {
+	// GetSingleton returns the ecosystem.DebugMode or
+	//  - a NotFoundError if the debugMode information is not found in the ecosystem or
+	//  - an InternalError if there is any other error.
+	GetSingleton(ctx context.Context) (*ecosystem.DebugMode, error)
+}
+
+type RestoreRepository interface {
+	// IsRestoreInProgress returns true if a restore is in progress or
+	//  - an InternalError if there is any other error.
+	IsRestoreInProgress(ctx context.Context) (bool, error)
+}
+
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
 func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {
@@ -179,6 +202,7 @@ func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFo
 type NotFoundError struct {
 	WrappedError error
 	Message      string
+	DoNotRetry   bool
 }
 
 // Error marks the struct as an error.

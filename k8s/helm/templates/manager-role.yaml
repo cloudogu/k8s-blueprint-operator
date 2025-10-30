@@ -9,44 +9,32 @@ metadata:
   {{- include "k8s-blueprint-operator.labels" . | nindent 4 }}
   name: {{ include "k8s-blueprint-operator.name" . }}-manager-role
 rules:
-
-# issue permissions to read/update fields beyond the status or finalizer fields
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints
-    verbs:
-      - get
-      - list
-      - patch
-      - update
-      - watch
-# issue permissions to update the finalizer field that may control CR deletion
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints/finalizers
-    verbs:
-      - update
-# issue permissions to update the status which contains blueprint processing data
-  - apiGroups:
-      - k8s.cloudogu.com
-    resources:
-      - blueprints/status
-    verbs:
-      - get
-      - patch
-      - update
 # issue secret handling for Dogus
   - apiGroups:
       - ""
     resources:
       - secrets
     verbs:
-      - create
-      - update
       - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      - watch
 # issue PVC read-only permissions to amend the Blueprint CR with a currently configured Dogu volume size
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps # for normal dogu config
+    verbs:
+      - get
+      - list # needed, as the registry-lib seems to need that for a normal get command
+      - watch
+  - apiGroups:
+      - k8s.cloudogu.com
+    resources:
+      - dogus
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups:
       - ""
     resources:
