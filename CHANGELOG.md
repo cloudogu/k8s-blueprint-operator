@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [#135] Support for the blueprint mask custom resource.
 - [#129] Reconciliation of the blueprint on changes of dogu-crs, ces-configMaps and ces-secrets
 - [#131] Ignore loglevel changes while debug-mode is active
+- [#131] Do not reconcile blueprint if a restore is in progress
 - [#136] Support non-sensitive config references with config maps and secrets
 
 ### Changed

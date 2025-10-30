@@ -18,6 +18,8 @@ github.com/cloudogu/ces-commons-lib v0.2.0 h1:yOEZWFl4W9N3J/6fok4svE3UufK5GQQtyx
 github.com/cloudogu/ces-commons-lib v0.2.0/go.mod h1:4rvR2RTDDaz5a6OZ1fW27G0MOnl5I3ackeiHxt4gn3o=
 github.com/cloudogu/cesapp-lib v0.18.1 h1:LMdGktIefm/PuhdPqpLTPvjY1smO06EEGBbRSAaYi7U=
 github.com/cloudogu/cesapp-lib v0.18.1/go.mod h1:J05eXFxnz4enZblABlmiVTZaUtJ+LIhlJ2UF6l9jpDw=
+github.com/cloudogu/k8s-backup-lib v1.7.0 h1:piu0+IK7IejeKTmdIMKuBHt0QKSdLVYzCALNewTDeF4=
+github.com/cloudogu/k8s-backup-lib v1.7.0/go.mod h1:FKk+/VswDzTttHzlIFDfgpWBe7kXWngxSFdSh7dZTpg=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251023135924-ab35c661e8ff h1:bDnFiKscc9ARUJDkOj1I4DqEean/df1VgGYmOdWmh+o=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251023135924-ab35c661e8ff/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251027130412-81a09b228be0 h1:XyHiEbXC5uFuQ8GhsZllNGvQ/lUycrSEX0DGrvyEfHA=

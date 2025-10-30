@@ -77,3 +77,11 @@ type StateDiffNotEmptyError struct {
 func (e *StateDiffNotEmptyError) Error() string {
 	return e.Message
 }
+
+type RestoreInProgressError struct {
+	Message string
+}
+
+func (e *RestoreInProgressError) Error() string {
+	return e.Message
+}

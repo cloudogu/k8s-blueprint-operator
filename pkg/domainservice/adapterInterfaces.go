@@ -186,6 +186,12 @@ type DebugModeRepository interface {
 	GetSingleton(ctx context.Context) (*ecosystem.DebugMode, error)
 }
 
+type RestoreRepository interface {
+	// IsRestoreInProgress returns true if a restore is in progress or
+	//  - an InternalError if there is any other error.
+	IsRestoreInProgress(ctx context.Context) (bool, error)
+}
+
 // NewNotFoundError creates a NotFoundError with a given message. The wrapped error may be nil. The error message must
 // omit the fmt.Errorf verb %w because this is done by NotFoundError.Error().
 func NewNotFoundError(wrappedError error, message string, msgArgs ...any) *NotFoundError {

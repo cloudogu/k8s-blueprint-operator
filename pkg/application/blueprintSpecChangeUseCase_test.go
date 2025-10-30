@@ -45,6 +45,7 @@ func TestNewBlueprintSpecChangeUseCase(t *testing.T) {
 		mocks.effectiveBlueprint,
 		mocks.stateDiff,
 		mocks.ecosystemHealth,
+		mocks.restoreInProgress,
 	)
 	applyUseCases := NewBlueprintApplyUseCase(
 		mocks.completeBlueprint,
@@ -75,6 +76,7 @@ type allMocks struct {
 	applyDogus         *mockApplyDogusUseCase
 	ecosystemHealth    *mockEcosystemHealthUseCase
 	dogusUpToDate      *mockDogusUpToDateUseCase
+	restoreInProgress  *mockRestoreInProgressUseCase
 }
 
 func createAllMocks(t *testing.T) *allMocks {
@@ -89,6 +91,7 @@ func createAllMocks(t *testing.T) *allMocks {
 		applyDogus:         newMockApplyDogusUseCase(t),
 		ecosystemHealth:    newMockEcosystemHealthUseCase(t),
 		dogusUpToDate:      newMockDogusUpToDateUseCase(t),
+		restoreInProgress:  newMockRestoreInProgressUseCase(t),
 	}
 }
 
@@ -97,6 +100,7 @@ func assertPreparationUseCases(t *testing.T, useCases BlueprintPreparationUseCas
 	assert.Equal(t, mocks.effectiveBlueprint, useCases.effectiveBlueprint)
 	assert.Equal(t, mocks.stateDiff, useCases.stateDiff)
 	assert.Equal(t, mocks.ecosystemHealth, useCases.healthUseCase)
+	assert.Equal(t, mocks.restoreInProgress, useCases.restoreInProgressUseCase)
 }
 
 func assertApplyUseCases(t *testing.T, useCases BlueprintApplyUseCase, mocks *allMocks) {
@@ -203,6 +207,22 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_PreparationPhaseErrors(t 
 				mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
 				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
 				mocks.stateDiff.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(assert.AnError)
+			},
+			wantErrTest: func(t *testing.T, err error) {
+				assert.Error(t, err)
+			},
+		},
+		{
+			name: "should return error on error checking if a restore is in progress",
+			setupMocks: func(mocks *allMocks) {
+				mocks.repo.EXPECT().GetById(mock.Anything, testBlueprintId).Return(testBlueprintSpec, nil)
+				mocks.initialStatus.EXPECT().InitateConditions(mock.Anything, mock.Anything).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecStatically(mock.Anything, mock.Anything).Return(nil)
+				mocks.effectiveBlueprint.EXPECT().CalculateEffectiveBlueprint(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, testBlueprintSpec).Return(ecosystem.HealthResult{}, nil)
+				mocks.stateDiff.EXPECT().DetermineStateDiff(mock.Anything, testBlueprintSpec).Return(nil)
+				mocks.restoreInProgress.EXPECT().CheckRestoreInProgress(mock.Anything).Return(assert.AnError)
 			},
 			wantErrTest: func(t *testing.T, err error) {
 				assert.Error(t, err)
@@ -386,11 +406,12 @@ func TestBlueprintSpecChangeUseCase_HandleUntilApplied_CompletionScenarios(t *te
 
 func createUseCase(mocks *allMocks) *BlueprintSpecChangeUseCase {
 	preparationUseCases := BlueprintPreparationUseCase{
-		initialStatus:      mocks.initialStatus,
-		validation:         mocks.validation,
-		effectiveBlueprint: mocks.effectiveBlueprint,
-		stateDiff:          mocks.stateDiff,
-		healthUseCase:      mocks.ecosystemHealth,
+		initialStatus:            mocks.initialStatus,
+		validation:               mocks.validation,
+		effectiveBlueprint:       mocks.effectiveBlueprint,
+		stateDiff:                mocks.stateDiff,
+		healthUseCase:            mocks.ecosystemHealth,
+		restoreInProgressUseCase: mocks.restoreInProgress,
 	}
 	applyUseCases := BlueprintApplyUseCase{
 		completeUseCase:        mocks.completeBlueprint,
@@ -414,6 +435,7 @@ func setupSuccessfulPreparationPhase(mocks *allMocks, spec *domain.BlueprintSpec
 	mocks.validation.EXPECT().ValidateBlueprintSpecDynamically(mock.Anything, spec).Return(nil)
 	mocks.ecosystemHealth.EXPECT().CheckEcosystemHealth(mock.Anything, spec).Return(ecosystem.HealthResult{}, nil).Times(1)
 	mocks.stateDiff.EXPECT().DetermineStateDiff(mock.Anything, spec).Return(nil)
+	mocks.restoreInProgress.EXPECT().CheckRestoreInProgress(mock.Anything).Return(nil)
 }
 
 func setupSuccessfulApplyPhaseExceptComplete(mocks *allMocks, spec *domain.BlueprintSpec) {
