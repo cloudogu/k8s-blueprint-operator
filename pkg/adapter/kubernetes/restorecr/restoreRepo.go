@@ -6,6 +6,7 @@ import (
 
 	restorev1 "github.com/cloudogu/k8s-backup-lib/api/v1"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domainservice"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -21,6 +22,11 @@ func NewRestoreRepo(restoreClient RestoreInterface) domainservice.RestoreReposit
 func (repo *restoreRepo) IsRestoreInProgress(ctx context.Context) (bool, error) {
 	list, err := repo.restoreClient.List(ctx, metav1.ListOptions{})
 	if err != nil {
+		if errors.IsNotFound(err) {
+			// no restores found, so no restore can be in progress
+			return false, nil
+		}
+
 		return false, fmt.Errorf("error while listing restore CRs: %w", err)
 	}
 
