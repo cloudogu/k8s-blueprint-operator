@@ -7,7 +7,9 @@ import (
 	restorev1 "github.com/cloudogu/k8s-backup-lib/api/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 var testCtx = context.Background()
@@ -89,5 +91,17 @@ func Test_restoreRepo_IsRestoreInProgress(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 		assert.ErrorContains(t, err, "error while listing restore CRs")
+	})
+
+	t.Run("should not fail if no restores could be found", func(t *testing.T) {
+		mRestoreClient := NewMockRestoreInterface(t)
+		mRestoreClient.EXPECT().List(testCtx, metav1.ListOptions{}).Return(nil, k8serrors.NewNotFound(schema.GroupResource{}, "restores not found"))
+
+		repo := &restoreRepo{restoreClient: mRestoreClient}
+
+		result, err := repo.IsRestoreInProgress(testCtx)
+
+		require.NoError(t, err)
+		assert.False(t, result)
 	})
 }

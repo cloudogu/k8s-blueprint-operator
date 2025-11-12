@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.0.1] - 2025-11-12
+
+### Fixed
+- [#144] Fix error when checking if a restore is in progress, but the Restore CRD is not installed.
+
 ## [v3.0.0] - 2025-10-30
 
 *Breaking Change ahead!*

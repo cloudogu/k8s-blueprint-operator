@@ -6,7 +6,7 @@ manager:
   image:
     registry: docker.io
     repository: cloudogu/k8s-blueprint-operator
-    tag: 3.0.0
+    tag: 3.0.1
   imagePullPolicy: IfNotPresent
   env:
     logLevel: info
