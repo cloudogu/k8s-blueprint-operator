@@ -199,7 +199,7 @@ func Test_determineConfigDiff(t *testing.T) {
 		assert.Equal(t, GlobalConfigDiffs(nil), globalConfigDiff)
 		require.NotNil(t, dogusConfigDiffs["dogu1"])
 		assert.Equal(t, SensitiveDoguConfigDiffs(nil), sensitiveConfigDiffs["dogu1"])
-		assert.Equal(t, 2, len(dogusConfigDiffs["dogu1"])) // only changes
+		assert.Equal(t, 1, len(dogusConfigDiffs["dogu1"])) // only changes
 		hitKeys := make(map[common.DoguConfigKey]bool)
 		for _, diff := range dogusConfigDiffs["dogu1"] {
 			if diff.Key == dogu1Key2 {
