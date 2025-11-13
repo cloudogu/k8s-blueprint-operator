@@ -95,7 +95,10 @@ func setSensitiveConfigValues(doguName cescommons.SimpleName, configEntries Dogu
 			}
 			// we checked previously that all referenced values exist. Therefore, we need no error here.
 			// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
-			sensitiveValue := referencedValues[key]
+			sensitiveValue, exists := referencedValues[key]
+			if !exists {
+				continue
+			}
 			configEntries[i].Value = &sensitiveValue
 			configEntries[i].SecretRef = nil
 		}
@@ -115,7 +118,10 @@ func setConfigValues(doguName cescommons.SimpleName, configEntries DoguConfigEnt
 			// in case of a bug, this will cause, that no expected value gets set while applying the blueprint.
 			value, exists := referencedValues[key]
 			if !exists {
-				value = referencedSensitiveValues[key]
+				value, exists = referencedSensitiveValues[key]
+			}
+			if !exists {
+				continue
 			}
 			configEntries[i].Value = &value
 
