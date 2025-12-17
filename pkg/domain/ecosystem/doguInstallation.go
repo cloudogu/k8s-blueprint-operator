@@ -33,6 +33,10 @@ type DoguInstallation struct {
 	// MinVolumeSize is the minimum storage of the dogu. This field is optional and can be nil to indicate that no
 	// storage is needed.
 	MinVolumeSize *VolumeSize
+	// StorageClassName is the name of the storage class to be used by the dogu volume.
+	// For the difference between null and empty string, see the appropriate kubernetes documentation:
+	// https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+	StorageClassName *string
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
@@ -94,6 +98,7 @@ func InstallDogu(
 	name cescommons.QualifiedName,
 	version *core.Version,
 	minVolumeSize *VolumeSize,
+	storageClassName *string,
 	reverseProxyConfig ReverseProxyConfig,
 	additionalMounts []AdditionalMount) *DoguInstallation {
 
@@ -107,6 +112,7 @@ func InstallDogu(
 		Version:            doguVersion,
 		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
 		MinVolumeSize:      minVolumeSize,
+		StorageClassName:   storageClassName,
 		ReverseProxyConfig: reverseProxyConfig,
 		AdditionalMounts:   additionalMounts,
 	}

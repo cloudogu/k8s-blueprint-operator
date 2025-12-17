@@ -61,6 +61,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		StartedAt:          cr.Status.StartedAt,
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
 		MinVolumeSize:      &minVolumeSize,
+		StorageClassName:   cr.Spec.Resources.StorageClassName,
 		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
 		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
@@ -131,6 +132,7 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				// the dogu-operator has a default of 2GiB if this field is 0 or not set
 				// we just always set this value, if a new dogu CR is created via blueprint
 				MinDataVolumeSize: minVolumeSize,
+				StorageClassName:  dogu.StorageClassName,
 			},
 			SupportMode:         false,
 			PauseReconciliation: false, // should be always false on installation

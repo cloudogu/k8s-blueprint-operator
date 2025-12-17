@@ -48,15 +48,18 @@ func Test_convertToDoguDiffStateDTO(t *testing.T) {
 
 	t.Run("should convert resource config", func(t *testing.T) {
 		// given
+		storageClassName := "example-storage-class"
 		domainDiffState := domain.DoguDiffState{
-			MinVolumeSize: &volumeSize,
+			MinVolumeSize:    &volumeSize,
+			StorageClassName: &storageClassName,
 		}
 		// when
 		result := convertToDoguDiffStateDTO(domainDiffState)
 		// then
 		want := crd.DoguDiffState{
 			ResourceConfig: &crd.ResourceConfig{
-				MinVolumeSize: &volumeSizeString,
+				MinVolumeSize:    &volumeSizeString,
+				StorageClassName: &storageClassName,
 			},
 		}
 

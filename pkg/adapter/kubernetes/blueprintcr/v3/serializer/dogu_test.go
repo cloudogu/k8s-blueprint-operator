@@ -21,6 +21,7 @@ var (
 	additionalConfig    = "additional"
 	volumeSize          = resource.MustParse("1Gi")
 	volumeSizeString    = volumeSize.String()
+	storageClassName    = "example-storage-class"
 	proxyBodySize       = resource.MustParse("1G")
 	proxyBodySizeString = proxyBodySize.String()
 	subfolder           = "subfolder"
@@ -91,8 +92,8 @@ func TestConvertDogus(t *testing.T) {
 		},
 		{
 			name:    "dogu with min volume size",
-			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString}}}}},
-			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, MinVolumeSize: &volumeSize}},
+			args:    args{dogus: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString, StorageClassName: &storageClassName}}}}},
+			want:    []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, MinVolumeSize: &volumeSize, StorageClassName: &storageClassName}},
 			wantErr: assert.NoError,
 		},
 		{
@@ -263,8 +264,15 @@ func TestConvertToDoguDTOs(t *testing.T) {
 		},
 		{
 			name: "ok",
-			args: args{dogus: []domain.Dogu{{Name: cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"}, Version: &version3211, Absent: false, MinVolumeSize: &volumeSize, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)}}}},
-			want: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString}, ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig}}}},
+			args: args{dogus: []domain.Dogu{{
+				Name:               cescommons.QualifiedName{Namespace: "official", SimpleName: "postgres"},
+				Version:            &version3211,
+				Absent:             false,
+				MinVolumeSize:      &volumeSize,
+				StorageClassName:   &storageClassName,
+				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)},
+			}}},
+			want: []bpv3.Dogu{{Name: "official/postgres", Version: &version3211.Raw, Absent: &falseVar, PlatformConfig: &bpv3.PlatformConfig{ResourceConfig: &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString, StorageClassName: &storageClassName}, ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig}}}},
 		},
 		{
 			name: "additionalMountsConfig",
@@ -273,6 +281,7 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				Version:            &version3211,
 				Absent:             false,
 				MinVolumeSize:      &volumeSize,
+				StorageClassName:   &storageClassName,
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)},
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{
@@ -294,7 +303,7 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				Version: &version3211.Raw,
 				Absent:  &falseVar,
 				PlatformConfig: &bpv3.PlatformConfig{
-					ResourceConfig:     &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString},
+					ResourceConfig:     &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString, StorageClassName: &storageClassName},
 					ReverseProxyConfig: &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
 					AdditionalMountsConfig: []bpv3.AdditionalMount{
 						{
@@ -319,6 +328,7 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				Version:            &version3211,
 				Absent:             false,
 				MinVolumeSize:      &volumeSize,
+				StorageClassName:   &storageClassName,
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: ecosystem.RewriteTarget(rewriteTarget), AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig)},
 				AdditionalMounts:   nil,
 			}}},
@@ -327,7 +337,7 @@ func TestConvertToDoguDTOs(t *testing.T) {
 				Version: &version3211.Raw,
 				Absent:  &falseVar,
 				PlatformConfig: &bpv3.PlatformConfig{
-					ResourceConfig:         &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString},
+					ResourceConfig:         &bpv3.ResourceConfig{MinVolumeSize: &volumeSizeString, StorageClassName: &storageClassName},
 					ReverseProxyConfig:     &bpv3.ReverseProxyConfig{MaxBodySize: &proxyBodySizeString, RewriteTarget: &rewriteTarget, AdditionalConfig: &additionalConfig},
 					AdditionalMountsConfig: nil,
 				}}},

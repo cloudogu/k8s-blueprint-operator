@@ -21,6 +21,7 @@ var (
 	}
 	volSize25G       = resource.MustParse("25G")
 	defaultVolSize   = resource.MustParse(v2.DefaultVolumeSize)
+	storageClassName = "storageClassName"
 	postgresDoguName = cescommons.QualifiedName{
 		Namespace:  cescommons.Namespace("official"),
 		SimpleName: cescommons.SimpleName("postgresql"),
@@ -58,9 +59,11 @@ func Test_parseDoguCR(t *testing.T) {
 					ResourceVersion: crResourceVersion,
 				},
 				Spec: v2.DoguSpec{
-					Name:      "official/postgresql",
-					Version:   version3214.Raw,
-					Resources: v2.DoguResources{},
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						StorageClassName: &storageClassName,
+					},
 					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: true,
 					},
@@ -81,6 +84,7 @@ func Test_parseDoguCR(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 				MinVolumeSize:      &defaultVolSize,
+				StorageClassName:   &storageClassName,
 				PersistenceContext: persistenceContext,
 				InstalledVersion:   version3213,
 				StartedAt:          pointInTime,
