@@ -216,6 +216,7 @@ type doguResourcesPatch struct {
 	// Deprecated: use MinDataVolumeSize instead. Only set it to correct possibly wrong dogu CRs
 	DataVolumeSize    string            `json:"dataVolumeSize"`
 	MinDataVolumeSize resource.Quantity `json:"minDataVolumeSize"`
+	StorageClassName  *string           `json:"storageClassName"`
 }
 
 func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
@@ -234,6 +235,7 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 				// we just always set this value, if a new dogu CR is created via blueprint
 				DataVolumeSize:    "",
 				MinDataVolumeSize: minVolumeSize,
+				StorageClassName:  dogu.StorageClassName,
 			},
 			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode
