@@ -28,9 +28,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_ok(t *testing.T) {
 
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
-	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
-	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
+	dependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	mountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	storageClassUseCase := newMockValidateDoguStorageClassDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, dependencyUseCase, mountsUseCase, storageClassUseCase)
 
 	repoMock.EXPECT().Update(ctx, &domain.BlueprintSpec{
 		Id: "testBlueprint1",
@@ -52,9 +53,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_invalid(t *testing
 
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
-	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
-	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
+	dependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	mountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	storageClassUseCase := newMockValidateDoguStorageClassDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, dependencyUseCase, mountsUseCase, storageClassUseCase)
 
 	repoMock.EXPECT().
 		Update(ctx, blueprint).
@@ -78,9 +80,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecStatically_repoError(t *testi
 		}
 		repoMock := newMockBlueprintSpecRepository(t)
 		ctx := context.Background()
-		DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
-		MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
-		useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
+		dependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+		mountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+		storageClassUseCase := newMockValidateDoguStorageClassDomainUseCase(t)
+		useCase := NewBlueprintSpecValidationUseCase(repoMock, dependencyUseCase, mountsUseCase, storageClassUseCase)
 
 		repoMock.EXPECT().Update(ctx, mock.Anything).Return(&domainservice.InternalError{Message: "test-error"})
 
@@ -104,12 +107,14 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_ok(t *testing.T) 
 	}
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
-	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
-	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
+	dependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	mountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	storageClassUseCase := newMockValidateDoguStorageClassDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, dependencyUseCase, mountsUseCase, storageClassUseCase)
 
-	DependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(nil)
-	MountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(nil)
+	dependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(nil)
+	mountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(nil)
+	storageClassUseCase.EXPECT().ValidateDoguStorageClass(ctx, mock.Anything).Return(nil)
 
 	repoMock.EXPECT().Update(ctx, blueprint).Return(nil)
 
@@ -125,9 +130,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	// given
 	repoMock := newMockBlueprintSpecRepository(t)
 	ctx := context.Background()
-	DependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
-	MountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
-	useCase := NewBlueprintSpecValidationUseCase(repoMock, DependencyUseCase, MountsUseCase)
+	dependencyUseCase := newMockValidateDependenciesDomainUseCase(t)
+	mountsUseCase := newMockValidateAdditionalMountsDomainUseCase(t)
+	storageClassUseCase := newMockValidateDoguStorageClassDomainUseCase(t)
+	useCase := NewBlueprintSpecValidationUseCase(repoMock, dependencyUseCase, mountsUseCase, storageClassUseCase)
 
 	version, _ := core.ParseVersion("1.0.0-1")
 	blueprint := &domain.BlueprintSpec{
@@ -141,8 +147,10 @@ func TestBlueprintSpecUseCase_ValidateBlueprintSpecDynamically_invalid(t *testin
 	}
 	invalidDependencyError := errors.New("invalid dependencies")
 	invalidMountsError := errors.New("invalid mounts")
-	DependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(invalidDependencyError)
-	MountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(invalidMountsError)
+	invalidStorageClassError := errors.New("invalid storage class")
+	dependencyUseCase.EXPECT().ValidateDependenciesForAllDogus(ctx, mock.Anything).Return(invalidDependencyError)
+	mountsUseCase.EXPECT().ValidateAdditionalMounts(ctx, mock.Anything).Return(invalidMountsError)
+	storageClassUseCase.EXPECT().ValidateDoguStorageClass(ctx, mock.Anything).Return(invalidStorageClassError)
 	repoMock.EXPECT().Update(ctx, blueprint).Return(nil)
 
 	// when

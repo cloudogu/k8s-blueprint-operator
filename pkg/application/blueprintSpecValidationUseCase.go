@@ -13,18 +13,21 @@ import (
 type BlueprintSpecValidationUseCase struct {
 	repo                        blueprintSpecRepository
 	validateDependenciesUseCase validateDependenciesDomainUseCase
-	ValidateMountsUseCase       validateAdditionalMountsDomainUseCase
+	validateMountsUseCase       validateAdditionalMountsDomainUseCase
+	validateStorageClassUseCase validateDoguStorageClassDomainUseCase
 }
 
 func NewBlueprintSpecValidationUseCase(
 	repo domainservice.BlueprintSpecRepository,
 	validateDependenciesUseCase validateDependenciesDomainUseCase,
-	ValidateMountsUseCase validateAdditionalMountsDomainUseCase,
+	validateMountsUseCase validateAdditionalMountsDomainUseCase,
+	validateStorageClassUseCase validateDoguStorageClassDomainUseCase,
 ) *BlueprintSpecValidationUseCase {
 	return &BlueprintSpecValidationUseCase{
 		repo:                        repo,
 		validateDependenciesUseCase: validateDependenciesUseCase,
-		ValidateMountsUseCase:       ValidateMountsUseCase,
+		validateMountsUseCase:       validateMountsUseCase,
+		validateStorageClassUseCase: validateStorageClassUseCase,
 	}
 }
 
@@ -60,7 +63,8 @@ func (useCase *BlueprintSpecValidationUseCase) ValidateBlueprintSpecDynamically(
 
 	validationError := errors.Join(
 		useCase.validateDependenciesUseCase.ValidateDependenciesForAllDogus(ctx, blueprint.EffectiveBlueprint),
-		useCase.ValidateMountsUseCase.ValidateAdditionalMounts(ctx, blueprint.EffectiveBlueprint),
+		useCase.validateMountsUseCase.ValidateAdditionalMounts(ctx, blueprint.EffectiveBlueprint),
+		useCase.validateStorageClassUseCase.ValidateDoguStorageClass(ctx, blueprint.EffectiveBlueprint),
 	)
 
 	if validationError != nil {
