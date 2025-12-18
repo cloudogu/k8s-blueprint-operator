@@ -65,13 +65,17 @@ func convertPlatformConfigFromDTOToDomain(dtoDogu *bpv3.Dogu, domainDogu *domain
 	var minVolumeSize, maxBodySize *resource.Quantity
 	var additionalMounts []ecosystem.AdditionalMount
 	var err error
-	if dtoDogu.PlatformConfig.ResourceConfig != nil && dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize != nil {
-		minVolumeSizeStr := dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize
-		minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
-		if err != nil {
-			return fmt.Errorf("could not parse minimum volume size %q for dogu %q", *minVolumeSizeStr, dtoDogu.Name)
+	if dtoDogu.PlatformConfig.ResourceConfig != nil {
+		domainDogu.StorageClassName = dtoDogu.PlatformConfig.ResourceConfig.StorageClassName
+
+		if dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize != nil {
+			minVolumeSizeStr := dtoDogu.PlatformConfig.ResourceConfig.MinVolumeSize
+			minVolumeSize, err = ecosystem.GetNonNilQuantityRef(*minVolumeSizeStr)
+			if err != nil {
+				return fmt.Errorf("could not parse minimum volume size %q for dogu %q", *minVolumeSizeStr, dtoDogu.Name)
+			}
+			domainDogu.MinVolumeSize = minVolumeSize
 		}
-		domainDogu.MinVolumeSize = minVolumeSize
 	}
 
 	if dtoDogu.PlatformConfig.ReverseProxyConfig != nil {
@@ -194,6 +198,7 @@ func convertReverseProxyConfigDTO(dogu domain.Dogu) *bpv3.ReverseProxyConfig {
 func convertResourceConfigDTO(dogu domain.Dogu) *bpv3.ResourceConfig {
 	config := bpv3.ResourceConfig{}
 	config.MinVolumeSize = ecosystem.GetQuantityString(dogu.MinVolumeSize)
+	config.StorageClassName = dogu.StorageClassName
 
 	return &config
 }

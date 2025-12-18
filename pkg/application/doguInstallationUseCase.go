@@ -143,6 +143,7 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 				cescommons.QualifiedName{Namespace: doguDiff.Expected.Namespace, SimpleName: doguDiff.DoguName},
 				doguDiff.Expected.Version,
 				doguDiff.Expected.MinVolumeSize,
+				doguDiff.Expected.StorageClassName,
 				doguDiff.Expected.ReverseProxyConfig,
 				doguDiff.Expected.AdditionalMounts,
 			)

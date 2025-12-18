@@ -21,6 +21,7 @@ var (
 	}
 	volSize25G       = resource.MustParse("25G")
 	defaultVolSize   = resource.MustParse(v2.DefaultVolumeSize)
+	storageClassName = "storageClassName"
 	postgresDoguName = cescommons.QualifiedName{
 		Namespace:  cescommons.Namespace("official"),
 		SimpleName: cescommons.SimpleName("postgresql"),
@@ -58,9 +59,11 @@ func Test_parseDoguCR(t *testing.T) {
 					ResourceVersion: crResourceVersion,
 				},
 				Spec: v2.DoguSpec{
-					Name:      "official/postgresql",
-					Version:   version3214.Raw,
-					Resources: v2.DoguResources{},
+					Name:    "official/postgresql",
+					Version: version3214.Raw,
+					Resources: v2.DoguResources{
+						StorageClassName: &storageClassName,
+					},
 					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: true,
 					},
@@ -81,6 +84,7 @@ func Test_parseDoguCR(t *testing.T) {
 					AllowNamespaceSwitch: true,
 				},
 				MinVolumeSize:      &defaultVolSize,
+				StorageClassName:   &storageClassName,
 				PersistenceContext: persistenceContext,
 				InstalledVersion:   version3213,
 				StartedAt:          pointInTime,
@@ -507,6 +511,7 @@ func Test_toDoguCRPatch(t *testing.T) {
 
 func Test_toDoguCRPatchBytes(t *testing.T) {
 	quantity2 := resource.MustParse("2Gi")
+	storageClassName := "example-storage-class"
 	tests := []struct {
 		name    string
 		dogu    *ecosystem.DoguInstallation
@@ -523,7 +528,8 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
-				MinVolumeSize: &quantity2,
+				MinVolumeSize:    &quantity2,
+				StorageClassName: &storageClassName,
 				ReverseProxyConfig: ecosystem.ReverseProxyConfig{
 					MaxBodySize:      &proxyBodySize,
 					RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
@@ -533,7 +539,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 		{
@@ -546,11 +552,12 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				UpgradeConfig: ecosystem.UpgradeConfig{
 					AllowNamespaceSwitch: true,
 				},
+				StorageClassName: &storageClassName,
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 	}

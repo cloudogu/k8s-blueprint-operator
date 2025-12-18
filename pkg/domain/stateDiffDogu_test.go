@@ -20,6 +20,7 @@ func Test_determineDoguDiff(t *testing.T) {
 	proxyBodySize := resource.MustParse("1M")
 	volumeSize1 := resource.MustParse("1Gi")
 	volumeSize2 := resource.MustParse("2Gi")
+	storageClassName := "example-storage-class"
 
 	type args struct {
 		blueprintDogu *Dogu
@@ -53,9 +54,10 @@ func Test_determineDoguDiff(t *testing.T) {
 			name: "install",
 			args: args{
 				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3211,
-					Absent:  false,
+					Name:             officialNexus,
+					Version:          &version3211,
+					Absent:           false,
+					StorageClassName: &storageClassName,
 				},
 				installedDogu: nil,
 			},
@@ -65,9 +67,10 @@ func Test_determineDoguDiff(t *testing.T) {
 					Absent: true,
 				},
 				Expected: DoguDiffState{
-					Namespace: officialNamespace,
-					Version:   &version3211,
-					Absent:    false,
+					Namespace:        officialNamespace,
+					Version:          &version3211,
+					Absent:           false,
+					StorageClassName: &storageClassName,
 				},
 				NeededActions: []Action{ActionInstall},
 			},

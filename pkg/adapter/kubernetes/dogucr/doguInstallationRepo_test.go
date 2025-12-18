@@ -339,7 +339,8 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 			"\"version\":\"3.2.1-4\"," +
 			"\"resources\":{" +
 			"\"dataVolumeSize\":\"\"," +
-			"\"minDataVolumeSize\":\"0\"}," +
+			"\"minDataVolumeSize\":\"0\"," +
+			"\"storageClassName\":null}," +
 			"\"supportMode\":false," +
 			"\"pauseReconciliation\":false," +
 			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +

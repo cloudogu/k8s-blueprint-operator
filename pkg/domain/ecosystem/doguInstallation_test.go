@@ -23,10 +23,12 @@ var (
 func TestInstallDogu(t *testing.T) {
 	volumeSize := resource.MustParse("1Gi")
 	proxyBodySize := resource.MustParse("1G")
+	storageClassName := "example-storage-class"
 	dogu := InstallDogu(
 		postgresqlQualifiedName,
 		&version1231,
 		&volumeSize,
+		&storageClassName,
 		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: RewriteTarget(rewriteTarget), AdditionalConfig: AdditionalConfig(additionalConfig)},
 		[]AdditionalMount{
 			{
@@ -38,10 +40,11 @@ func TestInstallDogu(t *testing.T) {
 		},
 	)
 	assert.Equal(t, &DoguInstallation{
-		Name:          postgresqlQualifiedName,
-		Version:       version1231,
-		UpgradeConfig: UpgradeConfig{AllowNamespaceSwitch: false},
-		MinVolumeSize: &volumeSize,
+		Name:             postgresqlQualifiedName,
+		Version:          version1231,
+		UpgradeConfig:    UpgradeConfig{AllowNamespaceSwitch: false},
+		MinVolumeSize:    &volumeSize,
+		StorageClassName: &storageClassName,
 		ReverseProxyConfig: ReverseProxyConfig{
 			MaxBodySize:      &proxyBodySize,
 			RewriteTarget:    RewriteTarget(rewriteTarget),

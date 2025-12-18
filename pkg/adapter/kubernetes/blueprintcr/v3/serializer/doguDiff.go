@@ -43,9 +43,10 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) bpv3.DoguDiffSt
 	}
 
 	var resourceConfig *bpv3.ResourceConfig
-	if domainModel.MinVolumeSize != nil {
+	if domainModel.MinVolumeSize != nil || domainModel.StorageClassName != nil {
 		resourceConfig = &bpv3.ResourceConfig{
-			MinVolumeSize: ecosystem.GetQuantityString(domainModel.MinVolumeSize),
+			MinVolumeSize:    ecosystem.GetQuantityString(domainModel.MinVolumeSize),
+			StorageClassName: domainModel.StorageClassName,
 		}
 	}
 	return bpv3.DoguDiffState{
