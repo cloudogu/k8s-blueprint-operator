@@ -24,10 +24,14 @@ github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251216151134-ff1bec13798a h1:j
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251216151134-ff1bec13798a/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251217102754-297baca08820 h1:tujvar7zlbLY8kkATvLULcKRT653/jfFs6R77GUZcE8=
 github.com/cloudogu/k8s-blueprint-lib/v3 v3.0.0-20251217102754-297baca08820/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
+github.com/cloudogu/k8s-blueprint-lib/v3 v3.2.0 h1:7J/1X+qjrMi2bVOl6Hcl3Vja/RWUcJZrBruFSG7mNLY=
+github.com/cloudogu/k8s-blueprint-lib/v3 v3.2.0/go.mod h1:3E1iLra8//8+kCwBjuDi6b0iwtNoArYfOIYnzNXSFMQ=
 github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0 h1:geZjXwWQY8d8aEWA9l2is/DwlADdOHQveBokPK63XH0=
 github.com/cloudogu/k8s-debug-mode-cr-lib v1.0.0/go.mod h1:OPAO5P5ZSZkEexP9YOWNj4wEE8T3wqs92yyP5muymxQ=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20251216145132-38e7f31966ae h1:As0XitYGSSDyAZyFk+8Z4khR9uFelYq2N8UlIfNDBEQ=
 github.com/cloudogu/k8s-dogu-lib/v2 v2.0.0-20251216145132-38e7f31966ae/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.11.0 h1:Jk8vsCUPE7nqth51CZPhTjv4LDciiBWomNLlAE5W5xs=
+github.com/cloudogu/k8s-dogu-lib/v2 v2.11.0/go.mod h1:2xkJ1TI7fuBRcqIpHUlmQ6CJAtzlOvyUbwPktIVq6K8=
 github.com/cloudogu/k8s-registry-lib v0.6.0 h1:+3gQoP2CVLuhTqRen49rvN0a0Jpa1qJ1cSZqu+J64CY=
 github.com/cloudogu/k8s-registry-lib v0.6.0/go.mod h1:NytbB2XBjc+gr5gOJFoPjCzyxs/TuhWpKSnDJzCLQ14=
 github.com/cloudogu/remote-dogu-descriptor-lib v0.1.1 h1:NWoBvBwiE8yO8HqSId0+nOTBMGSjzX0yM8m6fC7Ll6E=
