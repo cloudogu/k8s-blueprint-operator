@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.1.0] - 2026-01-05
+### Added
+- [#148] Support specifying a storage class for dogu volumes
+
 ## [v3.0.2] - 2025-11-13
 ### Fixed
 - [#146] Fix setting config if config is not set with reference.

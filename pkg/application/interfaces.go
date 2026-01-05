@@ -115,3 +115,7 @@ type validateDependenciesDomainUseCase interface {
 type validateAdditionalMountsDomainUseCase interface {
 	ValidateAdditionalMounts(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error
 }
+
+type validateDoguStorageClassDomainUseCase interface {
+	ValidateDoguStorageClass(ctx context.Context, effectiveBlueprint domain.EffectiveBlueprint) error
+}

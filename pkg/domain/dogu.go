@@ -24,6 +24,10 @@ type Dogu struct {
 	// MinVolumeSize is the minimum storage of the dogu. 0 indicates that the default size should be set.
 	// Reducing this value below the actual volume size has no impact as we do not support downsizing.
 	MinVolumeSize *ecosystem.VolumeSize
+	// StorageClassName is the name of the storage class to be used by the dogu volume.
+	// For the difference between null and empty string, see the appropriate kubernetes documentation:
+	// https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+	StorageClassName *string
 	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
 	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
