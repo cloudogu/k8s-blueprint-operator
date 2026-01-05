@@ -214,6 +214,7 @@ func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 		Version:            dogu.Version,
 		Absent:             dogu.Absent,
 		MinVolumeSize:      dogu.MinVolumeSize,
+		StorageClassName:   dogu.StorageClassName,
 		ReverseProxyConfig: dogu.ReverseProxyConfig,
 		AdditionalMounts:   dogu.AdditionalMounts,
 	}

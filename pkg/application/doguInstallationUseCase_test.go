@@ -17,8 +17,6 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-const blueprintId = "blueprint1"
-
 var version3211, _ = core.ParseVersion("3.2.1-1")
 var version3212, _ = core.ParseVersion("3.2.1-2")
 
@@ -72,6 +70,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 
 	t.Run("action install", func(t *testing.T) {
 		volumeSize := resource.MustParse("2Gi")
+		storageClassName := "example-storage-class"
 		bodySize := resource.MustParse("2G")
 		proxyConfig := ecosystem.ReverseProxyConfig{
 			MaxBodySize:      &bodySize,
@@ -90,7 +89,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 		doguRepoMock := newMockDoguInstallationRepository(t)
 		doguRepoMock.EXPECT().
 			Create(testCtx,
-				ecosystem.InstallDogu(postgresqlQualifiedName, &version3211, &volumeSize, proxyConfig, additionalMounts)).
+				ecosystem.InstallDogu(postgresqlQualifiedName, &version3211, &volumeSize, &storageClassName, proxyConfig, additionalMounts)).
 			Return(nil)
 
 		sut := NewDoguInstallationUseCase(nil, doguRepoMock, nil, nil, nil)
@@ -110,6 +109,7 @@ func TestDoguInstallationUseCase_applyDoguState(t *testing.T) {
 					Version:            &version3211,
 					Absent:             false,
 					MinVolumeSize:      &volumeSize,
+					StorageClassName:   &storageClassName,
 					ReverseProxyConfig: proxyConfig,
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
