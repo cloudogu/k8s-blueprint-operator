@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.1.1] - 2026-02-17
+### Security
+- [#150] Fix Golang stdlib CVE-2025-68121
+
 ## [v3.1.0] - 2026-01-05
 ### Added
 - [#148] Support specifying a storage class for dogu volumes
