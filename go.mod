@@ -1,6 +1,6 @@
 module github.com/cloudogu/k8s-blueprint-operator/v2
 
-go 1.25.1
+go 1.26.0
 
 require (
 	github.com/Masterminds/semver/v3 v3.4.0
