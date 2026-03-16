@@ -8,7 +8,6 @@ import (
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 // Dogu defines a Dogu, its version, and the installation state in which it is supposed to be after a blueprint
@@ -28,8 +27,6 @@ type Dogu struct {
 	// For the difference between null and empty string, see the appropriate kubernetes documentation:
 	// https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
 	StorageClassName *string
-	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
-	ReverseProxyConfig ecosystem.ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
 	AdditionalMounts []ecosystem.AdditionalMount
 }
@@ -43,12 +40,6 @@ func (dogu Dogu) validate() error {
 		errorList = append(errorList, fmt.Errorf("dogu version must not be empty: %s", dogu.Name))
 	}
 	// minVolumeSize is already checked while unmarshalling json/yaml
-
-	// Nginx only supports quantities in Decimal SI. This check can be removed if the dogu-operator implements an abstraction for the body size.
-	maxBodySize := dogu.ReverseProxyConfig.MaxBodySize
-	if maxBodySize != nil && !maxBodySize.IsZero() && maxBodySize.Format != resource.DecimalSI {
-		errorList = append(errorList, fmt.Errorf("dogu proxy body size is not in Decimal SI (\"M\" or \"G\"): %s", dogu.Name))
-	}
 
 	for _, mount := range dogu.AdditionalMounts {
 		if mount.SourceType != ecosystem.DataSourceConfigMap && mount.SourceType != ecosystem.DataSourceSecret {

@@ -230,13 +230,8 @@ func Test_determineDoguDiff(t *testing.T) {
 			name: "multiple update actions",
 			args: args{
 				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize:      &proxyBodySize,
-						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-						RewriteTarget:    ecosystem.RewriteTarget(rewriteConfig),
-					},
+					Name:          officialNexus,
+					Version:       &version3212,
 					MinVolumeSize: &volumeSize2,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
@@ -319,17 +314,11 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:             officialNexus,
 					Version:          version3212,
 					InstalledVersion: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
 				},
 			},
 			want: &DoguDiff{
@@ -358,17 +347,11 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:             officialNexus,
 					Version:          version3212,
 					InstalledVersion: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity10MPtr,
-					},
 				},
 			},
 			want: &DoguDiff{
@@ -397,16 +380,10 @@ func Test_determineDoguDiff(t *testing.T) {
 				blueprintDogu: &Dogu{
 					Name:    officialNexus,
 					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
 				},
 				installedDogu: &ecosystem.DoguInstallation{
 					Name:    officialNexus,
 					Version: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
 				},
 			},
 			want: nil,

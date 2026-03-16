@@ -117,13 +117,12 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
-			Namespace:          installedDogu.Name.Namespace,
-			Version:            &installedDogu.Version,
-			InstalledVersion:   &installedDogu.InstalledVersion,
-			MinVolumeSize:      installedDogu.MinVolumeSize,
-			StorageClassName:   installedDogu.StorageClassName,
-			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
-			AdditionalMounts:   installedDogu.AdditionalMounts,
+			Namespace:        installedDogu.Name.Namespace,
+			Version:          &installedDogu.Version,
+			InstalledVersion: &installedDogu.InstalledVersion,
+			MinVolumeSize:    installedDogu.MinVolumeSize,
+			StorageClassName: installedDogu.StorageClassName,
+			AdditionalMounts: installedDogu.AdditionalMounts,
 		}
 	}
 
@@ -132,13 +131,12 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = blueprintDogu.Name.SimpleName
 		expectedState = DoguDiffState{
-			Namespace:          blueprintDogu.Name.Namespace,
-			Version:            blueprintDogu.Version,
-			Absent:             blueprintDogu.Absent,
-			MinVolumeSize:      blueprintDogu.MinVolumeSize,
-			StorageClassName:   blueprintDogu.StorageClassName,
-			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
-			AdditionalMounts:   blueprintDogu.AdditionalMounts,
+			Namespace:        blueprintDogu.Name.Namespace,
+			Version:          blueprintDogu.Version,
+			Absent:           blueprintDogu.Absent,
+			MinVolumeSize:    blueprintDogu.MinVolumeSize,
+			StorageClassName: blueprintDogu.StorageClassName,
+			AdditionalMounts: blueprintDogu.AdditionalMounts,
 		}
 	}
 

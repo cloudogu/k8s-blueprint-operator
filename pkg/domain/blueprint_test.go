@@ -5,10 +5,8 @@ import (
 
 	"github.com/cloudogu/cesapp-lib/core"
 	"github.com/cloudogu/k8s-blueprint-operator/v2/pkg/domain/ecosystem"
-	"github.com/stretchr/testify/require"
-	"k8s.io/apimachinery/pkg/api/resource"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var version3_2_1_4, _ = core.ParseVersion("3.2.1-4")
@@ -71,17 +69,21 @@ func Test_validateDogus_ok(t *testing.T) {
 }
 
 func Test_validateDogus_multipleErrors(t *testing.T) {
-	wrongBodySize := resource.MustParse("1Ki")
+	mounts := []ecosystem.AdditionalMount{
+		{
+			SourceType: "thisIsNotValid",
+		},
+	}
 	dogus := []Dogu{
 		{Name: officialDogu1},
-		{Name: officialDogu2, ReverseProxyConfig: ecosystem.ReverseProxyConfig{MaxBodySize: &wrongBodySize}},
+		{Name: officialDogu2, AdditionalMounts: mounts},
 	}
 	blueprint := Blueprint{Dogus: dogus}
 
 	err := blueprint.validateDogus()
 
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "dogu proxy body size is not in Decimal SI (\"M\" or \"G\")")
+	assert.Contains(t, err.Error(), "additional mounts sourceType must be one of 'ConfigMap', 'Secret'")
 	assert.Contains(t, err.Error(), "dogu version must not be empty")
 }
 

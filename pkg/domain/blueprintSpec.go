@@ -210,13 +210,12 @@ func (spec *BlueprintSpec) calculateEffectiveDogus() ([]Dogu, error) {
 
 func (spec *BlueprintSpec) calculateEffectiveDogu(dogu Dogu) (Dogu, error) {
 	effectiveDogu := Dogu{
-		Name:               dogu.Name,
-		Version:            dogu.Version,
-		Absent:             dogu.Absent,
-		MinVolumeSize:      dogu.MinVolumeSize,
-		StorageClassName:   dogu.StorageClassName,
-		ReverseProxyConfig: dogu.ReverseProxyConfig,
-		AdditionalMounts:   dogu.AdditionalMounts,
+		Name:             dogu.Name,
+		Version:          dogu.Version,
+		Absent:           dogu.Absent,
+		MinVolumeSize:    dogu.MinVolumeSize,
+		StorageClassName: dogu.StorageClassName,
+		AdditionalMounts: dogu.AdditionalMounts,
 	}
 	maskDogu, noMaskDoguErr := spec.BlueprintMask.FindDoguByName(dogu.Name.SimpleName)
 	if noMaskDoguErr == nil {

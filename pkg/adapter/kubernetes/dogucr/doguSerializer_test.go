@@ -530,11 +530,6 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				},
 				MinVolumeSize:    &quantity2,
 				StorageClassName: &storageClassName,
-				ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-					MaxBodySize:      &proxyBodySize,
-					RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-					AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-				},
 				AdditionalMounts: []ecosystem.AdditionalMount{
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
@@ -568,120 +563,6 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 				return
 			}
 			assert.Equalf(t, tt.want, string(got), "toDoguCRPatchBytes(%v)", tt.dogu)
-		})
-	}
-}
-
-func Test_getNginxIngressAnnotations(t *testing.T) {
-	type args struct {
-		config ecosystem.ReverseProxyConfig
-	}
-	zeroQuantity := resource.MustParse("0")
-	tests := []struct {
-		name string
-		args args
-		want map[string]string
-	}{
-		{
-			name: "should set proxy body size on zero quantity",
-			args: args{config: ecosystem.ReverseProxyConfig{MaxBodySize: &zeroQuantity}},
-			want: map[string]string{ecosystem.NginxIngressAnnotationBodySize: "0"},
-		},
-		{
-			name: "should not set proxy body size on nil",
-			args: args{config: ecosystem.ReverseProxyConfig{}},
-			want: nil,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
-		})
-	}
-}
-
-func Test_parseDoguAdditionalIngressAnnotationsCR(t *testing.T) {
-	quantity1 := resource.MustParse("1G")
-	type args struct {
-		annotations v2.IngressAnnotations
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    ecosystem.ReverseProxyConfig
-		wantErr assert.ErrorAssertionFunc
-	}{
-		{
-			name: "should parse annotations",
-			args: args{
-				annotations: v2.IngressAnnotations{
-					"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
-					"nginx.ingress.kubernetes.io/rewrite-target":        "/",
-					"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
-				},
-			},
-			want: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      &quantity1,
-				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-			},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return err == nil
-			},
-		},
-		{
-			name: "should return internal error on invalid quantity",
-			args: args{
-				annotations: v2.IngressAnnotations{
-					"nginx.ingress.kubernetes.io/proxy-body-size": "1GG",
-				},
-			},
-			want: ecosystem.ReverseProxyConfig{},
-			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
-				assert.Error(t, err)
-				assert.ErrorContains(t, err, "failed to parse quantity \"1GG\"")
-				return false
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := parseDoguAdditionalIngressAnnotationsCR(tt.args.annotations)
-			if !tt.wantErr(t, err, fmt.Sprintf("parseDoguAdditionalIngressAnnotationsCR(%v)", tt.args.annotations)) {
-				return
-			}
-			assert.Equalf(t, tt.want, got, "parseDoguAdditionalIngressAnnotationsCR(%v)", tt.args.annotations)
-		})
-	}
-}
-
-func Test_getNginxIngressAnnotations1(t *testing.T) {
-	quantity := resource.MustParse("1M")
-	type args struct {
-		config ecosystem.ReverseProxyConfig
-	}
-	tests := []struct {
-		name string
-		args args
-		want map[string]string
-	}{
-		{
-			name: "should parse config",
-			args: args{config: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      &quantity,
-				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-			}},
-			want: map[string]string{
-				"nginx.ingress.kubernetes.io/proxy-body-size":       "1M",
-				"nginx.ingress.kubernetes.io/rewrite-target":        "/",
-				"nginx.ingress.kubernetes.io/configuration-snippet": "additional",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equalf(t, tt.want, getNginxIngressAnnotations(tt.args.config), "getNginxIngressAnnotations(%v)", tt.args.config)
 		})
 	}
 }

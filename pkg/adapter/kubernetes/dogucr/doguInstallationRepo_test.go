@@ -52,11 +52,6 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 					UpgradeConfig: v2.UpgradeConfig{
 						AllowNamespaceSwitch: false,
 					},
-					AdditionalIngressAnnotations: v2.IngressAnnotations{
-						"nginx.ingress.kubernetes.io/proxy-body-size":       "1G",
-						"nginx.ingress.kubernetes.io/rewrite-target":        "/",
-						"nginx.ingress.kubernetes.io/configuration-snippet": "snippet",
-					},
 				},
 				Status: v2.DoguStatus{
 					Status: v2.DoguStatusInstalled,
@@ -68,9 +63,6 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 
 		// then
 		require.NoError(t, err)
-		quantity1 := resource.MustParse("1G")
-		rewriteTarget := "/"
-		additionalConfig := "snippet"
 		assert.Equal(t, &ecosystem.DoguInstallation{
 			Name:               postgresDoguName,
 			Version:            version3214,
@@ -79,11 +71,6 @@ func Test_doguInstallationRepo_GetByName(t *testing.T) {
 			UpgradeConfig:      ecosystem.UpgradeConfig{},
 			PersistenceContext: persistenceContext,
 			MinVolumeSize:      &quantity2,
-			ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-				MaxBodySize:      &quantity1,
-				RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-				AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-			},
 		}, dogu)
 	})
 
