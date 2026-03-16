@@ -356,8 +356,7 @@ func Test_toDoguCR(t *testing.T) {
 						AllowNamespaceSwitch: true,
 						ForceUpgrade:         false,
 					},
-					AdditionalIngressAnnotations: nil,
-					PauseReconciliation:          false, // should be always false on installation
+					PauseReconciliation: false, // should be always false on installation
 				},
 				Status: v2.DoguStatus{},
 			},
@@ -455,7 +454,6 @@ func Test_toDoguCR(t *testing.T) {
 						AllowNamespaceSwitch: true,
 						ForceUpgrade:         false,
 					},
-					AdditionalIngressAnnotations: nil,
 				},
 				Status: v2.DoguStatus{},
 			},
@@ -534,7 +532,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":{\"nginx.ingress.kubernetes.io/configuration-snippet\":\"additional\",\"nginx.ingress.kubernetes.io/proxy-body-size\":\"1G\",\"nginx.ingress.kubernetes.io/rewrite-target\":\"/\"},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"2Gi\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 		{
@@ -552,7 +550,7 @@ func Test_toDoguCRPatchBytes(t *testing.T) {
 					{SourceType: ecosystem.DataSourceConfigMap, Name: "test", Volume: "volume", Subfolder: subfolder},
 				},
 			},
-			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalIngressAnnotations\":null,\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
+			want:    "{\"spec\":{\"name\":\"official/postgresql\",\"version\":\"3.2.1-4\",\"resources\":{\"dataVolumeSize\":\"\",\"minDataVolumeSize\":\"0\",\"storageClassName\":\"example-storage-class\"},\"supportMode\":false,\"pauseReconciliation\":false,\"upgradeConfig\":{\"allowNamespaceSwitch\":true,\"forceUpgrade\":false},\"additionalMounts\":[{\"sourceType\":\"ConfigMap\",\"name\":\"test\",\"volume\":\"volume\",\"subfolder\":\"subfolder\"}]}}",
 			wantErr: assert.NoError,
 		},
 	}

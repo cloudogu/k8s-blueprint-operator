@@ -144,7 +144,6 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 				doguDiff.Expected.Version,
 				doguDiff.Expected.MinVolumeSize,
 				doguDiff.Expected.StorageClassName,
-				doguDiff.Expected.ReverseProxyConfig,
 				doguDiff.Expected.AdditionalMounts,
 			)
 			return useCase.doguRepo.Create(ctx, newDogu)
@@ -173,10 +172,6 @@ func (useCase *DoguInstallationUseCase) applyDoguState(
 		case domain.ActionUpdateDoguResourceMinVolumeSize:
 			logger.Info("update minimum volume size for dogu")
 			doguInstallation.UpdateMinVolumeSize(doguDiff.Expected.MinVolumeSize)
-			continue
-		case domain.ActionUpdateDoguReverseProxyConfig:
-			logger.Info("update proxy config for dogu")
-			doguInstallation.UpdateProxyConfig(doguDiff.Expected.ReverseProxyConfig)
 			continue
 		case domain.ActionUpdateAdditionalMounts:
 			logger.Info("update additional mounts")

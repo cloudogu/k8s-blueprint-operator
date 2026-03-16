@@ -331,7 +331,6 @@ func Test_doguInstallationRepo_Update(t *testing.T) {
 			"\"supportMode\":false," +
 			"\"pauseReconciliation\":false," +
 			"\"upgradeConfig\":{\"allowNamespaceSwitch\":false,\"forceUpgrade\":false}," +
-			"\"additionalIngressAnnotations\":null," +
 			"\"additionalMounts\":null}" +
 			"}"
 		doguClientMock.EXPECT().Patch(testCtx, "postgresql", types.MergePatchType, []byte(expectedDoguPatch), metav1.PatchOptions{}).Return(nil, nil)

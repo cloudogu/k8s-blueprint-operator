@@ -140,14 +140,13 @@ type doguCRPatch struct {
 
 type doguSpecPatch struct {
 	// do not use omitempty, because we cannot delete things then
-	Name                         string             `json:"name"`
-	Version                      string             `json:"version"`
-	Resources                    doguResourcesPatch `json:"resources"`
-	SupportMode                  bool               `json:"supportMode"`
-	PauseReconciliation          bool               `json:"pauseReconciliation"`
-	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
-	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
-	AdditionalMounts             []v2.DataMount     `json:"additionalMounts"`
+	Name                string             `json:"name"`
+	Version             string             `json:"version"`
+	Resources           doguResourcesPatch `json:"resources"`
+	SupportMode         bool               `json:"supportMode"`
+	PauseReconciliation bool               `json:"pauseReconciliation"`
+	UpgradeConfig       upgradeConfigPatch `json:"upgradeConfig"`
+	AdditionalMounts    []v2.DataMount     `json:"additionalMounts"`
 }
 
 type upgradeConfigPatch struct {

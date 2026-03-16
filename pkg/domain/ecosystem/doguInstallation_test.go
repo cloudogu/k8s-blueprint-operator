@@ -13,11 +13,9 @@ import (
 )
 
 var (
-	version1231, _   = core.ParseVersion("1.2.3-1")
-	version1232, _   = core.ParseVersion("1.2.3-2")
-	rewriteTarget    = "/"
-	additionalConfig = "additional"
-	subfolder        = "different_subfolder"
+	version1231, _ = core.ParseVersion("1.2.3-1")
+	version1232, _ = core.ParseVersion("1.2.3-2")
+	subfolder      = "different_subfolder"
 )
 
 func TestInstallDogu(t *testing.T) {
