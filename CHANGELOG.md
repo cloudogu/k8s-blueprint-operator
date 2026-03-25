@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.2.0] - 2026-03-25
+### Removed
+- [#152] remove outdated ingress-nginx related code
+  - additionalIngressAnnotations are no longer supported
 ## [v3.1.1] - 2026-02-17
 ### Security
 - [#150] Fix Golang stdlib CVE-2025-68121

@@ -13,23 +13,19 @@ import (
 )
 
 var (
-	version1231, _   = core.ParseVersion("1.2.3-1")
-	version1232, _   = core.ParseVersion("1.2.3-2")
-	rewriteTarget    = "/"
-	additionalConfig = "additional"
-	subfolder        = "different_subfolder"
+	version1231, _ = core.ParseVersion("1.2.3-1")
+	version1232, _ = core.ParseVersion("1.2.3-2")
+	subfolder      = "different_subfolder"
 )
 
 func TestInstallDogu(t *testing.T) {
 	volumeSize := resource.MustParse("1Gi")
-	proxyBodySize := resource.MustParse("1G")
 	storageClassName := "example-storage-class"
 	dogu := InstallDogu(
 		postgresqlQualifiedName,
 		&version1231,
 		&volumeSize,
 		&storageClassName,
-		ReverseProxyConfig{MaxBodySize: &proxyBodySize, RewriteTarget: RewriteTarget(rewriteTarget), AdditionalConfig: AdditionalConfig(additionalConfig)},
 		[]AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
@@ -45,11 +41,6 @@ func TestInstallDogu(t *testing.T) {
 		UpgradeConfig:    UpgradeConfig{AllowNamespaceSwitch: false},
 		MinVolumeSize:    &volumeSize,
 		StorageClassName: &storageClassName,
-		ReverseProxyConfig: ReverseProxyConfig{
-			MaxBodySize:      &proxyBodySize,
-			RewriteTarget:    RewriteTarget(rewriteTarget),
-			AdditionalConfig: AdditionalConfig(additionalConfig),
-		},
 		AdditionalMounts: []AdditionalMount{
 			{
 				SourceType: DataSourceConfigMap,
@@ -127,27 +118,6 @@ func TestDoguInstallation_SwitchNamespace(t *testing.T) {
 		err := dogu.SwitchNamespace("premium", false)
 
 		require.ErrorContains(t, err, "not allowed to switch dogu namespace")
-	})
-}
-
-func TestDoguInstallation_UpdateProxyConfig(t *testing.T) {
-	t.Run("should set property", func(t *testing.T) {
-		// given
-		bodySize := resource.MustParse("1G")
-		dogu := DoguInstallation{}
-
-		// when
-		reverseProxyConfig := ReverseProxyConfig{
-			MaxBodySize:      &bodySize,
-			RewriteTarget:    RewriteTarget(rewriteTarget),
-			AdditionalConfig: AdditionalConfig(additionalConfig),
-		}
-		dogu.UpdateProxyConfig(reverseProxyConfig)
-
-		// then
-		assert.Equal(t, &bodySize, dogu.ReverseProxyConfig.MaxBodySize)
-		assert.Equal(t, RewriteTarget(rewriteTarget), dogu.ReverseProxyConfig.RewriteTarget)
-		assert.Equal(t, AdditionalConfig(additionalConfig), dogu.ReverseProxyConfig.AdditionalConfig)
 	})
 }
 

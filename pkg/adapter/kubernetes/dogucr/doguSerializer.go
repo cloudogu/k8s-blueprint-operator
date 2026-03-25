@@ -36,9 +36,7 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 	// that we maybe override an empty value with the default 2Gi if we update the Dogu CR for any reason.
 	minVolumeSize, volumeSizeErr := cr.GetMinDataVolumeSize()
 
-	reverseProxyConfigEntries, proxyErr := parseDoguAdditionalIngressAnnotationsCR(cr.Spec.AdditionalIngressAnnotations)
-
-	err := errors.Join(versionErr, nameErr, volumeSizeErr, proxyErr, installedVersionErr)
+	err := errors.Join(versionErr, nameErr, volumeSizeErr, installedVersionErr)
 	if err != nil {
 		return nil, &domainservice.InternalError{
 			WrappedError: err,
@@ -62,7 +60,6 @@ func parseDoguCR(cr *v2.Dogu) (*ecosystem.DoguInstallation, error) {
 		UpgradeConfig:      ecosystem.UpgradeConfig{AllowNamespaceSwitch: cr.Spec.UpgradeConfig.AllowNamespaceSwitch},
 		MinVolumeSize:      &minVolumeSize,
 		StorageClassName:   cr.Spec.Resources.StorageClassName,
-		ReverseProxyConfig: reverseProxyConfigEntries,
 		PersistenceContext: persistenceContext,
 		AdditionalMounts:   parseAdditionalMounts(cr.Spec.AdditionalMounts),
 	}, nil
@@ -79,28 +76,6 @@ func parseAdditionalMounts(mounts []v2.DataMount) []ecosystem.AdditionalMount {
 		})
 	}
 	return result
-}
-
-func parseDoguAdditionalIngressAnnotationsCR(annotations v2.IngressAnnotations) (ecosystem.ReverseProxyConfig, error) {
-	reverseProxyConfig := ecosystem.ReverseProxyConfig{}
-
-	reverseProxyBodySize, bodySizeOk := annotations[ecosystem.NginxIngressAnnotationBodySize]
-	if bodySizeOk {
-		// Sizes for Nginx can be specified in bytes, kilobytes (suffixes k and K) or megabytes (suffixes m and M), for example, “1024”, “8k”, “1m” in Decimal SI.
-		// Since the actual dogu-operator and service-discovery just use this format we can expect that the values for the volume size in are safe to set in the doguinstallation.
-		// Formats “1024”, “8k”, “1m” can be parsed by resource.Quantity
-		// See: [Documentation](https://nginx.org/en/docs/syntax.html)
-		quantity, err := resource.ParseQuantity(reverseProxyBodySize)
-		if err != nil {
-			return ecosystem.ReverseProxyConfig{}, domainservice.NewInternalError(err, "failed to parse quantity %q", reverseProxyBodySize)
-		}
-		reverseProxyConfig.MaxBodySize = &quantity
-	}
-
-	reverseProxyConfig.RewriteTarget = ecosystem.RewriteTarget(annotations[ecosystem.NginxIngressAnnotationRewriteTarget])
-	reverseProxyConfig.AdditionalConfig = ecosystem.AdditionalConfig(annotations[ecosystem.NginxIngressAnnotationAdditionalConfig])
-
-	return reverseProxyConfig, nil
 }
 
 func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
@@ -140,8 +115,7 @@ func toDoguCR(dogu *ecosystem.DoguInstallation) *v2.Dogu {
 				AllowNamespaceSwitch: dogu.UpgradeConfig.AllowNamespaceSwitch,
 				ForceUpgrade:         false,
 			},
-			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
-			AdditionalMounts:             toDoguCRAdditionalMounts(dogu.AdditionalMounts),
+			AdditionalMounts: toDoguCRAdditionalMounts(dogu.AdditionalMounts),
 		},
 		Status: v2.DoguStatus{},
 	}
@@ -160,49 +134,19 @@ func toDoguCRAdditionalMounts(mounts []ecosystem.AdditionalMount) []v2.DataMount
 	return result
 }
 
-func getNginxIngressAnnotations(config ecosystem.ReverseProxyConfig) map[string]string {
-	if config.IsEmpty() {
-		return nil
-	}
-
-	annotations := v2.IngressAnnotations{}
-	maxBodySize := config.MaxBodySize
-	if maxBodySize != nil {
-		annotations[ecosystem.NginxIngressAnnotationBodySize] = maxBodySize.String()
-	}
-
-	rewriteTarget := config.RewriteTarget
-	if rewriteTarget != "" {
-		annotations[ecosystem.NginxIngressAnnotationRewriteTarget] = string(rewriteTarget)
-	}
-
-	additionalConfig := config.AdditionalConfig
-	if additionalConfig != "" {
-		annotations[ecosystem.NginxIngressAnnotationAdditionalConfig] = string(additionalConfig)
-	}
-
-	// Use nil here to delete existing annotation from the cr.
-	if len(annotations) == 0 {
-		return nil
-	}
-
-	return annotations
-}
-
 type doguCRPatch struct {
 	Spec doguSpecPatch `json:"spec"`
 }
 
 type doguSpecPatch struct {
 	// do not use omitempty, because we cannot delete things then
-	Name                         string             `json:"name"`
-	Version                      string             `json:"version"`
-	Resources                    doguResourcesPatch `json:"resources"`
-	SupportMode                  bool               `json:"supportMode"`
-	PauseReconciliation          bool               `json:"pauseReconciliation"`
-	UpgradeConfig                upgradeConfigPatch `json:"upgradeConfig"`
-	AdditionalIngressAnnotations map[string]string  `json:"additionalIngressAnnotations"`
-	AdditionalMounts             []v2.DataMount     `json:"additionalMounts"`
+	Name                string             `json:"name"`
+	Version             string             `json:"version"`
+	Resources           doguResourcesPatch `json:"resources"`
+	SupportMode         bool               `json:"supportMode"`
+	PauseReconciliation bool               `json:"pauseReconciliation"`
+	UpgradeConfig       upgradeConfigPatch `json:"upgradeConfig"`
+	AdditionalMounts    []v2.DataMount     `json:"additionalMounts"`
 }
 
 type upgradeConfigPatch struct {
@@ -237,7 +181,6 @@ func toDoguCRPatch(dogu *ecosystem.DoguInstallation) *doguCRPatch {
 				MinDataVolumeSize: minVolumeSize,
 				StorageClassName:  dogu.StorageClassName,
 			},
-			AdditionalIngressAnnotations: getNginxIngressAnnotations(dogu.ReverseProxyConfig),
 			// always set this to false as a dogu cannot start in support mode
 			SupportMode:         false,
 			PauseReconciliation: dogu.PauseReconciliation,

@@ -104,7 +104,7 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		}
 
 		// Exception for the old nginx dependency from the single node Cloudogu EcoSystem.
-		// The nginx dependency was replaced by a the k8s-ces-gateway and k8s-ces-assets component
+		// ingress-nginx dependency was replaced by the k8s-ces-gateway
 		if dependencyOfWantedDogu.Name == nginxDependencyName {
 			continue
 		}
