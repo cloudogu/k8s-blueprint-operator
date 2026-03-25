@@ -32,14 +32,13 @@ type DoguDiff struct {
 
 // DoguDiffState contains all fields to make a diff for dogus in respect to another DoguDiffState.
 type DoguDiffState struct {
-	Namespace          cescommons.Namespace
-	Version            *core.Version
-	InstalledVersion   *core.Version
-	Absent             bool
-	MinVolumeSize      *ecosystem.VolumeSize
-	StorageClassName   *string
-	ReverseProxyConfig ecosystem.ReverseProxyConfig
-	AdditionalMounts   []ecosystem.AdditionalMount
+	Namespace        cescommons.Namespace
+	Version          *core.Version
+	InstalledVersion *core.Version
+	Absent           bool
+	MinVolumeSize    *ecosystem.VolumeSize
+	StorageClassName *string
+	AdditionalMounts []ecosystem.AdditionalMount
 }
 
 func (diff DoguDiff) HasChanges() bool {
@@ -117,13 +116,12 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = installedDogu.Name.SimpleName
 		actualState = DoguDiffState{
-			Namespace:          installedDogu.Name.Namespace,
-			Version:            &installedDogu.Version,
-			InstalledVersion:   &installedDogu.InstalledVersion,
-			MinVolumeSize:      installedDogu.MinVolumeSize,
-			StorageClassName:   installedDogu.StorageClassName,
-			ReverseProxyConfig: installedDogu.ReverseProxyConfig,
-			AdditionalMounts:   installedDogu.AdditionalMounts,
+			Namespace:        installedDogu.Name.Namespace,
+			Version:          &installedDogu.Version,
+			InstalledVersion: &installedDogu.InstalledVersion,
+			MinVolumeSize:    installedDogu.MinVolumeSize,
+			StorageClassName: installedDogu.StorageClassName,
+			AdditionalMounts: installedDogu.AdditionalMounts,
 		}
 	}
 
@@ -132,13 +130,12 @@ func determineDoguDiff(blueprintDogu *Dogu, installedDogu *ecosystem.DoguInstall
 	} else {
 		doguName = blueprintDogu.Name.SimpleName
 		expectedState = DoguDiffState{
-			Namespace:          blueprintDogu.Name.Namespace,
-			Version:            blueprintDogu.Version,
-			Absent:             blueprintDogu.Absent,
-			MinVolumeSize:      blueprintDogu.MinVolumeSize,
-			StorageClassName:   blueprintDogu.StorageClassName,
-			ReverseProxyConfig: blueprintDogu.ReverseProxyConfig,
-			AdditionalMounts:   blueprintDogu.AdditionalMounts,
+			Namespace:        blueprintDogu.Name.Namespace,
+			Version:          blueprintDogu.Version,
+			Absent:           blueprintDogu.Absent,
+			MinVolumeSize:    blueprintDogu.MinVolumeSize,
+			StorageClassName: blueprintDogu.StorageClassName,
+			AdditionalMounts: blueprintDogu.AdditionalMounts,
 		}
 	}
 
@@ -180,7 +177,6 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 
 	neededActions = appendActionForMinVolumeSize(neededActions, expected.MinVolumeSize, actual.MinVolumeSize)
 	neededActions = appendActionForAdditionalMounts(neededActions, expected.AdditionalMounts, actual.AdditionalMounts)
-	neededActions = appendActionForReverseProxyConfig(neededActions, expected, actual)
 
 	if expected.Version != nil && actual.Version != nil && expected.Version.IsNewerThan(*actual.Version) {
 		neededActions = append(neededActions, ActionUpgrade)
@@ -193,49 +189,12 @@ func getActionsForPresentDoguDiffs(expected DoguDiffState, actual DoguDiffState)
 	return neededActions
 }
 
-func appendActionForReverseProxyConfig(neededActions []Action, expected DoguDiffState, actual DoguDiffState) []Action {
-	exp := expected.ReverseProxyConfig
-	act := actual.ReverseProxyConfig
-
-	// both empty → nothing to do
-	if exp.IsEmpty() && act.IsEmpty() {
-		return neededActions
-	}
-
-	if exp.RewriteTarget != act.RewriteTarget || exp.AdditionalConfig != act.AdditionalConfig {
-		neededActions = append(neededActions, ActionUpdateDoguReverseProxyConfig)
-		return neededActions // early return to avoid duplicate actions
-	}
-
-	return appendActionForProxyBodySizes(neededActions, exp, act)
-}
-
 func appendActionForMinVolumeSize(actions []Action, expectedSize *ecosystem.VolumeSize, actualSize *ecosystem.VolumeSize) []Action {
 	// if expected > actual = update needed
 	if expectedSize == nil {
 		return actions
 	} else if actualSize == nil || expectedSize.Cmp(*actualSize) > 0 {
 		return append(actions, ActionUpdateDoguResourceMinVolumeSize)
-	}
-	return actions
-}
-
-func appendActionForProxyBodySizes(
-	actions []Action,
-	expectedReverseProxyConfig ecosystem.ReverseProxyConfig,
-	actualReverseProxyConfig ecosystem.ReverseProxyConfig,
-) []Action {
-	actualProxyBodySize := actualReverseProxyConfig.MaxBodySize
-	expectedProxyBodySize := expectedReverseProxyConfig.MaxBodySize
-
-	if expectedProxyBodySize == nil && actualProxyBodySize == nil {
-		return actions
-	} else if proxyBodySizeIdentityChanged(expectedProxyBodySize, actualProxyBodySize) {
-		return append(actions, ActionUpdateDoguReverseProxyConfig)
-	} else {
-		if expectedProxyBodySize != nil && actualProxyBodySize != nil && expectedProxyBodySize.Cmp(*actualProxyBodySize) != 0 {
-			return append(actions, ActionUpdateDoguReverseProxyConfig)
-		}
 	}
 	return actions
 }
@@ -258,8 +217,4 @@ func areAdditionalMountsEqual(first []ecosystem.AdditionalMount, second []ecosys
 		}
 	}
 	return true
-}
-
-func proxyBodySizeIdentityChanged(expectedProxyBodySize *ecosystem.BodySize, actualProxyBodySize *ecosystem.BodySize) bool {
-	return (expectedProxyBodySize != nil && actualProxyBodySize == nil) || (expectedProxyBodySize == nil && actualProxyBodySize != nil)
 }

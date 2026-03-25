@@ -5,7 +5,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-
+### Removed
+- [#152] remove outdated ingress-nginx related code
+  - additionalIngressAnnotations are no longer supported
 ## [v3.1.1] - 2026-02-17
 ### Security
 - [#150] Fix Golang stdlib CVE-2025-68121

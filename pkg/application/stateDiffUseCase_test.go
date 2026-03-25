@@ -283,7 +283,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 	t.Run("should succeed for dogu diff", func(t *testing.T) {
 		// given
 		volumeSize := resource.MustParse("2Gi")
-		bodySize := resource.MustParse("2G")
 		blueprint := &domain.BlueprintSpec{
 			Id:         "testBlueprint1",
 			Conditions: []domain.Condition{},
@@ -294,11 +293,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 						Version:       mustParseVersionToPtr(t, "2.9.0"),
 						Absent:        false,
 						MinVolumeSize: &volumeSize,
-						ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-							MaxBodySize:      &bodySize,
-							RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-							AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-						},
 						AdditionalMounts: []ecosystem.AdditionalMount{
 							{
 								SourceType: ecosystem.DataSourceConfigMap,
@@ -367,11 +361,6 @@ func TestStateDiffUseCase_DetermineStateDiff(t *testing.T) {
 					Version:       mustParseVersionToPtr(t, "2.9.0"),
 					Absent:        false,
 					MinVolumeSize: &volumeSize,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize:      &bodySize,
-						RewriteTarget:    ecosystem.RewriteTarget(rewriteTarget),
-						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-					},
 					AdditionalMounts: []ecosystem.AdditionalMount{
 						{
 							SourceType: ecosystem.DataSourceConfigMap,

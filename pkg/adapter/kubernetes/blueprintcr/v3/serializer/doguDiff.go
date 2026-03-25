@@ -26,22 +26,6 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) bpv3.DoguDiffSt
 		version = &domainModel.Version.Raw
 	}
 
-	var reverseProxyConfig *bpv3.ReverseProxyConfig
-	if !domainModel.ReverseProxyConfig.IsEmpty() {
-		var rewriteTarget, additionalConfig *string
-		if domainModel.ReverseProxyConfig.RewriteTarget != "" {
-			rewriteTarget = (*string)(&domainModel.ReverseProxyConfig.RewriteTarget)
-		}
-		if domainModel.ReverseProxyConfig.AdditionalConfig != "" {
-			additionalConfig = (*string)(&domainModel.ReverseProxyConfig.AdditionalConfig)
-		}
-		reverseProxyConfig = &bpv3.ReverseProxyConfig{
-			RewriteTarget:    rewriteTarget,
-			AdditionalConfig: additionalConfig,
-			MaxBodySize:      ecosystem.GetQuantityString(domainModel.ReverseProxyConfig.MaxBodySize),
-		}
-	}
-
 	var resourceConfig *bpv3.ResourceConfig
 	if domainModel.MinVolumeSize != nil || domainModel.StorageClassName != nil {
 		resourceConfig = &bpv3.ResourceConfig{
@@ -50,12 +34,11 @@ func convertToDoguDiffStateDTO(domainModel domain.DoguDiffState) bpv3.DoguDiffSt
 		}
 	}
 	return bpv3.DoguDiffState{
-		Namespace:          string(domainModel.Namespace),
-		Version:            version,
-		Absent:             domainModel.Absent,
-		ResourceConfig:     resourceConfig,
-		ReverseProxyConfig: reverseProxyConfig,
-		AdditionalMounts:   convertAdditionalMountsToDoguDiffDTO(domainModel.AdditionalMounts),
+		Namespace:        string(domainModel.Namespace),
+		Version:          version,
+		Absent:           domainModel.Absent,
+		ResourceConfig:   resourceConfig,
+		AdditionalMounts: convertAdditionalMountsToDoguDiffDTO(domainModel.AdditionalMounts),
 	}
 }
 

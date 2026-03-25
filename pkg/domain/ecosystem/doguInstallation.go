@@ -37,19 +37,9 @@ type DoguInstallation struct {
 	// For the difference between null and empty string, see the appropriate kubernetes documentation:
 	// https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
 	StorageClassName *string
-	// ReverseProxyConfig defines configuration for the ecosystem reverse proxy. This field is optional.
-	ReverseProxyConfig ReverseProxyConfig
 	// AdditionalMounts provides the possibility to mount additional data into the dogu.
 	AdditionalMounts []AdditionalMount
 }
-
-// Specific Nginx annotations. In future those annotations will be replaced be generalized fields in the dogu cr.
-// The dogu-operator or service-discovery will interpret them.
-const (
-	NginxIngressAnnotationBodySize         = "nginx.ingress.kubernetes.io/proxy-body-size"
-	NginxIngressAnnotationRewriteTarget    = "nginx.ingress.kubernetes.io/rewrite-target"
-	NginxIngressAnnotationAdditionalConfig = "nginx.ingress.kubernetes.io/configuration-snippet"
-)
 
 type ReverseProxyConfig struct {
 	MaxBodySize      *BodySize
@@ -99,7 +89,6 @@ func InstallDogu(
 	version *core.Version,
 	minVolumeSize *VolumeSize,
 	storageClassName *string,
-	reverseProxyConfig ReverseProxyConfig,
 	additionalMounts []AdditionalMount) *DoguInstallation {
 
 	doguVersion := core.Version{}
@@ -108,13 +97,12 @@ func InstallDogu(
 	}
 
 	return &DoguInstallation{
-		Name:               name,
-		Version:            doguVersion,
-		UpgradeConfig:      UpgradeConfig{AllowNamespaceSwitch: false},
-		MinVolumeSize:      minVolumeSize,
-		StorageClassName:   storageClassName,
-		ReverseProxyConfig: reverseProxyConfig,
-		AdditionalMounts:   additionalMounts,
+		Name:             name,
+		Version:          doguVersion,
+		UpgradeConfig:    UpgradeConfig{AllowNamespaceSwitch: false},
+		MinVolumeSize:    minVolumeSize,
+		StorageClassName: storageClassName,
+		AdditionalMounts: additionalMounts,
 	}
 }
 
@@ -152,10 +140,6 @@ func (dogu *DoguInstallation) SwitchNamespace(newNamespace cescommons.Namespace,
 
 func (dogu *DoguInstallation) UpdateMinVolumeSize(size *VolumeSize) {
 	dogu.MinVolumeSize = size
-}
-
-func (dogu *DoguInstallation) UpdateProxyConfig(config ReverseProxyConfig) {
-	dogu.ReverseProxyConfig = config
 }
 
 func (dogu *DoguInstallation) UpdateAdditionalMounts(mounts []AdditionalMount) {

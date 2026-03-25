@@ -17,7 +17,6 @@ var (
 )
 
 func Test_determineDoguDiff(t *testing.T) {
-	proxyBodySize := resource.MustParse("1M")
 	volumeSize1 := resource.MustParse("1Gi")
 	volumeSize2 := resource.MustParse("2Gi")
 	storageClassName := "example-storage-class"
@@ -28,8 +27,7 @@ func Test_determineDoguDiff(t *testing.T) {
 	}
 	quantity100M := resource.MustParse("100M")
 	quantity10M := resource.MustParse("10M")
-	quantity100MPtr := &quantity100M
-	quantity10MPtr := &quantity10M
+
 	tests := []struct {
 		name string
 		args args
@@ -230,13 +228,8 @@ func Test_determineDoguDiff(t *testing.T) {
 			name: "multiple update actions",
 			args: args{
 				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize:      &proxyBodySize,
-						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-						RewriteTarget:    ecosystem.RewriteTarget(rewriteConfig),
-					},
+					Name:          officialNexus,
+					Version:       &version3212,
 					MinVolumeSize: &volumeSize2,
 				},
 				installedDogu: &ecosystem.DoguInstallation{
@@ -255,16 +248,11 @@ func Test_determineDoguDiff(t *testing.T) {
 					MinVolumeSize:    &volumeSize1,
 				},
 				Expected: DoguDiffState{
-					Namespace: officialNamespace,
-					Version:   &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize:      &proxyBodySize,
-						AdditionalConfig: ecosystem.AdditionalConfig(additionalConfig),
-						RewriteTarget:    ecosystem.RewriteTarget(rewriteConfig),
-					},
+					Namespace:     officialNamespace,
+					Version:       &version3212,
 					MinVolumeSize: &volumeSize2,
 				},
-				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpdateDoguReverseProxyConfig, ActionUpgrade},
+				NeededActions: []Action{ActionUpdateDoguResourceMinVolumeSize, ActionUpgrade},
 			},
 		},
 		{
@@ -310,104 +298,6 @@ func Test_determineDoguDiff(t *testing.T) {
 			args: args{
 				blueprintDogu: nil,
 				installedDogu: nil,
-			},
-			want: nil,
-		},
-		{
-			name: "update proxy body size",
-			args: args{
-				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
-				},
-				installedDogu: &ecosystem.DoguInstallation{
-					Name:             officialNexus,
-					Version:          version3212,
-					InstalledVersion: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
-				},
-			},
-			want: &DoguDiff{
-				DoguName: "nexus",
-				Actual: DoguDiffState{
-					Namespace:        officialNamespace,
-					Version:          &version3212,
-					InstalledVersion: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
-				},
-				Expected: DoguDiffState{
-					Namespace: officialNamespace,
-					Version:   &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
-				},
-				NeededActions: []Action{ActionUpdateDoguReverseProxyConfig},
-			},
-		},
-		{
-			name: "update if proxy body size changed",
-			args: args{
-				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
-				},
-				installedDogu: &ecosystem.DoguInstallation{
-					Name:             officialNexus,
-					Version:          version3212,
-					InstalledVersion: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity10MPtr,
-					},
-				},
-			},
-			want: &DoguDiff{
-				DoguName: "nexus",
-				Actual: DoguDiffState{
-					Namespace:        officialNamespace,
-					Version:          &version3212,
-					InstalledVersion: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity10MPtr,
-					},
-				},
-				Expected: DoguDiffState{
-					Namespace: officialNamespace,
-					Version:   &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: quantity100MPtr,
-					},
-				},
-				NeededActions: []Action{ActionUpdateDoguReverseProxyConfig},
-			},
-		},
-		{
-			name: "no update if body sizes are nil",
-			args: args{
-				blueprintDogu: &Dogu{
-					Name:    officialNexus,
-					Version: &version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
-				},
-				installedDogu: &ecosystem.DoguInstallation{
-					Name:    officialNexus,
-					Version: version3212,
-					ReverseProxyConfig: ecosystem.ReverseProxyConfig{
-						MaxBodySize: nil,
-					},
-				},
 			},
 			want: nil,
 		},

@@ -28,8 +28,6 @@ const (
 	ActionDowngrade = bpv3.DoguActionDowngrade
 	// ActionSwitchDoguNamespace means the dogu should be pulled from a different dogu registry namespace
 	ActionSwitchDoguNamespace = bpv3.DoguActionSwitchNamespace
-	// ActionUpdateDoguReverseProxyConfig means the reverse proxy config of the dogu needs to be updated
-	ActionUpdateDoguReverseProxyConfig = bpv3.DoguActionUpdateReverseProxyConfig
 	// ActionUpdateDoguResourceMinVolumeSize means the minimum volume size of the dogu needs to be changed
 	ActionUpdateDoguResourceMinVolumeSize = bpv3.DoguActionUpdateResourceMinVolumeSize
 	// ActionUpdateAdditionalMounts means the additional mounts should be updated for the dogu
