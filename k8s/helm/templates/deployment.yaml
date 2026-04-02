@@ -70,6 +70,10 @@ spec:
                 optional: true
           - name: DEBOUNCE_WINDOW
             value: {{ quote .Values.manager.reconciler.debounceWindow | default "10s" }}
+          - name: AUTH_REGISTRATION_ENABLED
+            value: {{ quote .Values.manager.env.authRegistrationEnabled | default false }}
+          - name: DISABLE_POSTFIX_DEPENDENCY_CHECK
+            value: {{ quote .Values.manager.env.disablePostfixDependencyCheck | default false }}
           image: "{{ .Values.manager.image.registry }}/{{ .Values.manager.image.repository }}:{{ .Values.manager.image.tag | default .Chart.AppVersion }}"
           livenessProbe:
             httpGet:

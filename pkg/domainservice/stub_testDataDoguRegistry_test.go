@@ -3,6 +3,7 @@ package domainservice
 import (
 	"context"
 	"fmt"
+
 	cescommons "github.com/cloudogu/ces-commons-lib/dogu"
 	"github.com/cloudogu/cesapp-lib/core"
 )
@@ -77,6 +78,29 @@ var testDataDoguRegistry = stubRemoteDoguRegistry{
 				Version: "1.0.0-1",
 				Dependencies: []core.Dependency{
 					{Type: core.DependencyTypeDogu, Name: "registrator"},
+				},
+			},
+		},
+	},
+}
+
+var testDataDoguRegistryWithoutCasAndPostfix = stubRemoteDoguRegistry{
+	dogus: map[cescommons.QualifiedName]map[string]*core.Dogu{
+		officialRedmine: {
+			"1.0.0-1": &core.Dogu{
+				Name:    "official/redmine",
+				Version: "1.0.0-1",
+				Dependencies: []core.Dependency{
+					{Type: core.DependencyTypeDogu, Name: "postfix", Version: "1.0.0-1"},
+				},
+			},
+		},
+		helloworldBluespice: {
+			"1.0.0-1": &core.Dogu{
+				Name:    "helloworld/bluespice",
+				Version: "1.0.0-1",
+				Dependencies: []core.Dependency{
+					{Type: core.DependencyTypeDogu, Name: "cas", Version: "1.0.0-1"},
 				},
 			},
 		},
