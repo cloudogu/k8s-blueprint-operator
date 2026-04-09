@@ -1,9 +1,10 @@
 package config
 
 import (
-	"github.com/cloudogu/cesapp-lib/core"
 	"os"
 	"testing"
+
+	"github.com/cloudogu/cesapp-lib/core"
 
 	"github.com/Masterminds/semver/v3"
 	"github.com/go-logr/logr"
@@ -71,6 +72,8 @@ func TestNewOperatorConfig(t *testing.T) {
 		logMock.EXPECT().Info(0, "Version: [0.1.0]").Return()
 		logMock.EXPECT().Info(0, "Starting in development mode! This is not recommended for production!").Return()
 		logMock.EXPECT().Info(0, "Deploying the k8s dogu operator in namespace ecosystem").Return()
+		logMock.EXPECT().Info(0, "Environment variable AUTH_REGISTRATION_ENABLED not set. Disabling auth registration by default").Return()
+		logMock.EXPECT().Info(0, "Environment variable DISABLE_POSTFIX_DEPENDENCY_CHECK not set. Leaving postfix dependency check enabled").Return()
 		log = logr.New(logMock)
 
 		// when

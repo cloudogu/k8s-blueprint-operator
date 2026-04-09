@@ -15,15 +15,21 @@ import (
 const (
 	nginxDependencyName       = "nginx"
 	registratorDependencyName = "registrator"
+	casDependencyName         = "cas"
+	postfixDependencyName     = "postfix"
 )
 
 type ValidateDependenciesDomainUseCase struct {
-	remoteDoguRegistry RemoteDoguRegistry
+	remoteDoguRegistry            RemoteDoguRegistry
+	authRegistrationEnabled       bool
+	disablePostfixDependencyCheck bool
 }
 
-func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry) *ValidateDependenciesDomainUseCase {
+func NewValidateDependenciesDomainUseCase(remoteDoguRegistry RemoteDoguRegistry, authRegistrationEnabled bool, disablePostfixDependencyCheck bool) *ValidateDependenciesDomainUseCase {
 	return &ValidateDependenciesDomainUseCase{
-		remoteDoguRegistry,
+		remoteDoguRegistry:            remoteDoguRegistry,
+		authRegistrationEnabled:       authRegistrationEnabled,
+		disablePostfixDependencyCheck: disablePostfixDependencyCheck,
 	}
 }
 
@@ -106,6 +112,16 @@ func (useCase *ValidateDependenciesDomainUseCase) checkDoguDependencies(
 		// Exception for the old nginx dependency from the single node Cloudogu EcoSystem.
 		// ingress-nginx dependency was replaced by the k8s-ces-gateway
 		if dependencyOfWantedDogu.Name == nginxDependencyName {
+			continue
+		}
+
+		// When auth registration is not needed, CAS should be installed as a component and is therefore not checked.
+		if useCase.authRegistrationEnabled && dependencyOfWantedDogu.Name == casDependencyName {
+			continue
+		}
+
+		// If the flag is set postfix is not checked, e.g. because it is installed as a component.
+		if useCase.disablePostfixDependencyCheck && dependencyOfWantedDogu.Name == postfixDependencyName {
 			continue
 		}
 

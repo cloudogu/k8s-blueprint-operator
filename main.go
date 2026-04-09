@@ -81,7 +81,7 @@ func startOperator(
 	}
 
 	var recorder eventRecorder = k8sManager.GetEventRecorderFor("k8s-blueprint-operator")
-	bootstrap, err := pkg.Bootstrap(restConfig, recorder, operatorConfig.Namespace)
+	bootstrap, err := pkg.Bootstrap(restConfig, recorder, operatorConfig)
 	if err != nil {
 		return fmt.Errorf("unable to bootstrap application context: %w", err)
 	}

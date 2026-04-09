@@ -72,11 +72,17 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 	type args struct {
 		effectiveBlueprint domain.EffectiveBlueprint
 	}
+	type constructorArgs struct {
+		doguRegistry                  RemoteDoguRegistry
+		authRegistrationEnabled       bool
+		disablePostfixDependencyCheck bool
+	}
 	tests := []struct {
-		name          string
-		args          args
-		wantErr       bool
-		errorContains string
+		name            string
+		args            args
+		constructorArgs constructorArgs
+		wantErr         bool
+		errorContains   string
 	}{
 		{
 			name: "all ok",
@@ -87,6 +93,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 						{Name: officialPostgres, Version: &version1_0_0_1},
 					},
 				},
+			},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
 			},
 			wantErr: false,
 		},
@@ -100,6 +109,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					},
 				},
 			},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
 			wantErr: false,
 		},
 		{
@@ -110,6 +122,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 						{Name: officialRedmine, Version: &version1_0_0_1},
 					},
 				},
+			},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
 			},
 			wantErr:       true,
 			errorContains: "dependencies for dogu 'official/redmine' are not satisfied in blueprint: dependency 'postgres' in version '1.0.0-1' is not a present dogu in the effective blueprint",
@@ -123,6 +138,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					},
 				},
 			},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
 			wantErr:       true,
 			errorContains: "remote dogu registry has no dogu specification for at least one wanted dogu: dogu official/redmine2 in version 1.0.0-1 not found",
 		},
@@ -135,6 +153,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					},
 				},
 			},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
 			wantErr: false,
 		},
 		{
@@ -144,6 +165,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					{Name: officialScm, Version: &version1_0_0_1},
 				},
 			}},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
 			wantErr: true,
 		},
 		{
@@ -155,6 +179,9 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					{Name: k8sNginxIngress, Version: &version1_0_0_1},
 				},
 			}},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
 			wantErr: false,
 		},
 		{
@@ -164,12 +191,41 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 					{Name: ldapMapper, Version: &version1_0_0_1},
 				},
 			}},
+			constructorArgs: constructorArgs{
+				doguRegistry: testDataDoguRegistry,
+			},
+			wantErr: false,
+		},
+		{
+			name: "cas should be ignored if auth registration is enabled",
+			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
+				Dogus: []domain.Dogu{
+					{Name: helloworldBluespice, Version: &version1_0_0_1},
+				},
+			}},
+			constructorArgs: constructorArgs{
+				doguRegistry:            testDataDoguRegistryWithoutCasAndPostfix,
+				authRegistrationEnabled: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "postfix should be ignored if postfix dependency check is disabled",
+			args: args{effectiveBlueprint: domain.EffectiveBlueprint{
+				Dogus: []domain.Dogu{
+					{Name: officialRedmine, Version: &version1_0_0_1},
+				},
+			}},
+			constructorArgs: constructorArgs{
+				doguRegistry:                  testDataDoguRegistryWithoutCasAndPostfix,
+				disablePostfixDependencyCheck: true,
+			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
+			useCase := NewValidateDependenciesDomainUseCase(tt.constructorArgs.doguRegistry, tt.constructorArgs.authRegistrationEnabled, tt.constructorArgs.disablePostfixDependencyCheck)
 			err := useCase.ValidateDependenciesForAllDogus(ctx, tt.args.effectiveBlueprint)
 			if err != nil {
 				if !tt.wantErr {
@@ -184,7 +240,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus(t *te
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFoundError(t *testing.T) {
 	// given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
-	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
+	useCase := NewValidateDependenciesDomainUseCase(RegistryMock, false, false)
 
 	RegistryMock.EXPECT().GetDogus(ctx, mock.Anything).Return(nil, &NotFoundError{Message: "my error"})
 	// when
@@ -202,7 +258,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_NotFo
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_internalError(t *testing.T) {
 	// given
 	RegistryMock := NewMockRemoteDoguRegistry(t)
-	useCase := NewValidateDependenciesDomainUseCase(RegistryMock)
+	useCase := NewValidateDependenciesDomainUseCase(RegistryMock, false, false)
 
 	RegistryMock.EXPECT().GetDogus(ctx, mock.Anything).Return(nil, &InternalError{Message: "my error"})
 	// when
@@ -215,7 +271,7 @@ func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_inter
 
 func TestValidateDependenciesDomainUseCase_ValidateDependenciesForAllDogus_collectDependencyErrors(t *testing.T) {
 	// given
-	useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry)
+	useCase := NewValidateDependenciesDomainUseCase(testDataDoguRegistry, false, false)
 	// when
 	err := useCase.ValidateDependenciesForAllDogus(ctx, domain.EffectiveBlueprint{
 		Dogus: []domain.Dogu{

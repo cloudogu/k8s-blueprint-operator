@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.3.0] - 2026-04-09
+### Added
+- [#154] Ignore missing CAS dependency if `manager.env.authRegistrationEnabled` is set to `true` in the Helm values.
+- [#154] Ignore missing Postfix dependency if `manager.env.disablePostfixDependencyCheck` is set to `true` in the Helm values.
+
 ## [v3.2.0] - 2026-03-25
 ### Removed
 - [#152] remove outdated ingress-nginx related code
