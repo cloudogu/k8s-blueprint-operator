@@ -35,7 +35,7 @@ type ApplicationContext struct {
 }
 
 // Bootstrap creates the ApplicationContext and does all dependency injection of the whole application.
-func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, namespace string) (*ApplicationContext, error) {
+func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, operatorConfig *config.OperatorConfig) (*ApplicationContext, error) {
 	ecosystemClientSet, err := createEcosystemClientSet(restConfig)
 	if err != nil {
 		return nil, err
@@ -46,7 +46,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 		return nil, fmt.Errorf("failed to create dogus interface: %w", err)
 	}
 
-	blueprintInterface := ecosystemClientSet.EcosystemV1Alpha1().Blueprints(namespace)
+	blueprintInterface := ecosystemClientSet.EcosystemV1Alpha1().Blueprints(operatorConfig.Namespace)
 	debugModeClientSet, err := debugModeClient.NewForConfig(restConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create debug mode interface: %w", err)
@@ -57,30 +57,30 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	}
 	blueprintRepo := v2.NewBlueprintSpecRepository(
 		blueprintInterface,
-		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(namespace),
+		ecosystemClientSet.EcosystemV1Alpha1().BlueprintMasks(operatorConfig.Namespace),
 		eventRecorder,
 	)
 
-	remoteDoguRegistry, err := createRemoteDoguRegistry(ecosystemClientSet, namespace)
+	remoteDoguRegistry, err := createRemoteDoguRegistry(ecosystemClientSet, operatorConfig.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	k8sDoguConfigRepo := repository.NewDoguConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	k8sDoguConfigRepo := repository.NewDoguConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(operatorConfig.Namespace))
 	doguConfigRepo := adapterconfigk8s.NewDoguConfigRepository(*k8sDoguConfigRepo)
-	k8sSensitiveDoguConfigRepo := repository.NewSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(namespace))
+	k8sSensitiveDoguConfigRepo := repository.NewSensitiveDoguConfigRepository(ecosystemClientSet.CoreV1().Secrets(operatorConfig.Namespace))
 	sensitiveDoguConfigRepo := adapterconfigk8s.NewSensitiveDoguConfigRepository(*k8sSensitiveDoguConfigRepo)
-	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(ecosystemClientSet.CoreV1().Secrets(namespace))
-	configMapRefReader := configref.NewConfigMapRefReader(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
-	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(namespace))
+	sensitiveConfigRefReader := sensitiveconfigref.NewSecretRefReader(ecosystemClientSet.CoreV1().Secrets(operatorConfig.Namespace))
+	configMapRefReader := configref.NewConfigMapRefReader(ecosystemClientSet.CoreV1().ConfigMaps(operatorConfig.Namespace))
+	k8sGlobalConfigRepo := repository.NewGlobalConfigRepository(ecosystemClientSet.CoreV1().ConfigMaps(operatorConfig.Namespace))
 	globalConfigRepo := adapterconfigk8s.NewGlobalConfigRepository(*k8sGlobalConfigRepo)
 
-	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(namespace))
-	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeClientSet.DebugMode(namespace))
-	restoreRepo := restorecr.NewRestoreRepo(restoreClientSet.Restores(namespace))
+	doguRepo := dogucr.NewDoguInstallationRepo(dogusInterface.Dogus(operatorConfig.Namespace))
+	debugModeRepo := debugmodecr.NewDebugModeRepo(debugModeClientSet.DebugMode(operatorConfig.Namespace))
+	restoreRepo := restorecr.NewRestoreRepo(restoreClientSet.Restores(operatorConfig.Namespace))
 
 	initialBlueprintStateUseCase := application.NewInitiateBlueprintStatusUseCase(blueprintRepo)
-	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry)
+	validateDependenciesUseCase := domainservice.NewValidateDependenciesDomainUseCase(remoteDoguRegistry, operatorConfig.AuthRegistrationEnabled, operatorConfig.DisablePostfixDependencyCheck)
 	validateMountsUseCase := domainservice.NewValidateAdditionalMountsDomainUseCase(remoteDoguRegistry)
 	validateStorageClassUseCase := domainservice.NewValidateStorageClassDomainUseCase(doguRepo)
 	blueprintValidationUseCase := application.NewBlueprintSpecValidationUseCase(blueprintRepo, validateDependenciesUseCase, validateMountsUseCase, validateStorageClassUseCase)
@@ -114,7 +114,7 @@ func Bootstrap(restConfig *rest.Config, eventRecorder record.EventRecorder, name
 	if err != nil {
 		return nil, err
 	}
-	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase, blueprintRepo, namespace, debounceWindow)
+	blueprintReconciler := reconciler.NewBlueprintReconciler(blueprintChangeUseCase, blueprintRepo, operatorConfig.Namespace, debounceWindow)
 
 	return &ApplicationContext{
 		BlueprintReconciler: blueprintReconciler,

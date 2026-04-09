@@ -11,6 +11,8 @@ manager:
   env:
     logLevel: info
     stage: production
+    authRegistrationEnabled: false
+    disablePostfixDependencyCheck: false
   resourceLimits:
     memory: 105M
   resourceRequests:

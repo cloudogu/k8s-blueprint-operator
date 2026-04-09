@@ -30,6 +30,12 @@ const (
 	doguRegistryURLSchemaEnvVar = "DOGU_REGISTRY_URLSCHEMA"
 )
 
+// feature flags
+const (
+	authRegistrationEnabledEnvVar       = "AUTH_REGISTRATION_ENABLED"
+	disablePostfixDependencyCheckEnvVar = "DISABLE_POSTFIX_DEPENDENCY_CHECK"
+)
+
 const registryCacheDir = "/tmp/dogu-registry-cache"
 
 var log = ctrl.Log.WithName("config")
@@ -41,6 +47,12 @@ type OperatorConfig struct {
 	Version *semver.Version
 	// Namespace specifies the namespace that the operator is deployed to.
 	Namespace string
+	// AuthRegistrationEnabled defines whether the operator should manage AuthRegistration CRs for v2 dogus.
+	AuthRegistrationEnabled bool
+	// DisablePostfixDependencyCheck defines whether the operator should validate dependencies on postfix.
+	// If set to false, the operator will assume that postfix is installed as a normal dogu and will validate the dependencies accordingly.
+	// If set to true, the operator will assume that postfix is installed as a component and will not validate the dependencies.
+	DisablePostfixDependencyCheck bool
 }
 
 func IsStageDevelopment() bool {
@@ -64,14 +76,16 @@ func NewOperatorConfig(version string) (*OperatorConfig, error) {
 	log.Info(fmt.Sprintf("Deploying the k8s dogu operator in namespace %s", namespace))
 
 	return &OperatorConfig{
-		Version:   parsedVersion,
-		Namespace: namespace,
+		Version:                       parsedVersion,
+		Namespace:                     namespace,
+		AuthRegistrationEnabled:       getAuthRegistrationEnabled(),
+		DisablePostfixDependencyCheck: getDisablePostfixDependencyCheck(),
 	}, nil
 }
 
 func configureStage() {
 	var err error
-	Stage, err = getEnvVar(StageEnvVar)
+	Stage, err = getRequiredEnvVar(StageEnvVar)
 	if err != nil {
 		log.Error(err, "Error reading stage environment variable. Use stage production")
 	}
@@ -82,7 +96,7 @@ func configureStage() {
 }
 
 func GetLogLevel() (string, error) {
-	logLevel, err := getEnvVar(logLevelEnvVar)
+	logLevel, err := getRequiredEnvVar(logLevelEnvVar)
 	if err != nil {
 		return "", fmt.Errorf("failed to get env var [%s]: %w", logLevelEnvVar, err)
 	}
@@ -91,7 +105,7 @@ func GetLogLevel() (string, error) {
 }
 
 func GetNamespace() (string, error) {
-	namespace, err := getEnvVar(namespaceEnvVar)
+	namespace, err := getRequiredEnvVar(namespaceEnvVar)
 	if err != nil {
 		return "", fmt.Errorf("failed to get env var [%s]: %w", namespaceEnvVar, err)
 	}
@@ -99,7 +113,7 @@ func GetNamespace() (string, error) {
 	return namespace, nil
 }
 
-func getEnvVar(name string) (string, error) {
+func getRequiredEnvVar(name string) (string, error) {
 	env, found := os.LookupEnv(name)
 	if !found {
 		return "", fmt.Errorf("environment variable %s must be set", name)
@@ -110,14 +124,14 @@ func getEnvVar(name string) (string, error) {
 // GetRemoteConfiguration creates a remote configuration with the configured values.
 func GetRemoteConfiguration() (*core.Remote, error) {
 	// We can safely ignore this error since the url schema variable is optional.
-	urlSchema, _ := getEnvVar(doguRegistryURLSchemaEnvVar)
+	urlSchema, _ := getRequiredEnvVar(doguRegistryURLSchemaEnvVar)
 
 	if urlSchema != "index" {
 		log.Info("URLSchema is not index. Setting it to default.")
 		urlSchema = "default"
 	}
 
-	endpoint, err := getEnvVar(doguRegistryEndpointEnvVar)
+	endpoint, err := getRequiredEnvVar(doguRegistryEndpointEnvVar)
 	if err != nil {
 		return nil, err
 	}
@@ -174,12 +188,12 @@ func configureProxySettings(proxyURL string) (core.ProxySettings, error) {
 
 // GetRemoteCredentials creates a remote credential pair with the configured values.
 func GetRemoteCredentials() (*core.Credentials, error) {
-	username, err := getEnvVar(doguRegistryUsernameEnvVar)
+	username, err := getRequiredEnvVar(doguRegistryUsernameEnvVar)
 	if err != nil {
 		return nil, err
 	}
 
-	password, err := getEnvVar(doguRegistryPasswordEnvVar)
+	password, err := getRequiredEnvVar(doguRegistryPasswordEnvVar)
 	if err != nil {
 		return nil, err
 	}
@@ -191,7 +205,7 @@ func GetRemoteCredentials() (*core.Credentials, error) {
 }
 
 func GetDebounceWindow() (time.Duration, error) {
-	windowSecString, err := getEnvVar(debounceWindowEnvVar)
+	windowSecString, err := getRequiredEnvVar(debounceWindowEnvVar)
 	if err != nil {
 		return time.Duration(0), fmt.Errorf("failed to get env var [%s]: %w", debounceWindowEnvVar, err)
 	}
@@ -200,4 +214,36 @@ func GetDebounceWindow() (time.Duration, error) {
 		return time.Duration(0), fmt.Errorf("failed to parse env var [%s] to duration: %w", debounceWindowEnvVar, err)
 	}
 	return window, nil
+}
+
+func getAuthRegistrationEnabled() bool {
+	authRegistrationEnabledStr, found := os.LookupEnv(authRegistrationEnabledEnvVar)
+	if !found {
+		log.Info(fmt.Sprintf("Environment variable %s not set. Disabling auth registration by default", authRegistrationEnabledEnvVar))
+		return false
+	}
+
+	authRegistrationEnabled, err := strconv.ParseBool(authRegistrationEnabledStr)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to parse value of environment variable %s: %w", authRegistrationEnabledEnvVar, err), "Disabling auth registration by default")
+		return false
+	}
+
+	return authRegistrationEnabled
+}
+
+func getDisablePostfixDependencyCheck() bool {
+	disablePostfixDependencyCheckStr, found := os.LookupEnv(disablePostfixDependencyCheckEnvVar)
+	if !found {
+		log.Info(fmt.Sprintf("Environment variable %s not set. Leaving postfix dependency check enabled", disablePostfixDependencyCheckEnvVar))
+		return false
+	}
+
+	disablePostfixDependencyCheck, err := strconv.ParseBool(disablePostfixDependencyCheckStr)
+	if err != nil {
+		log.Error(fmt.Errorf("failed to parse value of environment variable %s: %w", disablePostfixDependencyCheckEnvVar, err), "Leaving postfix dependency check enabled")
+		return false
+	}
+
+	return disablePostfixDependencyCheck
 }
