@@ -33,7 +33,7 @@ A Dogu can contain the following fields:
 
 * Required
 * Data type: string
-* Content: Specifies the name including the namespace of the Dogu.
+* Content: Specifies the name including the dogu registry namespace of the Dogu.
 * Example: `name: "official/cas"`
 
 #### Absent
@@ -71,7 +71,7 @@ dogus:
 
 > The Dogu-Operator creates Dogus with 2Gi volumes. The Nexus Dogu requires a larger volume and must be configured via this entry.
 
-> Shrinking volumes is not supported.
+> Downsizing existing volumes is not supported. The initial value can be set freely.
 
 ##### ReverseProxy.maxBodySize
 
