@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.3.1] - 2026-08-27
+### Added
+- [#157] add blueprint format docs from k8s-blueprint-lib
+
 ## [v3.3.0] - 2026-04-09
 ### Added
 - [#154] Ignore missing CAS dependency if `manager.env.authRegistrationEnabled` is set to `true` in the Helm values.
