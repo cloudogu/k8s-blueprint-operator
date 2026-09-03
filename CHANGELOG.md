@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v3.4.0] - 2026-09-03
+### Changed
+- [#159] Component version constraint to support component `k8s-dogu-operator-crd` v3
+
 ## [v3.3.1] - 2026-08-27
 ### Added
 - [#157] add blueprint format docs from k8s-blueprint-lib
