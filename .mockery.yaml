@@ -1,14 +1,18 @@
-with-expecter: true
+# Configuration for mockery v3 (https://vektra.github.io/mockery/v3/configuration/).
 all: true
-exclude: ["vendor"]
 recursive: true
-inpackage: true
+template: testify
 include-auto-generated: false
-mockname: "{{.Mock}}{{.InterfaceName | camelcase }}"
-filename: "mock_{{.InterfaceName}}_test.go"
+
 dir: "{{.InterfaceDir}}"
+filename: "mocks_test.go"
+pkgname: "{{.SrcPackageName}}"
+structname: "{{.Mock}}{{.InterfaceName | firstUpper}}"
+
+exclude-subpkg-regex:
+  - "vendor"
 
 packages:
   github.com/cloudogu/k8s-blueprint-operator/v2:
     config:
-      recursive: True
+      recursive: true
