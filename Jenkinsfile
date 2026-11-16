@@ -1,6 +1,6 @@
 #!groovy
 
-@Library('github.com/cloudogu/ces-build-lib@4.2.0')
+@Library(['github.com/cloudogu/ces-build-lib@6.1.0'])
 import com.cloudogu.ces.cesbuildlib.*
 
 // Creating necessary git objects
@@ -12,7 +12,7 @@ github = new GitHub(this, git)
 changelog = new Changelog(this)
 Docker docker = new Docker(this)
 gpg = new Gpg(this, docker)
-goVersion = "1.26.0"
+goVersion = "1.27.3"
 Makefile makefile = new Makefile(this)
 
 componentOperatorVersion="1.10.0"
@@ -92,6 +92,8 @@ node('docker') {
             String controllerVersion = makefile.getVersion()
 
             stage('Set up k3d cluster') {
+                k3d.installKubectlManually()
+                k3d.installHelmManually()
                 k3d.startK3d()
             }
 

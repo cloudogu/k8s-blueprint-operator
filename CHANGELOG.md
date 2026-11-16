@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Security
+- Update to Go 1.27.3
+- Update makefiles to v11.2.0 and golangci-lint to v2.15.0
+- Migrate mockery configuration to mockery v3 and regenerate mocks
 
 ## [v3.4.0] - 2026-09-03
 ### Changed
